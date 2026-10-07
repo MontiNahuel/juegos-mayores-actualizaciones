@@ -1,6 +1,5 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { IonApp, setupIonicReact } from '@ionic/react';
-import Home from './pages/Home';
+import AppRoutes from './VISTAS/routes';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -36,12 +35,7 @@ setupIonicReact();
 
 const App: React.FC = () => (
   <IonApp>
-    <BrowserRouter>
-      <Routes>
-        <Route path="/home" element={<Home />} />
-        <Route path="/" element={<Navigate to="/home" replace />} />
-      </Routes>
-    </BrowserRouter>
+    <AppRoutes />
   </IonApp>
 );
 

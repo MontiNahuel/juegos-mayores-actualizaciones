@@ -1,9 +1,42 @@
-# Mente Activa: Manual Técnico, Arquitectura y Contexto de Desarrollo (Gemini)
+# Mente Activa: Manual Técnico, Arquitectura y Contexto de Desarrollo
 
 > **Documento de Contexto y Transferencia Técnica**  
-> **Autor / Asistente:** Antigravity (Google DeepMind - Gemini)  
-> **Fecha:** Octubre 2026  
+> **Última actualización:** 7 de octubre de 2026
 > **Repositorio:** [juegos-mayores-actualizaciones](https://github.com/MontiNahuel/juegos-mayores-actualizaciones.git)
+
+---
+
+## Estado actual del frontend
+
+El frontend está en la raíz de este repositorio: no hay una carpeta `frontend/` adicional. Es una aplicación Ionic + React + Capacitor con Android ya inicializado.
+
+La navegación se gestiona de forma centralizada con React Router en `src/VISTAS/routes.tsx`:
+
+| Ruta | Vista |
+| :--- | :--- |
+| `/` | Redirige a `/menu`. |
+| `/menu` | Menú principal de juegos. |
+| `/juegos/wordle` | Juego Wordle / Palabra del Día. |
+| Cualquier otra | Redirige a `/menu`. |
+
+El código de interfaz se organiza bajo `src/VISTAS`:
+
+```text
+src/
+├── App.tsx                         # Inicializa Ionic y monta las rutas
+├── VISTAS/
+│   ├── routes.tsx                  # React Router: rutas de la aplicación
+│   ├── MENU/Menu.tsx               # Pantalla principal y catálogo de juegos
+│   ├── JUEGOS/WORDLE/WordleGame.tsx
+│   ├── COMPONENTS/Icons/Icons.tsx  # Ilustraciones e íconos reutilizables
+│   ├── LOGIN/
+│   ├── PERFIL/
+│   ├── PREJUEGO/
+│   └── RESULTADOS/
+└── theme/variables.css             # Variables globales de Ionic
+```
+
+Las carpetas de vistas aún sin implementación se conservan con archivos `.gitkeep` para mantener la estructura del proyecto.
 
 ---
 
@@ -37,6 +70,11 @@ Para evitar el abandono de la app, se incluyen tres clásicos familiares adaptad
 * **Estilos & Accesibilidad:** Tailwind CSS v4 (vía `@tailwindcss/vite`).
 * **Capa Móvil & Navegación:** Ionic 9 (`@ionic/react`, `@ionic/react-router`, `ionicons`).
 * **Puente Nativo / Runtime:** Capacitor 8 (`@capacitor/core`, `@capacitor/cli`, `@capacitor/android`).
+
+### Navegación y responsabilidades actuales
+`App.tsx` solamente inicializa Ionic y renderiza `AppRoutes`. La definición de rutas y los redireccionamientos están concentrados en `src/VISTAS/routes.tsx`; las pantallas no deben crear un `BrowserRouter` propio.
+
+El menú usa `useNavigate` para abrir Wordle. Los nuevos juegos deben agregarse como una vista dentro de `src/VISTAS/JUEGOS/<NOMBRE_DEL_JUEGO>/` y registrar su ruta en `routes.tsx`.
 
 ### Concepto de Adaptive UI (Web vs. APK Nativo)
 La aplicación utiliza un único código fuente que adapta su interfaz según el entorno de ejecución:
@@ -94,7 +132,7 @@ Se evaluó y descartó almacenar los intentos dentro de arrays en el documento d
 
 ### 4.1. Levantar en Desarrollo Local (PC)
 ```bash
-cd frontend
+npm install
 npm run dev
 ```
 Abre en el navegador en `http://localhost:5173`. Para simular la vista móvil en tu PC: pulsa **F12** y activa el modo dispositivo (**Ctrl + Shift + M**).
@@ -104,7 +142,6 @@ Abre en el navegador en `http://localhost:5173`. Para simular la vista móvil en
 ### 4.2. Probar en Celular vía Túnel Público (Sin cables ni Wi-Fi compartida)
 Para saltar bloqueos de firewall corporativo o aislamiento de routers (AP isolation):
 ```bash
-cd frontend
 npm run tunnel
 ```
 Esto genera un enlace HTTPS público de Cloudflare (`https://xxxx.trycloudflare.com`) accesible desde cualquier teléfono con Wi-Fi o datos 4G/5G.
@@ -127,9 +164,8 @@ Esto genera un enlace HTTPS público de Cloudflare (`https://xxxx.trycloudflare.
 
 #### Método A: Por Terminal (PowerShell)
 ```powershell
-cd c:\Users\nmonti\Desktop\proyectos\frontend
-
 # 1. Compilar el build web y sincronizar con Android
+npm install
 npm run build
 npx cap sync
 
@@ -140,11 +176,10 @@ cd android
 .\gradlew assembleDebug
 ```
 El archivo compilado queda en:  
-📁 `frontend/android/app/build/outputs/apk/debug/app-debug.apk`
+📁 `android/app/build/outputs/apk/debug/app-debug.apk`
 
 #### Método B: Vía Android Studio (Visual)
 ```bash
-cd frontend
 npx cap open android
 ```
 En Android Studio:

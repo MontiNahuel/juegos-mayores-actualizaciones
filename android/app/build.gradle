@@ -1,3 +1,4 @@
+// importante para configuracion android
 apply plugin: 'com.android.application'
 
 android {

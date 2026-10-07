@@ -1,3 +1,4 @@
+// importante para configuracion android
 package com.menteactiva.app;
 
 import com.getcapacitor.BridgeActivity;
