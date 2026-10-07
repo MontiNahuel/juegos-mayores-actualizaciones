@@ -1,0 +1,6 @@
+@import "tailwindcss";
+
+:root {
+  --ion-background-color: #f8fafc;
+  --ion-text-color: #0f172a;
+}

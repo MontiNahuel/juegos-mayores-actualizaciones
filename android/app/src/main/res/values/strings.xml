@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Mente Activa</string>
+    <string name="title_activity_main">Mente Activa</string>
+    <string name="package_name">com.menteactiva.app</string>
+    <string name="custom_url_scheme">com.menteactiva.app</string>
+</resources>
