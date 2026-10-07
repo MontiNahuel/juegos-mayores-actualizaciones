@@ -1,232 +1,262 @@
 import React, { useState } from 'react';
 import {
   IonContent,
-  IonHeader,
   IonPage,
-  IonTitle,
-  IonToolbar,
-  IonButton,
-  IonIcon
 } from '@ionic/react';
-import { gameControllerOutline, flameOutline, ribbonOutline, settingsOutline, homeOutline } from 'ionicons/icons';
+import {
+  FlameIcon,
+  StarIcon,
+  PlayIcon,
+  WordleIllustration,
+  SudokuIllustration,
+  CrosswordIllustration,
+  RouteIllustration,
+  CalendarCheckIcon,
+} from '../components/Icons';
+
+interface GameItem {
+  id: string;
+  title: string;
+  category: string;
+  benefit: string;
+  description: string;
+  illustration: React.ReactNode;
+  isDaily?: boolean;
+  completedToday?: boolean;
+}
 
 const Home: React.FC = () => {
-  // Estado simple para probar interactividad
-  const [activeTab, setActiveTab] = useState<'home' | 'wordle' | 'stats'>('wordle');
-  const [currentGuess, setCurrentGuess] = useState<string>('CAS');
-  
-  // Tablero de ejemplo accesible
-  const rows = [
-    [
-      { letter: 'M', status: 'absent' },
-      { letter: 'A', status: 'correct' },
-      { letter: 'T', status: 'absent' },
-      { letter: 'E', status: 'present' },
-      { letter: 'S', status: 'absent' },
-    ],
-    [
-      { letter: 'P', status: 'absent' },
-      { letter: 'A', status: 'correct' },
-      { letter: 'N', status: 'correct' },
-      { letter: 'E', status: 'correct' },
-      { letter: 'L', status: 'correct' },
-    ],
-    // Fila actual
-    [
-      { letter: 'C', status: 'current' },
-      { letter: 'A', status: 'current' },
-      { letter: 'S', status: 'current' },
-      { letter: '', status: 'empty' },
-      { letter: '', status: 'empty' },
-    ],
-    // Filas vacías
-    [
-      { letter: '', status: 'empty' },
-      { letter: '', status: 'empty' },
-      { letter: '', status: 'empty' },
-      { letter: '', status: 'empty' },
-      { letter: '', status: 'empty' },
-    ],
-    [
-      { letter: '', status: 'empty' },
-      { letter: '', status: 'empty' },
-      { letter: '', status: 'empty' },
-      { letter: '', status: 'empty' },
-      { letter: '', status: 'empty' },
-    ],
+  // Estado local para presentación (sin requerir backend todavía)
+  const [user] = useState({
+    name: 'Beatriz',
+    streak: 5,
+    points: 120,
+  });
+
+  const games: GameItem[] = [
+    {
+      id: 'wordle',
+      title: 'Palabra del Día',
+      category: 'Clásicos',
+      benefit: 'Memoria y Vocabulario',
+      description: 'Adivina la palabra oculta de 5 letras con pistas de colores. Cada día una nueva palabra para descubrir.',
+      illustration: <WordleIllustration />,
+      isDaily: true,
+      completedToday: false,
+    },
+    {
+      id: 'sudoku',
+      title: 'Mini-Sudoku 4x4',
+      category: 'Lógica',
+      benefit: 'Concentración y Razonamiento',
+      description: 'Completa los casilleros sin repetir números en filas ni columnas. Un formato ágil pensado para disfrutar.',
+      illustration: <SudokuIllustration />,
+      completedToday: false,
+    },
+    {
+      id: 'crucigrama',
+      title: 'Crucigrama Cotidiano',
+      category: 'Palabras',
+      benefit: 'Memoria Semántica',
+      description: 'Resuelve pistas con palabras y recuerdos familiares de nuestra cultura en un tablero cómodo y claro.',
+      illustration: <CrosswordIllustration />,
+      completedToday: false,
+    },
+    {
+      id: 'ruta-postal',
+      title: 'La Ruta Postal',
+      category: 'Agilidad',
+      benefit: 'Atención y Visión Periférica',
+      description: 'Encuentra el buzón en pantalla y sigue el recorrido del cartero para ejercitar tus reflejos visuales.',
+      illustration: <RouteIllustration />,
+      completedToday: false,
+    },
   ];
 
-  const keyboardKeys = [
-    ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
-    ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Ñ'],
-    ['ENVIAR', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'BORRAR']
-  ];
+  const handleStartGame = (gameTitle: string) => {
+    alert(`¡Próximamente! Estás por iniciar: ${gameTitle}`);
+  };
 
   return (
-    <IonPage className="bg-slate-50">
+    <IonPage className="bg-slate-50 font-sans">
       {/* ========================================================
-          1. BARRA SUPERIOR PARA ESCRITORIO (WEB)
-          Se muestra en pantallas medianas/grandes (PC / Laptop)
+          1. BARRA SUPERIOR DE NAVEGACIÓN (ASISTODO WEB)
           ======================================================== */}
-      <header className="hidden md:flex items-center justify-between px-8 py-4 bg-white border-b border-slate-200 shadow-xs">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold text-xl shadow-xs">
-            🧠
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-slate-800 leading-tight">Mente Activa</h1>
-            <p className="text-xs text-slate-500 font-medium">Estimulación neurocognitiva diaria</p>
-          </div>
-        </div>
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-20">
+            {/* Logo e Identidad Institucional */}
+            <div className="flex items-center gap-3.5">
+              <img
+                src="/asistodo-logo.svg"
+                alt="Logo ASISTODO"
+                className="w-12 h-12 object-contain rounded-xl shadow-xs"
+              />
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl font-black text-[#002B5E] tracking-tight leading-none">
+                    ASISTODO
+                  </span>
+                  <span className="text-xs font-extrabold uppercase px-2 py-0.5 rounded-md bg-blue-50 text-[#002B5E] border border-blue-200">
+                    Mente Activa
+                  </span>
+                </div>
+                <p className="text-xs font-semibold text-slate-500 mt-1">
+                  Juegos de estimulación cognitiva
+                </p>
+              </div>
+            </div>
 
-        <nav className="flex items-center gap-6">
-          <button
-            onClick={() => setActiveTab('home')}
-            className={`font-semibold text-sm transition-colors ${activeTab === 'home' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1' : 'text-slate-600 hover:text-slate-900'}`}
-          >
-            Inicio y Catálogo
-          </button>
-          <button
-            onClick={() => setActiveTab('wordle')}
-            className={`font-semibold text-sm transition-colors ${activeTab === 'wordle' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1' : 'text-slate-600 hover:text-slate-900'}`}
-          >
-            Palabra del Día
-          </button>
-          <button
-            onClick={() => setActiveTab('stats')}
-            className={`font-semibold text-sm transition-colors ${activeTab === 'stats' ? 'text-indigo-600 border-b-2 border-indigo-600 pb-1' : 'text-slate-600 hover:text-slate-900'}`}
-          >
-            Mi Progreso
-          </button>
-        </nav>
+            {/* Saludo y Píldoras de Logro (Racha y Puntos) */}
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="hidden sm:block text-right mr-1">
+                <span className="text-base font-bold text-slate-800 block">
+                  ¡Hola, {user.name}!
+                </span>
+                <span className="text-xs text-slate-500 font-medium">
+                  Tu gimnasia mental de hoy
+                </span>
+              </div>
 
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 bg-amber-50 px-3 py-1.5 rounded-full border border-amber-200 text-amber-800 text-sm font-semibold">
-            <span>🔥</span> Racha: 5 días
-          </div>
-          <div className="flex items-center gap-2 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200 text-emerald-800 text-sm font-semibold">
-            <span>⭐</span> 28 estrellas
+              {/* Píldora de Racha */}
+              <div
+                className="flex items-center gap-2 bg-amber-50 border border-amber-200 px-3.5 py-1.5 rounded-full text-amber-900 text-sm font-bold shadow-xs select-none"
+                title="Días seguidos jugando"
+              >
+                <FlameIcon className="w-5 h-5 text-amber-600" />
+                <span>{user.streak} días</span>
+              </div>
+
+              {/* Píldora de Puntos */}
+              <div
+                className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-3.5 py-1.5 rounded-full text-emerald-900 text-sm font-bold shadow-xs select-none"
+                title="Puntos acumulados"
+              >
+                <StarIcon className="w-5 h-5 text-emerald-600" />
+                <span>{user.points} pts</span>
+              </div>
+            </div>
           </div>
         </div>
       </header>
 
       {/* ========================================================
-          2. CABECERA NATIVA PARA CELULAR (APK / MÓVIL)
-          Se muestra únicamente en pantallas pequeñas (móviles)
+          2. CONTENIDO PRINCIPAL (VISTA WEB ESPACIOSA Y ACCESIBLE)
           ======================================================== */}
-      <IonHeader className="md:hidden">
-        <IonToolbar color="light">
-          <IonTitle className="font-bold text-lg text-slate-800">
-            Palabra del Día
-          </IonTitle>
-        </IonToolbar>
-      </IonHeader>
+      <IonContent fullscreen className="bg-slate-50" style={{ '--background': '#f8fafc' } as React.CSSProperties}>
+        <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
 
-      {/* ========================================================
-          3. CONTENIDO CENTRAL RESPONSIVO (El juego interactivo)
-          ======================================================== */}
-      <IonContent fullscreen className="bg-slate-50" style={{ '--background': '#f8fafc' }}>
-        <div className="max-w-2xl mx-auto px-4 py-6 flex flex-col items-center justify-between min-h-full">
-          
-          {/* Tarjeta de consigna e info del día */}
-          <div className="w-full bg-white rounded-2xl p-4 shadow-xs border border-slate-200 mb-4 flex items-center justify-between">
-            <div>
-              <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">Desafío Diario</span>
-              <h2 className="text-lg font-bold text-slate-800">Palabra de 5 Letras</h2>
-              <p className="text-xs text-slate-500">Pista: Relacionado con el hogar familiar</p>
+          {/* ====================================================
+              SECCIÓN HERO: DESAFÍO DEL DÍA DESTACADO
+              ==================================================== */}
+          <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#002B5E] via-[#0b3c75] to-[#1e40af] text-white p-6 sm:p-8 md:p-10 shadow-md">
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="max-w-2xl space-y-3">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-sm text-blue-100 text-xs sm:text-sm font-semibold border border-white/20">
+                  <CalendarCheckIcon className="w-4 h-4 text-emerald-300" />
+                  <span>Desafío de hoy disponible</span>
+                </div>
+
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight leading-tight">
+                  Palabra del Día
+                </h1>
+
+                <p className="text-base sm:text-lg text-blue-100 leading-relaxed font-normal">
+                  Ejercita tu memoria y deducción descubriendo la palabra de hoy. Solo te llevará unos minutos y suma puntos para tu racha.
+                </p>
+              </div>
+
+              <div className="flex-shrink-0">
+                <button
+                  onClick={() => handleStartGame('Palabra del Día')}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4 bg-white text-[#002B5E] text-lg font-black rounded-2xl shadow-lg hover:bg-blue-50 active:scale-98 transition-all cursor-pointer"
+                >
+                  <PlayIcon className="w-6 h-6 text-[#002B5E]" />
+                  <span>Jugar Ahora</span>
+                </button>
+              </div>
             </div>
-            <div className="text-right">
-              <span className="text-2xl font-extrabold text-indigo-600">3/6</span>
-              <p className="text-xs text-slate-400">Intentos</p>
+          </section>
+
+          {/* ====================================================
+              SECCIÓN: CATÁLOGO DE JUEGOS COGNITIVOS
+              (Inspirado en el Mockup: Título + Tarjetas limpias)
+              ==================================================== */}
+          <section className="space-y-6">
+            <div className="border-b border-slate-200 pb-4">
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                Elige tu pasatiempo para hoy
+              </h2>
+              <p className="text-sm sm:text-base text-slate-600 font-normal mt-1">
+                Juegos tranquilos y sin límite de tiempo, diseñados para ejercitar la mente a tu propio ritmo.
+              </p>
             </div>
-          </div>
 
-          {/* Tablero accesible con letras grandes y contraste alto */}
-          <div className="flex flex-col gap-2.5 my-2">
-            {rows.map((row, rIdx) => (
-              <div key={rIdx} className="flex gap-2.5 justify-center">
-                {row.map((cell, cIdx) => {
-                  let bgStyle = 'bg-white border-2 border-slate-300 text-slate-800';
-                  if (cell.status === 'correct') {
-                    bgStyle = 'bg-emerald-600 border-2 border-emerald-600 text-white font-extrabold shadow-xs';
-                  } else if (cell.status === 'present') {
-                    bgStyle = 'bg-amber-500 border-2 border-amber-500 text-white font-extrabold shadow-xs';
-                  } else if (cell.status === 'absent') {
-                    bgStyle = 'bg-slate-400 border-2 border-slate-400 text-white font-medium';
-                  } else if (cell.status === 'current') {
-                    bgStyle = 'bg-white border-2 border-indigo-600 text-indigo-900 font-extrabold scale-105';
-                  }
-
-                  return (
-                    <div
-                      key={cIdx}
-                      className={`w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-xl flex items-center justify-center text-xl sm:text-2xl font-bold transition-all ${bgStyle}`}
-                    >
-                      {cell.letter}
+            {/* Grid de Tarjetas de Juego */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
+              {games.map((game) => (
+                <article
+                  key={game.id}
+                  className="bg-white rounded-2xl border border-slate-200 shadow-xs hover:shadow-md transition-shadow duration-200 flex flex-col justify-between overflow-hidden"
+                >
+                  {/* Encabezado de la Tarjeta e Ilustración SVG */}
+                  <div className="p-6 pb-4">
+                    {/* Píldoras de Categoría y Beneficio */}
+                    <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+                      <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-bold uppercase tracking-wider">
+                        {game.category}
+                      </span>
+                      <span className="px-3 py-1 rounded-full bg-blue-50 text-[#002B5E] border border-blue-100 text-xs font-semibold">
+                        {game.benefit}
+                      </span>
                     </div>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
 
-          {/* Teclado en pantalla (Táctil y adaptado a adultos mayores) */}
-          <div className="w-full mt-4 flex flex-col gap-2">
-            {keyboardKeys.map((row, kIdx) => (
-              <div key={kIdx} className="flex justify-center gap-1.5 sm:gap-2">
-                {row.map((key) => {
-                  const isSpecial = key === 'ENVIAR' || key === 'BORRAR';
-                  return (
+                    {/* Contenedor de la Ilustración SVG (sin imágenes rotas) */}
+                    <div className="w-full h-36 rounded-xl overflow-hidden mb-5 border border-slate-100 bg-slate-50 flex items-center justify-center">
+                      {game.illustration}
+                    </div>
+
+                    {/* Título y Descripción Accesible */}
+                    <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 leading-snug mb-2">
+                      {game.title}
+                    </h3>
+                    <p className="text-base text-slate-600 leading-relaxed font-normal">
+                      {game.description}
+                    </p>
+                  </div>
+
+                  {/* Pie de la Tarjeta con Botón de Acción Amplio */}
+                  <div className="px-6 py-4 bg-slate-50/70 border-t border-slate-100 flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-500">
+                      Sin límite de tiempo
+                    </span>
                     <button
-                      key={key}
-                      className={`h-12 sm:h-14 font-bold text-sm sm:text-base rounded-lg transition-transform active:scale-95 shadow-xs flex items-center justify-center select-none ${
-                        isSpecial
-                          ? 'px-3 sm:px-4 bg-slate-200 text-slate-800 text-xs sm:text-sm font-extrabold'
-                          : 'w-8 sm:w-10 bg-slate-100 hover:bg-slate-200 text-slate-800'
-                      }`}
+                      onClick={() => handleStartGame(game.title)}
+                      className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#002B5E] hover:bg-blue-900 text-white font-bold text-base rounded-xl transition-all shadow-xs cursor-pointer active:scale-95"
                     >
-                      {key}
+                      <PlayIcon className="w-4 h-4 text-white" />
+                      <span>Comenzar</span>
                     </button>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
 
-          {/* Espaciador inferior para no chocar con la barra móvil */}
-          <div className="h-16 md:hidden" />
-        </div>
+          {/* ====================================================
+              MENSAJE TRANQUILIZADOR (Validez para adultos mayores)
+              ==================================================== */}
+          <footer className="rounded-2xl border border-blue-100 bg-blue-50/60 p-6 text-center text-slate-600 space-y-1">
+            <p className="text-sm sm:text-base font-semibold text-[#002B5E]">
+              💡 Recuerda: acá no hay respuestas apuradas ni podés romper nada.
+            </p>
+            <p className="text-xs sm:text-sm text-slate-500">
+              Podés jugar cuántas veces quieras y retomar tus partidas cuando gustes.
+            </p>
+          </footer>
+
+        </main>
       </IonContent>
-
-      {/* ========================================================
-          4. BARRA INFERIOR DE PESTAÑAS PARA CELULAR (APK / MÓVIL)
-          Se muestra únicamente en pantallas pequeñas (móviles)
-          ======================================================== */}
-      <footer className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around items-center py-2 px-4 shadow-lg z-50">
-        <button
-          onClick={() => setActiveTab('home')}
-          className={`flex flex-col items-center gap-1 py-1 px-3 rounded-lg ${activeTab === 'home' ? 'text-indigo-600 font-bold' : 'text-slate-500'}`}
-        >
-          <IonIcon icon={homeOutline} className="text-xl" />
-          <span className="text-xs">Inicio</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('wordle')}
-          className={`flex flex-col items-center gap-1 py-1 px-3 rounded-lg ${activeTab === 'wordle' ? 'text-indigo-600 font-bold' : 'text-slate-500'}`}
-        >
-          <IonIcon icon={gameControllerOutline} className="text-xl" />
-          <span className="text-xs">Reto Hoy</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('stats')}
-          className={`flex flex-col items-center gap-1 py-1 px-3 rounded-lg ${activeTab === 'stats' ? 'text-indigo-600 font-bold' : 'text-slate-500'}`}
-        >
-          <IonIcon icon={ribbonOutline} className="text-xl" />
-          <span className="text-xs">Progreso</span>
-        </button>
-      </footer>
     </IonPage>
   );
 };
