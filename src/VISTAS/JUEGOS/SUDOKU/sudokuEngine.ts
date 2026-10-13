@@ -1,6 +1,6 @@
 ﻿// @ts-ignore
 import sudoku from 'sudoku';
-import { SudokuGrid } from './types';
+import { SudokuGrid, DifficultyLevel } from './types';
 
 /**
  * Convierte el array plano de 81 valores (0-8 o null) de la librería 'sudoku'
@@ -20,12 +20,16 @@ function rawArrayToGrid(raw: (number | null)[]): SudokuGrid {
 }
 
 /**
- * Genera el puzzle del día con solución única usando la librería 'sudoku'.
- * Implementa persistencia local por fecha (dateKey) para que durante todo el día
- * el usuario juegue exactamente el mismo tablero aunque recargue la pantalla.
+ * Genera el puzzle del día con solución única según el nivel de dificultad numérico:
+ * - Nivel 1 (Fácil / Bajo): ~43 pistas (revela +18 números de la solución)
+ * - Nivel 2 (Medio): ~35 pistas (revela +10 números de la solución)
+ * - Nivel 3 (Alto / Difícil): ~25 pistas (tablero base generado por la librería)
  */
-export function generateDailyPuzzle(dateKey: string): { initialBoard: SudokuGrid; solution: SudokuGrid } {
-  const cacheKey = `sudoku_daily_puzzle_${dateKey}`;
+export function generateDailyPuzzle(
+  dateKey: string,
+  level: DifficultyLevel = 1
+): { initialBoard: SudokuGrid; solution: SudokuGrid } {
+  const cacheKey = `sudoku_daily_puzzle_${dateKey}_lvl_${level}`;
   const cached = localStorage.getItem(cacheKey);
 
   if (cached) {
@@ -34,14 +38,33 @@ export function generateDailyPuzzle(dateKey: string): { initialBoard: SudokuGrid
       if (parsed.initialBoard && parsed.solution) {
         return parsed;
       }
-    } catch {
-      // Si falla la lectura, se vuelve a generar
-    }
+    } catch {}
   }
 
   // Generación matemática con solución única de la librería
-  const rawPuzzle = sudoku.makepuzzle();
-  const rawSolution = sudoku.solvepuzzle(rawPuzzle);
+  const rawPuzzle: (number | null)[] = sudoku.makepuzzle();
+  const rawSolution: (number | null)[] = sudoku.solvepuzzle(rawPuzzle);
+
+  // Cuántas pistas adicionales revelar según el nivel 1, 2 o 3
+  const extraCluesToReveal = level === 1 ? 18 : level === 2 ? 10 : 0;
+
+  if (extraCluesToReveal > 0) {
+    const emptyIndices: number[] = [];
+    rawPuzzle.forEach((val, idx) => {
+      if (val === null) emptyIndices.push(idx);
+    });
+
+    // Desordenar determinista o aleatoriamente para revelar de forma balanceada
+    for (let i = emptyIndices.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [emptyIndices[i], emptyIndices[j]] = [emptyIndices[j], emptyIndices[i]];
+    }
+
+    const indicesToFill = emptyIndices.slice(0, extraCluesToReveal);
+    indicesToFill.forEach(idx => {
+      rawPuzzle[idx] = rawSolution[idx];
+    });
+  }
 
   const result = {
     initialBoard: rawArrayToGrid(rawPuzzle),
@@ -50,9 +73,7 @@ export function generateDailyPuzzle(dateKey: string): { initialBoard: SudokuGrid
 
   try {
     localStorage.setItem(cacheKey, JSON.stringify(result));
-  } catch {
-    // Manejo silencioso si localStorage está lleno
-  }
+  } catch {}
 
   return result;
 }

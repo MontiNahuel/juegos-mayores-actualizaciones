@@ -43,7 +43,7 @@ export const SudokuCompletedModal: React.FC<ModalProps> = ({
 
         <p className="text-base text-[#334155] leading-relaxed">
           {isGameOver
-            ? 'Has consumido tus 3 vidas en este intento. ¡No te preocupes! Podés intentarlo nuevamente cuando quieras.'
+            ? 'Has consumido todas tus vidas en este intento. ¡No te preocupes! Podés intentarlo nuevamente cuando quieras.'
             : '¡Excelente trabajo! Has ejercitado tu concentración y completado con éxito el tablero de hoy.'}
         </p>
 
@@ -70,3 +70,4 @@ export const SudokuCompletedModal: React.FC<ModalProps> = ({
     </div>
   );
 };
+

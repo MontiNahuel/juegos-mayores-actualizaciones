@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import type { CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
@@ -20,6 +20,7 @@ export const DailyChallengeCalendar: React.FC<DailyChallengeCalendarProps> = ({
   heroBadge,
   heroSubtitle,
   playRoute,
+  onPlayChallenge,
   year,
   month,
   todayDay,
@@ -67,7 +68,7 @@ export const DailyChallengeCalendar: React.FC<DailyChallengeCalendarProps> = ({
     if (item.status === 'completed') {
       setSelectedCompleted(item);
     } else if (item.status === 'pending') {
-      navigate(playRoute, {
+      if (onPlayChallenge) { onPlayChallenge(item); } else if (playRoute) { navigate(playRoute, {
         state: {
           challenge: {
             day: item.day,
@@ -79,7 +80,7 @@ export const DailyChallengeCalendar: React.FC<DailyChallengeCalendarProps> = ({
             hints: item.config?.hints,
           },
         },
-      });
+      }); }
     } else {
       setFutureNotice(`El desafío del día ${item.day} estará disponible el ${item.dateStr}.`);
       setTimeout(() => setFutureNotice(null), 3500);
@@ -442,3 +443,4 @@ export const DailyChallengeCalendar: React.FC<DailyChallengeCalendarProps> = ({
     </IonPage>
   );
 };
+

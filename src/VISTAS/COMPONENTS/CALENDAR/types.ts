@@ -1,4 +1,4 @@
-import type React from 'react';
+﻿import type React from 'react';
 
 export interface DayChallenge {
   day: number;
@@ -71,7 +71,8 @@ export interface DailyChallengeCalendarProps {
   title: string;
   heroBadge?: string;
   heroSubtitle: string;
-  playRoute: string;
+  playRoute?: string;
+  onPlayChallenge?: (challenge: DayChallenge) => void;
   year?: number;
   month?: number;
   todayDay?: number;
@@ -79,3 +80,4 @@ export interface DailyChallengeCalendarProps {
   onBack?: () => void;
   renderCompletedModal?: (challenge: DayChallenge, onClose: () => void) => React.ReactNode;
 }
+

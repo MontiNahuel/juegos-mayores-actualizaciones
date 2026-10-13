@@ -1,32 +1,45 @@
 ﻿import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { SudokuCell, SudokuGrid } from './types';
+import { SudokuCell, SudokuGrid, DifficultyLevel } from './types';
 import { generateDailyPuzzle, hasConflict } from './sudokuEngine';
 import { saveFinalGameAttempt } from '../attemptsService';
 
-export const MAX_LIVES = 3;
+/**
+ * Cantidad de vidas / corazones según la dificultad seleccionada:
+ * - Nivel 1 (Fácil / Bajo): 7 corazones
+ * - Nivel 2 (Medio): 5 corazones
+ * - Nivel 3 (Alto / Difícil): 3 corazones
+ */
+export function getMaxLives(level: DifficultyLevel): number {
+  if (level === 1) return 7;
+  if (level === 2) return 5;
+  return 3;
+}
 
 export function useSudokuGame() {
   const location = useLocation();
   const navigate = useNavigate();
 
   const challenge = location.state?.challenge;
+  const difficultyLevel: DifficultyLevel = (location.state?.difficultyLevel as DifficultyLevel) || 1;
   const dateKey = challenge?.dateKey || new Date().toISOString().slice(0, 10);
   const dateStr = challenge?.dateStr || 'Desafío de hoy';
   const dayNumber = challenge?.day || parseInt(dateKey.split('-')[2], 10);
+
+  const maxLives = useMemo(() => getMaxLives(difficultyLevel), [difficultyLevel]);
 
   const [cells, setCells] = useState<SudokuCell[][]>([]);
   const [solution, setSolution] = useState<SudokuGrid>([]);
   const [selectedRow, setSelectedRow] = useState<number | null>(null);
   const [selectedCol, setSelectedCol] = useState<number | null>(null);
-  const [lives, setLives] = useState<number>(MAX_LIVES);
+  const [lives, setLives] = useState<number>(() => getMaxLives(difficultyLevel));
   const [errors, setErrors] = useState<number>(0);
   const [isNotesMode, setIsNotesMode] = useState<boolean>(false);
   const [hintsLeft, setHintsLeft] = useState<number>(3);
   const [isWon, setIsWon] = useState<boolean>(false);
   const [isGameOver, setIsGameOver] = useState<boolean>(false);
 
-  // Inicializar o reiniciar partida del día
+  // Inicializar o reiniciar partida del día según el nivel numérico de dificultad
   const initGame = useCallback(() => {
     let initB: SudokuGrid;
     let solB: SudokuGrid;
@@ -35,7 +48,7 @@ export function useSudokuGame() {
       initB = challenge.config.initialBoard;
       solB = challenge.config.solution;
     } else {
-      const puzzle = generateDailyPuzzle(dateKey);
+      const puzzle = generateDailyPuzzle(dateKey, difficultyLevel);
       initB = puzzle.initialBoard;
       solB = puzzle.solution;
     }
@@ -56,12 +69,12 @@ export function useSudokuGame() {
     setCells(initialCells);
     setSelectedRow(null);
     setSelectedCol(null);
-    setLives(MAX_LIVES);
+    setLives(getMaxLives(difficultyLevel));
     setErrors(0);
     setHintsLeft(3);
     setIsWon(false);
     setIsGameOver(false);
-  }, [challenge, dateKey]);
+  }, [challenge, dateKey, difficultyLevel]);
 
   useEffect(() => {
     initGame();
@@ -135,9 +148,9 @@ export function useSudokuGame() {
           gameId: 'sudoku',
           date: dateKey,
           day: dayNumber,
+          guesses: [],
           status: 'lost',
           attempts: newErrors,
-          guesses: [],
           stars: 0,
           score: 0,
         });
@@ -160,21 +173,54 @@ export function useSudokuGame() {
     });
   };
 
-  // Pista (revela el número correcto en la celda seleccionada)
+  // Pista: revela el número correcto y disminuye el contador en 1 garantizado.
+  // Si no hay celda seleccionada (o es fija/correcta), busca automáticamente una celda vacía.
   const useHint = () => {
-    if (selectedRow === null || selectedCol === null || hintsLeft <= 0 || isWon || isGameOver) return;
-    const target = cells[selectedRow][selectedCol];
-    if (target.initial || !solution.length) return;
+    if (hintsLeft <= 0 || isWon || isGameOver || !solution.length || !cells.length) return;
 
-    const correct = solution[selectedRow][selectedCol];
+    let targetRow = selectedRow;
+    let targetCol = selectedCol;
+
+    const isCurrentEligible =
+      targetRow !== null &&
+      targetCol !== null &&
+      !cells[targetRow][targetCol].initial &&
+      cells[targetRow][targetCol].value !== solution[targetRow][targetCol];
+
+    if (!isCurrentEligible) {
+      // Buscar la primera celda vacía o incorrecta en el tablero
+      let found = false;
+      for (let r = 0; r < 9; r++) {
+        for (let c = 0; c < 9; c++) {
+          if (!cells[r][c].initial && cells[r][c].value !== solution[r][c]) {
+            targetRow = r;
+            targetCol = c;
+            found = true;
+            break;
+          }
+        }
+        if (found) break;
+      }
+      if (!found) return; // Tablero ya resuelto
+    }
+
+    if (targetRow === null || targetCol === null) return;
+
+    const correct = solution[targetRow][targetCol];
+
+    // Enfocar y seleccionar la celda revelada
+    setSelectedRow(targetRow);
+    setSelectedCol(targetCol);
+
     setCells(prev => {
       const copy = prev.map(r => r.map(c => ({ ...c })));
-      copy[selectedRow][selectedCol].value = correct;
-      copy[selectedRow][selectedCol].notes = [];
-      copy[selectedRow][selectedCol].error = false;
+      copy[targetRow!][targetCol!].value = correct;
+      copy[targetRow!][targetCol!].notes = [];
+      copy[targetRow!][targetCol!].error = false;
       return copy;
     });
-    setHintsLeft(prev => prev - 1);
+
+    setHintsLeft(prev => Math.max(0, prev - 1));
   };
 
   // Verificación de victoria
@@ -187,22 +233,24 @@ export function useSudokuGame() {
 
     if (isAllFilledAndCorrect) {
       setIsWon(true);
-      const starsEarned = errors === 0 ? 3 : errors === 1 ? 2 : 1;
+      const starsEarned = errors === 0 ? 3 : errors <= Math.ceil(maxLives / 3) ? 2 : 1;
       saveFinalGameAttempt({
         gameId: 'sudoku',
         date: dateKey,
         day: dayNumber,
+        guesses: [],
         status: 'won',
         attempts: errors,
         stars: starsEarned,
-        guesses: [],
         score: starsEarned * 50,
       });
     }
-  }, [cells, solution, isWon, isGameOver, errors, dateKey, dayNumber]);
+  }, [cells, solution, isWon, isGameOver, errors, maxLives, dateKey, dayNumber]);
 
   return {
     dateStr,
+    difficultyLevel,
+    maxLives,
     cells,
     selectedRow,
     selectedCol,
@@ -213,7 +261,7 @@ export function useSudokuGame() {
     numberCounts,
     isWon,
     isGameOver,
-    stars: errors === 0 ? 3 : errors === 1 ? 2 : 1,
+    stars: errors === 0 ? 3 : errors <= Math.ceil(maxLives / 3) ? 2 : 1,
     selectCell,
     inputNumber,
     eraseCell,

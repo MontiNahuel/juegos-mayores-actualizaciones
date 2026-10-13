@@ -1,4 +1,8 @@
-﻿export interface SudokuCell {
+﻿import { DifficultyLevel } from '../../COMPONENTS/DIFICULTAD';
+
+export type { DifficultyLevel };
+
+export interface SudokuCell {
   row: number;
   col: number;
   value: number;       // 0 si está vacía, 1-9 si tiene número colocado
@@ -12,4 +16,6 @@ export type SudokuGrid = number[][]; // Matriz 9x9 de números (0-9)
 export interface SudokuConfig {
   initialBoard: SudokuGrid;
   solution: SudokuGrid;
+  difficultyLevel?: DifficultyLevel; // 1 = Fácil, 2 = Medio, 3 = Alto
 }
+
