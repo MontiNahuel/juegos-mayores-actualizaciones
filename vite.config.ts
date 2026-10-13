@@ -16,7 +16,13 @@ export default defineConfig({
   ],
   server: {
     host: true,
-    allowedHosts: true
+    allowedHosts: true,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      },
+    },
   },
   test: {
     globals: true,
