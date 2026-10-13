@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import type { CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
@@ -20,13 +20,13 @@ const color = {
 const games: MenuCardGame[] = [
   {
     id: 'wordle', group: 'Clásicos', title: 'Palabra del día', skill: 'Memoria y vocabulario',
-    description: 'Encontrá la palabra y poné a trabajar tu memoria con pistas claras.',
+    description: 'EncontrÃ¡ la palabra y ponÃ© a trabajar tu memoria con pistas claras.',
     icon: textOutline, accent: color.teal, available: true,
   },
   {
     id: 'sudoku', group: 'Clásicos', title: 'Mini-Sudoku 4x4', skill: 'Lógica y concentración',
     description: 'Un tablero breve para entrenar la atención sin apuro.',
-    icon: gridOutline, accent: color.lavender,
+    icon: gridOutline, accent: color.lavender, available: true,
   },
   {
     id: 'crucigrama', group: 'Narrativos', title: 'Crucigrama cotidiano', skill: 'Lenguaje y recuerdos',
@@ -34,15 +34,15 @@ const games: MenuCardGame[] = [
     icon: bookOutline, accent: color.coral,
   },
   {
-    id: 'ruta-postal', group: 'Narrativos', title: 'La ruta postal', skill: 'Atención visual',
-    description: 'Seguí un recorrido y encontrá las señales importantes en pantalla.',
+    id: 'ruta-postal', group: 'Narrativos', title: 'La ruta postal', skill: 'AtenciÃ³n visual',
+    description: 'SeguÃ­ un recorrido y encontrÃ¡ las seÃ±ales importantes en pantalla.',
     icon: navigateOutline, accent: color.teal,
   },
 ];
 
 const groups: { title: GameGroup; description: string }[] = [
   { title: 'Clásicos', description: 'Juegos conocidos para ejercitar lenguaje, memoria y lógica.' },
-  { title: 'Narrativos', description: 'Pequeñas historias que invitan a observar, recordar y decidir.' },
+  { title: 'Narrativos', description: 'PequeÃ±as historias que invitan a observar, recordar y decidir.' },
 ];
 
 const styles: Record<string, CSSProperties> = {
@@ -60,7 +60,7 @@ const styles: Record<string, CSSProperties> = {
 
 const Menu: React.FC = () => {
   const navigate = useNavigate();
-  const startGame = (id: string) => id === 'wordle' && navigate('/juegos/wordle');
+  const startGame = (id: string) => { if (id === 'wordle') navigate('/juegos/wordle'); if (id === 'sudoku') navigate('/juegos/sudoku'); };
 
   return (
     <IonPage>
@@ -96,3 +96,4 @@ const Menu: React.FC = () => {
 };
 
 export default Menu;
+
