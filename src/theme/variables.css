@@ -3,4 +3,7 @@
 :root {
   --ion-background-color: #f8fafc;
   --ion-text-color: #0f172a;
+  --ion-safe-area-top: env(safe-area-inset-top, 0px);
+  --ion-safe-area-bottom: max(env(safe-area-inset-bottom, 0px), 36px);
+  --app-safe-bottom: max(calc(env(safe-area-inset-bottom, 0px) + 16px), 48px);
 }
