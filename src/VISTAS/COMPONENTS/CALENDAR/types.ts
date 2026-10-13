@@ -71,7 +71,8 @@ export interface DailyChallengeCalendarProps {
   title: string;
   heroBadge?: string;
   heroSubtitle: string;
-  playRoute: string;
+  playRoute?: string;
+  onPlayChallenge?: (challenge: DayChallenge) => void;
   year?: number;
   month?: number;
   todayDay?: number;

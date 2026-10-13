@@ -20,6 +20,7 @@ export const DailyChallengeCalendar: React.FC<DailyChallengeCalendarProps> = ({
   heroBadge,
   heroSubtitle,
   playRoute,
+  onPlayChallenge,
   year,
   month,
   todayDay,
@@ -67,19 +68,23 @@ export const DailyChallengeCalendar: React.FC<DailyChallengeCalendarProps> = ({
     if (item.status === 'completed') {
       setSelectedCompleted(item);
     } else if (item.status === 'pending') {
-      navigate(playRoute, {
-        state: {
-          challenge: {
-            day: item.day,
-            dateStr: item.dateStr,
-            dateKey: item.dateKey,
-            config: item.config,
-            // Compatibilidad directa para Wordle y juegos con solución/pistas
-            word: item.config?.solution || item.completedData?.word,
-            hints: item.config?.hints,
+      if (onPlayChallenge) {
+        onPlayChallenge(item);
+      } else if (playRoute) {
+        navigate(playRoute, {
+          state: {
+            challenge: {
+              day: item.day,
+              dateStr: item.dateStr,
+              dateKey: item.dateKey,
+              config: item.config,
+              // Compatibilidad directa para Wordle y juegos con solución/pistas
+              word: item.config?.solution || item.completedData?.word,
+              hints: item.config?.hints,
+            },
           },
-        },
-      });
+        });
+      }
     } else {
       setFutureNotice(`El desafío del día ${item.day} estará disponible el ${item.dateStr}.`);
       setTimeout(() => setFutureNotice(null), 3500);

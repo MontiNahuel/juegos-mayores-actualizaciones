@@ -16,6 +16,7 @@ export interface ActiveGameProgress {
   day?: number;
   word?: string;
   guesses: any[];
+  gameData?: Record<string, any>;
   currentInput?: string;
   status: 'in_progress' | 'won' | 'lost' | 'completed' | 'failed';
   attempts: number;
@@ -30,6 +31,7 @@ export interface SaveProgressPayload {
   day?: number;
   word?: string;
   guesses: any[];
+  gameData?: Record<string, any>;
   currentInput?: string;
   status: 'in_progress' | 'won' | 'lost' | 'completed' | 'failed';
   attempts: number;
@@ -221,6 +223,7 @@ export async function saveActiveGameProgress(payload: SaveProgressPayload): Prom
     day: payload.day,
     word: payload.word,
     guesses: payload.guesses,
+    gameData: payload.gameData,
     currentInput: payload.currentInput || '',
     status: payload.status,
     attempts: payload.attempts,
@@ -258,6 +261,7 @@ export async function saveActiveGameProgress(payload: SaveProgressPayload): Prom
       stars: payload.stars || 0,
       score: payload.score || 0,
       guesses: payload.guesses,
+      game_data: payload.gameData,
       remaining_attempts: Math.max(0, 6 - payload.attempts),
     };
 
@@ -298,6 +302,7 @@ export async function saveFinalGameAttempt(payload: SaveProgressPayload): Promis
     day: dayNum,
     word: payload.word,
     guesses: payload.guesses,
+    gameData: payload.gameData,
     currentInput: '',
     status: isWon ? 'won' : 'lost',
     attempts: payload.attempts,
@@ -376,6 +381,7 @@ export async function saveFinalGameAttempt(payload: SaveProgressPayload): Promis
       stars,
       score,
       guesses: payload.guesses,
+      game_data: payload.gameData,
       remaining_attempts: 0,
     };
 
@@ -434,23 +440,17 @@ export async function migrateGuestProgressToNewUser(newUserId: number): Promise<
       }
     }
 
-    const guestCompletedRaw = localStorage.getItem('wordle_completed_days_guest');
-    if (guestCompletedRaw) {
-      localStorage.setItem(`wordle_completed_days_user_${newUserId}`, guestCompletedRaw);
-      localStorage.removeItem('wordle_completed_days_guest');
-    }
-
     const monthlyKeysToMigrate: string[] = [];
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
-      if (k && k.startsWith('wordle_completed_days_guest_')) {
+      if (k && k.includes('_completed_days_guest')) {
         monthlyKeysToMigrate.push(k);
       }
     }
     monthlyKeysToMigrate.forEach((k) => {
       const raw = localStorage.getItem(k);
       if (raw) {
-        const userK = k.replace('_guest_', `_user_${newUserId}_`);
+        const userK = k.replace('_guest', `_user_${newUserId}`);
         localStorage.setItem(userK, raw);
         localStorage.removeItem(k);
       }

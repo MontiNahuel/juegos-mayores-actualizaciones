@@ -2,7 +2,7 @@ import React from 'react';
 import type { CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
-import { bookOutline, gridOutline, navigateOutline, textOutline } from 'ionicons/icons';
+import { bookOutline, gridOutline, navigateOutline, searchOutline, textOutline } from 'ionicons/icons';
 import { BrainIcon } from '../COMPONENTS/Icons/Icons';
 import MenuCard, { type GameGroup, type MenuCardGame } from './MenuCard';
 import LoginHeader from '../LOGIN/LoginHeader';
@@ -24,9 +24,14 @@ const games: MenuCardGame[] = [
     icon: textOutline, accent: color.teal, available: true,
   },
   {
-    id: 'sudoku', group: 'Clásicos', title: 'Mini-Sudoku 4x4', skill: 'Lógica y concentración',
-    description: 'Un tablero breve para entrenar la atención sin apuro.',
-    icon: gridOutline, accent: color.lavender,
+    id: 'sopa-letras', group: 'Clásicos', title: 'Sopa de letras', skill: 'Atención visual y rastreo',
+    description: 'Buscá 4 palabras temáticas en una cuadrícula clara y entretenida.',
+    icon: searchOutline, accent: color.coral, available: true,
+  },
+  {
+    id: 'sudoku', group: 'Clásicos', title: 'Sudoku diario', skill: 'Lógica y concentración',
+    description: 'Tableros adaptados con 3 niveles de dificultad para entrenar sin apuro.',
+    icon: gridOutline, accent: color.lavender, available: true,
   },
   {
     id: 'crucigrama', group: 'Narrativos', title: 'Crucigrama cotidiano', skill: 'Lenguaje y recuerdos',
@@ -60,7 +65,11 @@ const styles: Record<string, CSSProperties> = {
 
 const Menu: React.FC = () => {
   const navigate = useNavigate();
-  const startGame = (id: string) => id === 'wordle' && navigate('/juegos/wordle');
+  const startGame = (id: string) => {
+    if (id === 'wordle') navigate('/juegos/wordle');
+    if (id === 'sopa-letras') navigate('/juegos/sopa-letras');
+    if (id === 'sudoku') navigate('/juegos/sudoku');
+  };
 
   return (
     <IonPage>
