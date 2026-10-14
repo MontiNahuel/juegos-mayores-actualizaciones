@@ -18,6 +18,7 @@ import {
   MailIcon,
   RefreshIcon,
   TagIcon,
+  CalendarIcon,
 } from './Icons';
 import { OPERADOR_STORAGE_KEY } from './LoginSistemas';
 
@@ -90,6 +91,66 @@ export default function PanelAltasSistemas() {
   const [exitoEstado, setExitoEstado] = useState('');
   const [cambiandoEstadoId, setCambiandoEstadoId] = useState(null);
   const [togglingEstadoId, setTogglingEstadoId] = useState(null);
+
+  // Estado para Modal de Desafíos Diarios
+  const [modalDesafiosAbierto, setModalDesafiosAbierto] = useState(false);
+  const [desafiosJuego, setDesafiosJuego] = useState('sudoku');
+  const [desafiosAnio, setDesafiosAnio] = useState(2026);
+  const [mesesDesafios, setMesesDesafios] = useState([]);
+  const [cargandoDesafios, setCargandoDesafios] = useState(false);
+  const [generandoMes, setGenerandoMes] = useState(null);
+  const [errorDesafios, setErrorDesafios] = useState('');
+  const [exitoDesafios, setExitoDesafios] = useState('');
+
+  const cargarEstadoDesafios = async (anio = desafiosAnio, juego = desafiosJuego) => {
+    setCargandoDesafios(true);
+    setErrorDesafios('');
+    try {
+      const res = await fetch(`/api/challenges/admin/status?year=${anio}&game_id=${juego}`, {
+        headers: getAuthHeaders(),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMesesDesafios(data.months || []);
+      } else {
+        setErrorDesafios('No se pudo cargar el estado de desafíos.');
+      }
+    } catch (e) {
+      console.error(e);
+      setErrorDesafios('Error al conectar con el servidor.');
+    } finally {
+      setCargandoDesafios(false);
+    }
+  };
+
+  const handleGenerarMes = async (mesNumero) => {
+    setGenerandoMes(mesNumero);
+    setErrorDesafios('');
+    setExitoDesafios('');
+    try {
+      const res = await fetch(
+        `/api/challenges/admin/generate-month?year=${desafiosAnio}&month=${mesNumero}&game_id=${desafiosJuego}`,
+        {
+          method: 'POST',
+          headers: getAuthHeaders(),
+        }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setExitoDesafios(`¡Mes de ${data.month_name || mesNumero} generado con éxito (${data.generated_count || 30} desafíos)!`);
+        await cargarEstadoDesafios(desafiosAnio, desafiosJuego);
+        showToast(`Desafíos de ${data.month_name || 'mes'} generados correctamente.`);
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setErrorDesafios(data.detail || data.message || 'Error al generar los desafíos del mes.');
+      }
+    } catch (e) {
+      console.error(e);
+      setErrorDesafios('Error de conexión al generar mes.');
+    } finally {
+      setGenerandoMes(null);
+    }
+  };
 
   // Cerrar sesión
   const handleLogout = () => {
@@ -655,6 +716,19 @@ export default function PanelAltasSistemas() {
             >
               <TagIcon size={15} />
               <span>Catálogo de Estados</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setErrorDesafios('');
+                setExitoDesafios('');
+                setModalDesafiosAbierto(true);
+                cargarEstadoDesafios(desafiosAnio, desafiosJuego);
+              }}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs transition shadow-xs cursor-pointer"
+            >
+              <CalendarIcon size={15} />
+              <span>Desafíos Diarios</span>
             </button>
 
             <button
@@ -1420,6 +1494,217 @@ export default function PanelAltasSistemas() {
               <button
                 type="button"
                 onClick={() => setModalEstadosAbierto(false)}
+                className="px-5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 transition cursor-pointer"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODAL DESAFÍOS DIARIOS ================= */}
+      {modalDesafiosAbierto && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white rounded-3xl max-w-3xl w-full p-6 shadow-2xl border border-slate-200 max-h-[90vh] flex flex-col animate-scale-in">
+            {/* Cabecera del modal */}
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-blue-50 text-[#002B5E] flex items-center justify-center shadow-xs">
+                  <CalendarIcon size={20} />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-slate-900 leading-tight">
+                    Cobertura de Desafíos Diarios
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Auditoría y generación automática de puzzles mensuales
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setModalDesafiosAbierto(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-700 transition cursor-pointer"
+              >
+                <XIcon size={16} />
+              </button>
+            </div>
+
+            {/* Selector de Juego y Año */}
+            <div className="py-4 flex flex-wrap items-center justify-between gap-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDesafiosJuego('sudoku');
+                    cargarEstadoDesafios(desafiosAnio, 'sudoku');
+                  }}
+                  className={`px-3 py-1.5 rounded-xl font-bold text-xs transition cursor-pointer ${
+                    desafiosJuego === 'sudoku'
+                      ? 'bg-[#002B5E] text-white shadow-xs'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  🧩 Sudoku
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDesafiosJuego('wordle');
+                    cargarEstadoDesafios(desafiosAnio, 'wordle');
+                  }}
+                  className={`px-3 py-1.5 rounded-xl font-bold text-xs transition cursor-pointer ${
+                    desafiosJuego === 'wordle'
+                      ? 'bg-[#002B5E] text-white shadow-xs'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  📝 Palabra del Día
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDesafiosJuego('sopa_letras');
+                    cargarEstadoDesafios(desafiosAnio, 'sopa_letras');
+                  }}
+                  className={`px-3 py-1.5 rounded-xl font-bold text-xs transition cursor-pointer ${
+                    desafiosJuego === 'sopa_letras'
+                      ? 'bg-[#002B5E] text-white shadow-xs'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  🔍 Sopa de Letras
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <select
+                  value={desafiosAnio}
+                  onChange={(e) => {
+                    const anio = parseInt(e.target.value, 10);
+                    setDesafiosAnio(anio);
+                    cargarEstadoDesafios(anio, desafiosJuego);
+                  }}
+                  className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 focus:outline-none focus:border-[#002B5E]"
+                >
+                  <option value={2026}>Año 2026</option>
+                  <option value={2027}>Año 2027</option>
+                </select>
+
+                <button
+                  type="button"
+                  onClick={() => cargarEstadoDesafios(desafiosAnio, desafiosJuego)}
+                  disabled={cargandoDesafios}
+                  className="p-1.5 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-600 transition cursor-pointer"
+                  title="Refrescar cobertura"
+                >
+                  <RefreshIcon size={16} className={cargandoDesafios ? 'animate-spin' : ''} />
+                </button>
+              </div>
+            </div>
+
+            {/* Notificaciones */}
+            {errorDesafios && (
+              <div className="mt-3 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2">
+                <AlertTriangleIcon size={16} />
+                <span>{errorDesafios}</span>
+              </div>
+            )}
+            {exitoDesafios && (
+              <div className="mt-3 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold flex items-center gap-2">
+                <CheckIcon size={16} />
+                <span>{exitoDesafios}</span>
+              </div>
+            )}
+
+            {/* Grilla de los 12 Meses */}
+            <div className="flex-1 overflow-y-auto py-4">
+              {cargandoDesafios ? (
+                <div className="py-12 text-center text-slate-400 text-xs font-semibold">
+                  Cargando estado de cobertura...
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {mesesDesafios.map((mes) => {
+                    const estaGenerando = generandoMes === mes.month;
+
+                    return (
+                      <div
+                        key={mes.month}
+                        className={`p-3.5 rounded-2xl border transition-all ${
+                          mes.is_complete
+                            ? 'bg-emerald-50/40 border-emerald-200'
+                            : mes.status === 'partial'
+                            ? 'bg-amber-50/40 border-amber-200'
+                            : 'bg-slate-50/60 border-slate-200'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-black text-xs text-slate-800">
+                            {mes.name}
+                          </span>
+                          <span
+                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                              mes.is_complete
+                                ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                                : mes.status === 'partial'
+                                ? 'bg-amber-100 text-amber-800 border-amber-300'
+                                : 'bg-slate-100 text-slate-500 border-slate-300'
+                            }`}
+                          >
+                            {mes.is_complete
+                              ? `✓ ${mes.generated_count}/${mes.days_in_month}`
+                              : `${mes.generated_count}/${mes.days_in_month} días`}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center justify-between gap-2 mt-3 pt-2 border-t border-slate-200/60">
+                          <span className="text-[11px] text-slate-500">
+                            {mes.is_complete ? 'Listo para jugar' : 'Sin publicar'}
+                          </span>
+
+                          {desafiosJuego === 'sudoku' || desafiosJuego === 'wordle' || desafiosJuego === 'sopa_letras' ? (
+                            <button
+                              type="button"
+                              onClick={() => handleGenerarMes(mes.month)}
+                              disabled={estaGenerando || generandoMes !== null}
+                              className={`px-3 py-1 rounded-xl text-[11px] font-bold transition shadow-xs cursor-pointer ${
+                                estaGenerando
+                                  ? 'bg-slate-200 text-slate-500 cursor-wait'
+                                  : mes.is_complete
+                                  ? 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
+                                  : 'bg-[#002B5E] text-white hover:bg-slate-900'
+                              }`}
+                            >
+                              {estaGenerando
+                                ? 'Generando...'
+                                : mes.is_complete
+                                ? 'Regenerar'
+                                : 'Generar Mes'}
+                            </button>
+                          ) : (
+                            <span className="text-[10px] font-semibold text-slate-400">
+                              Base Sembrada
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Pie del modal */}
+            <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-3 text-xs">
+              <span className="text-[11px] text-slate-500 font-medium">
+                💡 Los tableros de Sudoku se generan con semilla determinista garantizando solución única en sus 3 dificultades.
+              </span>
+              <button
+                type="button"
+                onClick={() => setModalDesafiosAbierto(false)}
                 className="px-5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 transition cursor-pointer"
               >
                 Cerrar

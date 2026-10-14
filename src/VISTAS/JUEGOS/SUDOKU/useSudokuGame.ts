@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { SudokuCell, SudokuGrid, DifficultyLevel } from './types';
 import { generateDailyPuzzle, hasConflict } from './sudokuEngine';
@@ -35,7 +35,7 @@ export function useSudokuGame() {
   const [lives, setLives] = useState<number>(() => getMaxLives(difficultyLevel));
   const [errors, setErrors] = useState<number>(0);
   const [isNotesMode, setIsNotesMode] = useState<boolean>(false);
-  const [hintsLeft, setHintsLeft] = useState<number>(3);
+  const [hintsLeft, setHintsLeft] = useState<number>(999);
   const [isWon, setIsWon] = useState<boolean>(false);
   const [isGameOver, setIsGameOver] = useState<boolean>(false);
 
@@ -44,7 +44,11 @@ export function useSudokuGame() {
     let initB: SudokuGrid;
     let solB: SudokuGrid;
 
-    if (challenge?.config?.initialBoard && challenge?.config?.solution) {
+    if (challenge?.config?.boards && challenge?.config?.solution) {
+      const levelKey = String(difficultyLevel);
+      initB = challenge.config.boards[levelKey] || challenge.config.boards['1'] || challenge.config.initialBoard;
+      solB = challenge.config.solution;
+    } else if (challenge?.config?.initialBoard && challenge?.config?.solution) {
       initB = challenge.config.initialBoard;
       solB = challenge.config.solution;
     } else {
@@ -71,7 +75,7 @@ export function useSudokuGame() {
     setSelectedCol(null);
     setLives(getMaxLives(difficultyLevel));
     setErrors(0);
-    setHintsLeft(3);
+    setHintsLeft(999);
     setIsWon(false);
     setIsGameOver(false);
   }, [challenge, dateKey, difficultyLevel]);
