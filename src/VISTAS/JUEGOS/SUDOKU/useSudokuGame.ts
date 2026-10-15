@@ -3,6 +3,11 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { SudokuCell, SudokuGrid, DifficultyLevel } from './types';
 import { generateDailyPuzzle, hasConflict } from './sudokuEngine';
 import { saveFinalGameAttempt } from '../attemptsService';
+import {
+  getSudokuLocalProgress,
+  saveSudokuLocalProgress,
+  clearSudokuLocalProgress,
+} from './sudokuStorage';
 
 /**
  * Cantidad de vidas / corazones según la dificultad seleccionada:
@@ -21,10 +26,15 @@ export function useSudokuGame() {
   const navigate = useNavigate();
 
   const challenge = location.state?.challenge;
-  const difficultyLevel: DifficultyLevel = (location.state?.difficultyLevel as DifficultyLevel) || 1;
+  const initialDifficulty: DifficultyLevel = (location.state?.difficultyLevel as DifficultyLevel) || 1;
   const dateKey = challenge?.dateKey || new Date().toISOString().slice(0, 10);
   const dateStr = challenge?.dateStr || 'Desafío de hoy';
   const dayNumber = challenge?.day || parseInt(dateKey.split('-')[2], 10);
+
+  const [difficultyLevel, setDifficultyLevel] = useState<DifficultyLevel>(() => {
+    const saved = getSudokuLocalProgress(dateKey);
+    return saved?.difficultyLevel || initialDifficulty;
+  });
 
   const maxLives = useMemo(() => getMaxLives(difficultyLevel), [difficultyLevel]);
 
@@ -39,20 +49,42 @@ export function useSudokuGame() {
   const [isWon, setIsWon] = useState<boolean>(false);
   const [isGameOver, setIsGameOver] = useState<boolean>(false);
 
-  // Inicializar o reiniciar partida del día según el nivel numérico de dificultad
-  const initGame = useCallback(() => {
+  // Inicializar o reiniciar partida del día
+  const initGame = useCallback((forceFresh: boolean = false) => {
+    if (!forceFresh) {
+      const saved = getSudokuLocalProgress(dateKey);
+      if (saved) {
+        setDifficultyLevel(saved.difficultyLevel);
+        setSolution(saved.solution);
+        setCells(saved.cells);
+        setSelectedRow(null);
+        setSelectedCol(null);
+        setLives(saved.lives);
+        setErrors(saved.errors);
+        setHintsLeft(saved.hintsLeft);
+        setIsWon(false);
+        setIsGameOver(false);
+        return;
+      }
+    }
+
+    clearSudokuLocalProgress(dateKey);
+
+    const targetDiff = (location.state?.difficultyLevel as DifficultyLevel) || difficultyLevel || 1;
+    setDifficultyLevel(targetDiff);
+
     let initB: SudokuGrid;
     let solB: SudokuGrid;
 
     if (challenge?.config?.boards && challenge?.config?.solution) {
-      const levelKey = String(difficultyLevel);
+      const levelKey = String(targetDiff);
       initB = challenge.config.boards[levelKey] || challenge.config.boards['1'] || challenge.config.initialBoard;
       solB = challenge.config.solution;
     } else if (challenge?.config?.initialBoard && challenge?.config?.solution) {
       initB = challenge.config.initialBoard;
       solB = challenge.config.solution;
     } else {
-      const puzzle = generateDailyPuzzle(dateKey, difficultyLevel);
+      const puzzle = generateDailyPuzzle(dateKey, targetDiff);
       initB = puzzle.initialBoard;
       solB = puzzle.solution;
     }
@@ -73,16 +105,42 @@ export function useSudokuGame() {
     setCells(initialCells);
     setSelectedRow(null);
     setSelectedCol(null);
-    setLives(getMaxLives(difficultyLevel));
+    setLives(getMaxLives(targetDiff));
     setErrors(0);
     setHintsLeft(999);
     setIsWon(false);
     setIsGameOver(false);
-  }, [challenge, dateKey, difficultyLevel]);
+
+    // Guardar el estado inicial inmediatamente para que si sale se recuerde la partida
+    saveSudokuLocalProgress({
+      date: dateKey,
+      difficultyLevel: targetDiff,
+      cells: initialCells,
+      solution: solB,
+      lives: getMaxLives(targetDiff),
+      errors: 0,
+      hintsLeft: 999,
+    });
+  }, [challenge, dateKey, location.state?.difficultyLevel, difficultyLevel]);
 
   useEffect(() => {
     initGame();
   }, [initGame]);
+
+  // Persistir en localStorage en cada cambio de celdas, vidas o pistas (solo mientras está en curso)
+  useEffect(() => {
+    if (!cells.length || !solution.length || isWon || isGameOver) return;
+
+    saveSudokuLocalProgress({
+      date: dateKey,
+      difficultyLevel,
+      cells,
+      solution,
+      lives,
+      errors,
+      hintsLeft,
+    });
+  }, [cells, solution, lives, errors, hintsLeft, difficultyLevel, dateKey, isWon, isGameOver]);
 
   // Contar cuántas veces se colocó cada número válido (1 al 9)
   const numberCounts = useMemo(() => {
@@ -148,16 +206,9 @@ export function useSudokuGame() {
 
       if (newLives <= 0) {
         setIsGameOver(true);
-        saveFinalGameAttempt({
-          gameId: 'sudoku',
-          date: dateKey,
-          day: dayNumber,
-          guesses: [],
-          status: 'lost',
-          attempts: newErrors,
-          stars: 0,
-          score: 0,
-        });
+        // Limpiamos de localStorage para permitir reintento limpio desde cero
+        clearSudokuLocalProgress(dateKey);
+        // NOTA: NO llamamos a saveFinalGameAttempt con 'lost' para no registrar derrota en la DB
       }
     }
   };
@@ -237,6 +288,9 @@ export function useSudokuGame() {
 
     if (isAllFilledAndCorrect) {
       setIsWon(true);
+      // Limpiar partida activa de localStorage al ganar
+      clearSudokuLocalProgress(dateKey);
+
       const starsEarned = errors === 0 ? 3 : errors <= Math.ceil(maxLives / 3) ? 2 : 1;
       saveFinalGameAttempt({
         gameId: 'sudoku',
@@ -250,6 +304,70 @@ export function useSudokuGame() {
       });
     }
   }, [cells, solution, isWon, isGameOver, errors, maxLives, dateKey, dayNumber]);
+
+  // Soporte de Teclado Físico (computadora / laptop)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignorar si el usuario está en un input de texto o si el juego ya terminó
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        isWon ||
+        isGameOver
+      ) {
+        return;
+      }
+
+      // 1. Números del 1 al 9 (teclado alfanumérico y teclado numérico Numpad)
+      if (/^[1-9]$/.test(e.key)) {
+        e.preventDefault();
+        inputNumber(Number(e.key));
+        return;
+      }
+
+      // 2. Borrar celda (Backspace o Delete)
+      if (e.key === 'Backspace' || e.key === 'Delete') {
+        e.preventDefault();
+        eraseCell();
+        return;
+      }
+
+      // 3. Mover celda activa con Flechas del teclado
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        e.preventDefault();
+        setSelectedRow((prevR) => {
+          const r = prevR !== null ? prevR : 0;
+          if (e.key === 'ArrowUp') return Math.max(0, r - 1);
+          if (e.key === 'ArrowDown') return Math.min(8, r + 1);
+          return r;
+        });
+        setSelectedCol((prevC) => {
+          const c = prevC !== null ? prevC : 0;
+          if (e.key === 'ArrowLeft') return Math.max(0, c - 1);
+          if (e.key === 'ArrowRight') return Math.min(8, c + 1);
+          return c;
+        });
+        return;
+      }
+
+      // 4. Alternar Modo Lápiz / Notas con 'n' o 'N'
+      if (e.key === 'n' || e.key === 'N') {
+        e.preventDefault();
+        setIsNotesMode((prev) => !prev);
+        return;
+      }
+
+      // 5. Pedir Pista con 'p', 'P', 'h' o 'H'
+      if (['p', 'P', 'h', 'H'].includes(e.key)) {
+        e.preventDefault();
+        useHint();
+        return;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [inputNumber, eraseCell, useHint, isWon, isGameOver]);
 
   return {
     dateStr,
@@ -271,7 +389,7 @@ export function useSudokuGame() {
     eraseCell,
     useHint,
     toggleNotes: () => setIsNotesMode(p => !p),
-    restart: initGame,
+    restart: () => initGame(true),
     goBack: () => navigate('/juegos/sudoku'),
   };
 }

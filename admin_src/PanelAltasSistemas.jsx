@@ -1577,6 +1577,20 @@ export default function PanelAltasSistemas() {
                 >
                   🔍 Sopa de Letras
                 </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDesafiosJuego('crucigrama');
+                    cargarEstadoDesafios(desafiosAnio, 'crucigrama');
+                  }}
+                  className={`px-3 py-1.5 rounded-xl font-bold text-xs transition cursor-pointer ${
+                    desafiosJuego === 'crucigrama'
+                      ? 'bg-[#002B5E] text-white shadow-xs'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  📰 Crucigrama
+                </button>
               </div>
 
               <div className="flex items-center gap-2">
@@ -1665,7 +1679,7 @@ export default function PanelAltasSistemas() {
                             {mes.is_complete ? 'Listo para jugar' : 'Sin publicar'}
                           </span>
 
-                          {desafiosJuego === 'sudoku' || desafiosJuego === 'wordle' || desafiosJuego === 'sopa_letras' ? (
+                          {desafiosJuego === 'sudoku' || desafiosJuego === 'wordle' || desafiosJuego === 'sopa_letras' || desafiosJuego === 'crucigrama' ? (
                             <button
                               type="button"
                               onClick={() => handleGenerarMes(mes.month)}
@@ -1700,7 +1714,13 @@ export default function PanelAltasSistemas() {
             {/* Pie del modal */}
             <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-3 text-xs">
               <span className="text-[11px] text-slate-500 font-medium">
-                💡 Los tableros de Sudoku se generan con semilla determinista garantizando solución única en sus 3 dificultades.
+                {desafiosJuego === 'crucigrama'
+                  ? '💡 Los crucigramas se generan con Backtracking algorítmico, cruces válidos 7x7 y definiciones limpias de la RAE.'
+                  : desafiosJuego === 'sudoku'
+                  ? '💡 Los tableros de Sudoku se generan con semilla determinista garantizando solución única en sus 3 dificultades.'
+                  : desafiosJuego === 'wordle'
+                  ? '💡 Las palabras de Wordle se toman del banco ordenado por frecuencia real en español.'
+                  : '💡 Las sopas de letras se generan procedimentalmente a partir de más de 60 temas culturales.'}
               </span>
               <button
                 type="button"

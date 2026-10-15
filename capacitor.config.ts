@@ -6,7 +6,7 @@ const config: CapacitorConfig = {
   appName: 'Mente Activa',
   webDir: 'dist',
   server: {
-    url: 'http://10.16.2.18:5173',
+    url: 'http://10.16.2.29:5173',
     cleartext: true,
   },
 };

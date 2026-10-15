@@ -1,19 +1,23 @@
-﻿export type DifficultyLevel = 1 | 2 | 3;
+export type DifficultyLevel = 1 | 2 | 3;
 
 export interface DifficultyOptionConfig {
   level: DifficultyLevel;
   title: string;
   description: string;
+  stars?: string;
   badge?: string;
-  icon?: string;
-  borderColor?: string;
-  bgColor?: string;
-  textColor?: string;
+  lives?: number;
+  leftBorderColor: string;
+  leftBorderHex?: string;
+  actionBgColor: string;
+  actionTextColor: string;
+  actionHoverBgColor: string;
 }
 
 export interface DifficultyModalProps {
   title?: string;
   subtitle?: string;
+  categoryBadge?: string;
   icon?: string;
   options?: DifficultyOptionConfig[];
   onSelectDifficulty: (level: DifficultyLevel) => void;
@@ -23,30 +27,39 @@ export interface DifficultyModalProps {
 export const DEFAULT_DIFFICULTY_OPTIONS: DifficultyOptionConfig[] = [
   {
     level: 1,
-    title: 'Fácil (Bajo)',
-    description: 'Ideal para relajarse sin presiones. 7 vidas y más números iniciales revelados.',
+    title: 'Nivel Inicial',
+    description: 'Partida tranquila con 7 vidas. Más números iniciales revelados.',
+    stars: '★☆☆',
     badge: 'Recomendado',
-    icon: '🟢',
-    borderColor: 'border-emerald-300 hover:border-emerald-500',
-    bgColor: 'bg-emerald-50/70 hover:bg-emerald-100/80',
-    textColor: 'text-emerald-950',
+    lives: 7,
+    leftBorderColor: 'border-l-emerald-500',
+    leftBorderHex: '#10B981',
+    actionBgColor: 'bg-emerald-50',
+    actionTextColor: 'text-emerald-700',
+    actionHoverBgColor: 'group-hover:bg-emerald-600',
   },
   {
     level: 2,
-    title: 'Medio',
-    description: 'Equilibrio perfecto entre concentración y lógica deductiva. 5 vidas.',
-    icon: '🟡',
-    borderColor: 'border-amber-300 hover:border-amber-500',
-    bgColor: 'bg-amber-50/70 hover:bg-amber-100/80',
-    textColor: 'text-amber-950',
+    title: 'Nivel Intermedio',
+    description: 'Desafío estándar con 5 vidas. Lógica y deducción equilibrada.',
+    stars: '★★☆',
+    lives: 5,
+    leftBorderColor: 'border-l-amber-500',
+    leftBorderHex: '#F59E0B',
+    actionBgColor: 'bg-amber-50',
+    actionTextColor: 'text-amber-700',
+    actionHoverBgColor: 'group-hover:bg-amber-600',
   },
   {
     level: 3,
-    title: 'Alto (Avanzado)',
-    description: 'Para ejercitar la mente y memoria al máximo. 3 vidas y tablero más exigente.',
-    icon: '🔴',
-    borderColor: 'border-rose-300 hover:border-rose-500',
-    bgColor: 'bg-rose-50/70 hover:bg-rose-100/80',
-    textColor: 'text-rose-950',
+    title: 'Nivel Experto',
+    description: 'Máxima deducción con 3 vidas. Tablero exigente para ejercitar la mente.',
+    stars: '★★★',
+    lives: 3,
+    leftBorderColor: 'border-l-rose-500',
+    leftBorderHex: '#F43F5E',
+    actionBgColor: 'bg-rose-50',
+    actionTextColor: 'text-rose-700',
+    actionHoverBgColor: 'group-hover:bg-rose-600',
   },
 ];

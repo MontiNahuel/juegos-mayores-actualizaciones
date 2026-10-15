@@ -34,9 +34,9 @@ const games: MenuCardGame[] = [
     icon: gridOutline, accent: color.lavender, available: true,
   },
   {
-    id: 'crucigrama', group: 'Narrativos', title: 'Crucigrama cotidiano', skill: 'Lenguaje y recuerdos',
-    description: 'Pistas cercanas para conectar palabras, ideas y memorias.',
-    icon: bookOutline, accent: color.coral,
+    id: 'crucigrama', group: 'Clásicos', title: 'Crucigrama diario', skill: 'Lenguaje y recuerdos',
+    description: 'Crucigrama 7x7 con pistas claras para ejercitar tu vocabulario y memoria.',
+    icon: bookOutline, accent: color.coral, available: true,
   },
   {
     id: 'ruta-postal', group: 'Narrativos', title: 'La ruta postal', skill: 'Atención visual',
@@ -69,6 +69,7 @@ const Menu: React.FC = () => {
     if (id === 'wordle') navigate('/juegos/wordle');
     if (id === 'sopa-letras') navigate('/juegos/sopa-letras');
     if (id === 'sudoku') navigate('/juegos/sudoku');
+    if (id === 'crucigrama') navigate('/juegos/crucigrama');
   };
 
   return (

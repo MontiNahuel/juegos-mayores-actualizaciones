@@ -1,14 +1,27 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DailyChallengeCalendar, DayChallenge } from '../../COMPONENTS/CALENDAR';
 import { DifficultyModal, DifficultyLevel } from '../../COMPONENTS/DIFICULTAD';
 import { SudokuCompletedModal } from './SudokuCompletedModal';
+import { getSudokuLocalProgress } from './sudokuStorage';
 
 export const SudokuCalendar: React.FC = () => {
   const navigate = useNavigate();
   const [selectedChallengeForPlay, setSelectedChallengeForPlay] = useState<DayChallenge | null>(null);
 
   const handlePlayChallenge = (challenge: DayChallenge) => {
+    // Si ya existe una partida en curso guardada, reanudar de inmediato sin volver a preguntar la dificultad
+    const saved = getSudokuLocalProgress(challenge.dateKey);
+    if (saved && saved.status === 'in_progress') {
+      navigate('/juegos/sudoku/jugar', {
+        state: {
+          challenge,
+          difficultyLevel: saved.difficultyLevel,
+        },
+      });
+      return;
+    }
+
     setSelectedChallengeForPlay(challenge);
   };
 
@@ -47,12 +60,12 @@ export const SudokuCalendar: React.FC = () => {
         }}
       />
 
-      {/* Modal Reutilizable de Dificultad (1 = Fácil, 2 = Medio, 3 = Alto) */}
+      {/* Modal Reutilizable de Dificultad (Opción C - Editorial) */}
       {selectedChallengeForPlay && (
         <DifficultyModal
-          title="Elegí la Dificultad"
+          title="Elegí tu Desafío"
           subtitle={selectedChallengeForPlay.dateStr}
-          icon="🧩"
+          categoryBadge="Cuaderno de Mente Activa"
           onSelectDifficulty={handleSelectDifficulty}
           onClose={() => setSelectedChallengeForPlay(null)}
         />

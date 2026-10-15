@@ -91,7 +91,8 @@ export const SopaLetrasGame: React.FC = () => {
   // Modales
   const [showVictoryModal, setShowVictoryModal] = useState<boolean>(false);
   const [showHintModal, setShowHintModal] = useState<boolean>(false);
-  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [justFoundWord, setJustFoundWord] = useState<string | null>(null);
+  const [justFoundCells, setJustFoundCells] = useState<Set<string>>(new Set());
 
   const gridRef = useRef<HTMLDivElement>(null);
 
@@ -295,9 +296,13 @@ export const SopaLetrasGame: React.FC = () => {
           score: nextFound.length * 100,
         });
 
-        // Mensaje breve de éxito
-        setStatusMessage(`¡Encontraste ${match}!`);
-        setTimeout(() => setStatusMessage(null), 2000);
+        // Micro-interacción de celebración en el chip y en las celdas encontradas
+        setJustFoundWord(match);
+        setJustFoundCells(new Set(cellsToMark));
+        setTimeout(() => {
+          setJustFoundWord(null);
+          setJustFoundCells(new Set());
+        }, 1200);
 
         // Si se encontraron las 4 palabras -> ¡Victoria!
         if (nextFound.length === targetWords.length) {
@@ -582,16 +587,21 @@ export const SopaLetrasGame: React.FC = () => {
           >
             {targetWords.map((word, idx) => {
               const isFound = foundWords.includes(word);
+              const isJustFound = justFoundWord === word;
               return (
                 <div
                   key={idx}
                   style={{
                     alignItems: 'center',
-                    background: isFound ? '#E8F8F5' : '#FFFFFF',
-                    border: `1.5px solid ${isFound ? '#17695F' : '#DEE3EA'}`,
+                    background: isJustFound ? '#CCFBF1' : isFound ? '#E8F8F5' : '#FFFFFF',
+                    border: isJustFound ? '2px solid #0D9488' : `1.5px solid ${isFound ? '#17695F' : '#DEE3EA'}`,
                     borderRadius: 12,
-                    boxShadow: isFound ? '0 1px 3px rgba(23, 105, 95, 0.15)' : 'none',
-                    color: isFound ? '#17695F' : '#294C6B',
+                    boxShadow: isJustFound
+                      ? '0 0 16px rgba(13, 148, 136, 0.45)'
+                      : isFound
+                      ? '0 1px 3px rgba(23, 105, 95, 0.15)'
+                      : 'none',
+                    color: isJustFound ? '#0F766E' : isFound ? '#17695F' : '#294C6B',
                     display: 'flex',
                     fontSize: 'clamp(13px, 3.8vw, 15px)',
                     fontWeight: 900,
@@ -600,34 +610,20 @@ export const SopaLetrasGame: React.FC = () => {
                     letterSpacing: '0.06em',
                     minHeight: 40,
                     padding: '6px 8px',
-                    textDecoration: isFound ? 'line-through' : 'none',
-                    transition: 'all 0.2s ease',
+                    position: 'relative',
+                    textDecoration: isFound && !isJustFound ? 'line-through' : 'none',
+                    transform: isJustFound ? 'scale(1.08)' : 'scale(1)',
+                    zIndex: isJustFound ? 10 : 1,
+                    transition:
+                      'transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s ease, border 0.2s ease, box-shadow 0.25s ease',
                   }}
                 >
-                  {isFound && <IonIcon icon={checkmarkCircle} style={{ color: '#17695F', fontSize: 16 }} />}
+                  {isFound && <IonIcon icon={checkmarkCircle} style={{ color: isJustFound ? '#0D9488' : '#17695F', fontSize: 16 }} />}
                   <span>{word}</span>
                 </div>
               );
             })}
           </div>
-
-          {/* Notificación rápida de palabra encontrada */}
-          {statusMessage && (
-            <div
-              style={{
-                background: '#17695F',
-                borderRadius: 999,
-                color: '#FFFFFF',
-                fontSize: 13,
-                fontWeight: 800,
-                marginBottom: 8,
-                padding: '4px 14px',
-                textAlign: 'center',
-              }}
-            >
-              {statusMessage}
-            </div>
-          )}
 
           {/* Cuadrícula 8x8 de la Sopa de Letras */}
           <div
@@ -655,12 +651,17 @@ export const SopaLetrasGame: React.FC = () => {
                 const cellKey = `${rIdx}-${cIdx}`;
                 const isFound = foundCellKeys.has(cellKey);
                 const isSelected = selectedKeySet.has(cellKey);
+                const isJustFound = justFoundCells.has(cellKey);
 
                 let cellBg = '#FFFFFF';
                 let cellColor = '#294C6B';
                 let cellBorder = '1px solid #E2E8F0';
 
-                if (isSelected) {
+                if (isJustFound) {
+                  cellBg = '#A7F3D0';
+                  cellColor = '#065F46';
+                  cellBorder = '2px solid #059669';
+                } else if (isSelected) {
                   cellBg = '#53BFC9';
                   cellColor = '#1A344A';
                   cellBorder = '1.5px solid #294C6B';
@@ -692,9 +693,13 @@ export const SopaLetrasGame: React.FC = () => {
                       lineHeight: 1,
                       outline: 'none',
                       padding: 0,
+                      position: 'relative',
                       touchAction: 'none',
-                      transform: isSelected ? 'scale(1.04)' : 'scale(1)',
-                      transition: 'background-color 0.12s ease, transform 0.12s ease',
+                      transform: isJustFound ? 'scale(1.14)' : isSelected ? 'scale(1.04)' : 'scale(1)',
+                      zIndex: isJustFound ? 15 : isSelected ? 5 : 1,
+                      boxShadow: isJustFound ? '0 0 14px rgba(5, 150, 105, 0.45)' : 'none',
+                      transition:
+                        'transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, border 0.15s ease, box-shadow 0.25s ease',
                       width: '100%',
                     }}
                     title={`Fila ${rIdx + 1}, Columna ${cIdx + 1}: ${letter}`}
