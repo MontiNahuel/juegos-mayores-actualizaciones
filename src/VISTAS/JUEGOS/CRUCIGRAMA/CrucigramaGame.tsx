@@ -7,6 +7,7 @@ import {
   loadActiveCrucigrama,
   clearActiveCrucigrama,
 } from './crucigramaStorage';
+import { GameHeader } from '../../COMPONENTS/GameHeader';
 import { CrucigramaCompletedModal } from './CrucigramaCompletedModal';
 import {
   IconChevronLeft,
@@ -488,6 +489,46 @@ export const CrucigramaGame: React.FC = () => {
 
   return (
     <IonPage>
+      {/* Encabezado Estandarizado con Safe Area, Cronómetro y Botón de Pistas */}
+      <GameHeader
+        title="Crucigrama 7x7"
+        backRoute="/juegos/crucigrama"
+        backLabel="Calendario"
+        badges={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
+            <span style={{ color: '#64748B', fontWeight: 700 }}>{targetDate}</span>
+            <span style={{ color: '#CBD5E1' }}>•</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 3, color: '#294C6B', fontWeight: 800 }}>
+              <IconClock size={13} color="#294C6B" />
+              {formatTimer(seconds)}
+            </span>
+          </div>
+        }
+        rightAction={
+          <button
+            type="button"
+            onClick={() => setShowClueDrawer((prev) => !prev)}
+            style={{
+              background: showClueDrawer ? '#294C6B' : '#F4F6F9',
+              border: '1px solid #DEE3EA',
+              borderRadius: 14,
+              height: 40,
+              width: 40,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: showClueDrawer ? '#FFFFFF' : '#294C6B',
+              cursor: 'pointer',
+              transition: 'background-color 0.15s ease',
+            }}
+            aria-label="Ver todas las pistas"
+            title="Ver lista de pistas"
+          >
+            <IconList size={18} color={showClueDrawer ? '#FFFFFF' : '#294C6B'} />
+          </button>
+        }
+      />
+
       <IonContent
         fullscreen
         style={
@@ -503,108 +544,10 @@ export const CrucigramaGame: React.FC = () => {
             minHeight: '100%',
             maxWidth: 520,
             margin: '0 auto',
-            padding: 'calc(env(safe-area-inset-top, 0px) + 8px) 14px calc(env(safe-area-inset-bottom, 0px) + 12px)',
+            padding: '12px 14px calc(env(safe-area-inset-bottom, 0px) + 12px)',
             boxSizing: 'border-box',
           }}
         >
-          {/* HEADER SUPERIOR */}
-          <header
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '40px 1fr 40px',
-              alignItems: 'center',
-              marginBottom: 10,
-            }}
-          >
-            <button
-              type="button"
-              onClick={() => navigate('/juegos/crucigrama')}
-              style={{
-                background: '#FFFFFF',
-                border: '1px solid #E2E8F0',
-                borderRadius: 12,
-                height: 38,
-                width: 38,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#294C6B',
-                cursor: 'pointer',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-              }}
-              aria-label="Volver al calendario"
-            >
-              <IconChevronLeft size={20} color="#294C6B" />
-            </button>
-
-            <div style={{ textAlign: 'center' }}>
-              <h1
-                style={{
-                  color: '#294C6B',
-                  fontSize: 17,
-                  fontWeight: 900,
-                  margin: 0,
-                  letterSpacing: '-0.02em',
-                }}
-              >
-                Crucigrama 7x7
-              </h1>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 6,
-                  marginTop: 2,
-                }}
-              >
-                <span
-                  style={{
-                    color: '#64748B',
-                    fontSize: 12,
-                    fontWeight: 700,
-                  }}
-                >
-                  {targetDate}
-                </span>
-                <span style={{ color: '#CBD5E1' }}>•</span>
-                <span
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 3,
-                    color: '#294C6B',
-                    fontSize: 12,
-                    fontWeight: 800,
-                  }}
-                >
-                  <IconClock size={13} color="#294C6B" />
-                  {formatTimer(seconds)}
-                </span>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setShowClueDrawer((prev) => !prev)}
-              style={{
-                background: showClueDrawer ? '#294C6B' : '#FFFFFF',
-                border: '1px solid #E2E8F0',
-                borderRadius: 12,
-                height: 38,
-                width: 38,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: showClueDrawer ? '#FFFFFF' : '#294C6B',
-                cursor: 'pointer',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-              }}
-              aria-label="Ver todas las pistas"
-            >
-              <IconList size={18} color={showClueDrawer ? '#FFFFFF' : '#294C6B'} />
-            </button>
-          </header>
 
           {/* BARRA DE PISTA ACTIVA FLOTANTE */}
           <div

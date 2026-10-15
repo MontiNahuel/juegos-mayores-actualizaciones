@@ -8,6 +8,7 @@ import {
   IonToolbar,
   IonIcon,
 } from '@ionic/react';
+import { GameHeader } from '../../COMPONENTS/GameHeader';
 import {
   arrowBackOutline,
   bulbOutline,
@@ -420,78 +421,35 @@ export const SopaLetrasGame: React.FC = () => {
   return (
     <IonPage style={{ background: '#F4F6F9' }}>
       <IonHeader className="ion-no-border">
-        <IonToolbar
-          style={
-            {
-              '--background': '#294C6B',
-              '--color': '#FFFFFF',
-              borderBottom: '1px solid #1E3850',
-            } as React.CSSProperties
-          }
-        >
-          <div
-            style={{
-              alignItems: 'center',
-              display: 'flex',
-              justifyContent: 'space-between',
-              padding: '0 12px',
-              width: '100%',
-            }}
-          >
-            <button
-              onClick={() => navigate('/juegos/sopa-letras')}
-              style={{
-                alignItems: 'center',
-                background: 'rgba(255, 255, 255, 0.12)',
-                border: 'none',
-                borderRadius: 12,
-                color: '#FFFFFF',
-                cursor: 'pointer',
-                display: 'inline-flex',
-                fontSize: 14,
-                fontWeight: 700,
-                gap: 6,
-                padding: '8px 12px',
-              }}
-              title="Volver al calendario"
-            >
-              <IonIcon icon={arrowBackOutline} style={{ fontSize: 18 }} />
-              <span className="hidden sm:inline">Calendario</span>
-            </button>
-
-            <IonTitle
-              style={{
-                color: '#FFFFFF',
-                fontSize: 18,
-                fontWeight: 900,
-                textAlign: 'center',
-              }}
-            >
-              Sopa de letras
-            </IonTitle>
-
+        <GameHeader
+          title="Sopa de letras"
+          backRoute="/juegos/sopa-letras"
+          backLabel="Calendario"
+          rightAction={
             <button
               onClick={() => setShowHintModal(true)}
               style={{
                 alignItems: 'center',
-                background: '#53BFC9',
-                border: 'none',
-                borderRadius: 12,
-                color: '#1A344A',
+                background: '#F4F6F9',
+                border: '1px solid #DEE3EA',
+                borderRadius: 14,
+                color: '#294C6B',
                 cursor: 'pointer',
                 display: 'inline-flex',
-                fontSize: 14,
+                fontSize: 13,
                 fontWeight: 800,
                 gap: 5,
-                padding: '8px 12px',
+                height: 40,
+                padding: '0 12px',
+                transition: 'background-color 0.15s ease',
               }}
               title="Ver pistas"
             >
-              <IonIcon icon={bulbOutline} style={{ fontSize: 18 }} />
+              <IonIcon icon={bulbOutline} style={{ fontSize: 17, color: '#D97706' }} />
               <span className="hidden sm:inline">Pistas</span>
             </button>
-          </div>
-        </IonToolbar>
+          }
+        />
       </IonHeader>
 
       <IonContent

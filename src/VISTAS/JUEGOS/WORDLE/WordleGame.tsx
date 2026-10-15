@@ -8,6 +8,7 @@ import {
   IonToolbar,
   IonIcon,
 } from '@ionic/react';
+import { GameHeader } from '../../COMPONENTS/GameHeader';
 import {
   arrowBackOutline,
   refreshOutline,
@@ -303,43 +304,6 @@ const WordleGame: React.FC = () => {
       {/* Navbar con el mismo tamaño y estilo de Home / Menu */}
       <IonHeader style={{ boxShadow: '0 1px 8px rgba(23, 59, 99, 0.14)' }} className="shrink-0">
         <style>{`
-          .wordle-back-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            background: #F4F6F9;
-            border: 1px solid #DEE3EA;
-            border-radius: 14px;
-            color: #294C6B;
-            font-size: 15px;
-            font-weight: 700;
-            cursor: pointer;
-            white-space: nowrap;
-            transition: background-color 0.15s ease;
-          }
-          .wordle-back-btn:active {
-            background-color: #E2E8F0;
-          }
-          @media (max-width: 639px) {
-            .wordle-back-btn {
-              width: 44px;
-              height: 44px;
-              padding: 0;
-            }
-            .wordle-back-btn .btn-text {
-              display: none;
-            }
-          }
-          @media (min-width: 640px) {
-            .wordle-back-btn {
-              min-height: 44px;
-              padding: 9px 18px;
-              gap: 8px;
-            }
-            .wordle-back-btn .btn-text {
-              display: inline;
-            }
-          }
           @keyframes wordleBackdropFade {
             from {
               opacity: 0;
@@ -365,70 +329,11 @@ const WordleGame: React.FC = () => {
             animation: wordleModalPop 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
           }
         `}</style>
-        <IonToolbar style={{ '--background': '#FFFFFF', '--border-width': 0 } as React.CSSProperties}>
-          <div
-            style={{
-              alignItems: 'center',
-              display: 'flex',
-              margin: '0 auto',
-              maxWidth: 1180,
-              minHeight: 76,
-              padding: '10px 16px',
-              width: '100%',
-            }}
-          >
-            {/* Columna Izquierda: Botón para volver al Menú (ancho flexible balanceado) */}
-            <div style={{ alignItems: 'center', display: 'flex', flex: '1 1 0', justifyContent: 'flex-start' }}>
-              <button
-                onClick={() => navigate('/menu')}
-                aria-label="Volver al Menú"
-                className="wordle-back-btn"
-              >
-                {/* Ícono SVG tipo "<" para volver atrás */}
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#294C6B"
-                  strokeWidth="2.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M15 18l-6-6 6-6" />
-                </svg>
-                <span className="btn-text">Menú</span>
-              </button>
-            </div>
-
-            {/* Columna Central: Título exactamente en el centro geométrico de la pantalla */}
-            <div style={{ flex: '0 0 auto', padding: '0 8px', textAlign: 'center' }}>
-              <h1
-                style={{
-                  color: '#294C6B',
-                  fontSize: 'clamp(17px, 4.5vw, 21px)',
-                  fontWeight: 800,
-                  lineHeight: 1.2,
-                  margin: 0,
-                  textAlign: 'center',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                Palabra del día
-              </h1>
-            </div>
-
-            {/* Columna Derecha: Logo de ASISTODO (ancho flexible exactamente igual al de la izquierda) */}
-            <div style={{ alignItems: 'center', display: 'flex', flex: '1 1 0', justifyContent: 'flex-end' }}>
-              <img
-                alt="ASISTODO"
-                src="/asistodo-logo.svg"
-                style={{ display: 'block', height: 44, width: 44, objectFit: 'contain' }}
-              />
-            </div>
-          </div>
-        </IonToolbar>
+        <GameHeader
+          title="Palabra del día"
+          backRoute="/menu"
+          backLabel="Menú"
+        />
       </IonHeader>
 
       {/* 2. Contenedor a pantalla completa sin scroll vertical */}
