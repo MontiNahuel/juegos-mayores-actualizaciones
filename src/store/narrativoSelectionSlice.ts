@@ -3,12 +3,7 @@ import type { PersonajeCard } from '../VISTAS/JUEGOS/NARRATIVO/CARDSELECTION/car
 
 type SelectionPhase = 'primera' | 'segunda' | 'completa';
 
-export interface AtributosReino {
-  oro: number;
-  comida: number;
-  orden: number;
-  moral: number;
-}
+export type AtributosReino = Record<string, number>;
 
 interface NarrativoSelectionState {
   desafioId: string | null;
@@ -28,8 +23,8 @@ const initialState: NarrativoSelectionState = {
   primeraSeleccion: [],
   segundaSeleccion: [],
   phase: 'primera',
-  // Recursos del universo Corte Real: todos van de 0 a 100.
-  atributos: { oro: 50, comida: 50, orden: 50, moral: 50 },
+  // Respaldo local hasta que el setup del universo devuelve sus recursos reales.
+  atributos: { oro: 50, pueblo: 50, ejercito: 50, fe: 50 },
 };
 
 const narrativoSelectionSlice = createSlice({
