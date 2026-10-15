@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>👑 Testeo Visual - Motor Narrativo (Crónicas de la Corte)</title>
+  <!-- Tailwind CSS CDN para renderizado rápido e independiente -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Nunito:wght@400;600;700;800&display=swap');
+    body { font-family: 'Nunito', sans-serif; }
+    .font-title { font-family: 'Cinzel', serif; }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col items-center p-3 sm:p-6">
+
+  <!-- ========================================================================= -->
+  <!-- BARRA DE HERRAMIENTAS DE TESTEO Y DEPURACIÓN INTERNA -->
+  <!-- ========================================================================= -->
+  <header class="w-full max-w-4xl bg-slate-800/90 border border-slate-700 rounded-xl p-3 mb-4 shadow-lg flex flex-wrap items-center justify-between gap-3 text-xs">
+    <div class="flex items-center gap-2">
+      <span class="w-3 h-3 rounded-full bg-amber-400 animate-pulse"></span>
+      <span class="font-bold tracking-wider text-amber-300 uppercase">Mesa de Pruebas Interna</span>
+    </div>
+
+    <!-- Selector de Modo de Datos -->
+    <div class="flex items-center gap-2 bg-slate-900/80 px-2 py-1 rounded-lg border border-slate-700">
+      <span class="text-slate-400">Modo:</span>
+      <select id="selectModo" onchange="cambiarModo(this.value)" class="bg-transparent text-amber-300 font-bold focus:outline-none cursor-pointer">
+        <option value="api" class="bg-slate-800 text-white" selected>API Real (FastAPI localhost:8080)</option>
+        <option value="simulado" class="bg-slate-800 text-white">Simulación Offline (Local)</option>
+      </select>
+    </div>
+
+    <!-- Salto Rápido de Fases (Cheat Bar) -->
+    <div class="flex items-center gap-1 overflow-x-auto py-1">
+      <span class="text-slate-400 mr-1">Fase:</span>
+      <button onclick="saltarAFase('SETUP')" class="px-2 py-1 rounded bg-slate-700 hover:bg-slate-600 font-bold text-slate-200">0. Setup</button>
+      <button onclick="saltarAFase('DRAFT')" class="px-2 py-1 rounded bg-slate-700 hover:bg-slate-600 font-bold text-slate-200">1. Draft</button>
+      <button onclick="saltarAFase('EVENTO')" class="px-2 py-1 rounded bg-slate-700 hover:bg-slate-600 font-bold text-slate-200">2. Evento</button>
+      <button onclick="saltarAFase('RESULTADO')" class="px-2 py-1 rounded bg-slate-700 hover:bg-slate-600 font-bold text-slate-200">3. Resultado</button>
+      <button onclick="saltarAFase('DIALOGO')" class="px-2 py-1 rounded bg-slate-700 hover:bg-slate-600 font-bold text-slate-200">4. Diálogo</button>
+      <button onclick="saltarAFase('FIN')" class="px-2 py-1 rounded bg-slate-700 hover:bg-slate-600 font-bold text-slate-200">5. Epílogo</button>
+    </div>
+
+    <button onclick="reiniciarPartida()" class="bg-red-600/80 hover:bg-red-500 text-white px-2.5 py-1 rounded font-bold transition">
+      🔄 Reiniciar
+    </button>
+  </header>
+
+  <!-- ========================================================================= -->
+  <!-- TABLERO PRINCIPAL DEL JUEGO -->
+  <!-- ========================================================================= -->
+  <main class="w-full max-w-4xl bg-slate-800 border-2 border-amber-900/60 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+    
+    <!-- 1. BARRA DE ESTADO SUPERIOR: RECURSOS Y MES -->
+    <section class="bg-slate-950/90 border-b border-amber-900/50 p-4">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">👑</span>
+          <div>
+            <h1 class="font-title text-base sm:text-lg font-bold text-amber-300">Crónicas de la Corte Real</h1>
+            <p class="text-xs text-slate-400">Reino de Valoria • Desafío Diario</p>
+          </div>
+        </div>
+        <div class="text-right">
+          <span id="badgeMes" class="inline-block bg-amber-500/20 text-amber-300 border border-amber-500/40 px-3 py-1 rounded-full text-xs sm:text-sm font-bold tracking-wide">
+            📅 Mes 1 de 12 (Primavera)
+          </span>
+        </div>
+      </div>
+
+      <!-- Los 4 Recursos Vivos -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 text-xs">
+        <!-- Oro -->
+        <div class="bg-slate-900/90 p-2.5 rounded-xl border border-amber-500/30">
+          <div class="flex justify-between items-center mb-1">
+            <span class="font-bold text-amber-400 flex items-center gap-1">🪙 Oro</span>
+            <span id="valOro" class="font-bold text-sm text-amber-200">50</span>
+          </div>
+          <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+            <div id="barOro" class="bg-amber-400 h-full rounded-full transition-all duration-500" style="width: 50%;"></div>
+          </div>
+        </div>
+
+        <!-- Pueblo -->
+        <div class="bg-slate-900/90 p-2.5 rounded-xl border border-emerald-500/30">
+          <div class="flex justify-between items-center mb-1">
+            <span class="font-bold text-emerald-400 flex items-center gap-1">👥 Pueblo</span>
+            <span id="valPueblo" class="font-bold text-sm text-emerald-200">50</span>
+          </div>
+          <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+            <div id="barPueblo" class="bg-emerald-400 h-full rounded-full transition-all duration-500" style="width: 50%;"></div>
+          </div>
+        </div>
+
+        <!-- Ejército -->
+        <div class="bg-slate-900/90 p-2.5 rounded-xl border border-sky-500/30">
+          <div class="flex justify-between items-center mb-1">
+            <span class="font-bold text-sky-400 flex items-center gap-1">🛡️ Ejército</span>
+            <span id="valEjercito" class="font-bold text-sm text-sky-200">50</span>
+          </div>
+          <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+            <div id="barEjercito" class="bg-sky-400 h-full rounded-full transition-all duration-500" style="width: 50%;"></div>
+          </div>
+        </div>
+
+        <!-- Fe -->
+        <div class="bg-slate-900/90 p-2.5 rounded-xl border border-purple-500/30">
+          <div class="flex justify-between items-center mb-1">
+            <span class="font-bold text-purple-400 flex items-center gap-1">⛪ Fe</span>
+            <span id="valFe" class="font-bold text-sm text-purple-200">50</span>
+          </div>
+          <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+            <div id="barFe" class="bg-purple-400 h-full rounded-full transition-all duration-500" style="width: 50%;"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. CONTENEDOR CENTRAL DE FASES INTERACTIVAS -->
+    <section id="panelContenido" class="p-4 sm:p-6 flex-1 flex flex-col justify-center min-h-[460px]">
+      <!-- Se inyecta dinámicamente según la fase actual -->
+    </section>
+
+    <!-- 3. BARRA INFERIOR: MIEMBROS DE LA CORTE Y CARTAS PASIVAS -->
+    <footer class="bg-slate-950/70 border-t border-slate-700/60 p-3 sm:p-4 text-xs">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <!-- Miembros de la corte elegidos -->
+        <div>
+          <span class="text-slate-400 uppercase tracking-wider font-bold block mb-1.5">🏛️ Corte Activa (3)</span>
+          <div id="listaCorte" class="flex flex-wrap gap-2">
+            <!-- Badges de personajes -->
+          </div>
+        </div>
+        <!-- Inventario de cartas pasivas -->
+        <div>
+          <span class="text-slate-400 uppercase tracking-wider font-bold block mb-1.5">🎴 Inventario y Apoyos Activos</span>
+          <div id="listaCartas" class="flex flex-wrap gap-1.5">
+            <!-- Badges de cartas -->
+          </div>
+        </div>
+      </div>
+    </footer>
+  </main>
+
+  <!-- ========================================================================= -->
+  <!-- CONSOLA DE ESTADO Y TELEMETRÍA (Para inspección técnica) -->
+  <!-- ========================================================================= -->
+  <section class="w-full max-w-4xl mt-4 bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs">
+    <details>
+      <summary class="font-bold text-slate-400 cursor-pointer hover:text-slate-200">
+        🔍 Inspección de Estado JSON (Snapshot Vivo)
+      </summary>
+      <pre id="debugJson" class="mt-2 p-2 bg-slate-900 rounded text-emerald-400 font-mono text-[11px] overflow-x-auto max-h-48"></pre>
+    </details>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- LÓGICA DE CONTROL JS (Simulación + Conexión FastAPI) -->
+  <!-- ========================================================================= -->
+  <script>
+    // Estado local reactivo
+    let estado = {
+      modo: 'api', // 'api' | 'simulado'
+      mes: 1,
+      fase: 'SETUP', // 'SETUP' | 'DRAFT' | 'EVENTO' | 'RESULTADO' | 'DIALOGO' | 'FIN'
+      recursos: { oro: 50, pueblo: 50, ejercito: 50, fe: 50 },
+      corte: [], // Empieza vacío
+      cartas: [], // Empieza vacío
+      setupPersonajes: [], // 5 ofrecidos
+      setupCartas: [], // 5 ofrecidas
+      setupSeleccionPJ: [], // 3 elegidos
+      setupSeleccionCartas: [] // 3 elegidas
+    };
+
+    const CATALOGO_PJ = [
+      { id: 'pj_canciller_elena', nombre: 'Elena de Valoria', titulo: 'Canciller del Reino', icon: '📜', pros: '+15% oro en eventos comerciales.', cons: '-5 pueblo si financia tropas.' },
+      { id: 'pj_comandante_marcus', nombre: 'Marcus Garra de Hierro', titulo: 'Capitán de la Guardia', icon: '⚔️', pros: '+15 fuerza militar inmediata.', cons: '-5 oro mensual por guardia.' },
+      { id: 'pj_obispo_tomas', nombre: 'Hermano Tomás', titulo: 'Obispo de la Catedral', icon: '⛪', pros: '+5 fe mensual garantizada.', cons: 'Exige diezmos regulares.' },
+      { id: 'pj_alquimista_vera', nombre: 'Vera la Erudita', titulo: 'Alquimista Real', icon: '🧪', pros: 'Cura plagas y da remedios.', cons: '-5 fe inicial por desconfianza.' },
+      { id: 'pj_ladrona_sylvia', nombre: 'Sylvia Niebla', titulo: 'Maestra de Espías', icon: '🗡️', pros: 'Detecta conspiraciones.', cons: 'Nobles desconfían de ella.' }
+    ];
+
+    const CATALOGO_CARTAS = [
+      { id: 'card_sello_real', nombre: 'Sello Real', desc: 'Permite dictar decretos supremos inviolables.', icon: '⚜️', tag: 'sello_real', categoria: 'item' },
+      { id: 'card_reserva_trigo', nombre: 'Reservas de Trigo', desc: '+15 de apoyo popular inmediato.', icon: '🌾', tag: 'abastecimiento', categoria: 'item' },
+      { id: 'card_escudo_hierro', nombre: 'Escudos de Hierro', desc: '+10 de fuerza militar inmediata.', icon: '🛡️', tag: 'defensa', categoria: 'item' },
+      { id: 'card_remedio_herbario', nombre: 'Boticario de Campaña', desc: 'Ungüentos y elixires para la salud.', icon: '🧪', tag: 'salud', categoria: 'item' },
+      { id: 'card_red_espias', nombre: 'Red de Informantes', desc: 'Habilita opciones secretas de intriga.', icon: '👁️', tag: 'espionaje', categoria: 'bonus' }
+    ];
+
+    function toggleSeleccionPJ(pjId) {
+      const idx = estado.setupSeleccionPJ.indexOf(pjId);
+      if (idx >= 0) {
+        estado.setupSeleccionPJ.splice(idx, 1);
+      } else {
+        if (estado.setupSeleccionPJ.length >= 3) {
+          alert("Ya seleccionaste 3 miembros para la corte. Haz clic en uno seleccionado para desmarcarlo.");
+          return;
+        }
+        estado.setupSeleccionPJ.push(pjId);
+      }
+      renderFase();
+    }
+
+    function toggleSeleccionCarta(cartaId) {
+      const idx = estado.setupSeleccionCartas.indexOf(cartaId);
+      if (idx >= 0) {
+        estado.setupSeleccionCartas.splice(idx, 1);
+      } else {
+        if (estado.setupSeleccionCartas.length >= 3) {
+          alert("Ya seleccionaste 3 cartas de apoyo. Haz clic en una seleccionada para desmarcarla.");
+          return;
+        }
+        estado.setupSeleccionCartas.push(cartaId);
+      }
+      renderFase();
+    }
+
+    function getPersonajeIcon(pid) {
+      if (!pid) return '👑';
+      const id = String(pid).toLowerCase();
+      if (id.includes('marcus') || id.includes('comandante') || id.includes('guardia')) return '⚔️';
+      if (id.includes('elena') || id.includes('canciller')) return '📜';
+      if (id.includes('vera') || id.includes('alquimista')) return '🧪';
+      if (id.includes('sylvia') || id.includes('ladrona') || id.includes('espia')) return '🗡️';
+      if (id.includes('tomas') || id.includes('obispo') || id.includes('tiberio') || id.includes('arzobispo') || id.includes('sacerdote') || id.includes('clero')) return '⛪';
+      if (id.includes('daelo') || id.includes('mercader') || id.includes('comercio')) return '🪙';
+      if (id.includes('lyra') || id.includes('astrologa') || id.includes('mago')) return '🔮';
+      if (id.includes('julian') || id.includes('bardo')) return '🎭';
+      return '👑';
+    }
+
+    function actualizarBarras() {
+      document.getElementById('valOro').textContent = estado.recursos.oro;
+      document.getElementById('barOro').style.width = Math.min(100, Math.max(0, estado.recursos.oro)) + '%';
+
+      document.getElementById('valPueblo').textContent = estado.recursos.pueblo;
+      document.getElementById('barPueblo').style.width = Math.min(100, Math.max(0, estado.recursos.pueblo)) + '%';
+
+      document.getElementById('valEjercito').textContent = estado.recursos.ejercito;
+      document.getElementById('barEjercito').style.width = Math.min(100, Math.max(0, estado.recursos.ejercito)) + '%';
+
+      document.getElementById('valFe').textContent = estado.recursos.fe;
+      document.getElementById('barFe').style.width = Math.min(100, Math.max(0, estado.recursos.fe)) + '%';
+
+      const estaciones = ['Primavera', 'Primavera', 'Primavera', 'Verano', 'Verano', 'Verano', 'Otoño', 'Otoño', 'Otoño', 'Invierno', 'Invierno', 'Invierno'];
+      const est = estaciones[(estado.mes - 1) % 12];
+      document.getElementById('badgeMes').textContent = `📅 Mes ${estado.mes} de 12 (${est})`;
+
+      // Render corte en footer
+      const elCorte = document.getElementById('listaCorte');
+      if (estado.corte.length === 0) {
+        elCorte.innerHTML = `<span class="text-slate-500 italic text-[11px]">(Sin miembros en corte. Se seleccionan en Fase 0)</span>`;
+      } else {
+        elCorte.innerHTML = estado.corte.map(c => `
+          <div class="bg-slate-900 border border-slate-700 px-2.5 py-1.5 rounded-lg flex items-center gap-2">
+            <span class="text-base">${c.icon || '👑'}</span>
+            <div>
+              <div class="font-bold text-slate-200">${c.nombre}</div>
+              <div class="text-[10px] text-amber-400">Afinidad: ${c.afinidad}%</div>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      // Render cartas en footer
+      const elCartas = document.getElementById('listaCartas');
+      if (estado.cartas.length === 0) {
+        elCartas.innerHTML = `<span class="text-slate-500 italic text-[11px]">(Sin cartas activas. Se seleccionan en Fase 0)</span>`;
+      } else {
+        elCartas.innerHTML = estado.cartas.map(c => `
+          <span class="bg-amber-950/60 border border-amber-500/40 text-amber-200 px-2 py-1 rounded text-[11px] font-bold flex items-center gap-1">
+            <span>${c.icon || '🎴'}</span> ${c.nombre}
+          </span>
+        `).join('');
+      }
+
+      document.getElementById('debugJson').textContent = JSON.stringify(estado, null, 2);
+    }
+
+    function renderFase() {
+      const panel = document.getElementById('panelContenido');
+      panel.innerHTML = '';
+
+      switch(estado.fase) {
+        case 'SETUP':
+          renderFaseSetup(panel);
+          break;
+        case 'DRAFT':
+          renderFaseDraft(panel);
+          break;
+        case 'EVENTO':
+          renderFaseEvento(panel);
+          break;
+        case 'RESULTADO':
+          renderFaseResultado(panel);
+          break;
+        case 'DIALOGO':
+          renderFaseDialogo(panel);
+          break;
+        case 'DIALOGO_RESULTADO':
+          renderFaseDialogoResultado(panel);
+          break;
+        case 'FIN':
+          renderFaseFin(panel);
+          break;
+      }
+      actualizarBarras();
+    }
+
+    // --- FASE 0: SETUP INICIAL INTERACTIVO ---
+    function renderFaseSetup(panel) {
+      const personajes = (estado.modo === 'api' && estado.setupPersonajes.length > 0)
+        ? estado.setupPersonajes
+        : CATALOGO_PJ;
+
+      const cartas = (estado.modo === 'api' && estado.setupCartas.length > 0)
+        ? estado.setupCartas
+        : CATALOGO_CARTAS;
+
+      const pjCount = estado.setupSeleccionPJ.length;
+      const cardCount = estado.setupSeleccionCartas.length;
+      const listoParaComenzar = pjCount === 3 && cardCount === 3;
+
+      panel.innerHTML = `
+        <div class="text-center mb-5">
+          <span class="text-xs uppercase tracking-wider font-bold text-amber-400 bg-amber-950/60 border border-amber-500/40 px-3 py-1 rounded-full">
+            Fase 0: Forja tu Corte y Apoyos
+          </span>
+          <h2 class="font-title text-xl sm:text-2xl font-bold text-slate-100 mt-2">Desafío Diario • Elección Inicial</h2>
+          <p class="text-xs sm:text-sm text-slate-400">Selecciona exactamente 3 miembros de corte y 3 cartas de apoyo entre las 5 opciones ofrecidas.</p>
+        </div>
+
+        <!-- 1. SELECCIÓN DE PERSONAJES (3 de 5) -->
+        <div class="mb-5">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-xs uppercase tracking-wider font-bold text-amber-400 flex items-center gap-1.5">
+              <span>🏛️</span> 1. Elige 3 de 5 Personajes de la Corte:
+            </h3>
+            <span class="text-xs font-bold px-2 py-0.5 rounded ${pjCount === 3 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'}">
+              ${pjCount} de 3 seleccionados
+            </span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-5 gap-2.5">
+            ${personajes.map(pj => {
+              const id = pj._id || pj.id;
+              const isSelected = estado.setupSeleccionPJ.includes(id);
+              const borderClass = isSelected 
+                ? 'border-amber-400 bg-amber-950/50 shadow-[0_0_15px_rgba(245,158,11,0.25)]' 
+                : 'border-slate-700 bg-slate-900/80 hover:border-slate-500';
+              const icon = pj.icon || (id.includes('marcus') ? '⚔️' : id.includes('elena') ? '📜' : id.includes('tomas') ? '⛪' : id.includes('vera') ? '🧪' : '🗡️');
+              const pros = Array.isArray(pj.pros) ? pj.pros.join(' ') : pj.pros || '';
+              const cons = Array.isArray(pj.cons) ? pj.cons.join(' ') : pj.cons || '';
+
+              return `
+                <div onclick="toggleSeleccionPJ('${id}')" class="${borderClass} border-2 p-3 rounded-xl cursor-pointer transition transform hover:-translate-y-1 flex flex-col justify-between select-none">
+                  <div>
+                    <div class="flex items-center gap-2 mb-1.5">
+                      <span class="text-2xl">${icon}</span>
+                      <div>
+                        <div class="font-bold text-slate-100 text-xs leading-tight">${pj.nombre}</div>
+                        <div class="text-[10px] text-amber-400 font-semibold">${pj.titulo || pj.rol || ''}</div>
+                      </div>
+                    </div>
+                    <div class="text-[11px] text-emerald-400 mt-2 leading-snug">✓ ${pros}</div>
+                    <div class="text-[11px] text-rose-400 mt-1.5 leading-snug">✗ ${cons}</div>
+                  </div>
+                  <div class="mt-3 text-center">
+                    <span class="text-[11px] w-full block py-1 rounded font-bold transition ${isSelected ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-300'}">
+                      ${isSelected ? '✓ Seleccionado' : '+ Elegir'}
+                    </span>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+
+        <!-- 2. SELECCIÓN DE CARTAS (3 de 5) -->
+        <div class="mb-5">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-xs uppercase tracking-wider font-bold text-amber-400 flex items-center gap-1.5">
+              <span>🎴</span> 2. Elige 3 de 5 Cartas de Apoyo Iniciales:
+            </h3>
+            <span class="text-xs font-bold px-2 py-0.5 rounded ${cardCount === 3 ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'}">
+              ${cardCount} de 3 seleccionadas
+            </span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-5 gap-2.5">
+            ${cartas.map(c => {
+              const id = c._id || c.id;
+              const isSelected = estado.setupSeleccionCartas.includes(id);
+              const borderClass = isSelected 
+                ? 'border-emerald-400 bg-emerald-950/50 shadow-[0_0_15px_rgba(16,185,129,0.25)]' 
+                : 'border-slate-700 bg-slate-900/80 hover:border-slate-500';
+              const icon = c.icon || (id.includes('sello') ? '⚜️' : id.includes('trigo') ? '🌾' : id.includes('escudo') ? '🛡️' : id.includes('espias') ? '👁️' : id.includes('pocion') || id.includes('remedio') ? '🧪' : id.includes('mercenario') ? '⚔️' : '🎴');
+              const desc = c.descripcion || c.desc || '';
+              const tags = c.tags || [];
+
+              return `
+                <div onclick="toggleSeleccionCarta('${id}')" class="${borderClass} border-2 p-3 rounded-xl cursor-pointer transition transform hover:-translate-y-1 flex flex-col justify-between select-none">
+                  <div>
+                    <div class="flex items-center gap-2 mb-1.5">
+                      <span class="text-2xl">${icon}</span>
+                      <div>
+                        <div class="font-bold text-slate-100 text-xs leading-tight">${c.nombre}</div>
+                        <div class="text-[10px] text-emerald-400 font-semibold uppercase">${c.categoria || 'Item'}</div>
+                      </div>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-1 leading-snug">${desc}</p>
+                    <div class="flex flex-wrap gap-1 mt-2">
+                      ${tags.map(t => `<span class="text-[9px] bg-slate-800 text-amber-300/80 px-1 py-0.5 rounded border border-slate-700">#${t}</span>`).join('')}
+                    </div>
+                  </div>
+                  <div class="mt-3 text-center">
+                    <span class="text-[11px] w-full block py-1 rounded font-bold transition ${isSelected ? 'bg-emerald-500 text-slate-950' : 'bg-slate-800 text-slate-300'}">
+                      ${isSelected ? '✓ Seleccionada' : '+ Elegir'}
+                    </span>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+
+        <!-- BOTÓN DE INICIO -->
+        <div class="text-center pt-2">
+          <button onclick="comenzarPartidaSetup()" ${!listoParaComenzar ? 'disabled' : ''} class="font-bold px-8 py-3.5 rounded-xl text-sm sm:text-base shadow-xl transition transform ${listoParaComenzar ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 cursor-pointer hover:scale-105' : 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-60'}">
+            ${listoParaComenzar ? '⚔️ ¡Iniciar Gobierno en el Mes 1 con esta Corte!' : `Selecciona 3 Personajes (${pjCount}/3) y 3 Cartas (${cardCount}/3) para Iniciar`}
+          </button>
+        </div>
+      `;
+    }
+
+    // --- FASE 1: DRAFT MENSUAL ---
+    function renderFaseDraft(panel) {
+      if (estado.modo === 'api' && estado.apiData?.cartas_draft_actual?.length) {
+        panel.innerHTML = `
+          <div class="text-center mb-6">
+            <span class="text-xs uppercase tracking-wider font-bold text-amber-400 bg-amber-950/60 border border-amber-500/40 px-3 py-1 rounded-full">
+              Robo de Cartas Mensual (API Real)
+            </span>
+            <h2 class="font-title text-xl sm:text-2xl font-bold text-slate-100 mt-2">Mes ${estado.mes}: Elige 1 Carta de Apoyo</h2>
+            <p class="text-xs sm:text-sm text-slate-400">Esta carta otorgará beneficios permanentes a tu reino para el resto del año.</p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            ${estado.apiData.cartas_draft_actual.map(c => `
+              <div onclick="elegirCartaDraft('${c._id}')" class="bg-slate-900/90 border-2 border-slate-700 hover:border-amber-400 p-4 rounded-xl cursor-pointer transition transform hover:-translate-y-1 flex flex-col justify-between group">
+                <div>
+                  <span class="text-4xl block mb-2">🎴</span>
+                  <span class="text-[10px] font-bold uppercase tracking-wider text-amber-400">${c.categoria.toUpperCase()}</span>
+                  <h3 class="font-bold text-slate-100 text-base mt-1 group-hover:text-amber-300">${c.nombre}</h3>
+                  <p class="text-xs text-slate-400 mt-2 leading-relaxed">${c.descripcion}</p>
+                  <div class="flex flex-wrap gap-1 mt-3">
+                    ${(c.tags || []).map(t => `<span class="text-[10px] bg-slate-800 text-amber-300/80 px-1.5 py-0.5 rounded border border-slate-700">#${t}</span>`).join('')}
+                  </div>
+                </div>
+                <button class="mt-4 w-full bg-slate-800 group-hover:bg-amber-500 group-hover:text-slate-950 py-2 rounded-lg font-bold text-xs transition">
+                  Elegir esta carta
+                </button>
+              </div>
+            `).join('')}
+          </div>
+        `;
+        return;
+      }
+
+      panel.innerHTML = `
+        <div class="text-center mb-6">
+          <span class="text-xs uppercase tracking-wider font-bold text-amber-400 bg-amber-950/60 border border-amber-500/40 px-3 py-1 rounded-full">
+            Robo de Cartas Mensual (Simulado)
+          </span>
+          <h2 class="font-title text-xl sm:text-2xl font-bold text-slate-100 mt-2">Mes ${estado.mes}: Elige 1 Carta de Apoyo</h2>
+          <p class="text-xs sm:text-sm text-slate-400">Esta carta otorgará beneficios permanentes a tu reino para el resto del año.</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div onclick="elegirCartaDraft('Arancel Comercial', 'oro', 10)" class="bg-slate-900/90 border-2 border-slate-700 hover:border-amber-400 p-4 rounded-xl cursor-pointer transition transform hover:-translate-y-1 flex flex-col justify-between group">
+            <div>
+              <span class="text-4xl block mb-2">📜</span>
+              <span class="text-[10px] font-bold uppercase tracking-wider text-amber-400">Bonus Económico</span>
+              <h3 class="font-bold text-slate-100 text-base mt-1 group-hover:text-amber-300">Arancel Comercial</h3>
+              <p class="text-xs text-slate-400 mt-2">Genera +10 de Oro cada mes mientras el pueblo esté conforme.</p>
+            </div>
+            <button class="mt-4 w-full bg-slate-800 group-hover:bg-amber-500 group-hover:text-slate-950 py-2 rounded-lg font-bold text-xs transition">
+              Elegir esta carta
+            </button>
+          </div>
+
+          <div onclick="elegirCartaDraft('Mercenarios Veteranos', 'ejercito', 20)" class="bg-slate-900/90 border-2 border-slate-700 hover:border-sky-400 p-4 rounded-xl cursor-pointer transition transform hover:-translate-y-1 flex flex-col justify-between group">
+            <div>
+              <span class="text-4xl block mb-2">⚔️</span>
+              <span class="text-[10px] font-bold uppercase tracking-wider text-sky-400">Recluta Militar</span>
+              <h3 class="font-bold text-slate-100 text-base mt-1 group-hover:text-sky-300">Mercenarios Veteranos</h3>
+              <p class="text-xs text-slate-400 mt-2">Añade +20 de Fuerza Militar de inmediato a cambio de 10 de oro.</p>
+            </div>
+            <button class="mt-4 w-full bg-slate-800 group-hover:bg-sky-500 group-hover:text-slate-950 py-2 rounded-lg font-bold text-xs transition">
+              Elegir esta carta
+            </button>
+          </div>
+
+          <div onclick="elegirCartaDraft('Remedio Botánico', 'pueblo', 15)" class="bg-slate-900/90 border-2 border-slate-700 hover:border-emerald-400 p-4 rounded-xl cursor-pointer transition transform hover:-translate-y-1 flex flex-col justify-between group">
+            <div>
+              <span class="text-4xl block mb-2">🧪</span>
+              <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-400">Ítem de Salud</span>
+              <h3 class="font-bold text-slate-100 text-base mt-1 group-hover:text-emerald-300">Remedios Botánicos</h3>
+              <p class="text-xs text-slate-400 mt-2">Otorga +15 de apoyo popular inmediato previniendo epidemias.</p>
+            </div>
+            <button class="mt-4 w-full bg-slate-800 group-hover:bg-emerald-500 group-hover:text-slate-950 py-2 rounded-lg font-bold text-xs transition">
+              Elegir esta carta
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    // --- FASE 2: EVENTO DEL MES CON PROBABILIDADES DINÁMICAS ---
+    function renderFaseEvento(panel) {
+      if (estado.modo === 'api' && estado.apiData?.evento_actual) {
+        const evt = estado.apiData.evento_actual;
+        panel.innerHTML = `
+          <div class="bg-slate-950/80 border border-amber-900/40 rounded-xl overflow-hidden mb-4 shadow-xl">
+            <div class="h-28 bg-gradient-to-r from-blue-950 via-slate-900 to-amber-950 flex items-center justify-center relative p-4">
+              <span class="text-5xl">👑</span>
+              <div class="absolute bottom-2 left-3 bg-black/60 px-2 py-0.5 rounded text-[11px] text-amber-300 font-bold">
+                Evento Real • ${evt.id}
+              </div>
+            </div>
+            <div class="p-4">
+              <h2 class="font-title text-xl font-bold text-amber-200">${evt.titulo}</h2>
+              <p class="text-sm text-slate-300 mt-1 leading-relaxed">${evt.descripcion}</p>
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            ${evt.opciones.map((op, idx) => {
+              const isSecret = op.es_secreta;
+              const isBlocked = op.bloqueada;
+              const bgClass = isSecret 
+                ? (isBlocked ? 'bg-slate-900/40 border-slate-800 opacity-60' : 'bg-gradient-to-r from-amber-950/40 via-slate-900 to-amber-950/30 border-amber-400 hover:border-amber-300 shadow-[0_0_20px_rgba(245,158,11,0.2)]') 
+                : 'bg-slate-900 border-slate-700 hover:border-amber-400';
+              const titleClass = isSecret ? (isBlocked ? 'text-slate-400' : 'text-amber-300') : 'text-slate-100 group-hover:text-amber-300';
+              
+              const probs = Array.isArray(op.probabilidades) ? op.probabilidades : [];
+              const allExplicaciones = [];
+              probs.forEach(p => {
+                if (Array.isArray(p.explicaciones)) {
+                  p.explicaciones.forEach(exp => {
+                    if (!allExplicaciones.includes(exp)) allExplicaciones.push(exp);
+                  });
+                }
+              });
+
+              return `
+                <button ${isBlocked ? 'disabled' : `onclick="tomarDecisionEvento('${op.id}')"`} class="w-full text-left ${bgClass} border-2 p-3.5 rounded-xl transition flex flex-col gap-1.5 group ${isBlocked ? 'cursor-not-allowed' : 'cursor-pointer'}">
+                  <div class="flex items-center justify-between">
+                    <span class="font-bold text-sm ${titleClass} flex items-center gap-1.5">
+                      ${isSecret ? '<span>⚜️</span> [SECRETA] ' : ''}${String.fromCharCode(65 + idx)}) ${op.texto}
+                    </span>
+                    ${probs.length > 0 && !isBlocked ? `
+                      <span class="text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded">
+                        ${probs.map(p => `${Math.round(p.porcentaje ?? 0)}% ${p.titulo}`).join('  /  ')}
+                      </span>
+                    ` : ''}
+                  </div>
+
+                  ${allExplicaciones.length > 0 && !isBlocked ? `
+                    <div class="flex flex-wrap gap-1.5 mt-1">
+                      ${allExplicaciones.map(exp => `
+                        <span class="text-[10px] bg-slate-800 text-sky-300 px-2 py-0.5 rounded border border-slate-700 font-semibold">
+                          📈 ${exp}
+                        </span>
+                      `).join('')}
+                    </div>
+                  ` : ''}
+
+                  ${isSecret && !isBlocked ? `
+                    <span class="text-[10px] w-fit bg-amber-400/20 text-amber-300 border border-amber-400/40 px-2 py-0.5 rounded font-black uppercase mt-1">
+                      ⚜️ Opción Secreta Desbloqueada por tu Corte / Inventario
+                    </span>
+                  ` : ''}
+
+                  ${isBlocked ? `
+                    <span class="text-[11px] text-rose-400 font-bold mt-1 flex items-center gap-1">
+                      🔒 Opción secreta bloqueada (no posees el personaje o carta requerida en tu corte)
+                    </span>
+                  ` : ''}
+                </button>
+              `;
+            }).join('')}
+          </div>
+        `;
+        return;
+      }
+
+      panel.innerHTML = `
+        <div class="bg-slate-950/80 border border-amber-900/40 rounded-xl overflow-hidden mb-4">
+          <!-- Encabezado del Evento -->
+          <div class="h-36 bg-gradient-to-r from-blue-950 via-slate-900 to-amber-950 flex items-center justify-center relative p-4">
+            <span class="text-6xl">❄️</span>
+            <div class="absolute bottom-2 left-3 bg-black/60 px-2 py-0.5 rounded text-[11px] text-amber-300 font-bold">
+              Evento del Mes • Clima y Hambruna (Simulado)
+            </div>
+          </div>
+          <div class="p-4">
+            <h2 class="font-title text-xl font-bold text-amber-200">La Gran Helada en el Valle</h2>
+            <p class="text-sm text-slate-300 mt-1 leading-relaxed">
+              Una ola de frío polar cayó sin aviso sobre los sembrados del norte. Los graneros campesinos amenazan con quedar vacíos antes de la primavera y los señores feudales retienen grano en sus castillos.
+            </p>
+          </div>
+        </div>
+
+        <!-- Opciones de Decisión -->
+        <div class="space-y-3">
+          <!-- Opción A con Probabilidad calculada -->
+          <button onclick="tomarDecisionEvento('A')" class="w-full text-left bg-slate-900 border-2 border-slate-700 hover:border-amber-400 p-3.5 rounded-xl transition flex flex-col gap-1 group">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-sm text-slate-100 group-hover:text-amber-300">
+                A) Enviar patrullas armadas a custodiar y racionar graneros
+              </span>
+              <span class="text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded">
+                85% Probabilidad de Éxito
+              </span>
+            </div>
+            <div class="flex items-center gap-1.5 mt-1">
+              <span class="text-[10px] bg-slate-800 text-sky-300 px-2 py-0.5 rounded border border-slate-700">
+                +35% por Comandante Marcus
+              </span>
+              <span class="text-[10px] bg-slate-800 text-amber-300 px-2 py-0.5 rounded border border-slate-700">
+                +15% por Carretas de Logística
+              </span>
+            </div>
+          </button>
+
+          <!-- Opción B con Probabilidad calculada -->
+          <button onclick="tomarDecisionEvento('B')" class="w-full text-left bg-slate-900 border-2 border-slate-700 hover:border-amber-400 p-3.5 rounded-xl transition flex flex-col gap-1 group">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-sm text-slate-100 group-hover:text-amber-300">
+                B) Abrir el tesoro real y comprar grano a mercaderes extranjeros
+              </span>
+              <span class="text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded">
+                60% Trigo Limpio / 40% Estafa
+              </span>
+            </div>
+            <div class="flex items-center gap-1.5 mt-1">
+              <span class="text-[10px] bg-slate-800 text-emerald-300 px-2 py-0.5 rounded border border-slate-700">
+                +30% por Canciller Elena
+              </span>
+            </div>
+          </button>
+
+          <!-- Opción C Secreta Desbloqueada por Carta Sello Real -->
+          <button onclick="tomarDecisionEvento('C')" class="w-full text-left bg-amber-950/30 border-2 border-amber-500/80 hover:border-amber-300 p-3.5 rounded-xl transition flex flex-col gap-1 group shadow-[0_0_15px_rgba(245,158,11,0.15)]">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-sm text-amber-300 group-hover:text-amber-200 flex items-center gap-1.5">
+                <span>⚜️</span> C) [Secreta] Decretar requisa general amparado en el Sello Real
+              </span>
+              <span class="text-xs font-bold bg-amber-400 text-slate-950 px-2 py-0.5 rounded">
+                100% Éxito Garantizado
+              </span>
+            </div>
+            <span class="text-[11px] text-amber-200/80">Desbloqueado gracias a poseer el Sello Real de la Corona.</span>
+          </button>
+        </div>
+      `;
+    }
+
+    // --- FASE 3: RESULTADO DEL EVENTO ---
+    function renderFaseResultado(panel) {
+      if (estado.modo === 'api' && estado.apiData?.resultado_actual) {
+        const res = estado.apiData.resultado_actual;
+        const isPos = res.tipo_resultado === 'positivo';
+        const isCat = res.tipo_resultado === 'catastrofico';
+        panel.innerHTML = `
+          <div class="bg-slate-900 border-2 ${isPos ? 'border-emerald-500/60 bg-emerald-950/30' : isCat ? 'border-rose-500/60 bg-rose-950/30' : 'border-amber-500/60 bg-amber-950/30'} rounded-2xl p-6 text-center max-w-xl mx-auto shadow-2xl">
+            <span class="text-6xl block mb-2">${isPos ? '🎉' : isCat ? '💀' : '⚖️'}</span>
+            <span class="text-xs font-bold tracking-widest uppercase ${isPos ? 'text-emerald-400 bg-emerald-900/60' : 'text-amber-400 bg-amber-900/60'} px-3 py-1 rounded-full border border-current">
+              Resultado: ${res.tipo_resultado.toUpperCase()}
+            </span>
+            <h2 class="font-title text-2xl font-bold text-slate-100 mt-3">${res.titulo}</h2>
+            <p class="text-sm text-slate-300 mt-2 leading-relaxed">
+              ${res.texto}
+            </p>
+
+            <div class="flex flex-wrap justify-center gap-2 my-5">
+              ${(res.efectos || []).map(ef => {
+                const a = ef.accion;
+                if (a && a.tipo === 'modificar_recurso') {
+                  const sign = a.valor > 0 ? '+' : '';
+                  const color = a.valor > 0 ? 'text-emerald-300 border-emerald-500/40 bg-emerald-900/40' : 'text-rose-300 border-rose-500/40 bg-rose-900/40';
+                  return `<span class="border px-3 py-1 rounded-xl text-xs font-bold ${color}">${a.clave.toUpperCase()} ${sign}${a.valor}</span>`;
+                }
+                return '';
+              }).join('')}
+            </div>
+
+            <button onclick="continuarTrasResultado()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-8 py-2.5 rounded-xl text-sm transition">
+              ${estado.apiData?.conversacion_actual ? 'Continuar al Diálogo de Corte ➔' : 'Continuar al Siguiente Mes ➔'}
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      panel.innerHTML = `
+        <div class="bg-emerald-950/40 border-2 border-emerald-500/60 rounded-2xl p-6 text-center max-w-xl mx-auto shadow-2xl">
+          <span class="text-6xl block mb-2">🌾</span>
+          <span class="text-xs font-bold tracking-widest uppercase text-emerald-400 bg-emerald-900/60 border border-emerald-500/40 px-3 py-1 rounded-full">
+            Desenlace Exitoso (Simulado)
+          </span>
+          <h2 class="font-title text-2xl font-bold text-emerald-200 mt-3">Silos y Graneros Protegidos</h2>
+          <p class="text-sm text-slate-300 mt-2 leading-relaxed">
+            Las patrullas de la guardia y las carretas de intendencia aseguraron el transporte de grano sin disturbios. La población recibe raciones justas y el hambre ha sido sofocada.
+          </p>
+
+          <!-- Deltas de Recursos -->
+          <div class="flex justify-center gap-4 my-6">
+            <span class="bg-emerald-900/80 border border-emerald-400 text-emerald-200 font-bold text-sm px-3.5 py-1.5 rounded-xl flex items-center gap-1">
+              👥 Pueblo +15
+            </span>
+            <span class="bg-sky-900/80 border border-sky-400 text-sky-200 font-bold text-sm px-3.5 py-1.5 rounded-xl flex items-center gap-1">
+              🛡️ Ejército +10
+            </span>
+          </div>
+
+          <button onclick="continuarTrasResultado()" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-8 py-2.5 rounded-xl text-sm transition">
+            Continuar al Diálogo de Corte ➔
+          </button>
+        </div>
+      `;
+    }
+
+    // --- FASE 4: DIÁLOGO DE CORTE ---
+    function renderFaseDialogo(panel) {
+      if (estado.modo === 'api' && estado.apiData?.conversacion_actual) {
+        const conv = estado.apiData.conversacion_actual;
+        const frases = conv.frases || conv.lineas || [];
+        const decisiones = conv.decisiones || conv.opciones || [];
+
+        panel.innerHTML = `
+          <div class="max-w-xl mx-auto w-full">
+            <div class="text-center mb-4">
+              <span class="text-xs font-bold uppercase tracking-wider text-amber-400 bg-amber-950/60 border border-amber-500/40 px-3 py-1 rounded-full">
+                Consejo Privado (API Real)
+              </span>
+              <h2 class="font-title text-lg sm:text-xl font-bold text-slate-100 mt-1">${conv.titulo}</h2>
+            </div>
+
+            <div class="space-y-3 mb-5">
+              ${frases.map((linea, idx) => {
+                const pid = linea.personajeId || linea.personaje_id;
+                const pj = (estado.corte || []).find(p => p.id === pid)
+                  || (estado.apiData?.personajes_corte || []).find(p => (p._id || p.id) === pid);
+                const nombre = pj ? pj.nombre : pid;
+                const rol = pj ? (pj.rol || pj.titulo || '') : '';
+                const icon = getPersonajeIcon(pid);
+
+                return `
+                  <div class="flex items-start gap-2.5 ${idx % 2 === 1 ? 'flex-row-reverse text-right' : ''}">
+                    <span class="text-3xl bg-slate-800 p-1.5 rounded-full border border-amber-500/40">${icon}</span>
+                    <div class="bg-slate-900 border border-slate-700 rounded-2xl p-3 text-xs sm:text-sm text-slate-200 flex-1 shadow">
+                      <div class="font-bold text-amber-400 text-xs mb-1 flex items-center gap-1.5 ${idx % 2 === 1 ? 'justify-end' : ''}">
+                        <span>${nombre}</span>
+                        ${rol ? `<span class="text-[10px] text-slate-400 font-normal">(${rol})</span>` : ''}
+                      </div>
+                      <p class="leading-relaxed">"${linea.texto}"</p>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+
+            <div class="space-y-2">
+              ${decisiones.map(dec => {
+                const num = dec.opcion !== undefined ? dec.opcion : dec.opcion_numero;
+                const afinidades = (dec.impacto_afinidad || []).map(imp => {
+                  const pj = (estado.corte || []).find(p => p.id === imp.personaje_id)
+                    || (estado.apiData?.personajes_corte || []).find(p => (p._id || p.id) === imp.personaje_id);
+                  const nom = pj ? pj.nombre.split(' ')[0] : imp.personaje_id;
+                  const isPos = imp.delta > 0;
+                  const color = isPos ? 'text-emerald-400 border-emerald-500/40 bg-emerald-950/40' : 'text-rose-400 border-rose-500/40 bg-rose-950/40';
+                  return `<span class="text-[10px] font-bold px-2 py-0.5 rounded border ${color}">${isPos ? '+' : ''}${imp.delta} ${nom}</span>`;
+                }).join(' ');
+
+                return `
+                  <button onclick="responderDialogo(${num})" class="w-full text-left bg-slate-900 border border-slate-700 hover:border-amber-400 p-3.5 rounded-xl transition flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs sm:text-sm group cursor-pointer shadow hover:bg-slate-850">
+                    <span class="font-medium text-slate-100 group-hover:text-amber-300">⚖️ ${dec.texto}</span>
+                    <div class="flex items-center gap-1.5 flex-shrink-0">
+                      ${afinidades}
+                    </div>
+                  </button>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      panel.innerHTML = `
+        <div class="max-w-xl mx-auto w-full">
+          <div class="text-center mb-4">
+            <span class="text-xs font-bold uppercase tracking-wider text-amber-400 bg-amber-950/60 border border-amber-500/40 px-3 py-1 rounded-full">
+              Discusión en el Consejo Privado (Simulado)
+            </span>
+            <h2 class="font-title text-lg sm:text-xl font-bold text-slate-100 mt-1">Presupuesto para la Guardia de Frontera</h2>
+          </div>
+
+          <!-- Burbujas de Diálogo Teatral -->
+          <div class="space-y-3 mb-5">
+            <!-- Marcus habla -->
+            <div class="flex items-start gap-2.5">
+              <span class="text-3xl bg-slate-800 p-1.5 rounded-full border border-sky-500/50">⚔️</span>
+              <div class="bg-slate-900 border border-sky-500/40 rounded-2xl rounded-tl-none p-3 text-xs sm:text-sm text-slate-200 flex-1 shadow">
+                <span class="font-bold text-sky-400 block text-xs mb-1">Comandante Marcus:</span>
+                "Mis soldados no pueden vigilar los pasos montañosos con botas rotas y espadas melladas. Necesitamos más oro para la guarnición."
+              </div>
+            </div>
+
+            <!-- Elena responde -->
+            <div class="flex items-start gap-2.5 flex-row-reverse">
+              <span class="text-3xl bg-slate-800 p-1.5 rounded-full border border-amber-500/50">📜</span>
+              <div class="bg-slate-900 border border-amber-500/40 rounded-2xl rounded-tr-none p-3 text-xs sm:text-sm text-slate-200 flex-1 text-right shadow">
+                <span class="font-bold text-amber-400 block text-xs mb-1">Canciller Elena:</span>
+                "Si duplicamos el presupuesto militar, quebraremos a los gremios campesinos con más tasas. Hay que cuidar el arca real."
+              </div>
+            </div>
+          </div>
+
+          <!-- Decisiones del Jugador -->
+          <div class="space-y-2">
+            <button onclick="responderDialogo(1)" class="w-full text-left bg-slate-900 border border-slate-700 hover:border-amber-400 p-3 rounded-xl transition flex items-center justify-between text-xs sm:text-sm group">
+              <span>⚖️ Respaldar a Elena: Priorizar el tesoro y la moderación fiscal</span>
+              <span class="text-[11px] text-emerald-400 font-bold">+15 Afinidad Elena / -10 Marcus</span>
+            </button>
+            <button onclick="responderDialogo(2)" class="w-full text-left bg-slate-900 border border-slate-700 hover:border-sky-400 p-3 rounded-xl transition flex items-center justify-between text-xs sm:text-sm group">
+              <span>🛡️ Respaldar a Marcus: Fortalecer las murallas y tropas de inmediato</span>
+              <span class="text-[11px] text-sky-400 font-bold">+15 Afinidad Marcus / -10 Elena</span>
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    // --- FASE 4B: RESOLUCIÓN DE DIÁLOGO ---
+    function renderFaseDialogoResultado(panel) {
+      const res = estado.dialogoResultado;
+      if (!res) {
+        avanzarMesSiguiente();
+        return;
+      }
+      panel.innerHTML = `
+        <div class="max-w-xl mx-auto w-full bg-slate-900 border-2 border-amber-500/50 rounded-2xl p-6 text-center shadow-2xl">
+          <span class="text-5xl block mb-2">📜</span>
+          <span class="text-xs font-bold uppercase tracking-wider text-amber-400 bg-amber-950/60 border border-amber-500/40 px-3 py-1 rounded-full">
+            Resolución del Consejo
+          </span>
+          <h2 class="font-title text-xl font-bold text-slate-100 mt-3">${res.titulo}</h2>
+          
+          <div class="bg-slate-950/70 border border-slate-800 rounded-xl p-4 my-4 text-left">
+            <span class="text-xs text-amber-300 font-bold block mb-1">Tu postura:</span>
+            <p class="text-xs text-slate-300 italic mb-3">"${res.decisionTexto}"</p>
+            <span class="text-xs text-amber-300 font-bold block mb-1">Reacción de la corte:</span>
+            <p class="text-sm text-slate-200">${res.texto}</p>
+          </div>
+
+          <div class="flex flex-wrap justify-center gap-2 mb-6">
+            ${(res.impacto_afinidad || []).map(imp => {
+              const pj = (estado.corte || []).find(p => p.id === imp.personaje_id)
+                || (estado.apiData?.personajes_corte || []).find(p => (p._id || p.id) === imp.personaje_id);
+              const nom = pj ? pj.nombre : imp.personaje_id;
+              const isPos = imp.delta > 0;
+              const color = isPos ? 'text-emerald-400 border-emerald-500/40 bg-emerald-950/40' : 'text-rose-400 border-rose-500/40 bg-rose-950/40';
+              return `<span class="text-xs font-bold px-3 py-1 rounded-xl border ${color}">${isPos ? '+' : ''}${imp.delta} Afinidad (${nom})</span>`;
+            }).join('')}
+          </div>
+
+          <button onclick="avanzarMesSiguiente()" class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold px-8 py-3 rounded-xl text-sm transition shadow-lg cursor-pointer">
+            Avanzar al Mes Siguiente ➔
+          </button>
+        </div>
+      `;
+    }
+
+    // --- FASE 5: EPÍLOGO MES 12 ---
+    function renderFaseFin(panel) {
+      if (estado.modo === 'api' && estado.apiData?.epilogo_final) {
+        const ep = estado.apiData.epilogo_final;
+        panel.innerHTML = `
+          <div class="text-center max-w-xl mx-auto py-6">
+            <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-tr from-amber-600 to-amber-300 text-slate-950 font-black text-4xl mb-4 shadow-xl">
+              ${ep.rango}
+            </div>
+            <span class="text-xs font-bold uppercase tracking-widest text-amber-400 block">Evaluación de Fin de Año (API Real)</span>
+            <h2 class="font-title text-2xl sm:text-3xl font-bold text-amber-200 mt-1">${ep.titulo}</h2>
+            <p class="text-sm text-slate-300 mt-3 leading-relaxed">
+              ${ep.descripcion}
+            </p>
+
+            <div class="bg-slate-900 border border-amber-900/40 rounded-xl p-4 my-6 text-xs text-left">
+              <span class="font-bold text-amber-300 block mb-2">📜 Balance Final del Reino:</span>
+              <div class="grid grid-cols-2 gap-2 text-slate-300">
+                <div>🪙 Oro Final: <span class="text-amber-400 font-bold">${ep.recursos_finales?.oro ?? estado.recursos.oro}</span></div>
+                <div>👥 Pueblo Final: <span class="text-emerald-400 font-bold">${ep.recursos_finales?.pueblo ?? estado.recursos.pueblo}</span></div>
+                <div>🛡️ Ejército Final: <span class="text-sky-400 font-bold">${ep.recursos_finales?.ejercito ?? estado.recursos.ejercito}</span></div>
+                <div>⛪ Fe Final: <span class="text-purple-400 font-bold">${ep.recursos_finales?.fe ?? estado.recursos.fe}</span></div>
+              </div>
+            </div>
+
+            <button onclick="reiniciarPartida()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-8 py-3 rounded-xl text-base shadow-lg transition">
+              🔄 Jugar Nuevo Desafío Diario
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      panel.innerHTML = `
+        <div class="text-center max-w-xl mx-auto py-6">
+          <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-tr from-amber-600 to-amber-300 text-slate-950 font-black text-4xl mb-4 shadow-xl">
+            S
+          </div>
+          <span class="text-xs font-bold uppercase tracking-widest text-amber-400 block">Evaluación de Fin de Año (Simulado)</span>
+          <h2 class="font-title text-2xl sm:text-3xl font-bold text-amber-200 mt-1">Era de Oro y Prosperidad Eterna</h2>
+          <p class="text-sm text-slate-300 mt-3 leading-relaxed">
+            Has completado los 12 meses de tu reinado con éxito rotundo. El equilibrio entre el tesoro, el pueblo, el ejército y la corte ha colocado a Valoria en su momento de mayor grandeza histórica.
+          </p>
+
+          <div class="bg-slate-900 border border-amber-900/40 rounded-xl p-4 my-6 text-xs text-left">
+            <span class="font-bold text-amber-300 block mb-2">📜 Balance Final del Reino:</span>
+            <div class="grid grid-cols-2 gap-2 text-slate-300">
+              <div>🪙 Oro Final: <span class="text-amber-400 font-bold">85</span></div>
+              <div>👥 Pueblo Final: <span class="text-emerald-400 font-bold">90</span></div>
+              <div>🛡️ Ejército Final: <span class="text-sky-400 font-bold">75</span></div>
+              <div>⛪ Fe Final: <span class="text-purple-400 font-bold">80</span></div>
+            </div>
+          </div>
+
+          <button onclick="reiniciarPartida()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-8 py-3 rounded-xl text-base shadow-lg transition">
+            🔄 Jugar Nuevo Desafío Diario
+          </button>
+        </div>
+      `;
+    }
+
+    // =========================================================================
+    // ACCIONES DE JUEGO (Disparadores de Transición)
+    // =========================================================================
+
+    function saltarAFase(fase) {
+      estado.fase = fase;
+      renderFase();
+    }
+
+    const API_BASE = "http://localhost:8080/api/narrative/partida";
+    const _now = new Date();
+    const TODAY = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, '0')}-${String(_now.getDate()).padStart(2, '0')}`;
+
+    // Mapear respuesta del backend al estado visual
+    function mapearRespuestaAPI(data) {
+      const run = data.run;
+      estado.mes = run.mes_actual;
+      estado.recursos = { ...run.recursos };
+      estado.apiData = data; // Guarda snapshot completo
+
+      // Mapear corte activa con iconos apropiados
+      estado.corte = (data.personajes_corte || []).map(p => {
+        const pid = p._id || p.id;
+        return {
+          id: pid,
+          nombre: p.nombre,
+          rol: p.titulo,
+          afinidad: (run.afinidad && run.afinidad[pid] !== undefined) ? run.afinidad[pid] : (p.afinidad_inicial || 50),
+          icon: getPersonajeIcon(pid)
+        };
+      });
+
+      // Mapear cartas en mano
+      estado.cartas = (data.cartas_inventario || []).map(c => ({
+        id: c._id || c.id,
+        nombre: c.nombre,
+        tag: c.tags ? c.tags[0] : 'item',
+        icon: '🎴'
+      }));
+
+      // Mapear fase
+      const faseMap = {
+        'DRAFT_MENSUAL': 'DRAFT',
+        'TOMA_DECISION_EVENTO': 'EVENTO',
+        'RESOLVER_CONVERSACION': 'DIALOGO',
+        'BALANCE_MES': 'RESULTADO',
+        'FINALIZADA': 'FIN'
+      };
+      estado.fase = faseMap[run.fase_actual] || 'DRAFT';
+    }
+
+    async function syncEstadoConAPI() {
+      let dataSetup = null;
+      let dataActiva = null;
+
+      try {
+        // 1. Obtener los 5 personajes y 5 cartas ofrecidas para el día
+        const resSetup = await fetch(`${API_BASE}/setup?date=${TODAY}`);
+        if (!resSetup.ok) throw new Error("No se pudo obtener el setup del día: " + resSetup.status);
+        dataSetup = await resSetup.json();
+
+        estado.setupPersonajes = dataSetup.personajes_ofrecidos || [];
+        estado.setupCartas = dataSetup.cartas_ofrecidas || [];
+
+        // 2. Si hay partida activa, recuperar estado exacto
+        if (dataSetup.tiene_partida_activa) {
+          const resActiva = await fetch(`${API_BASE}/activa?date=${TODAY}`);
+          if (resActiva.ok) {
+            dataActiva = await resActiva.json();
+          }
+        }
+      } catch (networkErr) {
+        console.error("Error de conexión con API:", networkErr);
+        alert("⚠️ No se pudo conectar con http://localhost:8080.\nVerificá que el backend esté corriendo o utilizá el 'Modo Simulación Offline'.");
+        estado.modo = 'simulado';
+        document.getElementById('selectModo').value = 'simulado';
+        renderFase();
+        actualizarBarras();
+        return;
+      }
+
+      // 3. Renderizar partida viva o pantalla de setup
+      try {
+        if (dataActiva) {
+          mapearRespuestaAPI(dataActiva);
+        } else if (dataSetup) {
+          estado.mes = 1;
+          estado.fase = 'SETUP';
+          estado.recursos = { ...dataSetup.atributos_iniciales };
+          estado.corte = [];
+          estado.cartas = [];
+          estado.setupSeleccionPJ = [];
+          estado.setupSeleccionCartas = [];
+        }
+        renderFase();
+        actualizarBarras();
+      } catch (renderErr) {
+        console.error("Error al renderizar estado de partida:", renderErr);
+      }
+    }
+
+    async function comenzarPartidaSetup() {
+      if (estado.modo === 'api') {
+        try {
+          const res = await fetch(`${API_BASE}/iniciar`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              date: TODAY,
+              corte_elegida_ids: estado.setupSeleccionPJ,
+              cartas_iniciales_ids: estado.setupSeleccionCartas
+            })
+          });
+          if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.detail || "Error al iniciar partida");
+          }
+          const data = await res.json();
+          mapearRespuestaAPI(data);
+          renderFase();
+          return;
+        } catch (e) {
+          alert("Error de API: " + e.message);
+          return;
+        }
+      }
+      // Modo simulado
+      estado.fase = 'DRAFT';
+      renderFase();
+    }
+
+    async function elegirCartaDraft(nombreOCartaId, recurso, delta) {
+      if (estado.modo === 'api') {
+        try {
+          // Si vino de la API real, usar el ID de la carta
+          const cartaId = typeof nombreOCartaId === 'string' && nombreOCartaId.startsWith('card_') 
+            ? nombreOCartaId 
+            : (estado.apiData?.cartas_draft_actual?.[0]?._id || 'card_diezmo_comercial');
+
+          const res = await fetch(`${API_BASE}/elegir-carta-mes`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ date: TODAY, carta_id: cartaId })
+          });
+          if (!res.ok) throw new Error((await res.json()).detail);
+          const data = await res.json();
+          mapearRespuestaAPI(data);
+          renderFase();
+          return;
+        } catch (e) {
+          alert("Error de API: " + e.message);
+          return;
+        }
+      }
+      // Modo simulado
+      estado.recursos[recurso] = Math.min(100, estado.recursos[recurso] + delta);
+      estado.cartas.push({ id: 'card_nueva', nombre: nombreOCartaId, tag: 'adquirida', icon: '✨' });
+      estado.fase = 'EVENTO';
+      renderFase();
+    }
+
+    async function tomarDecisionEvento(opcion) {
+      if (estado.modo === 'api') {
+        try {
+          let opcionId = opcion;
+          if (opcion === 'A') opcionId = 'op_a';
+          else if (opcion === 'B') opcionId = 'op_b';
+          else if (opcion === 'C') opcionId = 'op_c';
+
+          const res = await fetch(`${API_BASE}/decidir-evento`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ date: TODAY, opcion_id: opcionId })
+          });
+          if (!res.ok) throw new Error((await res.json()).detail);
+          const data = await res.json();
+          mapearRespuestaAPI(data);
+          if (data.resultado_actual) {
+            estado.fase = 'RESULTADO';
+          }
+          renderFase();
+          return;
+        } catch (e) {
+          alert("Error de API: " + e.message);
+          return;
+        }
+      }
+      // Modo simulado
+      if (opcion === 'A') {
+        estado.recursos.pueblo += 15;
+        estado.recursos.ejercito += 10;
+      } else if (opcion === 'B') {
+        estado.recursos.oro -= 15;
+        estado.recursos.pueblo += 20;
+      } else if (opcion === 'C') {
+        estado.recursos.pueblo += 25;
+        estado.recursos.fe += 10;
+      }
+      estado.fase = 'RESULTADO';
+      renderFase();
+    }
+
+    async function continuarTrasResultado() {
+      if (estado.modo === 'api') {
+        // En la API, si había diálogo ya se pasó a RESOLVER_CONVERSACION
+        // Si no había diálogo, pasamos directo a avanzar_mes
+        if (estado.apiData?.conversacion_actual) {
+          estado.fase = 'DIALOGO';
+          renderFase();
+        } else {
+          await avanzarMesSiguiente();
+        }
+        return;
+      }
+      // Modo simulado
+      if (Math.random() < 0.7) {
+        estado.fase = 'DIALOGO';
+      } else {
+        avanzarMesSiguiente();
+      }
+      renderFase();
+    }
+
+    async function responderDialogo(opcion) {
+      if (estado.modo === 'api') {
+        try {
+          const conv = estado.apiData?.conversacion_actual;
+          const decisiones = conv?.decisiones || conv?.opciones || [];
+          const decElegida = decisiones.find(d => (d.opcion !== undefined ? d.opcion : d.opcion_numero) === opcion);
+
+          const res = await fetch(`${API_BASE}/responder-conversacion`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ date: TODAY, opcion_numero: opcion })
+          });
+          if (!res.ok) throw new Error((await res.json()).detail);
+          const data = await res.json();
+          mapearRespuestaAPI(data);
+
+          if (decElegida) {
+            estado.dialogoResultado = {
+              titulo: conv.titulo,
+              texto: decElegida.resultado_texto,
+              decisionTexto: decElegida.texto,
+              impacto_afinidad: decElegida.impacto_afinidad
+            };
+            estado.fase = 'DIALOGO_RESULTADO';
+            renderFase();
+            return;
+          }
+
+          await avanzarMesSiguiente();
+          return;
+        } catch (e) {
+          alert("Error de API: " + e.message);
+          return;
+        }
+      }
+      // Modo simulado
+      if (opcion === 1) {
+        estado.corte[0].afinidad = Math.min(100, estado.corte[0].afinidad + 15);
+        estado.corte[1].afinidad = Math.max(0, estado.corte[1].afinidad - 10);
+      } else {
+        estado.corte[1].afinidad = Math.min(100, estado.corte[1].afinidad + 15);
+        estado.corte[0].afinidad = Math.max(0, estado.corte[0].afinidad - 10);
+      }
+      avanzarMesSiguiente();
+    }
+
+    async function avanzarMesSiguiente() {
+      if (estado.modo === 'api') {
+        try {
+          const res = await fetch(`${API_BASE}/avanzar-mes`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ date: TODAY })
+          });
+          if (!res.ok) throw new Error((await res.json()).detail);
+          const data = await res.json();
+          mapearRespuestaAPI(data);
+          renderFase();
+          return;
+        } catch (e) {
+          alert("Error de API: " + e.message);
+          return;
+        }
+      }
+      // Modo simulado
+      if (estado.mes >= 12) {
+        estado.fase = 'FIN';
+      } else {
+        estado.mes += 1;
+        estado.fase = 'DRAFT';
+      }
+      renderFase();
+    }
+
+    async function reiniciarPartida() {
+      if (estado.modo === 'api') {
+        try {
+          await fetch(`${API_BASE}/reiniciar`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ date: TODAY })
+          });
+        } catch (e) {
+          console.error("Error al reiniciar en backend:", e);
+        }
+        await syncEstadoConAPI();
+        return;
+      }
+      // Modo simulado
+      estado.mes = 1;
+      estado.fase = 'SETUP';
+      estado.recursos = { oro: 50, pueblo: 50, ejercito: 50, fe: 50 };
+      estado.corte = [];
+      estado.cartas = [];
+      estado.setupSeleccionPJ = [];
+      estado.setupSeleccionCartas = [];
+      renderFase();
+      actualizarBarras();
+    }
+
+    async function cambiarModo(nuevoModo) {
+      estado.modo = nuevoModo;
+      if (nuevoModo === 'api') {
+        await syncEstadoConAPI();
+      } else {
+        renderFase();
+        actualizarBarras();
+      }
+    }
+
+    // Inicializar al cargar conectando directamente con la API
+    if (estado.modo === 'api') {
+      syncEstadoConAPI();
+    } else {
+      renderFase();
+    }
+  </script>
+</body>
+</html>

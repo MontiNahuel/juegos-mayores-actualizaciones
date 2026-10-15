@@ -19,7 +19,9 @@ import {
   RefreshIcon,
   TagIcon,
   CalendarIcon,
+  BookOpenIcon,
 } from './Icons';
+import NarrativeAdminModal from './narrative/NarrativeAdminModal';
 import { OPERADOR_STORAGE_KEY } from './LoginSistemas';
 
 export default function PanelAltasSistemas() {
@@ -101,6 +103,9 @@ export default function PanelAltasSistemas() {
   const [generandoMes, setGenerandoMes] = useState(null);
   const [errorDesafios, setErrorDesafios] = useState('');
   const [exitoDesafios, setExitoDesafios] = useState('');
+
+  // Estado para Modal del Juego Narrativo
+  const [modalNarrativoAbierto, setModalNarrativoAbierto] = useState(false);
 
   const cargarEstadoDesafios = async (anio = desafiosAnio, juego = desafiosJuego) => {
     setCargandoDesafios(true);
@@ -729,6 +734,14 @@ export default function PanelAltasSistemas() {
             >
               <CalendarIcon size={15} />
               <span>Desafíos Diarios</span>
+            </button>
+
+            <button
+              onClick={() => setModalNarrativoAbierto(true)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs transition shadow-xs cursor-pointer"
+            >
+              <BookOpenIcon size={15} />
+              <span>Juego Narrativo</span>
             </button>
 
             <button
@@ -1733,6 +1746,11 @@ export default function PanelAltasSistemas() {
           </div>
         </div>
       )}
+      {/* MODAL JUEGO NARRATIVO */}
+      <NarrativeAdminModal
+        abierto={modalNarrativoAbierto}
+        onCerrar={() => setModalNarrativoAbierto(false)}
+      />
     </div>
   );
 }

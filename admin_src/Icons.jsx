@@ -153,3 +153,88 @@ export const CalendarIcon = ({ size = 16, className = '', ...props }) => (
   </svg>
 );
 
+export const BookOpenIcon = ({ size = 16, className = '', ...props }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" {...defaultProps} className={`flex-shrink-0 ${className}`} {...props}>
+    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+  </svg>
+);
+
+export const CrownIcon = ({ size = 16, className = '', ...props }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" {...defaultProps} className={`flex-shrink-0 ${className}`} {...props}>
+    <path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14v2H5v-2z" />
+  </svg>
+);
+
+export const LayersIcon = ({ size = 16, className = '', ...props }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" {...defaultProps} className={`flex-shrink-0 ${className}`} {...props}>
+    <polygon points="12 2 2 7 12 12 22 7 12 2" />
+    <polyline points="2 17 12 22 22 17" />
+    <polyline points="2 12 12 17 22 12" />
+  </svg>
+);
+
+export const TrashIcon = ({ size = 16, className = '', ...props }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" {...defaultProps} className={`flex-shrink-0 ${className}`} {...props}>
+    <polyline points="3 6 5 6 21 6" />
+    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+    <line x1="10" y1="11" x2="10" y2="17" />
+    <line x1="14" y1="11" x2="14" y2="17" />
+  </svg>
+);
+
+export const CoinsIcon = ({ size = 16, className = '', ...props }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" {...defaultProps} className={`flex-shrink-0 ${className}`} {...props}>
+    <circle cx="8" cy="8" r="6" />
+    <path d="M18.09 10.37A6 6 0 1 1 10.34 18" />
+    <path d="M7 6h1v4H7" />
+    <path d="m16.71 13.88.7.71-2.82 2.82" />
+  </svg>
+);
+
+export const HeartIcon = ({ size = 16, className = '', ...props }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" {...defaultProps} className={`flex-shrink-0 ${className}`} {...props}>
+    <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+  </svg>
+);
+
+export const SparklesIcon = ({ size = 16, className = '', ...props }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" {...defaultProps} className={`flex-shrink-0 ${className}`} {...props}>
+    <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+    <path d="M5 3v4" />
+    <path d="M19 17v4" />
+    <path d="M3 5h4" />
+    <path d="M17 19h4" />
+  </svg>
+);
+
+export const FilterIcon = ({ size = 16, className = '', ...props }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" {...defaultProps} className={`flex-shrink-0 ${className}`} {...props}>
+    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+  </svg>
+);
+
+export const ChevronRightIcon = ({ size = 16, className = '', ...props }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" {...defaultProps} className={`flex-shrink-0 ${className}`} {...props}>
+    <polyline points="9 18 15 12 9 6" />
+  </svg>
+);
+
+export const MessageSquareIcon = ({ size = 16, className = '', ...props }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" {...defaultProps} className={`flex-shrink-0 ${className}`} {...props}>
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+  </svg>
+);
+
+export const FileTextIcon = ({ size = 16, className = '', ...props }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" {...defaultProps} className={`flex-shrink-0 ${className}`} {...props}>
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+    <polyline points="14 2 14 8 20 8" />
+    <line x1="16" y1="13" x2="8" y2="13" />
+    <line x1="16" y1="17" x2="8" y2="17" />
+    <polyline points="10 9 9 9 8 9" />
+  </svg>
+);
+
+
+
