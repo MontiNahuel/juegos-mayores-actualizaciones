@@ -8,6 +8,8 @@ import SudokuCalendar from './JUEGOS/SUDOKU/SudokuCalendar';
 import SudokuGame from './JUEGOS/SUDOKU/SudokuGame';
 import CrucigramaCalendar from './JUEGOS/CRUCIGRAMA/CrucigramaCalendar';
 import CrucigramaGame from './JUEGOS/CRUCIGRAMA/CrucigramaGame';
+import KingsCourtCalendar from './JUEGOS/NARRATIVO/KingsCourtCalendar';
+import KingsCourt from './JUEGOS/NARRATIVO/KingsCourt';
 
 const AppRoutes = () => (
   <BrowserRouter>
@@ -21,6 +23,8 @@ const AppRoutes = () => (
       <Route path="/juegos/sudoku/jugar" element={<SudokuGame />} />
       <Route path="/juegos/crucigrama" element={<CrucigramaCalendar />} />
       <Route path="/juegos/crucigrama/jugar" element={<CrucigramaGame />} />
+      <Route path="/juegos/kings-court" element={<KingsCourtCalendar />} />
+      <Route path="/juegos/kings-court/jugar" element={<KingsCourt />} />
       <Route path="/" element={<Navigate to="/menu" replace />} />
       <Route path="*" element={<Navigate to="/menu" replace />} />
     </Routes>

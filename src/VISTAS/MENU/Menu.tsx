@@ -2,7 +2,7 @@ import React from 'react';
 import type { CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
-import { bookOutline, gridOutline, navigateOutline, searchOutline, textOutline } from 'ionicons/icons';
+import { bookOutline, gridOutline, peopleOutline, searchOutline, textOutline } from 'ionicons/icons';
 import { BrainIcon } from '../COMPONENTS/Icons/Icons';
 import MenuCard, { type GameGroup, type MenuCardGame } from './MenuCard';
 import LoginHeader from '../LOGIN/LoginHeader';
@@ -39,9 +39,9 @@ const games: MenuCardGame[] = [
     icon: bookOutline, accent: color.coral, available: true,
   },
   {
-    id: 'ruta-postal', group: 'Narrativos', title: 'La ruta postal', skill: 'Atención visual',
-    description: 'Seguí un recorrido y encontrá las señales importantes en pantalla.',
-    icon: navigateOutline, accent: color.teal,
+    id: 'kings-court', group: 'Narrativos', title: "King's Court", skill: 'Decisión y memoria',
+    description: 'Elegí a los miembros de tu corte para comenzar la historia.',
+    icon: peopleOutline, accent: color.teal, available: true,
   },
 ];
 
@@ -70,6 +70,7 @@ const Menu: React.FC = () => {
     if (id === 'sopa-letras') navigate('/juegos/sopa-letras');
     if (id === 'sudoku') navigate('/juegos/sudoku');
     if (id === 'crucigrama') navigate('/juegos/crucigrama');
+    if (id === 'kings-court') navigate('/juegos/kings-court');
   };
 
   return (
