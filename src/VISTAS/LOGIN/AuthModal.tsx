@@ -78,7 +78,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
       try {
         data = await tryFetch('/api/auth/ingresar-codigo');
       } catch {
-        data = await tryFetch('http://localhost:8080/api/auth/ingresar-codigo');
+        data = await tryFetch('http://10.16.2.19:8080/api/auth/ingresar-codigo');
       }
 
       if (data && data.success && data.user) {
@@ -140,7 +140,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
         data = await tryRegister('/api/auth/register');
       } catch (err: any) {
         try {
-          data = await tryRegister('http://localhost:8080/api/auth/register');
+          data = await tryRegister('http://10.16.2.19:8080/api/auth/register');
         } catch {
           throw err;
         }
@@ -202,7 +202,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
         data = await tryVerify('/api/auth/verificar-codigo-registro');
       } catch (err: any) {
         try {
-          data = await tryVerify('http://localhost:8080/api/auth/verificar-codigo-registro');
+          data = await tryVerify('http://10.16.2.19:8080/api/auth/verificar-codigo-registro');
         } catch {
           throw err;
         }
@@ -259,7 +259,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
         data = await tryResend('/api/auth/reenviar-codigo-registro');
       } catch (err: any) {
         try {
-          data = await tryResend('http://localhost:8080/api/auth/reenviar-codigo-registro');
+          data = await tryResend('http://10.16.2.19:8080/api/auth/reenviar-codigo-registro');
         } catch {
           throw err;
         }

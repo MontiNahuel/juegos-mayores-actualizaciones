@@ -40,7 +40,7 @@ async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T |
     return await tryUrl(endpoint);
   } catch {
     try {
-      return await tryUrl(`http://localhost:8080${endpoint}`);
+      return await tryUrl(`http://10.16.2.19:8080${endpoint}`);
     } catch {
       return null;
     }
