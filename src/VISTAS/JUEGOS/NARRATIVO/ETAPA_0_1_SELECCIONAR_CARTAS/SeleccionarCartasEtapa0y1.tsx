@@ -1,11 +1,17 @@
 // Permite elegir las cartas de preparacion o la carta mensual.
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import CartaSeleccionableEtapa0y1 from './CartaSeleccionableEtapa0y1';
+import shuffleCartas from './shuffleCartas';
 
 // ETAPA 0 y 1: elige la corte inicial o una carta mensual.
 export default function SeleccionarCartasEtapa0y1({ titulo, descripcion, cartas, cantidad, onConfirmar }: any) {
   const [seleccion, setSeleccion] = useState<any[]>([]);
   const [confirmando, setConfirmando] = useState(false);
+  const mazo = useRef<HTMLDivElement>(null);
+  const tanda = `${titulo}:${cartas.map((carta: any) => carta.id).join(',')}`;
+
+  // Reparte antes de pintar cada tanda nueva; seleccionar una carta no reinicia el shuffle.
+  useLayoutEffect(() => shuffleCartas(mazo.current), [tanda]);
 
   // Agrega o quita una carta sin superar la cantidad pedida.
   const seleccionar = (carta: any) => {
@@ -46,7 +52,7 @@ export default function SeleccionarCartasEtapa0y1({ titulo, descripcion, cartas,
         {seleccion.length} de {cantidad} seleccionados
       </p>
 
-      <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div ref={mazo} className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {cartas.map((carta: any) => {
           const selected = seleccion.some((item) => item.id === carta.id);
 
