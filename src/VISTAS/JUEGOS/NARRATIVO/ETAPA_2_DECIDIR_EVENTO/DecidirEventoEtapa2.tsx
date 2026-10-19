@@ -1,12 +1,15 @@
-import type { EventoApi } from './narrativeService';
+// Presenta el evento mensual y sus decisiones disponibles.
+import type { EventoApi } from '../narrativeService';
 
-export default function EventoActual({ evento, atributos, onElegir }: {
+// ETAPA 2: muestra el evento y envia la decision elegida.
+export default function ResolverEventoEtapa2({ evento, atributos, onElegir }: {
   evento: EventoApi;
   atributos: Record<string, number>;
   onElegir: (opcionId: string) => void;
 }) {
   return (
     <section className="p-6">
+      // mapea las estadisticas del jugador y las muestra en una barra de progreso.
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {Object.entries(atributos).map(([clave, valor]) => {
 
@@ -29,6 +32,7 @@ export default function EventoActual({ evento, atributos, onElegir }: {
       <p className="mt-4 text-slate-700">{evento.descripcion}</p>
 
       <div className="mt-4 grid gap-3">
+        // mapea las opciones posibles 
         {evento.opciones.filter((opcion) => !opcion.bloqueada).map((opcion) => (
           <button className="rounded border border-slate-400 p-4 text-left" key={opcion.id} onClick={() => onElegir(opcion.id)}>
             {opcion.texto}

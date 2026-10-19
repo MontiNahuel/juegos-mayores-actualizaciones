@@ -1,70 +1,79 @@
-import { IonContent, IonPage } from '@ionic/react';
+// Coordina las etapas de Kings Court usando el estado local del jugador.
 import { useEffect, useState } from 'react';
-import { useDispatch } from 'react-redux';
-import { useLocation } from 'react-router-dom';
-import { actualizarAtributos } from '../../../store/narrativoSelectionSlice';
-import { GameHeader } from '../../COMPONENTS/GameHeader';
-import CardSelection from './CARDSELECTION/CardSelection';
-import type { CardData } from './CARDSELECTION/card';
-import ConversacionActual from './ConversacionActual';
-import EventoActual from './EventoActual';
-import ResultadoActual from './ResultadoActual';
+import { IonContent, IonPage } from '@ionic/react';
+import { useDispatch, useSelector, useStore } from 'react-redux';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
-  avanzarMes,
+  avanzarMes as avanzarMesLocal,
+  elegirCarta,
+  finalizarPartida,
+  guardarCartasDraft,
+  guardarCartasIniciales,
+  guardarCorte,
+  guardarPersonajesCorte,
+  guardarResultado,
+  iniciarJugador,
+  limpiarResultado,
+  mostrarConversacion,
+  mostrarEvento,
+  registrarDecisionEvento,
+  reiniciarSeleccionNarrativa,
+  resolverConversacion,
+} from '../../../store/narrativoSelectionSlice';
+import SeleccionarCartasEtapa0y1 from './ETAPA_0_1_SELECCIONAR_CARTAS/SeleccionarCartasEtapa0y1';
+import DecidirEventoEtapa2 from './ETAPA_2_DECIDIR_EVENTO/DecidirEventoEtapa2';
+import ResponderConversacionEtapa3 from './ETAPA_3_RESPONDER_CONVERSACION/ResponderConversacionEtapa3';
+import MostrarResultadoEtapa4 from './ETAPA_4_MOSTRAR_RESULTADO/MostrarResultadoEtapa4';
+import EstadisticasPartidaEtapa5 from './ETAPA_5_ESTADISTICAS_PARTIDA/EstadisticasPartidaEtapa5';
+import {
+  avanzarMes as avisarAvanceMes,
   decidirEvento,
   elegirCartaMensual,
   iniciarPartida,
-  obtenerPartida,
+  obtenerCortePartida,
+  obtenerEstadoPartida,
+  obtenerHistorialPartida,
   obtenerSetup,
+  reiniciarPartida,
   responderConversacion,
-  type ConversacionApi,
-  type EstadoPartida,
-  type FinalizacionApi,
-  type SetupPartida,
 } from './narrativeService';
 
-type ChallengeState = { challenge?: { dateKey?: string } };
-type Decision = ConversacionApi['decisiones'][number];
+const IMAGENES = 'http://10.16.2.19:8080';
 
-const crearFinalizacion = (recursos: Record<string, number>): FinalizacionApi => {
-  const recursoAgotado = Object.entries(recursos).find(([, valor]) => valor <= 0)?.[0];
-  const derrota = Boolean(recursoAgotado);
+// Normaliza las cartas y personajes para que todas las etapas usen el mismo id.
+const prepararCarta = (item: any) => ({
+  ...item,
+  id: item.id || item._id,
+  nombre: item.nombre || item.titulo,
+  imagen: item.imagen?.startsWith('/') ? `${IMAGENES}${item.imagen}` : item.imagen,
+});
+
+// Crea un cierre local si un recurso se agota y aun no llego su texto final.
+const finalPorRecurso = (recursos: any) => {
+  const recurso = Object.entries(recursos).find(([, valor]) => Number(valor) <= 0)?.[0];
+  if (!recurso) return null;
 
   return {
-    _id: derrota ? `fin_${recursoAgotado}_cero` : 'fin_victoria',
-    recurso_clave: recursoAgotado || null,
-    tipo: derrota ? 'derrota_recurso' : 'victoria_tiempo',
-    titulo: derrota ? `El reino se quedó sin ${recursoAgotado}` : 'El reinado llega a su fin',
-    texto: derrota ? `El recurso ${recursoAgotado} llegó a cero y el reino no pudo sostenerse.` : 'La corte superó los doce meses de reinado.',
-    imagen: '/assets/narrative/finalizaciones/default.webp',
-    rango: derrota ? 'F' : null,
+    _id: `fin_${recurso}_cero`,
+    recurso_clave: recurso,
+    tipo: 'derrota_recurso',
+    titulo: `El reino perdio ${recurso}`,
+    texto: `El valor de ${recurso} llego a cero. La corte no pudo sostener el reino.`,
+    imagen: '',
+    rango: 'F',
   };
 };
 
-const toCard = (item: { _id: string; nombre: string; descripcion: string; imagen: string; categoria?: string; titulo?: string }): CardData => ({
-  id: item._id,
-  nombre: item.nombre,
-  descripcion: item.descripcion,
-  imagen: item.imagen,
-  categoria: item.categoria === 'personaje' ? 'Personaje' : item.categoria || item.titulo,
-});
-
-function ConsecuenciaConversacion({ decision, partida, onContinuar }: {
-  decision: Decision;
-  partida: EstadoPartida;
-  onContinuar: () => void;
-}) {
-  const nombres = new Map(partida.personajes_corte.map(({ _id, nombre }) => [_id, nombre]));
-
+// Muestra el efecto local de una conversacion antes de continuar el mes.
+function ConsecuenciaConversacion({ decision, personajes, onContinuar }: any) {
   return (
     <section className="mx-auto max-w-2xl p-6 text-center">
-      <p className="text-sm font-medium text-slate-500">Consecuencia de la conversación</p>
-      <h2 className="mt-2 text-2xl font-bold">Decisión tomada</h2>
-      <p className="mt-5 text-slate-700">{decision.resultado_texto}</p>
-      <div className="mt-6 grid gap-2 text-left">
-        {decision.impacto_afinidad.map(({ personaje_id, delta }) => (
-          <p className="rounded border border-slate-200 bg-slate-50 p-3" key={personaje_id}>
-            Afinidad con {nombres.get(personaje_id) || personaje_id}: <strong>{delta > 0 ? '+' : ''}{delta}</strong>
+      <p className="text-sm font-medium text-slate-500">Consecuencia</p>
+      <h2 className="mt-1 text-2xl font-bold text-slate-900">{decision.resultado_texto || 'La corte escucho tu decision.'}</h2>
+      <div className="mt-6 space-y-2 rounded-lg border border-amber-200 bg-amber-50 p-4 text-left">
+        {decision.impacto_afinidad?.map((impacto: any) => (
+          <p key={impacto.personaje_id}>
+            {impacto.personaje_nombre || impacto.nombre || personajes.find((personaje: any) => personaje._id === impacto.personaje_id || personaje.id === impacto.personaje_id)?.nombre || 'Personaje'}: {impacto.delta > 0 ? '+' : ''}{impacto.delta} afinidad
           </p>
         ))}
       </div>
@@ -73,95 +82,293 @@ function ConsecuenciaConversacion({ decision, partida, onContinuar }: {
   );
 }
 
+// Controla cada etapa sin reemplazar al jugador con respuestas del servidor.
 export default function KingsCourt() {
-  const challenge = (useLocation().state as ChallengeState | null)?.challenge;
+  const challenge = (useLocation().state as any)?.challenge;
   const date = challenge?.dateKey || new Date().toISOString().slice(0, 10);
+  const navigate = useNavigate();
   const dispatch = useDispatch();
-  const [setup, setSetup] = useState<SetupPartida | null>(null);
-  const [partida, setPartida] = useState<EstadoPartida | null>(null);
-  const [corte, setCorte] = useState<CardData[]>([]);
-  const [etapa, setEtapa] = useState<'corte' | 'cartas'>('corte');
-  const [resultadoVisto, setResultadoVisto] = useState(false);
-  const [decision, setDecision] = useState<Decision | null>(null);
+  const store = useStore();
+  const juego = useSelector((state: any) => state.narrativoSelection);
+  const [setup, setSetup] = useState<any>(null);
+  const [personajesDisponibles, setPersonajesDisponibles] = useState<any[]>([]);
+  const [decisionConversacion, setDecisionConversacion] = useState<any>(null);
+  const [conversacionPendiente, setConversacionPendiente] = useState<any>(null);
+  const [estadisticas, setEstadisticas] = useState<any>(null);
+  const [cargandoEstadisticas, setCargandoEstadisticas] = useState(false);
+  const [reiniciando, setReiniciando] = useState(false);
   const [error, setError] = useState('');
 
-  const guardarPartida = (estado: EstadoPartida) => {
-    setPartida(estado);
-    setResultadoVisto(false);
-    dispatch(actualizarAtributos(estado.run.recursos));
-  };
+  // Lee la foto mas reciente del jugador despues de cada accion de Redux.
+  const jugadorActual = () => (store.getState() as any).narrativoSelection.jugador;
 
-  // Todas las decisiones del jugador actualizan el mismo estado de partida.
-  const actualizarPartida = async (operacion: () => Promise<EstadoPartida>, mensaje = 'No se pudo actualizar la partida.') => {
+  // Informa errores de red sin revertir las decisiones tomadas localmente.
+  const pedir = async (accion: any, mensaje: string) => {
     try {
       setError('');
-      guardarPartida(await operacion());
-      return true;
-    } catch {
-      setError(mensaje);
-      return false;
+      return await accion();
+    } catch (error: any) {
+      setError(`${mensaje}${error?.message ? ` ${error.message}` : ''}`);
+      return null;
     }
   };
 
+  // Recupera solo la pantalla pendiente cuando el servidor ya avanzo de fase.
+  const recuperarFaseServidor = async () => {
+    try {
+      const estado = await obtenerEstadoPartida(date);
+
+      if (estado.finalizacion) dispatch(finalizarPartida(estado.finalizacion));
+      else if (estado.resultado_actual) dispatch(guardarResultado(estado.resultado_actual));
+      else if (estado.conversacion_actual) dispatch(mostrarConversacion(estado.conversacion_actual));
+      else if (estado.evento_actual) dispatch(mostrarEvento(estado.evento_actual));
+      else if (estado.cartas_draft_actual) dispatch(guardarCartasDraft(estado.cartas_draft_actual.map(prepararCarta)));
+    } catch {
+      // Conserva el error original si tampoco se puede recuperar la fase.
+    }
+  };
+
+  // Borra esta prueba en servidor y Redux antes de volver al calendario.
+  const salirDePrueba = async () => {
+    if (reiniciando) return;
+
+    setReiniciando(true);
+    const data = await pedir(
+      () => reiniciarPartida(date),
+      'No se pudo reiniciar la partida de prueba.'
+    );
+
+    if (data) {
+      dispatch(reiniciarSeleccionNarrativa());
+      navigate('/juegos/kings-court', { replace: true });
+    }
+
+    setReiniciando(false);
+  };
+
+  // Carga solo la configuracion necesaria para comenzar una partida nueva.
   useEffect(() => {
     const cargar = async () => {
-      try {
-        const data = await obtenerSetup(date);
-        setSetup(data);
-        dispatch(actualizarAtributos(data.atributos_iniciales));
-        if (data.tiene_partida_activa) guardarPartida(await obtenerPartida(date));
-      } catch {
-        setError('No se pudo cargar el desafío narrativo de hoy.');
+      const data = await pedir(() => obtenerSetup(date), 'No se pudo cargar el desafio de hoy.');
+      if (!data) return;
+
+      setSetup(data);
+      setPersonajesDisponibles(data.personajes_ofrecidos.map(prepararCarta));
+      if (jugadorActual().date !== date) {
+        dispatch(iniciarJugador({
+          date,
+          universo_id: data.universo_id || data.personajes_ofrecidos?.[0]?.universo_id || 'corte_medieval',
+          recursos: data.atributos_iniciales || { oro: 50, pueblo: 50, ejercito: 50, fe: 50 },
+        }));
       }
+
+      if (!data.tiene_partida_activa) return;
+
+      const [estado, corte] = await Promise.all([
+        pedir(() => obtenerEstadoPartida(date), 'No se pudo recuperar el contenido de la partida activa.'),
+        pedir(() => obtenerCortePartida(date), 'No se pudo recuperar la corte de la partida activa.'),
+      ]);
+      if (!estado) return;
+
+      if (corte?.corte) dispatch(guardarPersonajesCorte(corte.corte.map(({ personaje }: any) => prepararCarta(personaje))));
+
+      // Solo toma el contenido necesario para mostrar la fase. El jugador sigue local.
+      if (estado.cartas_draft_actual) dispatch(guardarCartasDraft(estado.cartas_draft_actual.map(prepararCarta)));
+      else if (estado.evento_actual) dispatch(mostrarEvento(estado.evento_actual));
+      else if (estado.conversacion_actual) dispatch(mostrarConversacion(estado.conversacion_actual));
+      else if (estado.finalizacion) dispatch(finalizarPartida(estado.finalizacion));
     };
 
     void cargar();
   }, [date, dispatch]);
 
-  const iniciar = (cartas: CardData[]) => actualizarPartida(() =>
-    iniciarPartida(date, corte.map(({ id }) => id), cartas.map(({ id }) => id)),
-  );
-
-  const responder = async (opcion: Decision) => {
-    const respondida = await actualizarPartida(
-      () => responderConversacion(date, opcion.opcion),
-      'No se pudo guardar la decisión de la conversación.',
+  // Inicia la partida despues de guardar las cartas iniciales en Redux.
+  const comenzarPartida = async (cartas: any[]) => {
+    const data = await pedir(
+      () => iniciarPartida(date, jugadorActual().corte_activa, cartas.map((carta) => carta.id)),
+      'Las cartas quedaron elegidas, pero no se pudo pedir el siguiente draft.'
     );
-    if (respondida) setDecision(opcion);
+
+    if (!data) return;
+
+    dispatch(guardarCartasIniciales(cartas));
+    if (data.cartas_draft_actual) dispatch(guardarCartasDraft(data.cartas_draft_actual.map(prepararCarta)));
   };
 
-  if (error) return <p className="p-6 text-center text-rose-700">{error}</p>;
-  if (!setup) return <p className="p-6 text-center">Cargando desafío...</p>;
+  // Guarda la carta mensual localmente y pide solo el evento que sigue.
+  const elegirCartaDelMes = async ([carta]: any[]) => {
+    const data = await pedir(
+      () => elegirCartaMensual(date, carta.id),
+      'No se pudo seleccionar la carta.'
+    );
 
-  const recursoAgotado = partida && Object.values(partida.run.recursos).some((valor) => valor <= 0);
-  const partidaFinalizada = partida && (partida.run.status === 'game_over' || partida.run.fase_actual === 'FINALIZADA' || recursoAgotado);
-  const finalizacion = partida && (partida.finalizacion || partida.run.finalizacion || crearFinalizacion(partida.run.recursos));
-  let contenido;
+    if (!data) {
+      await recuperarFaseServidor();
+      return;
+    }
 
-  if (!partida && etapa === 'corte') {
-    contenido = <CardSelection key="corte" titulo="Elegí tu corte" descripcion="Elegí tres miembros para la corte." cartas={setup.personajes_ofrecidos.map(toCard)} cantidad={3} onConfirmar={(seleccion) => { setCorte(seleccion); setEtapa('cartas'); }} />;
-  } else if (!partida) {
-    contenido = <CardSelection key="cartas-iniciales" titulo="Elegí tus cartas" descripcion="Elegí tres cartas iniciales. Algunas pueden sumar un personaje." cartas={setup.cartas_ofrecidas.map(toCard)} cantidad={3} onConfirmar={iniciar} />;
-  } else if (partidaFinalizada) {
-    // El backend determina el fin; esta pantalla sirve tanto para victoria como derrota.
-    contenido = <ResultadoActual finalizacion={finalizacion || crearFinalizacion(partida.run.recursos)} />;
-  } else if (decision) {
-    contenido = <ConsecuenciaConversacion decision={decision} partida={partida} onContinuar={() => { setDecision(null); void actualizarPartida(() => avanzarMes(date)); }} />;
-  } else if (partida.resultado_actual && !resultadoVisto) {
-    // El resultado se lee antes de abrir la conversación que pudo disparar el evento.
-    contenido = <ResultadoActual resultado={partida.resultado_actual} onContinuar={() => partida.conversacion_actual ? setResultadoVisto(true) : void actualizarPartida(() => avanzarMes(date))} />;
-  } else if (partida.conversacion_actual) {
-    contenido = <ConversacionActual conversacion={partida.conversacion_actual} personajes={partida.personajes_corte} onElegir={responder} />;
-  } else if (partida.evento_actual) {
-    contenido = <EventoActual evento={partida.evento_actual} atributos={partida.run.recursos} onElegir={(opcionId) => void actualizarPartida(() => decidirEvento(date, opcionId))} />;
-  } else {
-    contenido = <CardSelection key={partida.cartas_draft_actual.map(({ _id }) => _id).join('-')} titulo="Carta del mes" descripcion="Elegí una de las tres cartas. Después comenzará el próximo evento." cartas={partida.cartas_draft_actual.map(toCard)} cantidad={1} onConfirmar={([carta]) => actualizarPartida(() => elegirCartaMensual(date, carta.id))} />;
-  }
+    dispatch(elegirCarta(carta));
+    if (data.evento_actual) dispatch(mostrarEvento(data.evento_actual));
+  };
+
+  // Registra la decision local y toma solo el resultado del evento elegido.
+  const decidirEventoActual = async (opcionId: string) => {
+    const evento = juego.eventoActual;
+    dispatch(registrarDecisionEvento({ evento_id: evento?.id || evento?._id, opcion_id: opcionId }));
+
+    const data = await pedir(
+      () => decidirEvento(date, opcionId),
+      'La decision fue guardada, pero no se pudo cargar su resultado.'
+    );
+
+    if (data?.resultado_actual) dispatch(guardarResultado(data.resultado_actual));
+    if (data?.conversacion_actual) setConversacionPendiente(data.conversacion_actual);
+
+    const cierreLocal = finalPorRecurso(jugadorActual().recursos);
+    if (data.finalizacion || cierreLocal) dispatch(finalizarPartida(data.finalizacion || cierreLocal));
+  };
+
+  // Avanza el mes en Redux y pide solamente el proximo draft o el final v2.
+  const avanzarAlMesSiguiente = async () => {
+    dispatch(avanzarMesLocal());
+
+    const data = await pedir(
+      () => avisarAvanceMes(date),
+      'El mes avanzo localmente, pero no se pudieron cargar las nuevas cartas.'
+    );
+
+    if (data?.finalizacion) dispatch(finalizarPartida(data.finalizacion));
+    else if (data?.cartas_draft_actual) dispatch(guardarCartasDraft(data.cartas_draft_actual.map(prepararCarta)));
+  };
+
+  // Muestra la conversacion que el motor v2 resolvio para este evento.
+  const continuarDespuesResultado = () => {
+    dispatch(limpiarResultado());
+
+    if (conversacionPendiente) {
+      dispatch(mostrarConversacion(conversacionPendiente));
+      setConversacionPendiente(null);
+      return;
+    }
+
+    void avanzarAlMesSiguiente();
+  };
+
+  // Aplica la afinidad local y registra la decision en el backend para el historial.
+  const responderConversacionActual = async (decision: any) => {
+    const conversacion = juego.conversacionActual;
+    dispatch(resolverConversacion({ conversacionId: conversacion._id, decision }));
+    setDecisionConversacion(decision);
+
+    await pedir(
+      () => responderConversacion(date, decision.opcion),
+      'La respuesta quedo aplicada localmente, pero no se pudo guardar en el historial.'
+    );
+  };
+
+  // Consulta en paralelo la foto final y la trazabilidad solo al pedir estadisticas.
+  const verEstadisticas = async () => {
+    if (cargandoEstadisticas) return;
+
+    setCargandoEstadisticas(true);
+    try {
+      setError('');
+      const [estado, historial] = await Promise.all([
+        obtenerEstadoPartida(date),
+        obtenerHistorialPartida(date),
+      ]);
+      setEstadisticas({ estado, historial });
+    } catch (error: any) {
+      setError(`No se pudieron cargar las estadisticas. ${error?.message || ''}`);
+    } finally {
+      setCargandoEstadisticas(false);
+    }
+  };
+
+  if (!setup) return (
+    <IonPage>
+      <IonContent scrollY>
+        <p className="p-6 text-slate-600">Cargando desafio narrativo...</p>
+      </IonContent>
+    </IonPage>
+  );
+
+  const jugador = juego.jugador;
+  const personajes = juego.personajesCorte;
+  const cartasIniciales = setup.cartas_ofrecidas.map(prepararCarta);
+  const finalizacion = juego.finalizacion;
+  const enConversacion = Boolean(juego.conversacionActual);
 
   return (
     <IonPage>
-      <GameHeader backLabel="Calendario" backRoute="/juegos/kings-court" title={setup.universo_nombre} />
-      <IonContent>{contenido}</IonContent>
+      <IonContent scrollY>
+        <main className={enConversacion ? 'min-h-screen bg-slate-950' : 'mx-auto min-h-full max-w-6xl bg-slate-50'}>
+      {error && <p className="mx-6 mt-6 rounded border border-amber-300 bg-amber-50 p-3 text-amber-900">{error}</p>}
+
+      {!finalizacion && !enConversacion && <div className="px-6 pt-6 text-right"><button className="rounded border border-slate-300 px-3 py-2 text-sm text-slate-700 disabled:opacity-50" disabled={reiniciando} onClick={salirDePrueba}>{reiniciando ? 'Saliendo...' : 'Salir de prueba'}</button></div>}
+
+      {estadisticas ? <EstadisticasPartidaEtapa5 estado={estadisticas.estado} historial={estadisticas.historial} onVolver={() => setEstadisticas(null)} /> : null}
+
+      {!estadisticas && finalizacion ? <MostrarResultadoEtapa4 finalizacion={finalizacion} onVerEstadisticas={verEstadisticas} cargandoEstadisticas={cargandoEstadisticas} onTerminar={salirDePrueba} reiniciando={reiniciando} /> : null}
+
+      {!estadisticas && !finalizacion && decisionConversacion ? (
+        <ConsecuenciaConversacion
+          decision={decisionConversacion}
+          personajes={personajes}
+          onContinuar={() => {
+            setDecisionConversacion(null);
+            void avanzarAlMesSiguiente();
+          }}
+        />
+      ) : null}
+
+      {!estadisticas && !finalizacion && !decisionConversacion && juego.resultadoActual ? (
+        <MostrarResultadoEtapa4 resultado={juego.resultadoActual} onContinuar={continuarDespuesResultado} />
+      ) : null}
+
+      {!estadisticas && !finalizacion && !decisionConversacion && !juego.resultadoActual && juego.conversacionActual ? (
+        <ResponderConversacionEtapa3
+          conversacion={juego.conversacionActual}
+          personajes={personajes}
+          onElegir={responderConversacionActual}
+        />
+      ) : null}
+
+      {!estadisticas && !finalizacion && !decisionConversacion && !juego.resultadoActual && !juego.conversacionActual && juego.eventoActual ? (
+        <DecidirEventoEtapa2 evento={juego.eventoActual} atributos={jugador.recursos} onElegir={decidirEventoActual} />
+      ) : null}
+
+      {!estadisticas && !finalizacion && !decisionConversacion && !juego.resultadoActual && !juego.conversacionActual && !juego.eventoActual && jugador.fase_actual === 'seleccionar_corte' ? (
+        <SeleccionarCartasEtapa0y1
+          titulo="Forma tu corte"
+          descripcion="Elegí tres personajes para comenzar el desafio."
+          cartas={personajesDisponibles}
+          cantidad={3}
+          onConfirmar={(seleccion: any[]) => dispatch(guardarCorte(seleccion))}
+        />
+      ) : null}
+
+      {!estadisticas && !finalizacion && !decisionConversacion && !juego.resultadoActual && !juego.conversacionActual && !juego.eventoActual && jugador.fase_actual === 'seleccionar_cartas' ? (
+        <SeleccionarCartasEtapa0y1
+          titulo="Prepara el reino"
+          descripcion="Elegí tres cartas para comenzar la partida."
+          cartas={cartasIniciales}
+          cantidad={3}
+          onConfirmar={comenzarPartida}
+        />
+      ) : null}
+
+      {!estadisticas && !finalizacion && !decisionConversacion && !juego.resultadoActual && !juego.conversacionActual && !juego.eventoActual && jugador.fase_actual === 'draft_mensual' ? (
+        <SeleccionarCartasEtapa0y1
+          titulo={`Mes ${jugador.mes_actual}`}
+          descripcion="Elegí una carta para afrontar el proximo evento."
+          cartas={juego.cartasDraft.map(prepararCarta)}
+          cantidad={1}
+          onConfirmar={elegirCartaDelMes}
+        />
+      ) : null}
+        </main>
+      </IonContent>
     </IonPage>
   );
 }

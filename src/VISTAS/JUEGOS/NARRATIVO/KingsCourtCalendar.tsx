@@ -1,3 +1,4 @@
+// Muestra el calendario de desafios diarios de Kings Court.
 import { DailyChallengeCalendar } from '../../COMPONENTS/CALENDAR';
 
 export default function KingsCourtCalendar() {

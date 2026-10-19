@@ -1,7 +1,8 @@
-const API = 'http://10.16.2.29:8080/api/narrative/partida';
+const API = 'http://10.16.2.19:8080/api/narrative';
 
 export interface PersonajeApi {
   _id: string;
+  universo_id?: string;
   nombre: string;
   titulo: string;
   descripcion: string;
@@ -57,22 +58,21 @@ export interface ConversacionApi {
 }
 
 export interface EstadoPartida {
-  run: {
-    recursos: Record<string, number>;
-    afinidad: Record<string, number>;
-    status: string;
-    fase_actual?: string;
-    finalizacion?: FinalizacionApi | null;
-  };
-  personajes_corte: PersonajeApi[];
-  cartas_draft_actual: CartaApi[];
-  evento_actual: EventoApi | null;
-  resultado_actual: ResultadoApi | null;
-  conversacion_actual: ConversacionApi | null;
+  mes_actual?: number;
+  fase_actual?: string;
+  status?: string;
+  recursos?: Record<string, number>;
+  afinidad?: Record<string, number>;
+  cartas_draft_actual?: CartaApi[];
+  evento_actual?: EventoApi | null;
+  resultado_actual?: ResultadoApi | null;
+  conversacion_actual?: ConversacionApi | null;
   finalizacion?: FinalizacionApi | null;
 }
 
 export interface SetupPartida {
+  date: string;
+  universo_id: string;
   atributos_iniciales: Record<string, number>;
   personajes_ofrecidos: PersonajeApi[];
   cartas_ofrecidas: CartaApi[];
@@ -80,6 +80,7 @@ export interface SetupPartida {
   tiene_partida_activa: boolean;
 }
 
+// Envia una solicitud al motor narrativo con el token disponible.
 async function request<T>(path: string, options?: RequestInit) {
   const token = localStorage.getItem('token');
   const response = await fetch(`${API}${path}`, {
@@ -87,24 +88,57 @@ async function request<T>(path: string, options?: RequestInit) {
     headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
   });
 
-  if (!response.ok) throw new Error('No se pudo cargar la partida narrativa.');
+  if (!response.ok) {
+    const detalle = await response.json().catch(() => null);
+    throw new Error(detalle?.detail || `Error ${response.status}.`);
+  }
   return response.json() as Promise<T>;
 }
 
-export const obtenerSetup = (date: string) => request<SetupPartida>(`/setup?date=${date}`);
-export const obtenerPartida = (date: string) => request<EstadoPartida>(`/activa?date=${date}`);
-export const iniciarPartida = (date: string, corte: string[], cartas: string[]) => request<EstadoPartida>('/iniciar', {
+// Carga las opciones de preparacion de la etapa 0.
+export const obtenerSetup = (date: string) => request<SetupPartida>(`/partida/setup?date=${date}`);
+
+// Lee solo el contenido de la fase activa para reanudar una partida existente.
+export const obtenerEstadoPartida = (date: string) => request<EstadoPartida>(`/v2/partida/estado?date=${date}`);
+
+// Lee el historial mensual solo al abrir las estadisticas finales.
+export const obtenerHistorialPartida = (date: string) => request<any>(`/partida/historial?date=${date}`);
+
+// Lee las cartas y tags que quedaron en la partida terminada.
+export const obtenerInventarioPartida = (date: string) => request<any>(`/partida/inventario?date=${date}`);
+
+// Lee los personajes de corte y sus afinidades finales.
+export const obtenerCortePartida = (date: string) => request<any>(`/partida/corte?date=${date}`);
+
+// Lee el rango y epilogo final guardados por el servidor.
+export const obtenerFinalizacionPartida = (date: string) => request<any>(`/partida/finalizacion?date=${date}`);
+
+// Elimina el avance de prueba para volver a la seleccion inicial.
+export const reiniciarPartida = (date: string) => request<any>('/partida/reiniciar', {
+  method: 'POST', body: JSON.stringify({ date }),
+});
+
+// Inicia el ciclo v2 y recibe solo el draft mensual.
+export const iniciarPartida = (date: string, corte: string[], cartas: string[]) => request<EstadoPartida>('/v2/partida/iniciar', {
   method: 'POST', body: JSON.stringify({ date, corte_elegida_ids: corte, cartas_iniciales_ids: cartas }),
 });
-export const elegirCartaMensual = (date: string, cartaId: string) => request<EstadoPartida>('/elegir-carta-mes', {
+
+// Pide el evento generado por la carta mensual elegida.
+export const elegirCartaMensual = (date: string, cartaId: string) => request<EstadoPartida>('/v2/partida/elegir-carta-mes', {
   method: 'POST', body: JSON.stringify({ date, carta_id: cartaId }),
 });
-export const decidirEvento = (date: string, opcionId: string) => request<EstadoPartida>('/decidir-evento', {
+
+// Pide el resultado, la conversacion o la finalizacion del evento.
+export const decidirEvento = (date: string, opcionId: string) => request<EstadoPartida>('/v2/partida/decidir-evento', {
   method: 'POST', body: JSON.stringify({ date, opcion_id: opcionId }),
 });
-export const responderConversacion = (date: string, opcionNumero: number) => request<EstadoPartida>('/responder-conversacion', {
+
+// Registra la mediacion elegida y cierra la conversacion.
+export const responderConversacion = (date: string, opcionNumero: number) => request<EstadoPartida>('/v2/partida/responder-conversacion', {
   method: 'POST', body: JSON.stringify({ date, opcion_numero: opcionNumero }),
 });
-export const avanzarMes = (date: string) => request<EstadoPartida>('/avanzar-mes', {
+
+// Cierra el balance y recibe el nuevo draft o la finalizacion.
+export const avanzarMes = (date: string) => request<EstadoPartida>('/v2/partida/avanzar-mes', {
   method: 'POST', body: JSON.stringify({ date }),
 });
