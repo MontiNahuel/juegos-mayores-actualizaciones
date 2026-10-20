@@ -1,0 +1,75 @@
+/*
+  GUIA DE TIEMPOS: 1000ms = 1 segundo.
+  animation: NOMBRE DURACION CURVA DEMORA both;
+  - DURACION: cuanto tarda la animacion completa.
+  - DEMORA: cuanto espera desde que data-intro pasa a listo, no desde el elemento anterior.
+  - ease-out: aparece rapido al inicio y termina suavemente.
+  - ease-in-out: suaviza tanto la entrada como la salida.
+  - both: mantiene el estado inicial durante la espera y el estado final al terminar.
+  Los tiempos comienzan cuando carga el fondo; esto se controla en el componente.
+*/
+
+/* Oculta los elementos antes de la entrada, conservando su espacio para evitar saltos. */
+.conversacion-escena :is(.conversacion-fondo, .conversacion-personajes) {
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* Las herramientas globales flotan sin sumar alto a la escena de conversacion. */
+.narrativo-conversacion { position: relative; }
+.narrativo-conversacion > .narrativo-herramientas {
+  position: absolute;
+  inset: max(8px, env(safe-area-inset-top)) 12px auto;
+  z-index: 60;
+}
+
+/* Reserva una sola fila para Mazo, Edad y Salir, evitando que tapen el titulo. */
+.narrativo-conversacion .conversacion-escena { padding-top: 58px; }
+
+/* FONDO: 100ms controla su fade in. Sin demora, aparece primero. */
+.conversacion-escena[data-intro="listo"] .conversacion-fondo {
+  animation: conversacion-aparecer 100ms ease-out both;
+}
+
+/* El marco y su secuencia de entrada/permanencia/salida estan en COMPARTIDOS/tituloNarrativo.css. */
+
+/* PERSONAJES: entran despues del texto para presentar la escena en orden. */
+.conversacion-escena[data-intro="listo"] .conversacion-personajes {
+  animation: conversacion-aparecer 700ms ease-out 1900ms both;
+}
+
+/* DIALOGO: conserva el fade compartido, pero aparece antes que los personajes. */
+.conversacion-dialogo[data-intro='listo'] {
+  animation-delay: 1250ms;
+}
+
+/* El cambio a un solo retrato ya no corta al personaje inactivo de golpe. */
+.conversacion-retrato {
+  transition: opacity 700ms ease-in-out, transform 700ms ease-in-out, filter 700ms ease-in-out;
+}
+
+.conversacion-retrato[data-visible='false'] {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 700ms ease-in-out, filter 700ms ease-in-out, visibility 0s linear 700ms;
+}
+
+/* Fade in compartido. opacity va de 0 (invisible) a 1 (visible). No modifica posiciones. */
+@keyframes conversacion-aparecer {
+  from { opacity: 0; visibility: hidden; }
+  to { opacity: 1; visibility: visible; }
+}
+
+/* Accesibilidad: estas reglas reemplazan los fades si el usuario pide menos movimiento. */
+@media (prefers-reduced-motion: reduce) {
+  .conversacion-escena[data-intro="listo"] :is(.conversacion-fondo, .conversacion-personajes) {
+    animation: none;
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .conversacion-dialogo[data-intro='listo'] { animation-delay: 0s; }
+  .conversacion-retrato,
+  .conversacion-retrato[data-visible='false'] { transition: none; }
+
+}

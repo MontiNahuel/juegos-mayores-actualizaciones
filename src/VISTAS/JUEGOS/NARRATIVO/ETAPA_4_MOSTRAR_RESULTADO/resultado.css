@@ -1,0 +1,75 @@
+.resultado-etapa {
+  display: flex;
+  width: 100%;
+  min-height: 100%;
+  flex-direction: column;
+  align-items: center;
+  color: #25170d;
+  text-align: center;
+}
+
+.resultado-etapa > .titulo-narrativo { width: 100%; }
+
+/* 88vw limita el papel en mobile y 44svh evita que domine pantallas bajas. */
+.resultado-pergamino {
+  width: min(88vw, 44svh, 29rem);
+  transform-origin: center;
+  transition: transform 280ms ease, filter 280ms ease;
+}
+
+/* Los margenes mantienen el texto lejos de los bordes quemados del pergamino. */
+.resultado-pergamino__contenido {
+  color: #482b19;
+  font-family: 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif;
+  line-height: 1.45;
+  mix-blend-mode: multiply;
+  opacity: .92;
+  text-shadow: .2px 0 currentColor;
+}
+
+.resultado-pergamino__contenido h3 {
+  margin: 0 0 clamp(12px, 2.5vh, 24px);
+  color: #382011;
+  font-family: Copperplate, 'Copperplate Gothic Light', 'Palatino Linotype', Georgia, serif;
+  font-size: clamp(18px, 3.6vw, 28px);
+  line-height: 1.15;
+  letter-spacing: .035em;
+}
+
+.resultado-pergamino__relato {
+  margin: 0;
+  font-size: clamp(14px, 2.5vw, 19px);
+}
+
+.resultado-pergamino__efecto {
+  margin: clamp(16px, 3vh, 28px) 0 0;
+  padding-top: 12px;
+  border-top: 1px solid #6e442777;
+  color: #53351f;
+  font-size: clamp(13px, 2.2vw, 17px);
+  font-weight: 700;
+  white-space: pre-line;
+}
+
+.resultado-pergamino__efecto[data-tipo='positivo'] { color: #31592e; }
+.resultado-pergamino__efecto[data-tipo='negativo'] { color: #792f25; }
+
+.resultado-etapa__acciones {
+  display: flex;
+  width: min(88vw, 29rem);
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+@media (hover: hover) {
+  .resultado-pergamino:hover {
+    transform: scale(1.025);
+    filter: drop-shadow(0 16px 20px #1a0d09a6);
+  }
+}
+
+@media (max-width: 480px) {
+  .resultado-etapa__acciones .boton-narrativo { flex: 1 1 100%; }
+}

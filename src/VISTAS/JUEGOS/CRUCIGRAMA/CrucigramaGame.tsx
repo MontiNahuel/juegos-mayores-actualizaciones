@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { IonPage, IonContent } from '@ionic/react';
+import { API_URL } from '../../../config/api';
 import { saveFinalGameAttempt } from '../attemptsService';
 import {
   saveActiveCrucigrama,
@@ -104,7 +105,7 @@ export const CrucigramaGame: React.FC = () => {
   const [hintMessage, setHintMessage] = useState<string | null>(null);
   const [revealedCellCoord, setRevealedCellCoord] = useState<{ r: number; c: number } | null>(null);
 
-  // 1. Cargar el desafío (prioriza state del calendario; si no, consulta con endpoints resilientes)
+  // 1. Cargar el desafio (prioriza state del calendario; si no, consulta la API configurada)
   useEffect(() => {
     let isMounted = true;
 
@@ -114,29 +115,16 @@ export const CrucigramaGame: React.FC = () => {
       // Si no vino en el state de navegación o faltan celdas, buscar en la API
       if (!config?.cells || !config?.words) {
         setLoading(true);
-        // Lista de endpoints en orden de preferencia:
-        // 1. Relativo (/api/... funciona en web, celular por proxy Vite y producción)
-        // 2. IP de la máquina local (http://<hostname>:8080/api/...)
-        // 3. Localhost fallback
-        const tryEndpoints = [
-          `/api/challenges/date/${targetDate}?game_id=crucigrama`,
-          ...((import.meta as any).env?.VITE_API_URL ? [`${(import.meta as any).env.VITE_API_URL.replace(/\/+$/, '')}/api/challenges/date/${targetDate}?game_id=crucigrama`] : []),
-
-        ];
-
-        for (const url of tryEndpoints) {
-          try {
-            const res = await fetch(url);
-            if (res.ok) {
-              const data = await res.json();
-              if (data?.config?.cells && data?.config?.words) {
-                config = data.config;
-                break;
-              }
+        try {
+          const res = await fetch(`${API_URL}/api/challenges/date/${targetDate}?game_id=crucigrama`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data?.config?.cells && data?.config?.words) {
+              config = data.config;
             }
-          } catch {
-            // Intentar siguiente endpoint
           }
+        } catch {
+          // Conserva la configuracion inicial si el backend no responde.
         }
       }
 

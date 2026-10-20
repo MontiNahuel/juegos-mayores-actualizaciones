@@ -201,3 +201,21 @@ Representa la sesión o partida individual. Sirve para guardar el progreso en ti
    * El cliente envía `POST /api/games/wordle/guess` con la palabra propuesta.
    * El backend evalúa las letras, actualiza `state.guesses` y reduce `remaining_attempts`.
    * Si acierta o agota intentos, actualiza `status` a `'completed'` o `'failed'`, y calcula la racha en `users.streaks`.
+
+---
+
+## 5. Relación con el frontend actual
+
+La interfaz actual aún no consulta esta base de datos. El catálogo de juegos vive de forma estática en `src/VISTAS/MENU/Menu.tsx` y pasa cada definición a `MenuCard.tsx` mediante la prop `game`.
+
+Cuando se conecte el backend, la respuesta de un catálogo puede alimentar el mismo contrato de tarjeta sin cambiar su estructura visual:
+
+| Campo del catálogo futuro | Uso en la interfaz actual |
+| :--- | :--- |
+| `game_id` | `game.id` y selección de ruta. |
+| `title`, `description` | Nombre y resumen visibles en `MenuCard`. |
+| `cognitive_domain` | Etiqueta de habilidad cognitiva (`game.skill`). |
+| `availability` o progreso | Habilita el botón de inicio (`game.available`). |
+| `visual_theme` opcional | Ícono y acento de color de cada juego. |
+
+La navegación hacia una partida debe permanecer en el contenedor (`Menu.tsx` o la vista que lo reemplace). `MenuCard` es presentacional: informa qué juego eligió el usuario mediante `onStart(id)` y no consulta, persiste ni interpreta datos clínicos.

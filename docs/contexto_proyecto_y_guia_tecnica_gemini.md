@@ -1,7 +1,7 @@
 # Mente Activa: Manual Técnico, Arquitectura y Contexto de Desarrollo
 
 > **Documento de Contexto y Transferencia Técnica**  
-> **Última actualización:** 7 de octubre de 2026
+> **Última actualización:** 9 de octubre de 2026
 > **Repositorio:** [juegos-mayores-actualizaciones](https://github.com/MontiNahuel/juegos-mayores-actualizaciones.git)
 
 ---
@@ -26,7 +26,9 @@ src/
 ├── App.tsx                         # Inicializa Ionic y monta las rutas
 ├── VISTAS/
 │   ├── routes.tsx                  # React Router: rutas de la aplicación
-│   ├── MENU/Menu.tsx               # Pantalla principal y catálogo de juegos
+│   ├── MENU/
+│   │   ├── Menu.tsx                # Datos del catálogo, grupos y navegación
+│   │   └── MenuCard.tsx            # Tarjeta reutilizable que recibe contenido por props
 │   ├── JUEGOS/WORDLE/WordleGame.tsx
 │   ├── COMPONENTS/Icons/Icons.tsx  # Ilustraciones e íconos reutilizables
 │   ├── LOGIN/
@@ -67,7 +69,7 @@ Para evitar el abandono de la app, se incluyen tres clásicos familiares adaptad
 ### Stack Tecnológico
 * **Framework:** React 19 + TypeScript.
 * **Bundler & Tooling:** Vite 8 con `@vitejs/plugin-react` y `@vitejs/plugin-legacy`.
-* **Estilos & Accesibilidad:** Tailwind CSS v4 (vía `@tailwindcss/vite`).
+* **Estilos & Accesibilidad:** Tailwind CSS v4 está disponible vía `@tailwindcss/vite`. El menú actual usa objetos `CSSProperties` y propiedades de Ionic, sin hojas CSS ni clases de Tailwind propias.
 * **Capa Móvil & Navegación:** Ionic 9 (`@ionic/react`, `@ionic/react-router`, `ionicons`).
 * **Puente Nativo / Runtime:** Capacitor 8 (`@capacitor/core`, `@capacitor/cli`, `@capacitor/android`).
 
@@ -75,6 +77,44 @@ Para evitar el abandono de la app, se incluyen tres clásicos familiares adaptad
 `App.tsx` solamente inicializa Ionic y renderiza `AppRoutes`. La definición de rutas y los redireccionamientos están concentrados en `src/VISTAS/routes.tsx`; las pantallas no deben crear un `BrowserRouter` propio.
 
 El menú usa `useNavigate` para abrir Wordle. Los nuevos juegos deben agregarse como una vista dentro de `src/VISTAS/JUEGOS/<NOMBRE_DEL_JUEGO>/` y registrar su ruta en `routes.tsx`.
+
+### Arquitectura actual del menú
+
+El catálogo es una composición presentacional y sin backend. `Menu.tsx` conserva el arreglo de juegos, los grupos y la decisión de navegación; `MenuCard.tsx` renderiza cada tarjeta con los datos que recibe por props. Esto permite sumar o mover juegos sin duplicar markup.
+
+```text
+games[] en Menu.tsx
+        |
+        v
+grupos "Clásicos" y "Narrativos"
+        |
+        v
+<MenuCard game={game} onStart={startGame} />
+        |
+        v
+startGame("wordle") -> /juegos/wordle
+```
+
+El contrato de `MenuCard` es deliberadamente pequeño:
+
+| Prop | Responsabilidad |
+| :--- | :--- |
+| `game` | Provee `id`, grupo, título, habilidad cognitiva, descripción, ícono, color y disponibilidad. |
+| `onStart` | Devuelve el `id` elegido al contenedor para que decida la navegación. |
+
+En el estado actual, **Palabra del día** es el único juego navegable. Sudoku, Crucigrama y La ruta postal se muestran como próximos, por lo que no simulan una funcionalidad inexistente.
+
+### Filosofía de diseño actual
+
+La interfaz busca que el entrenamiento se perciba como una actividad cotidiana, no como una evaluación clínica. Las decisiones de diseño son parte de esa intención:
+
+1. **Azul profundo y sereno:** `#294C6B` ocupa el fondo del catálogo. Da continuidad a la pantalla y evita el estímulo visual excesivo. Las superficies blancas se reservan para lectura y acciones.
+2. **Cognición visible, no medicalizada:** el cerebro y los íconos de lenguaje, lógica, lectura o atención señalan qué se ejercita. Cada tarjeta nombra la habilidad antes del título del juego.
+3. **Puerta de entrada familiar:** `Clásicos` reúne juegos reconocibles como Palabra del día y Mini-Sudoku. `Narrativos` presenta experiencias contextualizadas que invitan a observar, recordar y decidir.
+4. **Jerarquía simple:** cada tarjeta mantiene una franja visual, una explicación breve y una única acción. No hay gradientes decorativos, paneles anidados ni acciones competidoras.
+5. **Lectura y toque confiables:** el texto mantiene contraste, tamaños amplios y frases directas. Los botones indican con claridad si un juego está disponible o próximo.
+
+La cabecera web recupera la identidad de ASISTODO, el saludo y los indicadores de racha y puntos. Su función es orientar y reconocer la continuidad de uso sin desplazar el catálogo de juegos.
 
 ### Concepto de Adaptive UI (Web vs. APK Nativo)
 La aplicación utiliza un único código fuente que adapta su interfaz según el entorno de ejecución:

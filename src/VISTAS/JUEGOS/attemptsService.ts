@@ -10,6 +10,8 @@
  *    Al iniciar sesión (login normal con código existente), NO se vuelca el progreso del invitado.
  */
 
+import { API_URL } from '../../config/api';
+
 export interface ActiveGameProgress {
   gameId: string;
   date: string; // Formato: 'YYYY-MM-DD'
@@ -175,16 +177,8 @@ export async function getActiveGameProgress(
       return await res.json();
     };
 
-    let data = null;
     const url = `/api/games/attempts/date/${date}?user_id=${uid}&game_id=${gameId}`;
-    try {
-      data = await tryFetch(url);
-    } catch {
-      const apiBase = (import.meta as any).env?.VITE_API_URL?.replace(/\/+$/, '') || '';
-      if (apiBase) {
-        data = await tryFetch(`${apiBase}${url}`);
-      }
-    }
+    const data = await tryFetch(`${API_URL}${url}`);
 
     if (data && data.date) {
       const progress: ActiveGameProgress = {
@@ -279,10 +273,7 @@ export async function saveActiveGameProgress(payload: SaveProgressPayload): Prom
       });
     };
 
-    sendBackend('/api/games/attempts').catch(() => {
-      const apiBase = (import.meta as any).env?.VITE_API_URL?.replace(/\/+$/, '') || '';
-      if (apiBase) sendBackend(`${apiBase}/api/games/attempts`).catch(() => {});
-    });
+    sendBackend(`${API_URL}/api/games/attempts`).catch(() => {});
   } catch {
     // Modo offline seguro
   }
@@ -401,10 +392,7 @@ export async function saveFinalGameAttempt(payload: SaveProgressPayload): Promis
       return await res.json();
     };
 
-    sendBackend('/api/games/attempts').catch(() => {
-      const apiBase = (import.meta as any).env?.VITE_API_URL?.replace(/\/+$/, '') || '';
-      if (apiBase) sendBackend(`${apiBase}/api/games/attempts`).catch(() => {});
-    });
+    sendBackend(`${API_URL}/api/games/attempts`).catch(() => {});
   } catch {
     // Modo offline seguro
   }

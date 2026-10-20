@@ -1,0 +1,19 @@
+/* Entrada del panel inferior compartida por eventos y conversaciones:
+   600ms de fade, con 1800ms de demora desde que el fondo esta listo. */
+.narrativo-fade-dialogo { opacity: 0; visibility: hidden; }
+.narrativo-fade-dialogo[data-intro='listo'] {
+  animation: narrativo-aparecer 600ms ease-out 1800ms both;
+}
+
+@keyframes narrativo-aparecer {
+  from { opacity: 0; visibility: hidden; }
+  to { opacity: 1; visibility: visible; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .narrativo-fade-dialogo[data-intro='listo'] {
+    animation: none;
+    opacity: 1;
+    visibility: visible;
+  }
+}

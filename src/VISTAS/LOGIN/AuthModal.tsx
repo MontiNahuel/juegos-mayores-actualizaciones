@@ -12,6 +12,7 @@ import {
 } from 'ionicons/icons';
 import type { Usuario } from './LoginHeader';
 import { migrateGuestProgressToNewUser } from '../JUEGOS/attemptsService';
+import { API_URL } from '../../config/api';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -74,7 +75,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
     };
 
     try {
-      const data = await tryFetch('/api/auth/ingresar-codigo');
+      const data = await tryFetch(`${API_URL}/api/auth/ingresar-codigo`);
 
       if (data && data.success && data.user) {
         localStorage.setItem('usuario', JSON.stringify(data.user));
@@ -130,7 +131,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
     };
 
     try {
-      const data = await tryRegister('/api/auth/register');
+      const data = await tryRegister(`${API_URL}/api/auth/register`);
 
       if (data && data.success) {
         if (data.status === 'PENDIENTE_VERIFICACION') {
@@ -183,7 +184,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
     };
 
     try {
-      const data = await tryVerify('/api/auth/verificar-codigo-registro');
+      const data = await tryVerify(`${API_URL}/api/auth/verificar-codigo-registro`);
 
       if (data && data.success && data.user) {
         // Guardar sesión activa
@@ -231,7 +232,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
     };
 
     try {
-      const data = await tryResend('/api/auth/reenviar-codigo-registro');
+      const data = await tryResend(`${API_URL}/api/auth/reenviar-codigo-registro`);
 
       setResendCooldown(60);
       setInfoMessage(data?.message || `Código reenviado con éxito a ${pendingEmail}`);

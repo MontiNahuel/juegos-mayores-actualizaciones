@@ -5,6 +5,7 @@
  */
 
 import type { DayChallenge, CompletedRecord } from './types';
+import { API_URL } from '../../../config/api';
 import {
   getCurrentUserId,
   getActiveProgressStorageKey,
@@ -27,27 +28,15 @@ export interface ServerTodayInfo {
 }
 
 /**
- * Cliente HTTP unificado con soporte para endpoints relativos y fallbacks
+ * Cliente HTTP unificado usando la URL configurada para el backend.
  */
 async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T | null> {
-  const tryUrl = async (url: string) => {
-    const res = await fetch(url, options);
+  try {
+    const res = await fetch(`${API_URL}${endpoint}`, options);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return (await res.json()) as T;
-  };
-
-  try {
-    return await tryUrl(endpoint);
   } catch {
-    try {
-      const apiBase = (import.meta as any).env?.VITE_API_URL;
-      if (apiBase) {
-        return await tryUrl(`${apiBase.replace(/\/+$/, '')}${endpoint}`);
-      }
-      return null;
-    } catch {
-      return null;
-    }
+    return null;
   }
 }
 

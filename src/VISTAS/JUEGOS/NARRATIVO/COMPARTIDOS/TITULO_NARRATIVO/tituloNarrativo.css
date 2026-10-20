@@ -1,0 +1,99 @@
+.titulo-narrativo[data-intro='listo'][data-permanente='true'] .titulo-narrativo__arte {
+  /* Conserva el fade de entrada original (20% de 3800ms), sin la salida. */
+  animation: titulo-narrativo-entrar 760ms ease-in-out 100ms both;
+}
+
+@keyframes titulo-narrativo-entrar {
+  from { opacity: 0; visibility: hidden; }
+  to { opacity: 1; visibility: visible; }
+}
+
+.titulo-narrativo {
+  position: relative;
+  z-index: 40;
+  flex-shrink: 0;
+  padding: 8px;
+  text-align: center;
+}
+
+/* Conserva el espacio al retirar el titulo: no desplaza el contenido ni crea scroll. */
+.titulo-narrativo__espacio {
+  position: relative;
+  width: min(36rem, 100%);
+  aspect-ratio: 4.4 / 1;
+  margin-inline: auto;
+}
+
+.titulo-narrativo__arte {
+  position: absolute;
+  inset: 0 0 auto;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.titulo-narrativo__arte img { display: block; width: 100%; }
+
+/* Eventos: solo la placa, sin la luna. La composicion compacta deja ver el fondo. */
+.titulo-narrativo[data-variante='evento'] .titulo-narrativo__espacio {
+  width: min(30rem, 100%);
+  aspect-ratio: 4.5 / 1;
+}
+.titulo-narrativo[data-variante='evento'] .titulo-narrativo__arte { inset: 0; }
+.titulo-narrativo[data-variante='evento'] img { height: 100%; object-fit: fill; }
+.titulo-narrativo[data-variante='evento'] .titulo-narrativo__arte p { top: 50%; }
+
+/* Si falla el archivo, muestra una placa legible en lugar del icono de imagen rota. */
+.titulo-narrativo[data-marco='fallido'] .titulo-narrativo__arte {
+  inset: 0;
+  border: 1px solid #cbb789;
+  border-radius: 10px;
+  background: linear-gradient(#29251f, #100e0bcc);
+}
+.titulo-narrativo[data-marco='fallido'] .titulo-narrativo__arte p { top: 50%; }
+.titulo-narrativo__arte p {
+  position: absolute;
+  inset-inline: 14%;
+  top: 58%;
+  transform: translateY(-50%);
+  margin: 0;
+  color: #f3e8d1;
+  font-family: 'Palatino Linotype', Palatino, Georgia, serif;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: .025em;
+  text-shadow: 0 2px 3px #000;
+}
+
+/* Misma secuencia para eventos y conversaciones: entrada, permanencia y salida.
+   Duracion 3800ms + demora 100ms; los porcentajes controlan cada parte. */
+.titulo-narrativo[data-intro='listo'] .titulo-narrativo__arte {
+  animation: narrativo-presentar-titulo 3800ms ease-in-out 100ms both;
+}
+
+@keyframes narrativo-presentar-titulo {
+  0%, 100% { opacity: 0; visibility: hidden; }
+  20%, 75% { opacity: 1; visibility: visible; }
+}
+
+@keyframes narrativo-retirar-titulo {
+  to { opacity: 0; visibility: hidden; }
+}
+
+@media (min-width: 640px) {
+  .titulo-narrativo__arte p { font-size: 20px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .titulo-narrativo[data-intro='listo'] .titulo-narrativo__arte {
+    animation: narrativo-retirar-titulo 1ms steps(1) 2500ms both;
+    opacity: 1;
+    visibility: visible;
+  }
+  .titulo-narrativo[data-intro='listo'][data-permanente='true'] .titulo-narrativo__arte {
+    animation: none;
+    opacity: 1;
+    visibility: visible;
+  }
+}

@@ -1,0 +1,10 @@
+.papel-ui {
+  position: relative;
+  aspect-ratio: 1028 / 1450;
+  flex: 0 0 auto;
+  filter: drop-shadow(0 10px 12px #1c0f0870);
+}
+
+.papel-ui__entrada { position: absolute; inset: 0; opacity: 0; visibility: hidden; will-change: clip-path, transform, opacity; }
+.papel-ui__imagen { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; filter: sepia(.08) saturate(.86) contrast(.98); pointer-events: none; }
+.papel-ui__contenido { position: absolute; inset: 12% 13% 11%; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #7a4b27 transparent; }

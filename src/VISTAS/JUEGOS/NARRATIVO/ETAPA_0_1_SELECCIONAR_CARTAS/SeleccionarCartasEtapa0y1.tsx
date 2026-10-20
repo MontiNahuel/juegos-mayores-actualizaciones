@@ -1,11 +1,19 @@
 // Permite elegir las cartas de preparacion o la carta mensual.
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
+import type { CSSProperties } from 'react';
 import CartaSeleccionableEtapa0y1 from './CartaSeleccionableEtapa0y1';
+import shuffleCartas from './shuffleCartas';
+import BotonNarrativo from '../COMPARTIDOS/BOTON_NARRATIVO/BotonNarrativo';
 
 // ETAPA 0 y 1: elige la corte inicial o una carta mensual.
 export default function SeleccionarCartasEtapa0y1({ titulo, descripcion, cartas, cantidad, onConfirmar }: any) {
   const [seleccion, setSeleccion] = useState<any[]>([]);
   const [confirmando, setConfirmando] = useState(false);
+  const mazo = useRef<HTMLDivElement>(null);
+  const tanda = `${titulo}:${cartas.map((carta: any) => carta.id).join(',')}`;
+
+  // Reparte antes de pintar cada tanda nueva; seleccionar una carta no reinicia el shuffle.
+  useLayoutEffect(() => shuffleCartas(mazo.current), [tanda]);
 
   // Agrega o quita una carta sin superar la cantidad pedida.
   const seleccionar = (carta: any) => {
@@ -33,20 +41,22 @@ export default function SeleccionarCartasEtapa0y1({ titulo, descripcion, cartas,
   };
 
   return (
-    <section className="p-6">
+    <section className="seleccion-cartas" style={{ '--columnas': Math.max(1, Math.min(cartas.length, 6)) } as CSSProperties}>
+      <header className="seleccion-cartas__cabecera">
       <h2 className="text-2xl font-bold">
         {titulo}
       </h2>
 
-      <p className="mt-1 text-slate-600">
+      <p className="mt-1 text-slate-200">
         {descripcion}
       </p>
 
-      <p className="mt-2">
+      <p className="seleccion-cartas__contador">
         {seleccion.length} de {cantidad} seleccionados
       </p>
+      </header>
 
-      <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div ref={mazo} className="seleccion-cartas__mazo">
         {cartas.map((carta: any) => {
           const selected = seleccion.some((item) => item.id === carta.id);
 
@@ -62,14 +72,13 @@ export default function SeleccionarCartasEtapa0y1({ titulo, descripcion, cartas,
         })}
       </div>
 
-      <div className="mt-5">
-        <button
-          className="rounded bg-slate-800 px-4 py-2 text-white disabled:opacity-50"
+      <div className="seleccion-cartas__acciones">
+        <BotonNarrativo
           disabled={confirmando || seleccion.length !== cantidad}
           onClick={guardar}
         >
           {confirmando ? 'Confirmando...' : 'Confirmar selección'}
-        </button>
+        </BotonNarrativo>
       </div>
     </section>
   );
