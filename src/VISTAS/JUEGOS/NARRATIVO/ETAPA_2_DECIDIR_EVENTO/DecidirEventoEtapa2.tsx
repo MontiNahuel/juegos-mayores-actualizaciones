@@ -1,18 +1,21 @@
 // Presenta el evento como una escena: ilustracion, titulo y decisiones al pie.
 import { useState } from 'react';
 import type { EventoApi } from '../narrativeService';
-import TituloNarrativo from '../COMPARTIDOS/TituloNarrativo';
-import BotonDecision from '../COMPARTIDOS/BotonDecision';
-import '../COMPARTIDOS/fadeNarrativo.css';
+import TituloNarrativo from '../COMPARTIDOS/TITULO_NARRATIVO/TituloNarrativo';
+import { API_URL } from '../../../../config/api';
+import { ocultarCambiosNumericos } from '../../../../config/adaptacionEdad';
+import BotonNarrativo from '../COMPARTIDOS/BOTON_NARRATIVO/BotonNarrativo';
+import '../COMPARTIDOS/TRANSICION_NARRATIVA/fadeNarrativo.css';
 import './evento.css';
 
 const FONDO_DEFAULT = '/assets/narrative/court.jpg';
 const imagenDe = (imagen: string) => imagen.startsWith('/') && !imagen.startsWith('/assets/') && !imagen.startsWith('//')
-  ? `http://10.16.2.19:8080${imagen}` : imagen;
+  ? `${API_URL}${imagen}` : imagen;
 
-export default function ResolverEventoEtapa2({ evento, atributos, onElegir }: {
+export default function ResolverEventoEtapa2({ evento, atributos, modoSimple = false, onElegir }: {
   evento: EventoApi;
   atributos: Record<string, number>;
+  modoSimple?: boolean;
   onElegir: (opcionId: string) => void;
 }) {
   const [imagenFallida, setImagenFallida] = useState<string | null>(null);
@@ -39,7 +42,7 @@ export default function ResolverEventoEtapa2({ evento, atributos, onElegir }: {
         <div className="evento-dialogo__interior">
           <div className="evento-dialogo__cabecera">
             <p className="evento-descripcion">{evento.descripcion}</p>
-            <details className="evento-recursos">
+            {!modoSimple ? <details className="evento-recursos">
               <summary>Recursos del reino</summary>
               <div className="evento-recursos__lista">
                 {Object.entries(atributos).map(([clave, valor]) => (
@@ -50,11 +53,11 @@ export default function ResolverEventoEtapa2({ evento, atributos, onElegir }: {
                   </div>
                 ))}
               </div>
-            </details>
+            </details> : null}
           </div>
           <div className="evento-opciones">
             {evento.opciones.filter(opcion => !opcion.bloqueada).map(opcion => (
-              <BotonDecision key={opcion.id} onClick={() => onElegir(opcion.id)}>{opcion.texto}</BotonDecision>
+              <BotonNarrativo className="boton-narrativo--decision" key={opcion.id} onClick={() => onElegir(opcion.id)}>{modoSimple ? ocultarCambiosNumericos(opcion.texto) : opcion.texto}</BotonNarrativo>
             ))}
           </div>
         </div>

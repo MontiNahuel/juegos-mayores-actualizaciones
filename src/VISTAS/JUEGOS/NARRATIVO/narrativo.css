@@ -61,6 +61,21 @@
   text-align: center;
 }
 
+/* Los tamanios vienen de configuracionPorEdad; estos valores son solo el respaldo visual. */
+.narrativo-modo-mayor { font-size: var(--narrativo-texto-adaptado, 18px); line-height: 1.65; }
+.narrativo-modo-mayor .boton-narrativo { min-height: var(--narrativo-control-adaptado, 52px); padding: 13px 20px; font-size: var(--narrativo-texto-adaptado, 18px); }
+.narrativo-modo-mayor .boton-narrativo--decision { min-height: 64px; line-height: 1.45; }
+.narrativo-modo-mayor .evento-descripcion { font-size: var(--narrativo-texto-adaptado, 18px); line-height: 1.65; }
+.narrativo-modo-mayor .evento-opciones { gap: 14px; }
+.narrativo-modo-mayor .narrativo-fade-dialogo { opacity: 1; visibility: visible; animation: none; }
+.narrativo-modo-mayor .titulo-narrativo__arte p { font-size: clamp(18px, 3vw, 24px); }
+.narrativo-modo-mayor .conversacion-dialogo p { font-size: var(--narrativo-texto-adaptado, 18px); line-height: 1.6; }
+.narrativo-modo-mayor .resultado-pergamino__relato { font-size: clamp(17px, 2.8vw, 21px); line-height: 1.6; }
+/* 42svh/19.2rem son el 60% del retrato (70svh/32rem): no se comprime y el resto fluye al scroll de IonContent. */
+.narrativo-modo-mayor .conversacion-personajes {
+  min-height: calc(max(var(--narrativo-personaje-visible-svh, 42svh), var(--narrativo-personaje-visible-rem, 19.2rem)) + 1.25rem);
+}
+
 .narrativo-estadisticas { text-align: left; }
 .narrativo-panel--claro { background: #f8fafceF; color: #0f172a; }
 .narrativo-panel h2 { margin-top: 0; }
@@ -75,7 +90,50 @@
 .narrativo-opciones button:hover { background: #ffffff1a; }
 
 @media (max-width: 767px) {
+  .narrativo-herramientas { flex-wrap: nowrap; }
+  .narrativo-herramientas > p { display: none; }
   .narrativo-escena { padding-inline: 12px; gap: 8px; }
   .narrativo-recursos { gap: 4px; font-size: 12px; }
   .narrativo-recurso { padding: 6px; }
+
+  /* Mobile adaptado: controles iguales arriba, titulo debajo y escena visual amplia.
+     El alto extra queda a cargo del scroll nativo de IonContent. */
+  .narrativo-modo-mayor {
+    --narrativo-barra-superior: var(--narrativo-control-adaptado, 60px);
+  }
+
+  .narrativo-modo-mayor > .narrativo-herramientas {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .narrativo-modo-mayor > .narrativo-herramientas > button {
+    width: 100%;
+    min-width: 0;
+    height: var(--narrativo-barra-superior);
+    min-height: var(--narrativo-barra-superior);
+    margin: 0;
+    padding: 6px;
+    font-size: clamp(13px, 4vw, var(--narrativo-texto-adaptado, 18px));
+  }
+
+  .narrativo-evento.narrativo-modo-mayor > .narrativo-herramientas,
+  .narrativo-conversacion.narrativo-modo-mayor > .narrativo-herramientas {
+    inset: max(8px, env(safe-area-inset-top)) 8px auto;
+  }
+
+  .narrativo-evento.narrativo-modo-mayor .evento-escena > .titulo-narrativo,
+  .narrativo-conversacion.narrativo-modo-mayor .conversacion-escena {
+    padding-top: calc(max(8px, env(safe-area-inset-top)) + var(--narrativo-barra-superior) + 10px);
+  }
+
+  .narrativo-evento.narrativo-modo-mayor .evento-ilustracion {
+    flex: none;
+    min-height: max(58svh, 28rem);
+  }
+
+  .narrativo-conversacion.narrativo-modo-mayor .conversacion-personajes {
+    min-height: max(56svh, 28rem);
+  }
 }

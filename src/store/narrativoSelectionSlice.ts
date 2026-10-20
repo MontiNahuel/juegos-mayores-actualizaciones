@@ -1,4 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
+import { adaptarValorNegativo } from '../config/adaptacionEdad';
 
 const initialState: any = {
   jugador: {
@@ -16,6 +17,8 @@ const initialState: any = {
     conversaciones_jugadas: [],
     historial_mensual: [],
     ultima_accion: null,
+    edad: null,
+    modo_mayor: false,
   },
   personajesCorte: [],
   cartasDraft: [],
@@ -65,7 +68,7 @@ const aplicarEfectosAlObtener = (jugador: any, elementos: any[]) => {
 
         if (accion?.tipo === 'modificar_recurso' && accion.clave) {
           const actual = jugador.recursos[accion.clave] || 0;
-          jugador.recursos[accion.clave] = limitar(actual + Number(accion.valor || 0));
+          jugador.recursos[accion.clave] = limitar(actual + adaptarValorNegativo(Number(accion.valor || 0), jugador.edad));
         }
 
         if (
@@ -92,6 +95,12 @@ const narrativoSelectionSlice = createSlice({
       state.resultadoActual = null;
       state.conversacionActual = null;
       state.finalizacion = null;
+    },
+
+    // Actualiza la adaptacion sin reiniciar la partida en curso.
+    configurarEdadNarrativa: (state, action: { payload: any }) => {
+      state.jugador.edad = action.payload.edad;
+      state.jugador.modo_mayor = action.payload.modo_mayor;
     },
 
     // Guarda los tres personajes elegidos para formar la corte.
@@ -154,7 +163,7 @@ const narrativoSelectionSlice = createSlice({
       resultado?.efectos?.forEach(({ accion }: any) => {
         if (!accion?.clave) return;
         const actual = state.jugador.recursos[accion.clave] || 0;
-        state.jugador.recursos[accion.clave] = limitar(actual + accion.valor);
+        state.jugador.recursos[accion.clave] = limitar(actual + adaptarValorNegativo(accion.valor, state.jugador.edad));
       });
       state.jugador.historial_mensual.push({
         mes: state.jugador.mes_actual,
@@ -182,7 +191,7 @@ const narrativoSelectionSlice = createSlice({
 
       decision.impacto_afinidad?.forEach(({ personaje_id, delta }: any) => {
         const actual = state.jugador.afinidad[personaje_id] || 50;
-        state.jugador.afinidad[personaje_id] = limitar(actual + delta);
+        state.jugador.afinidad[personaje_id] = limitar(actual + adaptarValorNegativo(delta, state.jugador.edad));
       });
     },
 
@@ -206,6 +215,7 @@ const narrativoSelectionSlice = createSlice({
 
 export const {
   iniciarJugador,
+  configurarEdadNarrativa,
   guardarCorte,
   guardarPersonajesCorte,
   guardarCartasIniciales,

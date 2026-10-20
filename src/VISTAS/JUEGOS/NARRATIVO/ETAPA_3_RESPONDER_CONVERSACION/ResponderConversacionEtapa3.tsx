@@ -1,16 +1,17 @@
 // Muestra una conversacion de corte como una escena paso a paso.
 import { useEffect, useRef, useState } from 'react';
-import TituloNarrativo from '../COMPARTIDOS/TituloNarrativo';
-import BotonDecision from '../COMPARTIDOS/BotonDecision';
-import '../COMPARTIDOS/fadeNarrativo.css';
+import TituloNarrativo from '../COMPARTIDOS/TITULO_NARRATIVO/TituloNarrativo';
+import BotonNarrativo from '../COMPARTIDOS/BOTON_NARRATIVO/BotonNarrativo';
+import '../COMPARTIDOS/TRANSICION_NARRATIVA/fadeNarrativo.css';
+import { API_URL } from '../../../../config/api';
+import { ocultarCambiosNumericos } from '../../../../config/adaptacionEdad';
 import './conversacion.css';
 
-const API = 'http://10.16.2.19:8080';
 // Recursos locales: cambiar estas rutas para reemplazar el fondo de respaldo o el PNG del titulo.
 const FONDO_DE_CORTE = '/assets/narrative/conversation-hall.png';
 
 // Conserva las URLs completas y agrega el host del backend a las rutas relativas.
-const imagenDe = (imagen: string) => imagen?.startsWith('http') ? imagen : `${API}${imagen || ''}`;
+const imagenDe = (imagen: string) => imagen?.startsWith('http') ? imagen : `${API_URL}${imagen || ''}`;
 
 // Respaldo visual cuando falta la foto del personaje o su carga falla.
 const iniciales = (nombre: string) => nombre?.split(' ').map((parte) => parte[0]).join('').slice(0, 2) || '?';
@@ -18,14 +19,15 @@ const iniciales = (nombre: string) => nombre?.split(' ').map((parte) => parte[0]
 // En modo solo muestra al hablante; con espacio suficiente mantiene los dos retratos.
 function Retrato({ personaje, activo, lado, solo }: any) {
   if (!personaje) return <div />;
+  const visible = !solo || activo;
 
   // 70svh es la altura del dibujo y 32rem su minimo. shrink-0 impide que se achique.
   // translate-x-[3%] mueve a la derecha y -translate-x-[3%] a la izquierda, sin rotar.
   // drop-shadow: desplazamiento horizontal, vertical, desenfoque y color de la sombra.
   // opacity-45 y grayscale apagan al personaje que no habla; z-20 prioriza al hablante.
   return (
-    <div className={`relative ${activo ? 'z-20 flex' : solo ? 'z-10 hidden' : 'z-10 flex'} h-full max-w-2xl shrink-0 flex-col justify-start px-5 transition duration-500 ${solo ? 'w-full' : 'w-1/2'} ${lado === 'derecha' ? 'ml-auto mr-0 items-end' : 'ml-0 mr-auto items-start'} ${activo ? 'scale-100 opacity-100' : 'opacity-45 grayscale'}`}>
-      <div className={`relative flex h-[70svh] min-h-[32rem] w-full shrink-0 items-end drop-shadow-[0_6px_12px_rgba(0,0,0,0.35)] transition duration-500 ${solo ? lado === 'derecha' ? 'translate-x-[3%] justify-end' : '-translate-x-[3%] justify-center' : 'justify-center'}`}>
+    <div data-visible={visible} className={`conversacion-retrato ${solo ? `absolute inset-y-0 ${lado === 'derecha' ? 'right-0' : 'left-0'} w-full` : 'relative w-1/2'} ${activo ? 'z-20' : 'z-10'} ${visible ? 'flex' : 'pointer-events-none flex'} h-full max-w-2xl shrink-0 flex-col justify-start px-5 ${lado === 'derecha' ? 'ml-auto mr-0 items-end' : 'ml-0 mr-auto items-start'} ${activo ? 'scale-100 opacity-100' : 'opacity-45 grayscale'}`}>
+      <div className={`relative flex h-[70svh] min-h-[32rem] w-full shrink-0 items-end drop-shadow-[0_6px_12px_rgba(0,0,0,0.35)] transition duration-700 ease-out ${solo ? lado === 'derecha' ? 'translate-x-[2%] justify-end' : '-translate-x-[2%] justify-center' : 'justify-center'}`}>
         <span className="absolute inset-0 grid place-items-center text-4xl font-semibold text-amber-100/70">{iniciales(personaje.nombre)}</span>
         {personaje.imagen && <img className="relative z-10 block h-full w-auto max-w-none object-contain object-bottom" src={imagenDe(personaje.imagen)} alt={personaje.nombre} onError={(evento) => { evento.currentTarget.classList.add('hidden'); }} />}
       </div>
@@ -34,7 +36,7 @@ function Retrato({ personaje, activo, lado, solo }: any) {
 }
 
 // ETAPA 3: alterna los dialogos y muestra las decisiones al terminar la escena.
-export default function ResponderConversacionEtapa3({ conversacion, personajes, onElegir }: any) {
+export default function ResponderConversacionEtapa3({ conversacion, personajes, modoSimple = false, onElegir }: any) {
   const [paso, setPaso] = useState(0);
   const [solo, setSolo] = useState(true);
   // Dispara la secuencia CSS al cargar el fondo. Los tiempos se editan en conversacion.css.
@@ -103,18 +105,18 @@ export default function ResponderConversacionEtapa3({ conversacion, personajes, 
         {!ultimoDialogo ? (
           <button className="group relative block w-full border-t border-slate-500/50 bg-slate-950/95 px-5 py-4 text-left transition hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-amber-300 sm:px-8 sm:py-5 md:px-20" onClick={() => setPaso((actual) => actual + 1)}>
             <p className="text-sm font-bold text-amber-300">{quienHabla.nombre}</p>
-            <p className="mt-2 max-w-3xl text-base leading-normal text-slate-100 sm:text-lg sm:leading-relaxed">{frase?.texto}</p>
+            <p className="mt-2 max-w-3xl text-base leading-normal text-slate-100 sm:text-lg sm:leading-relaxed">{modoSimple ? ocultarCambiosNumericos(frase?.texto) : frase?.texto}</p>
             <p className="mt-4 text-sm text-slate-400 group-hover:text-amber-200">Toca para continuar</p>
           </button>
         ) : (
           <div className="border-t border-slate-500/50 bg-slate-950/95 px-5 py-4 sm:px-8 sm:py-5 md:px-20">
             <p className="text-sm font-bold text-amber-300">{quienHabla.nombre}</p>
-            <p className="mt-2 max-w-3xl text-base leading-normal text-slate-100 sm:text-lg sm:leading-relaxed">{frase?.texto}</p>
+            <p className="mt-2 max-w-3xl text-base leading-normal text-slate-100 sm:text-lg sm:leading-relaxed">{modoSimple ? ocultarCambiosNumericos(frase?.texto) : frase?.texto}</p>
             <div className="mt-4 grid gap-2 sm:mt-5 sm:gap-3">
               {conversacion.decisiones.map((decision: any) => (
-                <BotonDecision key={decision.opcion} onClick={() => onElegir(decision)}>
-                  {decision.texto}
-                </BotonDecision>
+                <BotonNarrativo className="boton-narrativo--decision" key={decision.opcion} onClick={() => onElegir(decision)}>
+                  {modoSimple ? ocultarCambiosNumericos(decision.texto) : decision.texto}
+                </BotonNarrativo>
               ))}
             </div>
           </div>

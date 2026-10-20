@@ -1,7 +1,8 @@
 import { store } from '../../../store/store';
 import { resolverRespaldoNarrativo } from './narrativeFallback';
+import { API_URL } from '../../../config/api';
 
-const API = 'http://10.16.2.19:8080/api/narrative';
+const API = `${API_URL}/api/narrative`;
 
 // Respaldo temporal para jugar sin servidor. Poner VITE_NARRATIVE_FALLBACK=false
 // en .env.local y reiniciar Vite (o recompilar) para deshabilitar TODOS estos fallbacks.
@@ -98,6 +99,12 @@ export interface SetupPartida {
   tiene_partida_activa: boolean;
 }
 
+// Hint opcional para el motor: la ruta actual sigue funcionando si el backend aun no lo consume.
+export interface PreferenciaConversacion {
+  probabilidad_no_repetida: number;
+  excluir_ids: string[];
+}
+
 // Una vez activado el respaldo, conserva esa partida local hasta terminar o reiniciar.
 // No reenvia al servidor las decisiones tomadas en la demostracion.
 async function request<T>(path: string, options?: RequestInit) {
@@ -170,8 +177,14 @@ export const elegirCartaMensual = (date: string, cartaId: string) => request<Est
 });
 
 // Pide el resultado, la conversacion o la finalizacion del evento.
-export const decidirEvento = (date: string, opcionId: string) => request<EstadoPartida>('/v2/partida/decidir-evento', {
-  method: 'POST', body: JSON.stringify({ date, opcion_id: opcionId }),
+export const decidirEvento = (date: string, opcionId: string, preferenciaConversacion?: PreferenciaConversacion) => request<EstadoPartida>('/v2/partida/decidir-evento', {
+  method: 'POST',
+  body: JSON.stringify({
+    date,
+    opcion_id: opcionId,
+    // Solo se agrega cuando el llamador lo pide; asi se mantiene el contrato anterior por defecto.
+    ...(preferenciaConversacion ? { preferencia_conversacion: preferenciaConversacion } : {}),
+  }),
 });
 
 // Registra la mediacion elegida y cierra la conversacion.

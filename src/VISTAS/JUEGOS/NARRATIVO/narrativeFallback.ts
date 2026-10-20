@@ -1,4 +1,5 @@
 import type { CartaApi, ConversacionApi, EstadoPartida, EventoApi, FinalizacionApi, PersonajeApi, ResultadoApi, SetupPartida } from './narrativeService';
+import { configuracionPorEdad } from '../../../config/adaptacionEdad';
 
 // Partida de demostracion corta: seis meses, con recursos y afinidad reales en Redux.
 const MESES_DE_PRUEBA = 6;
@@ -40,6 +41,8 @@ interface EstadoLocal {
     eventos_jugados: string[];
     conversaciones_jugadas: string[];
     historial_mensual: { mes: number; resultado: string }[];
+    edad?: number | null;
+    modo_mayor?: boolean;
   };
   personajesCorte: PersonajeLocal[];
   cartasDraft: CartaLocal[];
@@ -55,12 +58,14 @@ function conversacionDe(estado: EstadoLocal): ConversacionApi {
   const corte = estado.personajesCorte.length ? estado.personajesCorte : personajes;
   const [primero, segundo] = corte;
   const id = (p: PersonajeLocal) => p.id || p._id;
+  const [tema, necesidad] = situaciones[(estado.jugador.mes_actual - 1) % situaciones.length];
   return {
     _id: `local-conversacion-${estado.jugador.mes_actual}`,
-    titulo: 'Voces de la corte', imagen: '',
+    // El tema mensual mantiene variadas las conversaciones del respaldo sin cambiar su estructura.
+    titulo: tema, imagen: '',
     requisitos: [primero, segundo].filter(Boolean).map(p => ({ personajeId: id(p) })),
     frases: [
-      { personajeId: id(primero), texto: 'El pueblo necesita ver que escuchamos sus preocupaciones.' },
+      { personajeId: id(primero), texto: `${necesidad} El pueblo necesita ver que escuchamos sus preocupaciones.` },
       { personajeId: id(segundo || primero), texto: 'También debemos cuidar las reservas. ¿Qué camino elegimos?' },
     ],
     decisiones: [
@@ -68,6 +73,15 @@ function conversacionDe(estado: EstadoLocal): ConversacionApi {
       { opcion: 2, texto: 'Preparar un plan antes de prometer ayuda.', resultado_texto: 'La corte revisará los recursos antes de actuar.', impacto_afinidad: [{ personaje_id: id(segundo || primero), delta: 8 }] },
     ],
   };
+}
+
+// Cadencia determinista: evita pruebas inestables y conserva el 50% previo (meses pares).
+// Con 75% habilita tres de cada cuatro meses y nunca repite el id ya registrado.
+function debeOfrecerConversacion(estado: EstadoLocal, probabilidad: number) {
+  const mes = estado.jugador.mes_actual;
+  const id = `local-conversacion-${mes}`;
+  const umbralPorMes = [0, .75, .25, .5][mes % 4];
+  return !estado.jugador.conversaciones_jugadas.includes(id) && umbralPorMes < probabilidad;
 }
 
 function finalDe(estado: EstadoLocal): FinalizacionApi | null {
@@ -115,7 +129,7 @@ export function resolverRespaldoNarrativo(path: string, options: RequestInit | u
       const carta = estado.cartasDraft.find(c => (c.id || c._id) === body.carta_id);
       const evento: EventoApi = {
         id: `local-evento-${mes}`, titulo, imagen: '',
-        descripcion: `${carta ? `${carta.nombre}: ` : ''}${descripcion}`,
+        descripcion: `${jugador.modo_mayor ? '' : carta ? `${carta.nombre}: ` : ''}${descripcion}`,
         opciones: [
           { id: 'local-ayudar', texto: 'Destinar reservas a la comunidad (−12 oro, +8 pueblo, +4 fe).', bloqueada: false },
           { id: 'local-organizar', texto: 'Organizar un esfuerzo compartido (+6 oro, −4 pueblo, +3 ejército).', bloqueada: false },
@@ -132,7 +146,14 @@ export function resolverRespaldoNarrativo(path: string, options: RequestInit | u
         imagen: '', tipo_resultado: 'neutro',
         efectos: cambios.map(([clave, valor]) => ({ accion: { clave, valor } })),
       };
-      return { resultado_actual: resultado, ...(mes % 2 === 0 ? { conversacion_actual: conversacionDe(estado) } : {}) };
+      const perfilEdad = configuracionPorEdad(jugador.edad ?? null);
+      // El hint opcional usa la misma forma que el servicio real; sin hint manda la regla central por edad.
+      const probabilidad = body.preferencia_conversacion?.probabilidad_no_repetida
+        ?? perfilEdad.probabilidadConversacionNoRepetida;
+      return {
+        resultado_actual: resultado,
+        ...(debeOfrecerConversacion(estado, probabilidad) ? { conversacion_actual: conversacionDe(estado) } : {}),
+      };
     }
     case '/v2/partida/responder-conversacion':
       return foto;

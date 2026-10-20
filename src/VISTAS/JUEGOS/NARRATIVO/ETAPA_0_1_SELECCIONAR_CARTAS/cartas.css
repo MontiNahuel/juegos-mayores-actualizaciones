@@ -137,18 +137,42 @@
 }
 
 .carta-narrativa:disabled { opacity: .55; cursor: default; }
+.carta-narrativa--lectura { cursor: default; }
 
 @media (hover: hover) {
   .carta-narrativa:not(:disabled):hover { translate: 0 -6px; }
+  .carta-narrativa--lectura:hover { translate: 0; }
 }
 
 @media (max-width: 767px) {
-  .seleccion-cartas__mazo {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    max-width: min(100%, calc(max(110px, min(220px, (100svh - 230px) / var(--filas-movil) * 2 / 3)) * 2 + 12px));
-    gap: 8px 12px;
-    margin-block: 12px;
+  .seleccion-cartas {
+    margin-block: 0;
   }
+
+  .seleccion-cartas__cabecera {
+    width: 100%;
+    text-align: center;
+  }
+
+  .seleccion-cartas__cabecera h2 {
+    font-size: 16px;
+    font-weight: 400;
+  }
+
+  .seleccion-cartas__mazo {
+    grid-template-columns: minmax(0, 1fr);
+    width: clamp(150px, 55vw, 210px);
+    max-width: none;
+    gap: 12px;
+    margin: 12px auto 16px;
+  }
+
+  .seleccion-cartas__acciones {
+    width: clamp(150px, 55vw, 210px);
+    margin-inline: auto;
+  }
+
+  .seleccion-cartas__acciones button { width: 100%; }
   .carta-narrativa__texto { font-size: 12px; line-height: 1.25; }
   .carta-narrativa__categoria { font-size: 11px; }
   .carta-narrativa__contenido { gap: 4px; }

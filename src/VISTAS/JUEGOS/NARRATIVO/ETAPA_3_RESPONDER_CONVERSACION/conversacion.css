@@ -15,6 +15,17 @@
   visibility: hidden;
 }
 
+/* Las herramientas globales flotan sin sumar alto a la escena de conversacion. */
+.narrativo-conversacion { position: relative; }
+.narrativo-conversacion > .narrativo-herramientas {
+  position: absolute;
+  inset: max(8px, env(safe-area-inset-top)) 12px auto;
+  z-index: 60;
+}
+
+/* Reserva una sola fila para Mazo, Edad y Salir, evitando que tapen el titulo. */
+.narrativo-conversacion .conversacion-escena { padding-top: 58px; }
+
 /* FONDO: 100ms controla su fade in. Sin demora, aparece primero. */
 .conversacion-escena[data-intro="listo"] .conversacion-fondo {
   animation: conversacion-aparecer 100ms ease-out both;
@@ -22,12 +33,26 @@
 
 /* El marco y su secuencia de entrada/permanencia/salida estan en COMPARTIDOS/tituloNarrativo.css. */
 
-/* PERSONAJES: 700ms de fade in, comenzando a los 1500ms. Subir 1500ms los retrasa. */
+/* PERSONAJES: entran despues del texto para presentar la escena en orden. */
 .conversacion-escena[data-intro="listo"] .conversacion-personajes {
-  animation: conversacion-aparecer 700ms ease-out 1500ms both;
+  animation: conversacion-aparecer 700ms ease-out 1900ms both;
 }
 
-/* DIALOGO: la entrada compartida con eventos esta en COMPARTIDOS/fadeNarrativo.css. */
+/* DIALOGO: conserva el fade compartido, pero aparece antes que los personajes. */
+.conversacion-dialogo[data-intro='listo'] {
+  animation-delay: 1250ms;
+}
+
+/* El cambio a un solo retrato ya no corta al personaje inactivo de golpe. */
+.conversacion-retrato {
+  transition: opacity 700ms ease-in-out, transform 700ms ease-in-out, filter 700ms ease-in-out;
+}
+
+.conversacion-retrato[data-visible='false'] {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 700ms ease-in-out, filter 700ms ease-in-out, visibility 0s linear 700ms;
+}
 
 /* Fade in compartido. opacity va de 0 (invisible) a 1 (visible). No modifica posiciones. */
 @keyframes conversacion-aparecer {
@@ -42,5 +67,9 @@
     opacity: 1;
     visibility: visible;
   }
+
+  .conversacion-dialogo[data-intro='listo'] { animation-delay: 0s; }
+  .conversacion-retrato,
+  .conversacion-retrato[data-visible='false'] { transition: none; }
 
 }

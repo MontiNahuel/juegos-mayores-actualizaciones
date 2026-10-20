@@ -5,6 +5,7 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { qrcode } from 'vite-plugin-qrcode'
 import { defineConfig } from 'vite'
+import { API_URL } from './src/config/api.ts'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -19,7 +20,7 @@ export default defineConfig({
     allowedHosts: true,
     proxy: {
       '/api': {
-        target: 'http://10.16.2.19:8080',
+        target: API_URL,
         changeOrigin: true,
       },
     },

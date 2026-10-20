@@ -12,6 +12,7 @@ import {
 } from 'ionicons/icons';
 import type { Usuario } from './LoginHeader';
 import { migrateGuestProgressToNewUser } from '../JUEGOS/attemptsService';
+import { API_URL } from '../../config/api';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -74,12 +75,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
     };
 
     try {
-      let data;
-      try {
-        data = await tryFetch('/api/auth/ingresar-codigo');
-      } catch {
-        data = await tryFetch('http://10.16.2.19:8080/api/auth/ingresar-codigo');
-      }
+      const data = await tryFetch(`${API_URL}/api/auth/ingresar-codigo`);
 
       if (data && data.success && data.user) {
         localStorage.setItem('usuario', JSON.stringify(data.user));
@@ -135,16 +131,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
     };
 
     try {
-      let data;
-      try {
-        data = await tryRegister('/api/auth/register');
-      } catch (err: any) {
-        try {
-          data = await tryRegister('http://10.16.2.19:8080/api/auth/register');
-        } catch {
-          throw err;
-        }
-      }
+      const data = await tryRegister(`${API_URL}/api/auth/register`);
 
       if (data && data.success) {
         if (data.status === 'PENDIENTE_VERIFICACION') {
@@ -197,16 +184,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
     };
 
     try {
-      let data;
-      try {
-        data = await tryVerify('/api/auth/verificar-codigo-registro');
-      } catch (err: any) {
-        try {
-          data = await tryVerify('http://10.16.2.19:8080/api/auth/verificar-codigo-registro');
-        } catch {
-          throw err;
-        }
-      }
+      const data = await tryVerify(`${API_URL}/api/auth/verificar-codigo-registro`);
 
       if (data && data.success && data.user) {
         // Guardar sesión activa
@@ -254,16 +232,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
     };
 
     try {
-      let data;
-      try {
-        data = await tryResend('/api/auth/reenviar-codigo-registro');
-      } catch (err: any) {
-        try {
-          data = await tryResend('http://10.16.2.19:8080/api/auth/reenviar-codigo-registro');
-        } catch {
-          throw err;
-        }
-      }
+      const data = await tryResend(`${API_URL}/api/auth/reenviar-codigo-registro`);
 
       setResendCooldown(60);
       setInfoMessage(data?.message || `Código reenviado con éxito a ${pendingEmail}`);

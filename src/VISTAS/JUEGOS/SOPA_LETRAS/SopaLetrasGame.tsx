@@ -18,6 +18,7 @@ import {
   star,
 } from 'ionicons/icons';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
+import { API_URL } from '../../../config/api';
 import {
   getActiveGameProgress,
   saveActiveGameProgress,
@@ -115,7 +116,7 @@ export const SopaLetrasGame: React.FC = () => {
     let isMounted = true;
     const fetchChallenge = async () => {
       try {
-        const res = await fetch(`http://10.16.2.19:8080/api/challenges/date/${dateStrKey}?game_id=sopa_letras`);
+        const res = await fetch(`${API_URL}/api/challenges/date/${dateStrKey}?game_id=sopa_letras`);
         if (!res.ok) return;
         const data = await res.json();
         if (!isMounted || !data?.config) return;

@@ -3,6 +3,7 @@ import { useLayoutEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import CartaSeleccionableEtapa0y1 from './CartaSeleccionableEtapa0y1';
 import shuffleCartas from './shuffleCartas';
+import BotonNarrativo from '../COMPARTIDOS/BOTON_NARRATIVO/BotonNarrativo';
 
 // ETAPA 0 y 1: elige la corte inicial o una carta mensual.
 export default function SeleccionarCartasEtapa0y1({ titulo, descripcion, cartas, cantidad, onConfirmar }: any) {
@@ -40,7 +41,7 @@ export default function SeleccionarCartasEtapa0y1({ titulo, descripcion, cartas,
   };
 
   return (
-    <section className="seleccion-cartas" style={{ '--columnas': Math.max(1, Math.min(cartas.length, 6)), '--filas-movil': Math.max(1, Math.ceil(cartas.length / 2)) } as CSSProperties}>
+    <section className="seleccion-cartas" style={{ '--columnas': Math.max(1, Math.min(cartas.length, 6)) } as CSSProperties}>
       <header className="seleccion-cartas__cabecera">
       <h2 className="text-2xl font-bold">
         {titulo}
@@ -72,13 +73,12 @@ export default function SeleccionarCartasEtapa0y1({ titulo, descripcion, cartas,
       </div>
 
       <div className="seleccion-cartas__acciones">
-        <button
-          className="rounded bg-slate-800 px-4 py-2 text-white disabled:opacity-50"
+        <BotonNarrativo
           disabled={confirmando || seleccion.length !== cantidad}
           onClick={guardar}
         >
           {confirmando ? 'Confirmando...' : 'Confirmar selección'}
-        </button>
+        </BotonNarrativo>
       </div>
     </section>
   );

@@ -1,0 +1,82 @@
+.mazo-ui {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 11px;
+  border: 1px solid #8f6d3f;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #251d17eF, #17120feF);
+  box-shadow: inset 0 0 0 1px #f2d59a12, 0 3px 8px #0005;
+  color: #f1e1bd;
+  font-family: 'Palatino Linotype', Palatino, Georgia, serif;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.mazo-ui:hover { border-color: #d1ac68; }
+.mazo-ui:focus-visible { outline: 2px solid #e6c57e; outline-offset: 3px; }
+
+.mazo-ui__cartas {
+  position: relative;
+  width: 17px;
+  height: 23px;
+  border: 1px solid #d1ac68;
+  border-radius: 2px;
+  background: #3a2a1d;
+  box-shadow: -3px 2px 0 #17110d, -3px 2px 0 1px #8f6d3f;
+}
+
+.mazo-ui__cartas::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 1px solid #d1ac6877;
+}
+
+.mazo-ui strong { color: #fff3d2; font-size: 15px; }
+
+.mazo-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  overflow: auto;
+  background: #07050491;
+  backdrop-filter: blur(9px);
+}
+
+.mazo-modal__papel { width: min(92vw, 61svh, 44rem); }
+
+.mazo-modal__contenido {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  color: #432918;
+  font-family: 'Palatino Linotype', Palatino, Georgia, serif;
+  text-align: center;
+}
+
+.mazo-modal__cabecera { display: flex; align-items: center; justify-content: center; gap: 10px; border-bottom: 1px solid #6e442777; }
+.mazo-modal__cabecera h2 { margin: 0 0 8px; font-size: clamp(20px, 4vw, 30px); }
+.mazo-modal__cabecera span { display: grid; width: 25px; height: 25px; place-items: center; border: 1px solid #79502e; border-radius: 50%; }
+.mazo-modal__lista { display: grid; gap: 10px; overflow-y: auto; text-align: left; }
+.mazo-modal__lista h3 { margin: 0 0 6px; text-align: center; }
+.mazo-modal__rejilla { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.mazo-modal__vacio { margin-block: auto; text-align: center; }
+.mazo-modal__contenido > .boton-narrativo { align-self: center; }
+
+@media (max-width: 767px) {
+  .mazo-ui {
+    width: 42px;
+    min-width: 42px;
+    justify-content: center;
+    margin-right: auto;
+    padding-inline: 8px;
+  }
+
+  .mazo-ui > span:not(.mazo-ui__cartas),
+  .mazo-ui strong { display: none; }
+}

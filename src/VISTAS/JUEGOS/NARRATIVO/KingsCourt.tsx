@@ -1,10 +1,12 @@
 // Coordina las etapas de Kings Court usando el estado local del jugador.
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { IonContent, IonPage } from '@ionic/react';
 import { useDispatch, useSelector, useStore } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { API_URL } from '../../../config/api';
 import {
   avanzarMes as avanzarMesLocal,
+  configurarEdadNarrativa,
   elegirCarta,
   finalizarPartida,
   guardarCartasDraft,
@@ -25,7 +27,11 @@ import DecidirEventoEtapa2 from './ETAPA_2_DECIDIR_EVENTO/DecidirEventoEtapa2';
 import ResponderConversacionEtapa3 from './ETAPA_3_RESPONDER_CONVERSACION/ResponderConversacionEtapa3';
 import MostrarResultadoEtapa4 from './ETAPA_4_MOSTRAR_RESULTADO/MostrarResultadoEtapa4';
 import EstadisticasPartidaEtapa5 from './ETAPA_5_ESTADISTICAS_PARTIDA/EstadisticasPartidaEtapa5';
-import TransicionNarrativa from './COMPARTIDOS/TransicionNarrativa';
+import TransicionNarrativa from './COMPARTIDOS/TRANSICION_NARRATIVA/TransicionNarrativa';
+import BotonNarrativo from './COMPARTIDOS/BOTON_NARRATIVO/BotonNarrativo';
+import MazoUi from './COMPARTIDOS/MAZO_UI/MazoUi';
+import ConfiguracionEdad from './COMPARTIDOS/CONFIGURACION_EDAD/ConfiguracionEdad';
+import { configuracionPorEdad, guardarEdad, leerEdad } from '../../../config/adaptacionEdad';
 import './narrativo.css';
 import {
   avanzarMes as avisarAvanceMes,
@@ -41,14 +47,12 @@ import {
   responderConversacion,
 } from './narrativeService';
 
-const IMAGENES = 'http://10.16.2.19:8080';
-
 // Normaliza las cartas y personajes para que todas las etapas usen el mismo id.
 const prepararCarta = (item: any) => ({
   ...item,
   id: item.id || item._id,
   nombre: item.nombre || item.titulo,
-  imagen: item.imagen?.startsWith('/') ? `${IMAGENES}${item.imagen}` : item.imagen,
+  imagen: item.imagen?.startsWith('/') ? `${API_URL}${item.imagen}` : item.imagen,
 });
 
 // Crea un cierre local si un recurso se agota y aun no llego su texto final.
@@ -67,24 +71,6 @@ const finalPorRecurso = (recursos: any) => {
   };
 };
 
-// Muestra el efecto local de una conversacion antes de continuar el mes.
-function ConsecuenciaConversacion({ decision, personajes, onContinuar }: any) {
-  return (
-    <section className="narrativo-panel narrativo-panel--claro mx-auto max-w-2xl text-center">
-      <p className="text-sm font-medium text-slate-500">Consecuencia</p>
-      <h2 className="mt-1 text-2xl font-bold text-slate-900">{decision.resultado_texto || 'La corte escucho tu decision.'}</h2>
-      <div className="mt-6 space-y-2 rounded-lg border border-amber-200 bg-amber-50 p-4 text-left">
-        {decision.impacto_afinidad?.map((impacto: any) => (
-          <p key={impacto.personaje_id}>
-            {impacto.personaje_nombre || impacto.nombre || personajes.find((personaje: any) => personaje._id === impacto.personaje_id || personaje.id === impacto.personaje_id)?.nombre || 'Personaje'}: {impacto.delta > 0 ? '+' : ''}{impacto.delta} afinidad
-          </p>
-        ))}
-      </div>
-      <button className="mt-6 rounded bg-slate-800 px-4 py-2 text-white" onClick={onContinuar}>Continuar</button>
-    </section>
-  );
-}
-
 // Controla cada etapa sin reemplazar al jugador con respuestas del servidor.
 export default function KingsCourt() {
   const challenge = (useLocation().state as any)?.challenge;
@@ -101,6 +87,22 @@ export default function KingsCourt() {
   const [cargandoEstadisticas, setCargandoEstadisticas] = useState(false);
   const [reiniciando, setReiniciando] = useState(false);
   const [error, setError] = useState('');
+  const [edad, setEdad] = useState<number | null>(() => leerEdad());
+  // Toda la adaptacion sale de esta configuracion; no se repiten edades ni reglas en el componente.
+  const configuracionEdad = configuracionPorEdad(edad);
+  const modoMayor = configuracionEdad.adaptado;
+  const estiloEdad = {
+    '--narrativo-texto-adaptado': `${configuracionEdad.tamanioTexto}px`,
+    '--narrativo-control-adaptado': `${configuracionEdad.altoControl}px`,
+    // La fraccion central decide cuanto retrato debe quedar visible sin fijar otro breakpoint.
+    '--narrativo-personaje-visible-svh': `${70 * configuracionEdad.fraccionVisiblePersonaje}svh`,
+    '--narrativo-personaje-visible-rem': `${32 * configuracionEdad.fraccionVisiblePersonaje}rem`,
+  } as CSSProperties;
+
+  // Mantiene el perfil local sincronizado con las reglas del jugador.
+  useEffect(() => {
+    dispatch(configurarEdadNarrativa({ edad, modo_mayor: modoMayor }));
+  }, [dispatch, edad, modoMayor]);
 
   // Lee la foto mas reciente del jugador despues de cada accion de Redux.
   const jugadorActual = () => (store.getState() as any).narrativoSelection.jugador;
@@ -116,6 +118,18 @@ export default function KingsCourt() {
     }
   };
 
+  // El backend aun pide una carta para sortear el evento, pero en modo adaptado no se suma al mazo.
+  const abrirEventoSinTomarCarta = async (cartas: any[]) => {
+    const carta = cartas[0];
+    if (!carta) return;
+
+    const data = await pedir(
+      () => elegirCartaMensual(date, carta.id || carta._id),
+      'No se pudo preparar la siguiente decision.'
+    );
+    if (data?.evento_actual) dispatch(mostrarEvento(data.evento_actual));
+  };
+
   // Recupera solo la pantalla pendiente cuando el servidor ya avanzo de fase.
   const recuperarFaseServidor = async () => {
     try {
@@ -125,7 +139,11 @@ export default function KingsCourt() {
       else if (estado.resultado_actual) dispatch(guardarResultado(estado.resultado_actual));
       else if (estado.conversacion_actual) dispatch(mostrarConversacion(estado.conversacion_actual));
       else if (estado.evento_actual) dispatch(mostrarEvento(estado.evento_actual));
-      else if (estado.cartas_draft_actual) dispatch(guardarCartasDraft(estado.cartas_draft_actual.map(prepararCarta)));
+      else if (estado.cartas_draft_actual) {
+        const draft = estado.cartas_draft_actual.map(prepararCarta);
+        if (configuracionPorEdad(leerEdad()).permitirCartasMensuales) dispatch(guardarCartasDraft(draft));
+        else await abrirEventoSinTomarCarta(draft);
+      }
     } catch {
       // Conserva el error original si tampoco se puede recuperar la fase.
     }
@@ -158,10 +176,14 @@ export default function KingsCourt() {
       setSetup(data);
       setPersonajesDisponibles(data.personajes_ofrecidos.map(prepararCarta));
       if (jugadorActual().date !== date) {
+        const edadGuardada = leerEdad();
+        const perfilEdad = configuracionPorEdad(edadGuardada);
         dispatch(iniciarJugador({
           date,
           universo_id: data.universo_id || data.personajes_ofrecidos?.[0]?.universo_id || 'corte_medieval',
           recursos: data.atributos_iniciales || { oro: 50, pueblo: 50, ejercito: 50, fe: 50 },
+          edad: edadGuardada,
+          modo_mayor: perfilEdad.adaptado,
         }));
       }
 
@@ -178,7 +200,11 @@ export default function KingsCourt() {
 
       // Solo toma el contenido necesario para mostrar la fase. El jugador sigue local.
       if (estado.resultado_actual) dispatch(guardarResultado(estado.resultado_actual));
-      else if (estado.cartas_draft_actual) dispatch(guardarCartasDraft(estado.cartas_draft_actual.map(prepararCarta)));
+      else if (estado.cartas_draft_actual) {
+        const draft = estado.cartas_draft_actual.map(prepararCarta);
+        if (configuracionPorEdad(leerEdad()).permitirCartasMensuales) dispatch(guardarCartasDraft(draft));
+        else await abrirEventoSinTomarCarta(draft);
+      }
       else if (estado.evento_actual) dispatch(mostrarEvento(estado.evento_actual));
       else if (estado.conversacion_actual) dispatch(mostrarConversacion(estado.conversacion_actual));
       else if (estado.finalizacion) dispatch(finalizarPartida(estado.finalizacion));
@@ -197,7 +223,11 @@ export default function KingsCourt() {
     if (!data) return;
 
     dispatch(guardarCartasIniciales(cartas));
-    if (data.cartas_draft_actual) dispatch(guardarCartasDraft(data.cartas_draft_actual.map(prepararCarta)));
+    if (data.cartas_draft_actual) {
+      const draft = data.cartas_draft_actual.map(prepararCarta);
+      if (configuracionEdad.permitirCartasMensuales) dispatch(guardarCartasDraft(draft));
+      else await abrirEventoSinTomarCarta(draft);
+    }
   };
 
   // Guarda la carta mensual localmente y pide solo el evento que sigue.
@@ -221,8 +251,14 @@ export default function KingsCourt() {
     const evento = juego.eventoActual;
     dispatch(registrarDecisionEvento({ evento_id: evento?.id || evento?._id, opcion_id: opcionId }));
 
+    // El modo adaptado pide mas variedad usando el mismo endpoint; fuera de ese modo conserva el body anterior.
+    const preferenciaConversacion = modoMayor ? {
+      probabilidad_no_repetida: configuracionEdad.probabilidadConversacionNoRepetida,
+      excluir_ids: jugadorActual().conversaciones_jugadas,
+    } : undefined;
+
     const data = await pedir(
-      () => decidirEvento(date, opcionId),
+      () => decidirEvento(date, opcionId, preferenciaConversacion),
       'La decision fue guardada, pero no se pudo cargar su resultado.'
     );
 
@@ -243,7 +279,11 @@ export default function KingsCourt() {
     );
 
     if (data?.finalizacion) dispatch(finalizarPartida(data.finalizacion));
-    else if (data?.cartas_draft_actual) dispatch(guardarCartasDraft(data.cartas_draft_actual.map(prepararCarta)));
+    else if (data?.cartas_draft_actual) {
+      const draft = data.cartas_draft_actual.map(prepararCarta);
+      if (configuracionEdad.permitirCartasMensuales) dispatch(guardarCartasDraft(draft));
+      else await abrirEventoSinTomarCarta(draft);
+    }
   };
 
   // Muestra la conversacion que el motor v2 resolvio para este evento.
@@ -269,6 +309,17 @@ export default function KingsCourt() {
       () => responderConversacion(date, decision.opcion),
       'La respuesta quedo aplicada localmente, pero no se pudo guardar en el historial.'
     );
+  };
+
+  // Si la edad cambia durante un draft, aplica la nueva regla ahi mismo y evita dejar una pantalla vacia.
+  const guardarConfiguracionEdad = (nuevaEdad: number) => {
+    const nuevaConfiguracion = configuracionPorEdad(nuevaEdad);
+    guardarEdad(nuevaEdad);
+    setEdad(nuevaEdad);
+
+    if (!nuevaConfiguracion.permitirCartasMensuales && juego.jugador.fase_actual === 'draft_mensual' && juego.cartasDraft.length) {
+      void abrirEventoSinTomarCarta(juego.cartasDraft);
+    }
   };
 
   // Consulta en paralelo la foto final y la trazabilidad solo al pedir estadisticas.
@@ -305,6 +356,20 @@ export default function KingsCourt() {
   const finalizacion = juego.finalizacion;
   const enConversacion = Boolean(juego.conversacionActual) && !estadisticas && !finalizacion && !decisionConversacion && !juego.resultadoActual;
   const enEvento = Boolean(juego.eventoActual) && !enConversacion && !estadisticas && !finalizacion && !decisionConversacion && !juego.resultadoActual;
+  const consecuencia = decisionConversacion ? {
+    titulo: 'Consecuencia',
+    texto: decisionConversacion.resultado_texto || 'La corte escucho tu decision.',
+    imagen: '',
+    tipo_resultado: 'neutro' as const,
+    efectos: [],
+  } : null;
+  const efectoConsecuencia = decisionConversacion?.impacto_afinidad?.map((impacto: any) => {
+    const personaje = personajes.find((item: any) => item._id === impacto.personaje_id || item.id === impacto.personaje_id);
+    const nombre = impacto.personaje_nombre || impacto.nombre || personaje?.nombre || 'Personaje';
+    return !configuracionEdad.mostrarNumeros
+      ? `${nombre}: ${impacto.delta < 0 ? 'La relacion necesita cuidado' : 'La relacion se fortalecio'}`
+      : `${nombre}: ${impacto.delta > 0 ? '+' : ''}${impacto.delta} afinidad`;
+  }).join('\n');
   const etapaVisible = estadisticas ? 'estadisticas'
     : finalizacion ? `final:${finalizacion._id}`
     : decisionConversacion ? `consecuencia:${jugador.mes_actual}`
@@ -317,21 +382,24 @@ export default function KingsCourt() {
     <IonPage>
       <IonContent scrollY className={enConversacion ? undefined : 'narrativo-contenido'}>
         <TransicionNarrativa etapa={etapaVisible}>
-        <main className={enConversacion ? 'min-h-screen bg-slate-950' : enEvento ? 'narrativo-evento' : 'narrativo-escena'}>
+        <main style={modoMayor ? estiloEdad : undefined} className={`${enConversacion ? 'narrativo-conversacion min-h-screen bg-slate-950' : enEvento ? 'narrativo-evento' : 'narrativo-escena'}${modoMayor ? ' narrativo-modo-mayor' : ''}`}>
       {error && <p role="alert" className="rounded border border-amber-300 bg-amber-50 p-3 text-amber-900">{error}</p>}
-      {!enConversacion && <div className="narrativo-herramientas">
+      {/* Las herramientas son globales: no desaparecen al entrar en una conversacion. */}
+      <div className="narrativo-herramientas">
         {esPartidaNarrativaLocal(date) && <p role="status" title="Partida local de seis meses. El progreso dura mientras la app esté abierta.">Prueba sin servidor</p>}
-        {!finalizacion && <button className="rounded border border-slate-300 bg-slate-950/60 px-3 py-1.5 text-sm text-white disabled:opacity-50" disabled={reiniciando} onClick={salirDePrueba}>{reiniciando ? 'Saliendo...' : 'Salir de prueba'}</button>}
-      </div>}
+        <MazoUi cartas={configuracionEdad.permitirCartasMensuales ? jugador.cartas_en_mano : []} personajes={personajes} mostrarCantidad={configuracionEdad.mostrarNumeros} />
+        <ConfiguracionEdad edad={edad} onGuardar={guardarConfiguracionEdad} />
+        {!finalizacion && <BotonNarrativo disabled={reiniciando} onClick={salirDePrueba}>{reiniciando ? 'Saliendo...' : 'Salir de prueba'}</BotonNarrativo>}
+      </div>
 
-      {estadisticas ? <EstadisticasPartidaEtapa5 estado={estadisticas.estado} historial={estadisticas.historial} onVolver={() => setEstadisticas(null)} /> : null}
+      {estadisticas ? <EstadisticasPartidaEtapa5 estado={estadisticas.estado} historial={estadisticas.historial} modoSimple={!configuracionEdad.mostrarNumeros} onVolver={() => setEstadisticas(null)} /> : null}
 
       {!estadisticas && finalizacion ? <MostrarResultadoEtapa4 finalizacion={finalizacion} onVerEstadisticas={verEstadisticas} cargandoEstadisticas={cargandoEstadisticas} onTerminar={salirDePrueba} reiniciando={reiniciando} /> : null}
 
-      {!estadisticas && !finalizacion && decisionConversacion ? (
-        <ConsecuenciaConversacion
-          decision={decisionConversacion}
-          personajes={personajes}
+      {!estadisticas && !finalizacion && consecuencia ? (
+        <MostrarResultadoEtapa4
+          resultado={consecuencia}
+          efectoTexto={efectoConsecuencia}
           onContinuar={() => {
             setDecisionConversacion(null);
             void avanzarAlMesSiguiente();
@@ -340,19 +408,20 @@ export default function KingsCourt() {
       ) : null}
 
       {!estadisticas && !finalizacion && !decisionConversacion && juego.resultadoActual ? (
-        <MostrarResultadoEtapa4 resultado={juego.resultadoActual} onContinuar={continuarDespuesResultado} />
+        <MostrarResultadoEtapa4 resultado={juego.resultadoActual} efectoTexto={!configuracionEdad.mostrarNumeros ? 'Tu decision cambio el equilibrio del reino.' : undefined} onContinuar={continuarDespuesResultado} />
       ) : null}
 
       {!estadisticas && !finalizacion && !decisionConversacion && !juego.resultadoActual && juego.conversacionActual ? (
         <ResponderConversacionEtapa3
           conversacion={juego.conversacionActual}
           personajes={personajes}
+          modoSimple={!configuracionEdad.mostrarNumeros}
           onElegir={responderConversacionActual}
         />
       ) : null}
 
       {!estadisticas && !finalizacion && !decisionConversacion && !juego.resultadoActual && !juego.conversacionActual && juego.eventoActual ? (
-        <DecidirEventoEtapa2 key={juego.eventoActual.id || juego.eventoActual._id} evento={juego.eventoActual} atributos={jugador.recursos} onElegir={decidirEventoActual} />
+        <DecidirEventoEtapa2 key={juego.eventoActual.id || juego.eventoActual._id} evento={juego.eventoActual} atributos={jugador.recursos} modoSimple={!configuracionEdad.mostrarNumeros} onElegir={decidirEventoActual} />
       ) : null}
 
       {!estadisticas && !finalizacion && !decisionConversacion && !juego.resultadoActual && !juego.conversacionActual && !juego.eventoActual && jugador.fase_actual === 'seleccionar_corte' ? (
@@ -375,7 +444,7 @@ export default function KingsCourt() {
         />
       ) : null}
 
-      {!estadisticas && !finalizacion && !decisionConversacion && !juego.resultadoActual && !juego.conversacionActual && !juego.eventoActual && jugador.fase_actual === 'draft_mensual' ? (
+      {configuracionEdad.permitirCartasMensuales && !estadisticas && !finalizacion && !decisionConversacion && !juego.resultadoActual && !juego.conversacionActual && !juego.eventoActual && jugador.fase_actual === 'draft_mensual' ? (
         <SeleccionarCartasEtapa0y1
           titulo={`Mes ${jugador.mes_actual}`}
           descripcion="Elegí una carta para afrontar el proximo evento."

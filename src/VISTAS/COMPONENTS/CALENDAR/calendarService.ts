@@ -5,6 +5,7 @@
  */
 
 import type { DayChallenge, CompletedRecord } from './types';
+import { API_URL } from '../../../config/api';
 import {
   getCurrentUserId,
   getActiveProgressStorageKey,
@@ -27,23 +28,15 @@ export interface ServerTodayInfo {
 }
 
 /**
- * Cliente HTTP unificado con soporte para endpoints relativos y fallbacks
+ * Cliente HTTP unificado usando la URL configurada para el backend.
  */
 async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T | null> {
-  const tryUrl = async (url: string) => {
-    const res = await fetch(url, options);
+  try {
+    const res = await fetch(`${API_URL}${endpoint}`, options);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return (await res.json()) as T;
-  };
-
-  try {
-    return await tryUrl(endpoint);
   } catch {
-    try {
-      return await tryUrl(`http://10.16.2.19:8080${endpoint}`);
-    } catch {
-      return null;
-    }
+    return null;
   }
 }
 

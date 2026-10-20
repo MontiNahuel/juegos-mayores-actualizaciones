@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import marcoEvento from '../../../../assets/narrative/event-title.png';
+import marcoEvento from '../../../../../assets/narrative/event-title.png';
 import './tituloNarrativo.css';
 
 // Compartido por eventos y conversaciones. La entrada espera a que el marco este cargado.
