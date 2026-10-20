@@ -10,6 +10,7 @@ import {
   RefreshIcon,
   XIcon,
 } from '../Icons';
+import ImageUploadField from './ImageUploadField';
 
 export default function UniversosTab({ onUniversosChange }) {
   const [universos, setUniversos] = useState([]);
@@ -26,6 +27,7 @@ export default function UniversosTab({ onUniversosChange }) {
   const [id, setId] = useState('');
   const [nombre, setNombre] = useState('');
   const [descripcion, setDescripcion] = useState('');
+  const [imagen, setImagen] = useState('/assets/narrative/universos/default.webp');
   const [icono, setIcono] = useState('crown');
   const [recursos, setRecursos] = useState([
     { clave: 'oro', nombre: 'Tesoro Real', icono: 'coins', min: 0, max: 100, inicial: 50 },
@@ -63,6 +65,7 @@ export default function UniversosTab({ onUniversosChange }) {
     setId('universo_' + Date.now().toString(36));
     setNombre('');
     setDescripcion('');
+    setImagen('/assets/narrative/universos/default.webp');
     setIcono('crown');
     setRecursos([
       { clave: 'oro', nombre: 'Tesoro Real', icono: 'coins', min: 0, max: 100, inicial: 50 },
@@ -80,6 +83,7 @@ export default function UniversosTab({ onUniversosChange }) {
     setId(u._id || u.id);
     setNombre(u.nombre || '');
     setDescripcion(u.descripcion || '');
+    setImagen(u.imagen || '/assets/narrative/universos/default.webp');
     setIcono(u.icono || 'crown');
     setRecursos(u.recursos && u.recursos.length > 0 ? JSON.parse(JSON.stringify(u.recursos)) : []);
     setError('');
@@ -124,6 +128,7 @@ export default function UniversosTab({ onUniversosChange }) {
       nombre: nombre.trim(),
       descripcion: descripcion.trim(),
       icono: icono.trim() || 'crown',
+      imagen: imagen.trim() || '/assets/narrative/universos/default.webp',
       recursos: recursos.map((r) => ({
         clave: r.clave.trim().toLowerCase(),
         nombre: r.nombre.trim(),
@@ -246,8 +251,16 @@ export default function UniversosTab({ onUniversosChange }) {
                 <div>
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 border border-amber-200/60 flex items-center justify-center flex-shrink-0">
-                        <CrownIcon size={20} />
+                      <div className="relative w-11 h-11 rounded-xl overflow-hidden border border-slate-200 bg-amber-50 flex-shrink-0 flex items-center justify-center shadow-2xs">
+                        <img
+                          src={u.imagen || '/assets/narrative/universos/default.webp'}
+                          alt={u.nombre}
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = '/assets/narrative/universos/default.webp';
+                          }}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
                       <div>
                         <h4 className="font-bold text-sm text-slate-900">{u.nombre}</h4>
@@ -396,6 +409,14 @@ export default function UniversosTab({ onUniversosChange }) {
                   className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:border-[#002B5E]"
                 />
               </div>
+
+              <ImageUploadField
+                label="Banner / Ilustración del Universo"
+                categoria="universos"
+                value={imagen}
+                onChange={setImagen}
+                helperText="Banner panorámico del universo. Resolución recomendada: 1200x600 px."
+              />
 
               {/* SECCIÓN DE RECURSOS DINÁMICOS */}
               <div className="pt-2 border-t border-slate-100">

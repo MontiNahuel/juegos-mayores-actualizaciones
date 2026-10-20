@@ -1,7 +1,7 @@
 // Muestra una conversacion de corte como una escena paso a paso.
 import { useState } from 'react';
 
-const API = 'http://10.16.2.19:8080';
+const API = (import.meta as any).env?.VITE_ASSETS_BASE_URL || '';
 
 const imagenDe = (imagen: string) => imagen?.startsWith('http') ? imagen : `${API}${imagen || ''}`;
 

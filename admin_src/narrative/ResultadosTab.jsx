@@ -13,6 +13,7 @@ import {
   CoinsIcon,
   HeartIcon,
 } from '../Icons';
+import ImageUploadField from './ImageUploadField';
 
 export default function ResultadosTab({ universos = [], personajes = [] }) {
   const [resultados, setResultados] = useState([]);
@@ -33,7 +34,7 @@ export default function ResultadosTab({ universos = [], personajes = [] }) {
   const [universoId, setUniversoId] = useState('');
   const [titulo, setTitulo] = useState('');
   const [texto, setTexto] = useState('');
-  const [imagen, setImagen] = useState('');
+  const [imagen, setImagen] = useState('/assets/narrative/resultados/default.webp');
   const [tipoResultado, setTipoResultado] = useState('positivo');
   const [efectos, setEfectos] = useState([]);
   const [afinidades, setAfinidades] = useState([]);
@@ -70,7 +71,7 @@ export default function ResultadosTab({ universos = [], personajes = [] }) {
     setUniversoId(universoFiltro || universos[0]?._id || universos[0]?.id || 'corte_medieval');
     setTitulo('');
     setTexto('');
-    setImagen('/assets/narrative/results/default.webp');
+    setImagen('/assets/narrative/resultados/default.webp');
     setTipoResultado('positivo');
     setEfectos([{ clave: 'oro', valor: 15 }]);
     setAfinidades([]);
@@ -85,7 +86,7 @@ export default function ResultadosTab({ universos = [], personajes = [] }) {
     setUniversoId(r.universo_id || '');
     setTitulo(r.titulo || '');
     setTexto(r.texto || '');
-    setImagen(r.imagen || '');
+    setImagen(r.imagen || '/assets/narrative/resultados/default.webp');
     setTipoResultado(r.tipo_resultado || 'positivo');
 
     // Mapear efectos existentes
@@ -152,7 +153,7 @@ export default function ResultadosTab({ universos = [], personajes = [] }) {
       universo_id: universoId.trim(),
       titulo: titulo.trim(),
       texto: texto.trim(),
-      imagen: imagen.trim() || '/assets/narrative/results/default.webp',
+      imagen: imagen.trim() || '/assets/narrative/resultados/default.webp',
       tipo_resultado: tipoResultado,
       efectos: efectos.map((ef) => ({
         disparador: 'al_obtener',
@@ -331,16 +332,29 @@ export default function ResultadosTab({ universos = [], personajes = [] }) {
               >
                 <div>
                   <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <span
-                        className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase border ${getTipoBadge(
-                          r.tipo_resultado
-                        )}`}
-                      >
-                        {r.tipo_resultado}
-                      </span>
-                      <h4 className="font-bold text-sm text-slate-900 mt-1.5 leading-tight">{r.titulo}</h4>
-                      <span className="text-[9px] font-mono text-slate-400">ID: {rid}</span>
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden flex-shrink-0 flex items-center justify-center shadow-2xs">
+                        <img
+                          src={r.imagen || '/assets/narrative/resultados/default.webp'}
+                          alt={r.titulo}
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = '/assets/narrative/resultados/default.webp';
+                          }}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div>
+                        <span
+                          className={`text-[9px] font-bold px-2 py-0.5 rounded-full uppercase border ${getTipoBadge(
+                            r.tipo_resultado
+                          )}`}
+                        >
+                          {r.tipo_resultado}
+                        </span>
+                        <h4 className="font-bold text-sm text-slate-900 mt-1 leading-tight">{r.titulo}</h4>
+                        <span className="text-[9px] font-mono text-slate-400">ID: {rid}</span>
+                      </div>
                     </div>
 
                     <div className="flex items-center gap-1">
@@ -552,6 +566,14 @@ export default function ResultadosTab({ universos = [], personajes = [] }) {
                   className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:border-[#002B5E]"
                 />
               </div>
+
+              <ImageUploadField
+                label="Ilustración del Desenlace"
+                categoria="resultados"
+                value={imagen}
+                onChange={setImagen}
+                helperText="Ilustración de la escena o desenlace. Proporción panorámica recomendada (900x500 px)."
+              />
 
               {/* SECCIÓN DE IMPACTO EN RECURSOS */}
               <div className="pt-2 border-t border-slate-100">

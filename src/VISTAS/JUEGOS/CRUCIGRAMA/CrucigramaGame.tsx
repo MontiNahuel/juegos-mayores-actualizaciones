@@ -120,8 +120,8 @@ export const CrucigramaGame: React.FC = () => {
         // 3. Localhost fallback
         const tryEndpoints = [
           `/api/challenges/date/${targetDate}?game_id=crucigrama`,
-          `http://${window.location.hostname}:8080/api/challenges/date/${targetDate}?game_id=crucigrama`,
-          `http://10.16.2.19:8080/api/challenges/date/${targetDate}?game_id=crucigrama`,
+          ...((import.meta as any).env?.VITE_API_URL ? [`${(import.meta as any).env.VITE_API_URL.replace(/\/+$/, '')}/api/challenges/date/${targetDate}?game_id=crucigrama`] : []),
+
         ];
 
         for (const url of tryEndpoints) {

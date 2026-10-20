@@ -1,4 +1,4 @@
-const API = 'http://10.16.2.19:8080/api/narrative';
+const API = (import.meta as any).env?.VITE_NARRATIVE_API_URL || '/api/narrative';
 
 export interface PersonajeApi {
   _id: string;

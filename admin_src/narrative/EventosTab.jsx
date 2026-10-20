@@ -15,6 +15,7 @@ import {
   TagIcon,
   LockIcon,
 } from '../Icons';
+import ImageUploadField from './ImageUploadField';
 
 export default function EventosTab({ universos = [], personajes = [] }) {
   const [eventos, setEventos] = useState([]);
@@ -92,7 +93,7 @@ export default function EventosTab({ universos = [], personajes = [] }) {
     setUniversoId(u);
     setTitulo('');
     setDescripcion('');
-    setImagen('/assets/narrative/events/default.webp');
+    setImagen('/assets/narrative/eventos/default.webp');
     setPesoBase(100);
     setTagsStr('crisis, orden');
 
@@ -168,7 +169,7 @@ export default function EventosTab({ universos = [], personajes = [] }) {
     setUniversoId(evt.universo_id || '');
     setTitulo(evt.titulo || '');
     setDescripcion(evt.descripcion || '');
-    setImagen(evt.imagen || '');
+    setImagen(evt.imagen || '/assets/narrative/eventos/default.webp');
     setPesoBase(evt.peso_base ?? 100);
     setTagsStr((evt.tags_tematicos || []).join(', '));
 
@@ -380,7 +381,7 @@ export default function EventosTab({ universos = [], personajes = [] }) {
       universo_id: universoId,
       titulo: titulo.trim(),
       descripcion: descripcion.trim(),
-      imagen: imagen.trim() || '/assets/narrative/events/default.webp',
+      imagen: imagen.trim() || '/assets/narrative/eventos/default.webp',
       tags_tematicos: tagsArray,
       peso_base: parseFloat(pesoBase) || 100,
       opciones: opciones,
@@ -562,11 +563,12 @@ export default function EventosTab({ universos = [], personajes = [] }) {
                   {/* Imagen y badges de cabecera */}
                   <div className="relative h-36 bg-slate-900 overflow-hidden flex items-center justify-center">
                     <img
-                      src={evt.imagen || '/assets/narrative/events/default.webp'}
+                      src={evt.imagen || '/assets/narrative/eventos/default.webp'}
                       alt={evt.titulo}
                       className="w-full h-full object-cover group-hover:scale-105 transition duration-300 opacity-90"
                       onError={(e) => {
-                        e.target.style.display = 'none';
+                        e.target.onerror = null;
+                        e.target.src = '/assets/narrative/eventos/default.webp';
                       }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-black/30" />
@@ -778,33 +780,26 @@ export default function EventosTab({ universos = [], personajes = [] }) {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Título del Evento <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={titulo}
-                      onChange={(e) => setTitulo(e.target.value)}
-                      placeholder="Ej: La Gran Helada en el Valle"
-                      className="text-xs w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold text-slate-800 focus:ring-2 focus:ring-[#002B5E]/20"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Ruta o URL de Imagen
-                    </label>
-                    <input
-                      type="text"
-                      value={imagen}
-                      onChange={(e) => setImagen(e.target.value)}
-                      placeholder="/assets/narrative/events/helada.webp"
-                      className="text-xs w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono text-slate-800 focus:ring-2 focus:ring-[#002B5E]/20"
-                    />
-                  </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Título del Evento <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={titulo}
+                    onChange={(e) => setTitulo(e.target.value)}
+                    placeholder="Ej: La Gran Helada en el Valle"
+                    className="text-xs w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold text-slate-800 focus:ring-2 focus:ring-[#002B5E]/20"
+                  />
                 </div>
+
+                <ImageUploadField
+                  label="Ilustración del Evento Mensual"
+                  categoria="eventos"
+                  value={imagen}
+                  onChange={setImagen}
+                  helperText="Ilustración del evento. Proporción panorámica recomendada (900x500 px)."
+                />
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">

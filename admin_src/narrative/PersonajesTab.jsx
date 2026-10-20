@@ -13,6 +13,7 @@ import {
   FilterIcon,
   CoinsIcon,
 } from '../Icons';
+import ImageUploadField from './ImageUploadField';
 
 export default function PersonajesTab({ universos = [] }) {
   const [personajes, setPersonajes] = useState([]);
@@ -32,7 +33,7 @@ export default function PersonajesTab({ universos = [] }) {
   const [universoId, setUniversoId] = useState('');
   const [nombre, setNombre] = useState('');
   const [titulo, setTitulo] = useState('');
-  const [imagen, setImagen] = useState('');
+  const [imagen, setImagen] = useState('/assets/narrative/personajes/default.webp');
   const [descripcion, setDescripcion] = useState('');
   const [afinidadInicial, setAfinidadInicial] = useState(50);
   const [tagsInput, setTagsInput] = useState('');
@@ -72,7 +73,7 @@ export default function PersonajesTab({ universos = [] }) {
     setUniversoId(universoFiltro || universos[0]?._id || universos[0]?.id || 'corte_medieval');
     setNombre('');
     setTitulo('');
-    setImagen('/assets/narrative/characters/default.webp');
+    setImagen('/assets/narrative/personajes/default.webp');
     setDescripcion('');
     setAfinidadInicial(50);
     setTagsInput('');
@@ -90,7 +91,7 @@ export default function PersonajesTab({ universos = [] }) {
     setUniversoId(p.universo_id || '');
     setNombre(p.nombre || '');
     setTitulo(p.titulo || '');
-    setImagen(p.imagen || '');
+    setImagen(p.imagen || '/assets/narrative/personajes/default.webp');
     setDescripcion(p.descripcion || '');
     setAfinidadInicial(p.afinidad_inicial !== undefined ? p.afinidad_inicial : 50);
     setTagsInput((p.tags || []).join(', '));
@@ -158,7 +159,7 @@ export default function PersonajesTab({ universos = [] }) {
       universo_id: universoId.trim(),
       nombre: nombre.trim(),
       titulo: titulo.trim(),
-      imagen: imagen.trim() || '/assets/narrative/characters/default.webp',
+      imagen: imagen.trim() || '/assets/narrative/personajes/default.webp',
       descripcion: descripcion.trim(),
       pros: pros,
       cons: cons,
@@ -310,8 +311,16 @@ export default function PersonajesTab({ universos = [] }) {
                   {/* Encabezado de la Tarjeta */}
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 flex-shrink-0 overflow-hidden font-bold">
-                        <UserIcon size={22} />
+                      <div className="w-12 h-14 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-600 flex-shrink-0 overflow-hidden shadow-2xs">
+                        <img
+                          src={p.imagen || '/assets/narrative/personajes/default.webp'}
+                          alt={p.nombre}
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = '/assets/narrative/personajes/default.webp';
+                          }}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
                       <div>
                         <h4 className="font-bold text-sm text-slate-900 leading-tight">{p.nombre}</h4>
@@ -546,6 +555,14 @@ export default function PersonajesTab({ universos = [] }) {
                   className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:border-[#002B5E]"
                 />
               </div>
+
+              <ImageUploadField
+                label="Retrato del Personaje"
+                categoria="personajes"
+                value={imagen}
+                onChange={setImagen}
+                helperText="Retrato vertical del personaje. Proporción 4:5 recomendada (600x750 px)."
+              />
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>

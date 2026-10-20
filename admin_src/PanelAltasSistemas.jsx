@@ -23,9 +23,31 @@ import {
 } from './Icons';
 import NarrativeAdminModal from './narrative/NarrativeAdminModal';
 import { OPERADOR_STORAGE_KEY } from './LoginSistemas';
+import { solicitarTicketRetorno } from './ssoService';
 
 export default function PanelAltasSistemas() {
   const navigate = useNavigate();
+
+// Salto SSO al panel central de usuarios
+  const [saltandoSSO, setSaltandoSSO] = useState(false);
+  const handleIrAAutenticador = async () => {
+    if (saltandoSSO) return;
+    setSaltandoSSO(true);
+    try {
+      const data = await solicitarTicketRetorno('autenticador');
+      if (data && data.ticket) {
+        const defaultAuthUrl = (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'))
+          ? 'http://localhost:5173'
+          : 'https://autenticador.asistodo.com.ar';
+        const authFrontUrl = import.meta.env.VITE_AUTH_FRONTEND_URL || defaultAuthUrl;
+        window.location.href = `${authFrontUrl}?ticket=${encodeURIComponent(data.ticket)}`;
+      }
+    } catch (err) {
+      console.error('Error al generar salto a Autenticador:', err);
+      showToast(err.message || 'No se pudo iniciar el salto al panel central');
+      setSaltandoSSO(false);
+    }
+  };
 
   // Operador autenticado
   const [operadorInfo, setOperadorInfo] = useState({ user: 'Operador' });
@@ -742,6 +764,16 @@ export default function PanelAltasSistemas() {
             >
               <BookOpenIcon size={15} />
               <span>Juego Narrativo</span>
+            </button>
+
+<button
+              onClick={handleIrAAutenticador}
+              disabled={saltandoSSO}
+              title="Ir a la Torre de Control Central de Usuarios (SSO)"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 text-indigo-700 font-bold text-xs transition shadow-xs cursor-pointer disabled:opacity-50"
+            >
+              <ShieldIcon size={15} />
+              <span>{saltandoSSO ? 'Conectando...' : 'Gestión Central'}</span>
             </button>
 
             <button

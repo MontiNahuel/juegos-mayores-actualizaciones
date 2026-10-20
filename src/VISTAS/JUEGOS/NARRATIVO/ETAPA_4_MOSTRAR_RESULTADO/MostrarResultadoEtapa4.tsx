@@ -2,7 +2,7 @@
 import type { FinalizacionApi, ResultadoApi } from '../narrativeService';
 
 // ETAPA 4: muestra el resultado del evento o el cierre de la partida.
-const API = 'http://10.16.2.19:8080';
+const API = (import.meta as any).env?.VITE_ASSETS_BASE_URL || '';
 
 export default function MostrarResultadoEtapa4({ resultado, finalizacion, onContinuar, onVerEstadisticas, cargandoEstadisticas, onTerminar, reiniciando }: {
   resultado?: ResultadoApi;

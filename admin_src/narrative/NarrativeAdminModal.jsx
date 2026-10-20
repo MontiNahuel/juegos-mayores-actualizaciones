@@ -8,6 +8,7 @@ import {
   FileTextIcon,
   MessageSquareIcon,
   CalendarIcon,
+  SkullIcon,
   XIcon,
 } from '../Icons';
 import UniversosTab from './UniversosTab';
@@ -16,6 +17,7 @@ import CartasTab from './CartasTab';
 import ResultadosTab from './ResultadosTab';
 import EventosTab from './EventosTab';
 import ConversacionesTab from './ConversacionesTab';
+import FinalizacionesTab from './FinalizacionesTab';
 import CalendarioTab from './CalendarioTab';
 
 export default function NarrativeAdminModal({ abierto, onCerrar }) {
@@ -65,7 +67,8 @@ export default function NarrativeAdminModal({ abierto, onCerrar }) {
     { id: 'resultados', label: '4. Desenlaces', Icon: SparklesIcon },
     { id: 'eventos', label: '5. Eventos', Icon: FileTextIcon },
     { id: 'conversaciones', label: '6. Diálogos', Icon: MessageSquareIcon },
-    { id: 'calendario', label: '7. Calendario', Icon: CalendarIcon },
+    { id: 'finalizaciones', label: '7. Finalizaciones', Icon: SkullIcon },
+    { id: 'calendario', label: '8. Calendario', Icon: CalendarIcon },
   ];
 
   return (
@@ -167,6 +170,10 @@ export default function NarrativeAdminModal({ abierto, onCerrar }) {
 
           {tabActiva === 'conversaciones' && (
             <ConversacionesTab universos={universos} personajes={personajes} />
+          )}
+
+          {tabActiva === 'finalizaciones' && (
+            <FinalizacionesTab universos={universos} />
           )}
 
           {tabActiva === 'calendario' && (

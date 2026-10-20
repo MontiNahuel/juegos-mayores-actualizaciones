@@ -180,7 +180,10 @@ export async function getActiveGameProgress(
     try {
       data = await tryFetch(url);
     } catch {
-      data = await tryFetch(`http://10.16.2.19:8080${url}`);
+      const apiBase = (import.meta as any).env?.VITE_API_URL?.replace(/\/+$/, '') || '';
+      if (apiBase) {
+        data = await tryFetch(`${apiBase}${url}`);
+      }
     }
 
     if (data && data.date) {
@@ -277,7 +280,8 @@ export async function saveActiveGameProgress(payload: SaveProgressPayload): Prom
     };
 
     sendBackend('/api/games/attempts').catch(() => {
-      sendBackend('http://10.16.2.19:8080/api/games/attempts').catch(() => {});
+      const apiBase = (import.meta as any).env?.VITE_API_URL?.replace(/\/+$/, '') || '';
+      if (apiBase) sendBackend(`${apiBase}/api/games/attempts`).catch(() => {});
     });
   } catch {
     // Modo offline seguro
@@ -398,7 +402,8 @@ export async function saveFinalGameAttempt(payload: SaveProgressPayload): Promis
     };
 
     sendBackend('/api/games/attempts').catch(() => {
-      sendBackend('http://10.16.2.19:8080/api/games/attempts').catch(() => {});
+      const apiBase = (import.meta as any).env?.VITE_API_URL?.replace(/\/+$/, '') || '';
+      if (apiBase) sendBackend(`${apiBase}/api/games/attempts`).catch(() => {});
     });
   } catch {
     // Modo offline seguro

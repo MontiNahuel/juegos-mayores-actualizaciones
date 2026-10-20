@@ -13,6 +13,7 @@ import {
   UsersIcon,
   HeartIcon,
 } from '../Icons';
+import ImageUploadField from './ImageUploadField';
 
 export default function ConversacionesTab({ universos = [], personajes = [] }) {
   const [conversaciones, setConversaciones] = useState([]);
@@ -31,7 +32,7 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
   const [id, setId] = useState('');
   const [universoId, setUniversoId] = useState('');
   const [titulo, setTitulo] = useState('');
-  const [imagen, setImagen] = useState('');
+  const [imagen, setImagen] = useState('/assets/narrative/conversaciones/default.webp');
   const [reqPj1, setReqPj1] = useState('');
   const [reqPj2, setReqPj2] = useState('');
   const [frases, setFrases] = useState([]);
@@ -77,7 +78,7 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
     const u = universoFiltro || universos[0]?._id || universos[0]?.id || 'corte_medieval';
     setUniversoId(u);
     setTitulo('');
-    setImagen('/assets/narrative/conversations/default.webp');
+    setImagen('/assets/narrative/conversaciones/default.webp');
 
     // Seleccionar por defecto los primeros dos personajes del universo
     const p1 = personajes[0]?._id || personajes[0]?.id || '';
@@ -129,7 +130,7 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
     setId(conv._id || conv.id);
     setUniversoId(conv.universo_id || '');
     setTitulo(conv.titulo || '');
-    setImagen(conv.imagen || '');
+    setImagen(conv.imagen || '/assets/narrative/conversaciones/default.webp');
 
     const reqs = conv.requisitos || [];
     setReqPj1(reqs[0]?.personajeId || '');
@@ -271,7 +272,7 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
       _id: id.trim(),
       universo_id: universoId,
       titulo: titulo.trim(),
-      imagen: imagen.trim() || '/assets/narrative/conversations/default.webp',
+      imagen: imagen.trim() || '/assets/narrative/conversaciones/default.webp',
       requisitos: [{ personajeId: reqPj1 }, { personajeId: reqPj2 }],
       frases: frases.map((f) => ({
         personajeId: f.personajeId,
@@ -463,11 +464,12 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
                   {/* Cabecera con Imagen */}
                   <div className="relative h-32 bg-slate-900 overflow-hidden flex items-center justify-center">
                     <img
-                      src={conv.imagen || '/assets/narrative/conversations/default.webp'}
+                      src={conv.imagen || '/assets/narrative/conversaciones/default.webp'}
                       alt={conv.titulo}
                       className="w-full h-full object-cover group-hover:scale-105 transition duration-300 opacity-80"
                       onError={(e) => {
-                        e.target.style.display = 'none';
+                        e.target.onerror = null;
+                        e.target.src = '/assets/narrative/conversaciones/default.webp';
                       }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-black/40 to-black/20" />
@@ -671,6 +673,14 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
                     />
                   </div>
                 </div>
+
+                <ImageUploadField
+                  label="Ilustración / Escenario del Diálogo"
+                  categoria="conversaciones"
+                  value={imagen}
+                  onChange={setImagen}
+                  helperText="Fondo o ilustración del encuentro entre los personajes. Si no subes una, se usará la de fallback."
+                />
 
                 {/* Selección de los 2 Personajes Requeridos */}
                 <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">

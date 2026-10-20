@@ -38,7 +38,7 @@ import {
   responderConversacion,
 } from './narrativeService';
 
-const IMAGENES = 'http://10.16.2.19:8080';
+const IMAGENES = (import.meta as any).env?.VITE_ASSETS_BASE_URL || '';
 
 // Normaliza las cartas y personajes para que todas las etapas usen el mismo id.
 const prepararCarta = (item: any) => ({

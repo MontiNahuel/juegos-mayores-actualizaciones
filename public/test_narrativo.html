@@ -27,8 +27,9 @@
     <div class="flex items-center gap-2 bg-slate-900/80 px-2 py-1 rounded-lg border border-slate-700">
       <span class="text-slate-400">Modo:</span>
       <select id="selectModo" onchange="cambiarModo(this.value)" class="bg-transparent text-amber-300 font-bold focus:outline-none cursor-pointer">
-        <option value="api" class="bg-slate-800 text-white" selected>API Real (FastAPI localhost:8080)</option>
-        <option value="simulado" class="bg-slate-800 text-white">Simulación Offline (Local)</option>
+        <option value="v2" class="bg-slate-800 text-white" selected>⚡ API V2 Ligera (/v2/partida)</option>
+        <option value="v1" class="bg-slate-800 text-white">📦 API V1 Legacy (/partida)</option>
+        <option value="simulado" class="bg-slate-800 text-white">🧪 Simulación Offline (Local)</option>
       </select>
     </div>
 
@@ -162,12 +163,14 @@
   <script>
     // Estado local reactivo
     let estado = {
-      modo: 'api', // 'api' | 'simulado'
+      modo: 'v2', // 'v2' | 'v1' | 'simulado'
       mes: 1,
       fase: 'SETUP', // 'SETUP' | 'DRAFT' | 'EVENTO' | 'RESULTADO' | 'DIALOGO' | 'FIN'
       recursos: { oro: 50, pueblo: 50, ejercito: 50, fe: 50 },
+      afinidad: {},
       corte: [], // Empieza vacío
       cartas: [], // Empieza vacío
+      finalizacion: null,
       setupPersonajes: [], // 5 ofrecidos
       setupCartas: [], // 5 ofrecidas
       setupSeleccionPJ: [], // 3 elegidos
@@ -312,11 +315,12 @@
 
     // --- FASE 0: SETUP INICIAL INTERACTIVO ---
     function renderFaseSetup(panel) {
-      const personajes = (estado.modo === 'api' && estado.setupPersonajes.length > 0)
+      const isApi = estado.modo === 'v2' || estado.modo === 'v1' || estado.modo === 'api';
+      const personajes = (isApi && estado.setupPersonajes.length > 0)
         ? estado.setupPersonajes
         : CATALOGO_PJ;
 
-      const cartas = (estado.modo === 'api' && estado.setupCartas.length > 0)
+      const cartas = (isApi && estado.setupCartas.length > 0)
         ? estado.setupCartas
         : CATALOGO_CARTAS;
 
@@ -436,22 +440,25 @@
 
     // --- FASE 1: DRAFT MENSUAL ---
     function renderFaseDraft(panel) {
-      if (estado.modo === 'api' && estado.apiData?.cartas_draft_actual?.length) {
+      if ((estado.modo === 'v2' || estado.modo === 'v1' || estado.modo === 'api') && estado.apiData?.cartas_draft_actual?.length) {
         panel.innerHTML = `
           <div class="text-center mb-6">
             <span class="text-xs uppercase tracking-wider font-bold text-amber-400 bg-amber-950/60 border border-amber-500/40 px-3 py-1 rounded-full">
-              Robo de Cartas Mensual (API Real)
+              Robo de Cartas Mensual (${estado.modo === 'v2' ? 'API V2 Ligera' : 'API Real'})
             </span>
             <h2 class="font-title text-xl sm:text-2xl font-bold text-slate-100 mt-2">Mes ${estado.mes}: Elige 1 Carta de Apoyo</h2>
             <p class="text-xs sm:text-sm text-slate-400">Esta carta otorgará beneficios permanentes a tu reino para el resto del año.</p>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            ${estado.apiData.cartas_draft_actual.map(c => `
-              <div onclick="elegirCartaDraft('${c._id}')" class="bg-slate-900/90 border-2 border-slate-700 hover:border-amber-400 p-4 rounded-xl cursor-pointer transition transform hover:-translate-y-1 flex flex-col justify-between group">
+            ${estado.apiData.cartas_draft_actual.map(c => {
+              const cId = c.id || c._id;
+              const cat = (c.categoria || 'item').toUpperCase();
+              return `
+              <div onclick="elegirCartaDraft('${cId}')" class="bg-slate-900/90 border-2 border-slate-700 hover:border-amber-400 p-4 rounded-xl cursor-pointer transition transform hover:-translate-y-1 flex flex-col justify-between group">
                 <div>
                   <span class="text-4xl block mb-2">🎴</span>
-                  <span class="text-[10px] font-bold uppercase tracking-wider text-amber-400">${c.categoria.toUpperCase()}</span>
+                  <span class="text-[10px] font-bold uppercase tracking-wider text-amber-400">${cat}</span>
                   <h3 class="font-bold text-slate-100 text-base mt-1 group-hover:text-amber-300">${c.nombre}</h3>
                   <p class="text-xs text-slate-400 mt-2 leading-relaxed">${c.descripcion}</p>
                   <div class="flex flex-wrap gap-1 mt-3">
@@ -462,7 +469,8 @@
                   Elegir esta carta
                 </button>
               </div>
-            `).join('')}
+            `;
+            }).join('')}
           </div>
         `;
         return;
@@ -519,7 +527,7 @@
 
     // --- FASE 2: EVENTO DEL MES CON PROBABILIDADES DINÁMICAS ---
     function renderFaseEvento(panel) {
-      if (estado.modo === 'api' && estado.apiData?.evento_actual) {
+      if ((estado.modo === 'v2' || estado.modo === 'v1' || estado.modo === 'api') && estado.apiData?.evento_actual) {
         const evt = estado.apiData.evento_actual;
         panel.innerHTML = `
           <div class="bg-slate-950/80 border border-amber-900/40 rounded-xl overflow-hidden mb-4 shadow-xl">
@@ -670,7 +678,7 @@
 
     // --- FASE 3: RESULTADO DEL EVENTO ---
     function renderFaseResultado(panel) {
-      if (estado.modo === 'api' && estado.apiData?.resultado_actual) {
+      if ((estado.modo === 'v2' || estado.modo === 'v1' || estado.modo === 'api') && estado.apiData?.resultado_actual) {
         const res = estado.apiData.resultado_actual;
         const isPos = res.tipo_resultado === 'positivo';
         const isCat = res.tipo_resultado === 'catastrofico';
@@ -735,7 +743,7 @@
 
     // --- FASE 4: DIÁLOGO DE CORTE ---
     function renderFaseDialogo(panel) {
-      if (estado.modo === 'api' && estado.apiData?.conversacion_actual) {
+      if ((estado.modo === 'v2' || estado.modo === 'v1' || estado.modo === 'api') && estado.apiData?.conversacion_actual) {
         const conv = estado.apiData.conversacion_actual;
         const frases = conv.frases || conv.lineas || [];
         const decisiones = conv.decisiones || conv.opciones || [];
@@ -885,32 +893,46 @@
       `;
     }
 
-    // --- FASE 5: EPÍLOGO MES 12 ---
+    // --- FASE 5: EPÍLOGO MES 12 / FIN DE PARTIDA ---
     function renderFaseFin(panel) {
-      if (estado.modo === 'api' && estado.apiData?.epilogo_final) {
-        const ep = estado.apiData.epilogo_final;
+      const fin = estado.finalizacion || estado.apiData?.finalizacion || estado.apiData?.epilogo_final;
+      if ((estado.modo === 'v2' || estado.modo === 'v1' || estado.modo === 'api') && fin) {
+        const esDerrota = fin.tipo === 'derrota' || fin.rango === 'F';
+        const rango = fin.rango || (esDerrota ? 'F' : 'S');
+        const badgeColor = esDerrota ? 'text-rose-400 border-rose-500/40 bg-rose-950/60' : 'text-amber-400 border-amber-500/40 bg-amber-950/60';
+        const rankGrad = esDerrota ? 'from-rose-700 to-rose-400' : 'from-amber-600 to-amber-300';
+
         panel.innerHTML = `
           <div class="text-center max-w-xl mx-auto py-6">
-            <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-tr from-amber-600 to-amber-300 text-slate-950 font-black text-4xl mb-4 shadow-xl">
-              ${ep.rango}
+            <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-tr ${rankGrad} text-slate-950 font-black text-4xl mb-4 shadow-xl">
+              ${rango}
             </div>
-            <span class="text-xs font-bold uppercase tracking-widest text-amber-400 block">Evaluación de Fin de Año (API Real)</span>
-            <h2 class="font-title text-2xl sm:text-3xl font-bold text-amber-200 mt-1">${ep.titulo}</h2>
+            <span class="text-xs font-bold uppercase tracking-widest ${badgeColor} px-3 py-1 rounded-full border inline-block mb-2">
+              ${esDerrota ? '💀 Reino Caído • Derrota' : '👑 Reinado Glorioso • Victoria'}
+            </span>
+            <h2 class="font-title text-2xl sm:text-3xl font-bold ${esDerrota ? 'text-rose-200' : 'text-amber-200'} mt-1">
+              ${fin.titulo || (esDerrota ? 'El Reino ha Caído' : 'Victoria del Reino')}
+            </h2>
             <p class="text-sm text-slate-300 mt-3 leading-relaxed">
-              ${ep.descripcion}
+              ${fin.descripcion || ''}
             </p>
+            ${fin.recurso_agotado ? `
+              <div class="mt-3 inline-block bg-rose-900/60 text-rose-300 text-xs px-3 py-1 rounded-lg border border-rose-500/40 font-bold">
+                ⚠️ Causa: Colapso del recurso [${fin.recurso_agotado.toUpperCase()}]
+              </div>
+            ` : ''}
 
-            <div class="bg-slate-900 border border-amber-900/40 rounded-xl p-4 my-6 text-xs text-left">
-              <span class="font-bold text-amber-300 block mb-2">📜 Balance Final del Reino:</span>
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 my-6 text-xs text-left">
+              <span class="font-bold text-amber-300 block mb-2">📜 Recursos Finales al Desenlace:</span>
               <div class="grid grid-cols-2 gap-2 text-slate-300">
-                <div>🪙 Oro Final: <span class="text-amber-400 font-bold">${ep.recursos_finales?.oro ?? estado.recursos.oro}</span></div>
-                <div>👥 Pueblo Final: <span class="text-emerald-400 font-bold">${ep.recursos_finales?.pueblo ?? estado.recursos.pueblo}</span></div>
-                <div>🛡️ Ejército Final: <span class="text-sky-400 font-bold">${ep.recursos_finales?.ejercito ?? estado.recursos.ejercito}</span></div>
-                <div>⛪ Fe Final: <span class="text-purple-400 font-bold">${ep.recursos_finales?.fe ?? estado.recursos.fe}</span></div>
+                <div>🪙 Oro Final: <span class="text-amber-400 font-bold">${estado.recursos.oro}</span></div>
+                <div>👥 Pueblo Final: <span class="text-emerald-400 font-bold">${estado.recursos.pueblo}</span></div>
+                <div>🛡️ Ejército Final: <span class="text-sky-400 font-bold">${estado.recursos.ejercito}</span></div>
+                <div>⛪ Fe Final: <span class="text-purple-400 font-bold">${estado.recursos.fe}</span></div>
               </div>
             </div>
 
-            <button onclick="reiniciarPartida()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-8 py-3 rounded-xl text-base shadow-lg transition">
+            <button onclick="reiniciarPartida()" class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold px-8 py-3 rounded-xl text-base shadow-lg transition cursor-pointer">
               🔄 Jugar Nuevo Desafío Diario
             </button>
           </div>
@@ -955,18 +977,20 @@
       renderFase();
     }
 
-    const API_BASE = "http://localhost:8080/api/narrative/partida";
+    const API_V1 = "http://localhost:8080/api/narrative/partida";
+    const API_V2 = "http://localhost:8080/api/narrative/v2/partida";
     const _now = new Date();
     const TODAY = `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, '0')}-${String(_now.getDate()).padStart(2, '0')}`;
 
-    // Mapear respuesta del backend al estado visual
+    // Mapear respuesta completa V1 (Legacy) al estado visual
     function mapearRespuestaAPI(data) {
       const run = data.run;
       estado.mes = run.mes_actual;
       estado.recursos = { ...run.recursos };
-      estado.apiData = data; // Guarda snapshot completo
+      estado.afinidad = { ...(run.afinidad || {}) };
+      estado.apiData = data;
+      estado.finalizacion = data.finalizacion || null;
 
-      // Mapear corte activa con iconos apropiados
       estado.corte = (data.personajes_corte || []).map(p => {
         const pid = p._id || p.id;
         return {
@@ -978,7 +1002,6 @@
         };
       });
 
-      // Mapear cartas en mano
       estado.cartas = (data.cartas_inventario || []).map(c => ({
         id: c._id || c.id,
         nombre: c.nombre,
@@ -986,7 +1009,6 @@
         icon: '🎴'
       }));
 
-      // Mapear fase
       const faseMap = {
         'DRAFT_MENSUAL': 'DRAFT',
         'TOMA_DECISION_EVENTO': 'EVENTO',
@@ -994,27 +1016,112 @@
         'BALANCE_MES': 'RESULTADO',
         'FINALIZADA': 'FIN'
       };
-      estado.fase = faseMap[run.fase_actual] || 'DRAFT';
+      if (run.fase_actual === 'FINALIZADA' || data.finalizacion) {
+        estado.fase = 'FIN';
+      } else {
+        estado.fase = faseMap[run.fase_actual] || 'DRAFT';
+      }
+    }
+
+    // Mapear respuesta V2 (Ligera / Delteada) al estado visual
+    function mapearRespuestaV2(turno, corteData = null, invData = null) {
+      estado.mes = turno.mes_actual;
+      estado.recursos = { ...turno.recursos };
+      estado.afinidad = { ...(turno.afinidad || {}) };
+      estado.finalizacion = turno.finalizacion || null;
+      estado.apiData = {
+        cartas_draft_actual: turno.cartas_draft_actual || [],
+        evento_actual: turno.evento_actual || null,
+        resultado_actual: turno.resultado_actual || null,
+        conversacion_actual: turno.conversacion_actual || null,
+        finalizacion: turno.finalizacion || null
+      };
+
+      if (corteData && corteData.corte) {
+        estado.corte = corteData.corte.map(c => {
+          const pid = c.personaje.id || c.personaje._id;
+          return {
+            id: pid,
+            nombre: c.personaje.nombre,
+            rol: c.personaje.titulo || c.personaje.rol || '',
+            afinidad: c.afinidad !== undefined ? c.afinidad : (estado.afinidad[pid] ?? 50),
+            icon: getPersonajeIcon(pid)
+          };
+        });
+      } else if (estado.setupSeleccionPJ.length > 0) {
+        estado.corte = estado.setupSeleccionPJ.map(id => {
+          const pj = estado.setupPersonajes.find(p => (p._id || p.id) === id);
+          return {
+            id: id,
+            nombre: pj ? pj.nombre : id,
+            rol: pj ? (pj.titulo || pj.rol) : '',
+            afinidad: estado.afinidad[id] ?? 50,
+            icon: getPersonajeIcon(id)
+          };
+        });
+      }
+
+      if (invData && invData.cartas) {
+        estado.cartas = invData.cartas.map(c => ({
+          id: c.id || c._id,
+          nombre: c.nombre,
+          tag: (c.tags && c.tags[0]) || 'item',
+          icon: '🎴'
+        }));
+      }
+
+      const faseMap = {
+        'DRAFT_MENSUAL': 'DRAFT',
+        'TOMA_DECISION_EVENTO': 'EVENTO',
+        'RESOLVER_CONVERSACION': 'DIALOGO',
+        'BALANCE_MES': 'RESULTADO',
+        'FINALIZADA': 'FIN'
+      };
+      if (turno.finalizacion || turno.status === 'completed' || turno.fase_actual === 'FINALIZADA') {
+        estado.fase = 'FIN';
+      } else {
+        estado.fase = faseMap[turno.fase_actual] || 'DRAFT';
+      }
     }
 
     async function syncEstadoConAPI() {
       let dataSetup = null;
-      let dataActiva = null;
 
       try {
         // 1. Obtener los 5 personajes y 5 cartas ofrecidas para el día
-        const resSetup = await fetch(`${API_BASE}/setup?date=${TODAY}`);
+        const resSetup = await fetch(`${API_V1}/setup?date=${TODAY}`);
         if (!resSetup.ok) throw new Error("No se pudo obtener el setup del día: " + resSetup.status);
         dataSetup = await resSetup.json();
 
         estado.setupPersonajes = dataSetup.personajes_ofrecidos || [];
         estado.setupCartas = dataSetup.cartas_ofrecidas || [];
 
-        // 2. Si hay partida activa, recuperar estado exacto
+        // 2. Si hay partida activa, recuperar según el modo
         if (dataSetup.tiene_partida_activa) {
-          const resActiva = await fetch(`${API_BASE}/activa?date=${TODAY}`);
-          if (resActiva.ok) {
-            dataActiva = await resActiva.json();
+          if (estado.modo === 'v2') {
+            const resTurno = await fetch(`${API_V2}/estado?date=${TODAY}`);
+            if (resTurno.ok) {
+              const dataTurno = await resTurno.json();
+              // Recuperar corte e inventario bajo demanda
+              const resCorte = await fetch(`${API_V1}/corte?date=${TODAY}`).catch(() => null);
+              const dataCorte = resCorte && resCorte.ok ? await resCorte.json() : null;
+              const resInv = await fetch(`${API_V1}/inventario?date=${TODAY}`).catch(() => null);
+              const dataInv = resInv && resInv.ok ? await resInv.json() : null;
+
+              mapearRespuestaV2(dataTurno, dataCorte, dataInv);
+              renderFase();
+              actualizarBarras();
+              return;
+            }
+          } else if (estado.modo === 'v1' || estado.modo === 'api') {
+            const resActiva = await fetch(`${API_V1}/activa?date=${TODAY}`);
+            if (resActiva.ok) {
+              const dataActiva = await resActiva.json();
+              mapearRespuestaAPI(dataActiva);
+              renderFase();
+              actualizarBarras();
+              return;
+            }
           }
         }
       } catch (networkErr) {
@@ -1027,30 +1134,26 @@
         return;
       }
 
-      // 3. Renderizar partida viva o pantalla de setup
-      try {
-        if (dataActiva) {
-          mapearRespuestaAPI(dataActiva);
-        } else if (dataSetup) {
-          estado.mes = 1;
-          estado.fase = 'SETUP';
-          estado.recursos = { ...dataSetup.atributos_iniciales };
-          estado.corte = [];
-          estado.cartas = [];
-          estado.setupSeleccionPJ = [];
-          estado.setupSeleccionCartas = [];
-        }
-        renderFase();
-        actualizarBarras();
-      } catch (renderErr) {
-        console.error("Error al renderizar estado de partida:", renderErr);
+      // 3. Si no hay partida activa, mostrar Setup
+      if (dataSetup) {
+        estado.mes = 1;
+        estado.fase = 'SETUP';
+        estado.recursos = { ...dataSetup.atributos_iniciales };
+        estado.corte = [];
+        estado.cartas = [];
+        estado.setupSeleccionPJ = [];
+        estado.setupSeleccionCartas = [];
+        estado.apiData = null;
+        estado.finalizacion = null;
       }
+      renderFase();
+      actualizarBarras();
     }
 
     async function comenzarPartidaSetup() {
-      if (estado.modo === 'api') {
+      if (estado.modo === 'v2') {
         try {
-          const res = await fetch(`${API_BASE}/iniciar`, {
+          const res = await fetch(`${API_V2}/iniciar`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -1061,31 +1164,119 @@
           });
           if (!res.ok) {
             const err = await res.json();
-            throw new Error(err.detail || "Error al iniciar partida");
+            throw new Error(err.detail || "Error al iniciar partida en V2");
+          }
+          const data = await res.json();
+          // IniciarPartidaV2Response
+          estado.mes = data.mes_actual;
+          estado.recursos = { ...data.recursos };
+          estado.afinidad = { ...(data.afinidad || {}) };
+          estado.apiData = { cartas_draft_actual: data.cartas_draft_actual || [] };
+
+          estado.corte = estado.setupSeleccionPJ.map(id => {
+            const pj = estado.setupPersonajes.find(p => (p._id || p.id) === id);
+            return {
+              id: id,
+              nombre: pj ? pj.nombre : id,
+              rol: pj ? (pj.titulo || pj.rol) : '',
+              afinidad: estado.afinidad[id] ?? 50,
+              icon: getPersonajeIcon(id)
+            };
+          });
+
+          estado.cartas = estado.setupSeleccionCartas.map(id => {
+            const c = estado.setupCartas.find(x => (x._id || x.id) === id);
+            return {
+              id: id,
+              nombre: c ? c.nombre : id,
+              tag: (c?.tags && c.tags[0]) || 'apoyo',
+              icon: '🎴'
+            };
+          });
+
+          estado.fase = 'DRAFT';
+          renderFase();
+          return;
+        } catch (e) {
+          alert("Error de API V2: " + e.message);
+          return;
+        }
+      }
+
+      if (estado.modo === 'v1' || estado.modo === 'api') {
+        try {
+          const res = await fetch(`${API_V1}/iniciar`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              date: TODAY,
+              corte_elegida_ids: estado.setupSeleccionPJ,
+              cartas_iniciales_ids: estado.setupSeleccionCartas
+            })
+          });
+          if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.detail || "Error al iniciar partida en V1");
           }
           const data = await res.json();
           mapearRespuestaAPI(data);
           renderFase();
           return;
         } catch (e) {
-          alert("Error de API: " + e.message);
+          alert("Error de API V1: " + e.message);
           return;
         }
       }
+
       // Modo simulado
       estado.fase = 'DRAFT';
       renderFase();
     }
 
     async function elegirCartaDraft(nombreOCartaId, recurso, delta) {
-      if (estado.modo === 'api') {
+      if (estado.modo === 'v2') {
         try {
-          // Si vino de la API real, usar el ID de la carta
+          const cartaId = typeof nombreOCartaId === 'string' && nombreOCartaId.startsWith('card_')
+            ? nombreOCartaId
+            : (estado.apiData?.cartas_draft_actual?.[0]?.id || estado.apiData?.cartas_draft_actual?.[0]?._id || 'card_diezmo_comercial');
+
+          const cElegida = (estado.apiData?.cartas_draft_actual || []).find(c => (c.id || c._id) === cartaId);
+          if (cElegida) {
+            estado.cartas.push({
+              id: cElegida.id || cElegida._id,
+              nombre: cElegida.nombre,
+              tag: (cElegida.tags && cElegida.tags[0]) || 'item',
+              icon: '🎴'
+            });
+          }
+
+          const res = await fetch(`${API_V2}/elegir-carta-mes`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ date: TODAY, carta_id: cartaId })
+          });
+          if (!res.ok) throw new Error((await res.json()).detail);
+          const data = await res.json();
+          // ElegirCartaMesV2Response
+          estado.recursos = { ...data.recursos };
+          if (!estado.apiData) estado.apiData = {};
+          estado.apiData.evento_actual = data.evento_actual;
+          estado.fase = 'EVENTO';
+          renderFase();
+          return;
+        } catch (e) {
+          alert("Error de API V2: " + e.message);
+          return;
+        }
+      }
+
+      if (estado.modo === 'v1' || estado.modo === 'api') {
+        try {
           const cartaId = typeof nombreOCartaId === 'string' && nombreOCartaId.startsWith('card_') 
             ? nombreOCartaId 
-            : (estado.apiData?.cartas_draft_actual?.[0]?._id || 'card_diezmo_comercial');
+            : (estado.apiData?.cartas_draft_actual?.[0]?._id || estado.apiData?.cartas_draft_actual?.[0]?.id || 'card_diezmo_comercial');
 
-          const res = await fetch(`${API_BASE}/elegir-carta-mes`, {
+          const res = await fetch(`${API_V1}/elegir-carta-mes`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ date: TODAY, carta_id: cartaId })
@@ -1096,10 +1287,11 @@
           renderFase();
           return;
         } catch (e) {
-          alert("Error de API: " + e.message);
+          alert("Error de API V1: " + e.message);
           return;
         }
       }
+
       // Modo simulado
       estado.recursos[recurso] = Math.min(100, estado.recursos[recurso] + delta);
       estado.cartas.push({ id: 'card_nueva', nombre: nombreOCartaId, tag: 'adquirida', icon: '✨' });
@@ -1108,14 +1300,48 @@
     }
 
     async function tomarDecisionEvento(opcion) {
-      if (estado.modo === 'api') {
+      if (estado.modo === 'v2') {
         try {
           let opcionId = opcion;
           if (opcion === 'A') opcionId = 'op_a';
           else if (opcion === 'B') opcionId = 'op_b';
           else if (opcion === 'C') opcionId = 'op_c';
 
-          const res = await fetch(`${API_BASE}/decidir-evento`, {
+          const res = await fetch(`${API_V2}/decidir-evento`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ date: TODAY, opcion_id: opcionId })
+          });
+          if (!res.ok) throw new Error((await res.json()).detail);
+          const data = await res.json();
+          // DecidirEventoV2Response
+          estado.recursos = { ...data.recursos };
+          if (!estado.apiData) estado.apiData = {};
+          estado.apiData.resultado_actual = data.resultado_actual;
+          estado.apiData.conversacion_actual = data.conversacion_actual;
+          estado.finalizacion = data.finalizacion;
+
+          if (data.finalizacion) {
+            estado.fase = 'FIN';
+          } else {
+            estado.fase = 'RESULTADO';
+          }
+          renderFase();
+          return;
+        } catch (e) {
+          alert("Error de API V2: " + e.message);
+          return;
+        }
+      }
+
+      if (estado.modo === 'v1' || estado.modo === 'api') {
+        try {
+          let opcionId = opcion;
+          if (opcion === 'A') opcionId = 'op_a';
+          else if (opcion === 'B') opcionId = 'op_b';
+          else if (opcion === 'C') opcionId = 'op_c';
+
+          const res = await fetch(`${API_V1}/decidir-evento`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ date: TODAY, opcion_id: opcionId })
@@ -1129,10 +1355,11 @@
           renderFase();
           return;
         } catch (e) {
-          alert("Error de API: " + e.message);
+          alert("Error de API V1: " + e.message);
           return;
         }
       }
+
       // Modo simulado
       if (opcion === 'A') {
         estado.recursos.pueblo += 15;
@@ -1149,9 +1376,7 @@
     }
 
     async function continuarTrasResultado() {
-      if (estado.modo === 'api') {
-        // En la API, si había diálogo ya se pasó a RESOLVER_CONVERSACION
-        // Si no había diálogo, pasamos directo a avanzar_mes
+      if (estado.modo === 'v2' || estado.modo === 'v1' || estado.modo === 'api') {
         if (estado.apiData?.conversacion_actual) {
           estado.fase = 'DIALOGO';
           renderFase();
@@ -1170,13 +1395,49 @@
     }
 
     async function responderDialogo(opcion) {
-      if (estado.modo === 'api') {
+      if (estado.modo === 'v2') {
         try {
           const conv = estado.apiData?.conversacion_actual;
           const decisiones = conv?.decisiones || conv?.opciones || [];
           const decElegida = decisiones.find(d => (d.opcion !== undefined ? d.opcion : d.opcion_numero) === opcion);
 
-          const res = await fetch(`${API_BASE}/responder-conversacion`, {
+          const res = await fetch(`${API_V2}/responder-conversacion`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ date: TODAY, opcion_numero: opcion })
+          });
+          if (!res.ok) throw new Error((await res.json()).detail);
+          const data = await res.json();
+          // ResponderConversacionV2Response
+          estado.afinidad = { ...(data.afinidad || {}) };
+          (estado.corte || []).forEach(c => {
+            if (data.afinidad && data.afinidad[c.id] !== undefined) {
+              c.afinidad = data.afinidad[c.id];
+            }
+          });
+
+          estado.dialogoResultado = {
+            titulo: conv ? conv.titulo : 'Consejo Privado',
+            texto: data.resultado_texto || decElegida?.resultado_texto || '',
+            decisionTexto: decElegida?.texto || '',
+            impacto_afinidad: data.impacto_afinidad || decElegida?.impacto_afinidad || []
+          };
+          estado.fase = 'DIALOGO_RESULTADO';
+          renderFase();
+          return;
+        } catch (e) {
+          alert("Error de API V2: " + e.message);
+          return;
+        }
+      }
+
+      if (estado.modo === 'v1' || estado.modo === 'api') {
+        try {
+          const conv = estado.apiData?.conversacion_actual;
+          const decisiones = conv?.decisiones || conv?.opciones || [];
+          const decElegida = decisiones.find(d => (d.opcion !== undefined ? d.opcion : d.opcion_numero) === opcion);
+
+          const res = await fetch(`${API_V1}/responder-conversacion`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ date: TODAY, opcion_numero: opcion })
@@ -1200,10 +1461,11 @@
           await avanzarMesSiguiente();
           return;
         } catch (e) {
-          alert("Error de API: " + e.message);
+          alert("Error de API V1: " + e.message);
           return;
         }
       }
+
       // Modo simulado
       if (opcion === 1) {
         estado.corte[0].afinidad = Math.min(100, estado.corte[0].afinidad + 15);
@@ -1216,9 +1478,38 @@
     }
 
     async function avanzarMesSiguiente() {
-      if (estado.modo === 'api') {
+      if (estado.modo === 'v2') {
         try {
-          const res = await fetch(`${API_BASE}/avanzar-mes`, {
+          const res = await fetch(`${API_V2}/avanzar-mes`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ date: TODAY })
+          });
+          if (!res.ok) throw new Error((await res.json()).detail);
+          const data = await res.json();
+          // AvanzarMesV2Response
+          estado.mes = data.mes_actual;
+          estado.recursos = { ...data.recursos };
+          if (!estado.apiData) estado.apiData = {};
+          estado.apiData.cartas_draft_actual = data.cartas_draft_actual || [];
+          estado.finalizacion = data.finalizacion;
+
+          if (data.finalizacion || data.status === 'completed' || data.mes_actual > 12) {
+            estado.fase = 'FIN';
+          } else {
+            estado.fase = 'DRAFT';
+          }
+          renderFase();
+          return;
+        } catch (e) {
+          alert("Error de API V2: " + e.message);
+          return;
+        }
+      }
+
+      if (estado.modo === 'v1' || estado.modo === 'api') {
+        try {
+          const res = await fetch(`${API_V1}/avanzar-mes`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ date: TODAY })
@@ -1229,10 +1520,11 @@
           renderFase();
           return;
         } catch (e) {
-          alert("Error de API: " + e.message);
+          alert("Error de API V1: " + e.message);
           return;
         }
       }
+
       // Modo simulado
       if (estado.mes >= 12) {
         estado.fase = 'FIN';
@@ -1244,9 +1536,9 @@
     }
 
     async function reiniciarPartida() {
-      if (estado.modo === 'api') {
+      if (estado.modo === 'v2' || estado.modo === 'v1' || estado.modo === 'api') {
         try {
-          await fetch(`${API_BASE}/reiniciar`, {
+          await fetch(`${API_V1}/reiniciar`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ date: TODAY })
@@ -1254,6 +1546,14 @@
         } catch (e) {
           console.error("Error al reiniciar en backend:", e);
         }
+        estado.mes = 1;
+        estado.fase = 'SETUP';
+        estado.corte = [];
+        estado.cartas = [];
+        estado.setupSeleccionPJ = [];
+        estado.setupSeleccionCartas = [];
+        estado.apiData = null;
+        estado.finalizacion = null;
         await syncEstadoConAPI();
         return;
       }
@@ -1265,13 +1565,15 @@
       estado.cartas = [];
       estado.setupSeleccionPJ = [];
       estado.setupSeleccionCartas = [];
+      estado.apiData = null;
+      estado.finalizacion = null;
       renderFase();
       actualizarBarras();
     }
 
     async function cambiarModo(nuevoModo) {
       estado.modo = nuevoModo;
-      if (nuevoModo === 'api') {
+      if (nuevoModo === 'v2' || nuevoModo === 'v1' || nuevoModo === 'api') {
         await syncEstadoConAPI();
       } else {
         renderFase();
@@ -1280,7 +1582,7 @@
     }
 
     // Inicializar al cargar conectando directamente con la API
-    if (estado.modo === 'api') {
+    if (estado.modo === 'v2' || estado.modo === 'v1' || estado.modo === 'api') {
       syncEstadoConAPI();
     } else {
       renderFase();

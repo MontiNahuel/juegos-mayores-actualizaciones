@@ -40,7 +40,11 @@ async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T |
     return await tryUrl(endpoint);
   } catch {
     try {
-      return await tryUrl(`http://10.16.2.19:8080${endpoint}`);
+      const apiBase = (import.meta as any).env?.VITE_API_URL;
+      if (apiBase) {
+        return await tryUrl(`${apiBase.replace(/\/+$/, '')}${endpoint}`);
+      }
+      return null;
     } catch {
       return null;
     }

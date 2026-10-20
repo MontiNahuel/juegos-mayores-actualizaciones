@@ -13,6 +13,7 @@ import {
   CoinsIcon,
   TagIcon,
 } from '../Icons';
+import ImageUploadField from './ImageUploadField';
 
 export default function CartasTab({ universos = [] }) {
   const [cartas, setCartas] = useState([]);
@@ -34,7 +35,7 @@ export default function CartasTab({ universos = [] }) {
   const [categoria, setCategoria] = useState('item');
   const [nombre, setNombre] = useState('');
   const [descripcion, setDescripcion] = useState('');
-  const [imagen, setImagen] = useState('');
+  const [imagen, setImagen] = useState('/assets/narrative/cartas/default.webp');
   const [tagsInput, setTagsInput] = useState('');
   const [efectos, setEfectos] = useState([]);
 
@@ -71,7 +72,7 @@ export default function CartasTab({ universos = [] }) {
     setCategoria('item');
     setNombre('');
     setDescripcion('');
-    setImagen('/assets/narrative/cards/default.webp');
+    setImagen('/assets/narrative/cartas/default.webp');
     setTagsInput('');
     setEfectos([]);
     setError('');
@@ -86,7 +87,7 @@ export default function CartasTab({ universos = [] }) {
     setCategoria(c.categoria || 'item');
     setNombre(c.nombre || '');
     setDescripcion(c.descripcion || '');
-    setImagen(c.imagen || '');
+    setImagen(c.imagen || '/assets/narrative/cartas/default.webp');
     setTagsInput((c.tags || []).join(', '));
     setEfectos(c.efectos && c.efectos.length > 0 ? JSON.parse(JSON.stringify(c.efectos)) : []);
     setError('');
@@ -141,7 +142,7 @@ export default function CartasTab({ universos = [] }) {
       categoria: categoria,
       nombre: nombre.trim(),
       descripcion: descripcion.trim(),
-      imagen: imagen.trim() || '/assets/narrative/cards/default.webp',
+      imagen: imagen.trim() || '/assets/narrative/cartas/default.webp',
       tags: tags,
       efectos: efectos.map((ef) => ({
         disparador: ef.disparador,
@@ -320,8 +321,16 @@ export default function CartasTab({ universos = [] }) {
                   {/* Encabezado */}
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-800 border border-amber-200/60 flex items-center justify-center flex-shrink-0">
-                        <LayersIcon size={22} />
+                      <div className="w-11 h-14 rounded-xl bg-amber-50 border border-slate-200 flex items-center justify-center flex-shrink-0 overflow-hidden shadow-2xs">
+                        <img
+                          src={c.imagen || '/assets/narrative/cartas/default.webp'}
+                          alt={c.nombre}
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = '/assets/narrative/cartas/default.webp';
+                          }}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
                       <div>
                         <span
@@ -521,6 +530,14 @@ export default function CartasTab({ universos = [] }) {
                   className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:border-[#002B5E]"
                 />
               </div>
+
+              <ImageUploadField
+                label="Ilustración / Arte de la Carta"
+                categoria="cartas"
+                value={imagen}
+                onChange={setImagen}
+                helperText="Arte vertical de la carta. Proporción tarot (ej. 450x630 px). Si no subes una, se usará la de fallback."
+              />
 
               <div>
                 <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
