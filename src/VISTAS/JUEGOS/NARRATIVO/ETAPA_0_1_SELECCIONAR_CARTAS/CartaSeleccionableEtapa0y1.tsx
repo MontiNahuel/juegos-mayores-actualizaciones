@@ -1,18 +1,40 @@
-// Renderiza una carta elegible durante las etapas 0 y 1.
-// ETAPA 0 y 1: representa una carta que el jugador puede elegir.
-const CartaSeleccionableEtapa0y1 = ({ carta, selected, disabled, onSelect }: any) => (
-  <button
-    aria-pressed={selected}
-    className={`rounded border p-4 text-left ${selected ? 'border-green-600 bg-green-50' : 'border-slate-300 bg-white'} ${disabled ? 'opacity-50' : ''}`}
-    disabled={disabled}
-    onClick={onSelect}
-    type="button"
-  >
-    {carta.imagen && <img alt={carta.nombre} className="mb-3 h-32 w-full object-cover" src={carta.imagen} />}
-    {carta.categoria && <p className="text-sm text-slate-500">{carta.categoria}</p>}
-    <h3 className="font-bold">{carta.nombre}</h3>
-    <p className="mt-1 text-sm text-slate-600">{carta.descripcion}</p>
-  </button>
-);
+import { useState } from 'react';
+import './cartas.css';
 
-export default CartaSeleccionableEtapa0y1;
+export interface ContenidoCarta {
+  id: string;
+  nombre: string;
+  descripcion?: string;
+  texto?: string;
+  categoria?: string;
+  titulo?: string;
+  imagen?: string | null;
+}
+
+interface Props {
+  carta: ContenidoCarta;
+  selected: boolean;
+  disabled: boolean;
+  onSelect: () => void;
+}
+
+// El marco transparente deja la ilustracion y el texto dentro del ornamento.
+export default function CartaSeleccionableEtapa0y1({ carta, selected, disabled, onSelect }: Props) {
+  const [imagenFallida, setImagenFallida] = useState<string | null>(null);
+  const mostrarImagen = Boolean(carta.imagen && carta.imagen !== imagenFallida);
+
+  return (
+    <button aria-pressed={selected} className="carta-narrativa" data-selected={selected} disabled={disabled} onClick={onSelect} type="button">
+      <span className="carta-narrativa__interior" data-imagen={mostrarImagen}>
+        {mostrarImagen ? <img alt="" className="carta-narrativa__imagen" src={carta.imagen!} onError={() => setImagenFallida(carta.imagen!)} /> : null}
+        <span className="carta-narrativa__contenido">
+          {carta.categoria || carta.titulo ? <span className="carta-narrativa__categoria">{carta.categoria || carta.titulo}</span> : null}
+          <span className="carta-narrativa__texto">{carta.descripcion || carta.texto}</span>
+        </span>
+      </span>
+      <img alt="" aria-hidden="true" className="carta-narrativa__marco" src="/assets/narrative/card-frame.png" />
+      <span className="carta-narrativa__nombre">{carta.nombre}</span>
+      {selected ? <span className="carta-narrativa__seleccion" aria-label="Seleccionada">✓</span> : null}
+    </button>
+  );
+}

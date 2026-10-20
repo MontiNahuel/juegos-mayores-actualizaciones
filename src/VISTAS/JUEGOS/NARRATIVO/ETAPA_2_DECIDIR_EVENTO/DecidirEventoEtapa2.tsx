@@ -1,43 +1,63 @@
-// Presenta el evento mensual y sus decisiones disponibles.
+// Presenta el evento como una escena: ilustracion, titulo y decisiones al pie.
+import { useState } from 'react';
 import type { EventoApi } from '../narrativeService';
+import TituloNarrativo from '../COMPARTIDOS/TituloNarrativo';
+import BotonDecision from '../COMPARTIDOS/BotonDecision';
+import '../COMPARTIDOS/fadeNarrativo.css';
+import './evento.css';
 
-// ETAPA 2: muestra el evento y envia la decision elegida.
+const FONDO_DEFAULT = '/assets/narrative/court.jpg';
+const imagenDe = (imagen: string) => imagen.startsWith('/') && !imagen.startsWith('/assets/') && !imagen.startsWith('//')
+  ? `http://10.16.2.19:8080${imagen}` : imagen;
+
 export default function ResolverEventoEtapa2({ evento, atributos, onElegir }: {
   evento: EventoApi;
   atributos: Record<string, number>;
   onElegir: (opcionId: string) => void;
 }) {
+  const [imagenFallida, setImagenFallida] = useState<string | null>(null);
+  const [fondoListo, setFondoListo] = useState<string | null>(null);
+  const fondo = evento.imagen && evento.imagen !== imagenFallida ? imagenDe(evento.imagen) : FONDO_DEFAULT;
+
   return (
-    <section className="p-6">
-      // mapea las estadisticas del jugador y las muestra en una barra de progreso.
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {Object.entries(atributos).map(([clave, valor]) => {
-
-          return (
-            <div className="rounded border bg-white p-3" key={clave}>
-              <p className="text-sm capitalize text-slate-600">{clave}</p>
-              <p className="font-bold">{valor}/100</p>
-              <div className="mt-2 h-1.5 rounded bg-slate-200">
-                <div className="h-full rounded bg-emerald-600" style={{ width: `${valor}%` }} />
+    <section className="evento-escena" aria-label="Evento del reino">
+      <img
+        key={fondo}
+        className="evento-fondo"
+        src={fondo}
+        alt=""
+        onLoad={() => setFondoListo(fondo)}
+        onError={() => {
+          if (fondo !== FONDO_DEFAULT) setImagenFallida(evento.imagen);
+          else setFondoListo(fondo);
+        }}
+      />
+      <TituloNarrativo key={evento.id} titulo={evento.titulo} listo={fondoListo === fondo} variante="evento" permanente />
+      <div className="evento-ilustracion" aria-hidden="true" />
+      {/* El panel conserva su altura durante la introduccion para no mover el fondo. */}
+      <div className="evento-dialogo narrativo-fade-dialogo" data-intro={fondoListo === fondo ? 'listo' : 'cargando'}>
+        <div className="evento-dialogo__interior">
+          <div className="evento-dialogo__cabecera">
+            <p className="evento-descripcion">{evento.descripcion}</p>
+            <details className="evento-recursos">
+              <summary>Recursos del reino</summary>
+              <div className="evento-recursos__lista">
+                {Object.entries(atributos).map(([clave, valor]) => (
+                  <div key={clave}>
+                    <span className="capitalize">{clave}</span>
+                    <strong>{valor}/100</strong>
+                    <progress value={valor} max={100} aria-label={clave} />
+                  </div>
+                ))}
               </div>
-            </div>
-          );
-        })}
-      </div>
-
-      <h2 className="text-2xl font-bold">{evento.titulo}</h2>
-      <div className="mt-4 flex h-48 items-center justify-center rounded border bg-slate-900 text-white">
-        {evento.imagen}
-      </div>
-      <p className="mt-4 text-slate-700">{evento.descripcion}</p>
-
-      <div className="mt-4 grid gap-3">
-        // mapea las opciones posibles 
-        {evento.opciones.filter((opcion) => !opcion.bloqueada).map((opcion) => (
-          <button className="rounded border border-slate-400 p-4 text-left" key={opcion.id} onClick={() => onElegir(opcion.id)}>
-            {opcion.texto}
-          </button>
-        ))}
+            </details>
+          </div>
+          <div className="evento-opciones">
+            {evento.opciones.filter(opcion => !opcion.bloqueada).map(opcion => (
+              <BotonDecision key={opcion.id} onClick={() => onElegir(opcion.id)}>{opcion.texto}</BotonDecision>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );

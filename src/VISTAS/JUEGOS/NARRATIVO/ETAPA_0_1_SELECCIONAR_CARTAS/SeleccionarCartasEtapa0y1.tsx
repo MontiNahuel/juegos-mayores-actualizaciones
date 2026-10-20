@@ -1,5 +1,6 @@
 // Permite elegir las cartas de preparacion o la carta mensual.
 import { useLayoutEffect, useRef, useState } from 'react';
+import type { CSSProperties } from 'react';
 import CartaSeleccionableEtapa0y1 from './CartaSeleccionableEtapa0y1';
 import shuffleCartas from './shuffleCartas';
 
@@ -39,20 +40,22 @@ export default function SeleccionarCartasEtapa0y1({ titulo, descripcion, cartas,
   };
 
   return (
-    <section className="p-6">
+    <section className="seleccion-cartas" style={{ '--columnas': Math.max(1, Math.min(cartas.length, 6)), '--filas-movil': Math.max(1, Math.ceil(cartas.length / 2)) } as CSSProperties}>
+      <header className="seleccion-cartas__cabecera">
       <h2 className="text-2xl font-bold">
         {titulo}
       </h2>
 
-      <p className="mt-1 text-slate-600">
+      <p className="mt-1 text-slate-200">
         {descripcion}
       </p>
 
-      <p className="mt-2">
+      <p className="seleccion-cartas__contador">
         {seleccion.length} de {cantidad} seleccionados
       </p>
+      </header>
 
-      <div ref={mazo} className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div ref={mazo} className="seleccion-cartas__mazo">
         {cartas.map((carta: any) => {
           const selected = seleccion.some((item) => item.id === carta.id);
 
@@ -68,7 +71,7 @@ export default function SeleccionarCartasEtapa0y1({ titulo, descripcion, cartas,
         })}
       </div>
 
-      <div className="mt-5">
+      <div className="seleccion-cartas__acciones">
         <button
           className="rounded bg-slate-800 px-4 py-2 text-white disabled:opacity-50"
           disabled={confirmando || seleccion.length !== cantidad}

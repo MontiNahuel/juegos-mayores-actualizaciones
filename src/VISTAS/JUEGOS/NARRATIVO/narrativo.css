@@ -1,0 +1,81 @@
+/* El fondo vive en la capa fija de Ionic: cubre el viewport y no crece con el contenido.
+   Cambiar esta URL reemplaza el fondo default de TODAS las etapas salvo conversacion. */
+.narrativo-contenido {
+  --background: linear-gradient(#10151d55, #10151d99), url('/assets/narrative/court.jpg') center / cover no-repeat;
+}
+
+.narrativo-transicion { display: contents; }
+.narrativo-transicion-salida {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .narrativo-transicion-salida { display: none; }
+}
+
+.narrativo-escena {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 100%;
+  max-width: 1240px;
+  margin-inline: auto;
+  padding: max(8px, env(safe-area-inset-top)) 20px max(12px, env(safe-area-inset-bottom));
+  color: #fff;
+}
+
+.narrativo-herramientas {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 30px;
+  font-size: 12px;
+}
+
+.narrativo-herramientas p { margin: 0 auto 0 0; text-shadow: 0 1px 3px #000; }
+
+.narrativo-evento { position: relative; min-height: 100%; color: #fff; }
+.narrativo-evento > .narrativo-herramientas {
+  position: absolute;
+  top: max(8px, env(safe-area-inset-top));
+  left: 16px;
+  right: 16px;
+  z-index: 50;
+}
+.narrativo-evento > [role='alert'] { position: relative; z-index: 50; margin: 0; }
+
+.narrativo-panel {
+  width: 100%;
+  max-width: 900px;
+  margin: auto;
+  padding: clamp(14px, 2.5vh, 24px);
+  border-radius: 12px;
+  background: #0d1827db;
+  color: #fff;
+  text-align: center;
+}
+
+.narrativo-estadisticas { text-align: left; }
+.narrativo-panel--claro { background: #f8fafceF; color: #0f172a; }
+.narrativo-panel h2 { margin-top: 0; }
+.narrativo-panel__imagen { width: 100%; height: clamp(80px, 20svh, 180px); object-fit: cover; border-radius: 8px; margin-block: 12px; }
+.narrativo-panel__acciones { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.narrativo-recursos { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 16px; }
+.narrativo-recurso { padding: 8px; border: 1px solid #ffffff40; border-radius: 6px; background: #ffffff0d; }
+.narrativo-recurso p { margin: 0; }
+.narrativo-opciones { display: grid; gap: 8px; margin-top: 16px; }
+.narrativo-opciones button { padding: 10px 12px; border: 1px solid #94a3b8; border-radius: 6px; text-align: left; background: #ffffff0d; }
+.narrativo-opciones button:focus-visible { outline: 2px solid #f3d78a; outline-offset: 2px; }
+.narrativo-opciones button:hover { background: #ffffff1a; }
+
+@media (max-width: 767px) {
+  .narrativo-escena { padding-inline: 12px; gap: 8px; }
+  .narrativo-recursos { gap: 4px; font-size: 12px; }
+  .narrativo-recurso { padding: 6px; }
+}

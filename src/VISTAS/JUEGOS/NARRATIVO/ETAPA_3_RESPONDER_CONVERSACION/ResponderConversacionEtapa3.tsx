@@ -1,11 +1,13 @@
 // Muestra una conversacion de corte como una escena paso a paso.
 import { useEffect, useRef, useState } from 'react';
+import TituloNarrativo from '../COMPARTIDOS/TituloNarrativo';
+import BotonDecision from '../COMPARTIDOS/BotonDecision';
+import '../COMPARTIDOS/fadeNarrativo.css';
 import './conversacion.css';
 
 const API = 'http://10.16.2.19:8080';
 // Recursos locales: cambiar estas rutas para reemplazar el fondo de respaldo o el PNG del titulo.
 const FONDO_DE_CORTE = '/assets/narrative/conversation-hall.png';
-const MARCO_TITULO = '/assets/narrative/conversation-title.png';
 
 // Conserva las URLs completas y agrega el host del backend a las rutas relativas.
 const imagenDe = (imagen: string) => imagen?.startsWith('http') ? imagen : `${API}${imagen || ''}`;
@@ -82,20 +84,7 @@ export default function ResponderConversacionEtapa3({ conversacion, personajes, 
         {/* bg-black/25 oscurece el fondo un 25%; subir ese numero lo oscurece mas. */}
         <div className="absolute inset-0 -z-10 bg-black/25" />
 
-        {/* 36rem limita el ancho del marco en PC; 96vw lo adapta al movil.
-            aspect-[4.4/1] reserva espacio sin aumentar el scroll por la altura del PNG.
-            El titulo se oculta con opacity y visibility: conserva el espacio y no desplaza la escena. */}
-        <header className="relative z-40 shrink-0 px-2 py-2 text-center">
-          <div className="relative mx-auto w-[min(36rem,96vw)] aspect-[4.4/1]">
-            <div className="conversacion-titulo pointer-events-none absolute inset-x-0 top-0">
-              <img className="block w-full" src={MARCO_TITULO} alt="" />
-              {/* top-[58%] centra el texto en la placa del PNG; inset-x-[14%] deja margen a los lados.
-                  !m-0 evita el margen de Ionic. !text-sm y sm:!text-xl ajustan movil y PC.
-                  La fuente se cambia en .conversacion-titulo h2 del CSS. */}
-              <h2 className="absolute inset-x-[14%] top-[58%] !m-0 -translate-y-1/2 text-center !text-sm !font-semibold !leading-tight tracking-wide text-[#f3e8d1] [text-shadow:0_2px_3px_black] sm:!text-xl">{conversacion.titulo}</h2>
-            </div>
-          </div>
-        </header>
+        <TituloNarrativo key={conversacion._id} titulo={conversacion.titulo} listo={fondoListo} />
 
         {/* 49svh = 70svh * 0.70 y 22.4rem = 32rem * 0.70: permite cubrir como maximo el 30%.
             Para dejar 75% visible, usar 52.5svh y 24rem. Actualizar ambos si cambia la altura del dibujo.
@@ -110,7 +99,7 @@ export default function ResponderConversacionEtapa3({ conversacion, personajes, 
         {/* Este contenedor permanece al cambiar de frase para no repetir el fade in.
             px/py ajustan los espacios; text-base y leading-normal compactan el texto en movil.
             Los prefijos sm: aplican desde 640px y md: desde 768px. */}
-        <div className="conversacion-dialogo relative z-30 shrink-0">
+        <div className="conversacion-dialogo narrativo-fade-dialogo relative z-30 shrink-0" data-intro={fondoListo ? 'listo' : 'cargando'}>
         {!ultimoDialogo ? (
           <button className="group relative block w-full border-t border-slate-500/50 bg-slate-950/95 px-5 py-4 text-left transition hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-amber-300 sm:px-8 sm:py-5 md:px-20" onClick={() => setPaso((actual) => actual + 1)}>
             <p className="text-sm font-bold text-amber-300">{quienHabla.nombre}</p>
@@ -123,9 +112,9 @@ export default function ResponderConversacionEtapa3({ conversacion, personajes, 
             <p className="mt-2 max-w-3xl text-base leading-normal text-slate-100 sm:text-lg sm:leading-relaxed">{frase?.texto}</p>
             <div className="mt-4 grid gap-2 sm:mt-5 sm:gap-3">
               {conversacion.decisiones.map((decision: any) => (
-                <button className="rounded-xl border border-slate-600 bg-slate-800 px-4 py-3 text-left text-sm font-medium text-slate-100 transition hover:border-amber-300 hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-300 sm:px-5 sm:text-base" key={decision.opcion} onClick={() => onElegir(decision)}>
+                <BotonDecision key={decision.opcion} onClick={() => onElegir(decision)}>
                   {decision.texto}
-                </button>
+                </BotonDecision>
               ))}
             </div>
           </div>

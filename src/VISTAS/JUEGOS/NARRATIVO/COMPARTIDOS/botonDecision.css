@@ -1,0 +1,49 @@
+/* El grabado conserva su proporcion: solo las lineas del marco crecen con el texto. */
+.boton-decision {
+  position: relative;
+  isolation: isolate;
+  display: block;
+  width: 100%;
+  min-height: 70px;
+  padding: 15px 20px 15px 88px;
+  border: 1px solid #b8b2a3;
+  border-radius: 2px;
+  background: #f4f0e5;
+  color: #24231f;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 16px;
+  line-height: 1.4;
+  text-align: left;
+  cursor: pointer;
+}
+
+.boton-decision::before {
+  content: '';
+  position: absolute;
+  inset: 9px 12px 9px 66px;
+  border-block: 1px solid #615c51;
+  pointer-events: none;
+}
+
+.boton-decision__grabado {
+  position: absolute;
+  left: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 74px;
+  height: calc(100% - 8px);
+  max-height: 84px;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.boton-decision__texto { display: block; position: relative; overflow-wrap: anywhere; white-space: normal; }
+.boton-decision:not(:disabled):hover { background: #fffaf0; border-color: #e3c77a; }
+.boton-decision:focus-visible { outline: 2px solid #fcd34d; outline-offset: 3px; }
+.boton-decision:disabled { opacity: .5; cursor: default; }
+
+@media (max-width: 640px), (max-height: 600px) {
+  .boton-decision { min-height: 66px; padding: 13px 16px 13px 76px; font-size: 14px; }
+  .boton-decision__grabado { width: 64px; max-height: 74px; }
+  .boton-decision::before { left: 58px; }
+}

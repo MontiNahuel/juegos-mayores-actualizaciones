@@ -25,10 +25,13 @@ import DecidirEventoEtapa2 from './ETAPA_2_DECIDIR_EVENTO/DecidirEventoEtapa2';
 import ResponderConversacionEtapa3 from './ETAPA_3_RESPONDER_CONVERSACION/ResponderConversacionEtapa3';
 import MostrarResultadoEtapa4 from './ETAPA_4_MOSTRAR_RESULTADO/MostrarResultadoEtapa4';
 import EstadisticasPartidaEtapa5 from './ETAPA_5_ESTADISTICAS_PARTIDA/EstadisticasPartidaEtapa5';
+import TransicionNarrativa from './COMPARTIDOS/TransicionNarrativa';
+import './narrativo.css';
 import {
   avanzarMes as avisarAvanceMes,
   decidirEvento,
   elegirCartaMensual,
+  esPartidaNarrativaLocal,
   iniciarPartida,
   obtenerCortePartida,
   obtenerEstadoPartida,
@@ -67,7 +70,7 @@ const finalPorRecurso = (recursos: any) => {
 // Muestra el efecto local de una conversacion antes de continuar el mes.
 function ConsecuenciaConversacion({ decision, personajes, onContinuar }: any) {
   return (
-    <section className="mx-auto max-w-2xl p-6 text-center">
+    <section className="narrativo-panel narrativo-panel--claro mx-auto max-w-2xl text-center">
       <p className="text-sm font-medium text-slate-500">Consecuencia</p>
       <h2 className="mt-1 text-2xl font-bold text-slate-900">{decision.resultado_texto || 'La corte escucho tu decision.'}</h2>
       <div className="mt-6 space-y-2 rounded-lg border border-amber-200 bg-amber-50 p-4 text-left">
@@ -162,7 +165,8 @@ export default function KingsCourt() {
         }));
       }
 
-      if (!data.tiene_partida_activa) return;
+      // El respaldo lee el mismo Redux; recuperarlo otra vez duplicaria los efectos del resultado.
+      if (!data.tiene_partida_activa || esPartidaNarrativaLocal(date)) return;
 
       const [estado, corte] = await Promise.all([
         pedir(() => obtenerEstadoPartida(date), 'No se pudo recuperar el contenido de la partida activa.'),
@@ -173,7 +177,8 @@ export default function KingsCourt() {
       if (corte?.corte) dispatch(guardarPersonajesCorte(corte.corte.map(({ personaje }: any) => prepararCarta(personaje))));
 
       // Solo toma el contenido necesario para mostrar la fase. El jugador sigue local.
-      if (estado.cartas_draft_actual) dispatch(guardarCartasDraft(estado.cartas_draft_actual.map(prepararCarta)));
+      if (estado.resultado_actual) dispatch(guardarResultado(estado.resultado_actual));
+      else if (estado.cartas_draft_actual) dispatch(guardarCartasDraft(estado.cartas_draft_actual.map(prepararCarta)));
       else if (estado.evento_actual) dispatch(mostrarEvento(estado.evento_actual));
       else if (estado.conversacion_actual) dispatch(mostrarConversacion(estado.conversacion_actual));
       else if (estado.finalizacion) dispatch(finalizarPartida(estado.finalizacion));
@@ -225,7 +230,7 @@ export default function KingsCourt() {
     if (data?.conversacion_actual) setConversacionPendiente(data.conversacion_actual);
 
     const cierreLocal = finalPorRecurso(jugadorActual().recursos);
-    if (data.finalizacion || cierreLocal) dispatch(finalizarPartida(data.finalizacion || cierreLocal));
+    if (data?.finalizacion || cierreLocal) dispatch(finalizarPartida(data?.finalizacion || cierreLocal));
   };
 
   // Avanza el mes en Redux y pide solamente el proximo draft o el final v2.
@@ -287,8 +292,9 @@ export default function KingsCourt() {
 
   if (!setup) return (
     <IonPage>
-      <IonContent scrollY>
-        <p className="p-6 text-slate-600">Cargando desafio narrativo...</p>
+      <IonContent scrollY className="narrativo-contenido">
+        <p className="p-6 text-white">Cargando desafio narrativo...</p>
+        {error && <p role="alert" className="px-6 text-amber-900">{error}</p>}
       </IonContent>
     </IonPage>
   );
@@ -297,15 +303,26 @@ export default function KingsCourt() {
   const personajes = juego.personajesCorte;
   const cartasIniciales = setup.cartas_ofrecidas.map(prepararCarta);
   const finalizacion = juego.finalizacion;
-  const enConversacion = Boolean(juego.conversacionActual);
+  const enConversacion = Boolean(juego.conversacionActual) && !estadisticas && !finalizacion && !decisionConversacion && !juego.resultadoActual;
+  const enEvento = Boolean(juego.eventoActual) && !enConversacion && !estadisticas && !finalizacion && !decisionConversacion && !juego.resultadoActual;
+  const etapaVisible = estadisticas ? 'estadisticas'
+    : finalizacion ? `final:${finalizacion._id}`
+    : decisionConversacion ? `consecuencia:${jugador.mes_actual}`
+    : juego.resultadoActual ? `resultado:${jugador.mes_actual}`
+    : enConversacion ? `conversacion:${juego.conversacionActual._id}`
+    : enEvento ? `evento:${juego.eventoActual.id || juego.eventoActual._id}`
+    : `${jugador.fase_actual}:${jugador.mes_actual}`;
 
   return (
     <IonPage>
-      <IonContent scrollY>
-        <main className={enConversacion ? 'min-h-screen bg-slate-950' : 'mx-auto min-h-full max-w-6xl bg-slate-50'}>
-      {error && <p className="mx-6 mt-6 rounded border border-amber-300 bg-amber-50 p-3 text-amber-900">{error}</p>}
-
-      {!finalizacion && !enConversacion && <div className="px-6 pt-6 text-right"><button className="rounded border border-slate-300 px-3 py-2 text-sm text-slate-700 disabled:opacity-50" disabled={reiniciando} onClick={salirDePrueba}>{reiniciando ? 'Saliendo...' : 'Salir de prueba'}</button></div>}
+      <IonContent scrollY className={enConversacion ? undefined : 'narrativo-contenido'}>
+        <TransicionNarrativa etapa={etapaVisible}>
+        <main className={enConversacion ? 'min-h-screen bg-slate-950' : enEvento ? 'narrativo-evento' : 'narrativo-escena'}>
+      {error && <p role="alert" className="rounded border border-amber-300 bg-amber-50 p-3 text-amber-900">{error}</p>}
+      {!enConversacion && <div className="narrativo-herramientas">
+        {esPartidaNarrativaLocal(date) && <p role="status" title="Partida local de seis meses. El progreso dura mientras la app esté abierta.">Prueba sin servidor</p>}
+        {!finalizacion && <button className="rounded border border-slate-300 bg-slate-950/60 px-3 py-1.5 text-sm text-white disabled:opacity-50" disabled={reiniciando} onClick={salirDePrueba}>{reiniciando ? 'Saliendo...' : 'Salir de prueba'}</button>}
+      </div>}
 
       {estadisticas ? <EstadisticasPartidaEtapa5 estado={estadisticas.estado} historial={estadisticas.historial} onVolver={() => setEstadisticas(null)} /> : null}
 
@@ -335,7 +352,7 @@ export default function KingsCourt() {
       ) : null}
 
       {!estadisticas && !finalizacion && !decisionConversacion && !juego.resultadoActual && !juego.conversacionActual && juego.eventoActual ? (
-        <DecidirEventoEtapa2 evento={juego.eventoActual} atributos={jugador.recursos} onElegir={decidirEventoActual} />
+        <DecidirEventoEtapa2 key={juego.eventoActual.id || juego.eventoActual._id} evento={juego.eventoActual} atributos={jugador.recursos} onElegir={decidirEventoActual} />
       ) : null}
 
       {!estadisticas && !finalizacion && !decisionConversacion && !juego.resultadoActual && !juego.conversacionActual && !juego.eventoActual && jugador.fase_actual === 'seleccionar_corte' ? (
@@ -368,6 +385,7 @@ export default function KingsCourt() {
         />
       ) : null}
         </main>
+        </TransicionNarrativa>
       </IonContent>
     </IonPage>
   );

@@ -109,3 +109,22 @@ Para garantizar que la experiencia sea terapéutica y no estresante:
 2. **Frontend:** React / Vite con librerías de interfaz ligeras y soporte de Canvas/WebGL (ej. Pixi.js / Phaser) para minijuegos interactivos.
 3. **Telemetría Clínica:** Registro en milisegundos de tiempos de respuesta, tasa de aciertos y omisiones para generar un perfil evolutivo del usuario.
 4. **Módulo Cuidador/Familiar:** Panel donde un familiar o profesional puede observar la regularidad de juego y detectar posibles alertas de declive sostenido.
+
+---
+
+## 6. Estado de implementación del catálogo
+
+El menú actual traduce esta propuesta a dos recorridos de entrada:
+
+| Grupo visible | Juegos actuales | Intención de diseño |
+| :--- | :--- | :--- |
+| **Clásicos** | Palabra del día, Mini-Sudoku 4x4 | Ofrecer formatos conocidos para generar confianza, hábito y una primera experiencia sin ansiedad. |
+| **Narrativos** | Crucigrama cotidiano, La ruta postal | Presentar ejercicios vinculados con lenguaje, recuerdos, contexto y atención visual. |
+
+Cada juego expone una habilidad cognitiva concreta, un resumen de una oración y una única acción. Esta estructura evita que el usuario tenga que interpretar tableros densos o decidir entre varias acciones antes de empezar.
+
+La primera versión funcional corresponde a **Palabra del día**. Los demás juegos permanecen visibles como parte del mapa de producto, pero se marcan como próximos hasta que tengan ruta y lógica propias.
+
+### Criterio visual del catálogo
+
+La pantalla usa un fondo azul profundo, superficies claras de lectura y acentos suaves para distinguir cada actividad. El objetivo no es convertir el menú en un tablero clínico ni en una pantalla promocional: es ofrecer una selección tranquila, reconocible y legible. El ícono de cerebro y las etiquetas de habilidad hacen explícito el propósito cognitivo sin convertir el error o el rendimiento en una fuente de presión.

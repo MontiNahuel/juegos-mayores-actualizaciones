@@ -10,7 +10,7 @@
 */
 
 /* Oculta los elementos antes de la entrada, conservando su espacio para evitar saltos. */
-.conversacion-escena :is(.conversacion-fondo, .conversacion-titulo, .conversacion-personajes, .conversacion-dialogo) {
+.conversacion-escena :is(.conversacion-fondo, .conversacion-personajes) {
   opacity: 0;
   visibility: hidden;
 }
@@ -20,29 +20,14 @@
   animation: conversacion-aparecer 100ms ease-out both;
 }
 
-/*
-  TITULO: espera 600ms y dura 3800ms entre fade in, permanencia y fade out.
-  Para ajustar cada parte por separado, editar los porcentajes de
-  @keyframes conversacion-presentar-titulo mas abajo.
-*/
-.conversacion-escena[data-intro="listo"] .conversacion-titulo {
-  animation: conversacion-presentar-titulo 3800ms ease-in-out 100ms both;
-}
-
-/* Tipografia: usa la primera fuente disponible. Cambiar el orden para preferir otra. */
-.conversacion-titulo h2 {
-  font-family: "Palatino Linotype", Palatino, Georgia, serif;
-}
+/* El marco y su secuencia de entrada/permanencia/salida estan en COMPARTIDOS/tituloNarrativo.css. */
 
 /* PERSONAJES: 700ms de fade in, comenzando a los 1500ms. Subir 1500ms los retrasa. */
 .conversacion-escena[data-intro="listo"] .conversacion-personajes {
   animation: conversacion-aparecer 700ms ease-out 1500ms both;
 }
 
-/* DIALOGO: 600ms de fade in, comenzando a los 1800ms. Ajustar este ultimo valor para adelantarlo. */
-.conversacion-escena[data-intro="listo"] .conversacion-dialogo {
-  animation: conversacion-aparecer 600ms ease-out 1800ms both;
-}
+/* DIALOGO: la entrada compartida con eventos esta en COMPARTIDOS/fadeNarrativo.css. */
 
 /* Fade in compartido. opacity va de 0 (invisible) a 1 (visible). No modifica posiciones. */
 @keyframes conversacion-aparecer {
@@ -50,35 +35,12 @@
   to { opacity: 1; visibility: visible; }
 }
 
-/*
-  TITULO, repartido sobre su duracion total (3800ms):
-  0% -> 20%: fade in (760ms). Bajar 20% hace la entrada mas rapida.
-  20% -> 75%: queda visible (2090ms). Subir 75% lo mantiene visible mas tiempo.
-  75% -> 100%: fade out (950ms). Bajar 75% hace la salida mas lenta.
-  Cambiar 3800ms tambien cambia proporcionalmente estas tres partes.
-*/
-@keyframes conversacion-presentar-titulo {
-  0%, 100% { opacity: 0; visibility: hidden; }
-  20%, 75% { opacity: 1; visibility: visible; }
-}
-
-/* Retiro sin fade: solo se usa cuando el sistema solicita menos movimiento. */
-@keyframes conversacion-retirar-titulo {
-  to { opacity: 0; visibility: hidden; }
-}
-
 /* Accesibilidad: estas reglas reemplazan los fades si el usuario pide menos movimiento. */
 @media (prefers-reduced-motion: reduce) {
-  .conversacion-escena[data-intro="listo"] :is(.conversacion-fondo, .conversacion-personajes, .conversacion-dialogo) {
+  .conversacion-escena[data-intro="listo"] :is(.conversacion-fondo, .conversacion-personajes) {
     animation: none;
     opacity: 1;
     visibility: visible;
   }
 
-  /* 2500ms es la permanencia del titulo en este modo; 1ms evita una salida animada. */
-  .conversacion-escena[data-intro="listo"] .conversacion-titulo {
-    animation: conversacion-retirar-titulo 1ms steps(1) 2500ms both;
-    opacity: 1;
-    visibility: visible;
-  }
 }

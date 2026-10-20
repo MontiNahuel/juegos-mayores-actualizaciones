@@ -1,4 +1,20 @@
+import { store } from '../../../store/store';
+import { resolverRespaldoNarrativo } from './narrativeFallback';
+
 const API = 'http://10.16.2.19:8080/api/narrative';
+
+// Respaldo temporal para jugar sin servidor. Poner VITE_NARRATIVE_FALLBACK=false
+// en .env.local y reiniciar Vite (o recompilar) para deshabilitar TODOS estos fallbacks.
+// Activado por defecto: usa una partida local ante errores de red, timeout, HTTP 404 o 5xx.
+export const HABILITAR_FALLBACK_NARRATIVO = import.meta.env.VITE_NARRATIVE_FALLBACK !== 'false';
+const ESPERA_SERVIDOR_MS = 2500;
+const fechasLocales = new Set<string>();
+
+export const esPartidaNarrativaLocal = (date: string) => HABILITAR_FALLBACK_NARRATIVO && fechasLocales.has(date);
+
+class ErrorServidorNarrativo extends Error {
+  constructor(public status: number, mensaje: string) { super(mensaje); }
+}
 
 export interface PersonajeApi {
   _id: string;
@@ -6,7 +22,8 @@ export interface PersonajeApi {
   nombre: string;
   titulo: string;
   descripcion: string;
-  imagen: string;
+  imagen?: string | null;
+  texto?: string;
 }
 
 export interface CartaApi {
@@ -14,7 +31,8 @@ export interface CartaApi {
   categoria: string;
   nombre: string;
   descripcion: string;
-  imagen: string;
+  imagen?: string | null;
+  texto?: string;
 }
 
 export interface EventoApi {
@@ -80,19 +98,42 @@ export interface SetupPartida {
   tiene_partida_activa: boolean;
 }
 
-// Envia una solicitud al motor narrativo con el token disponible.
+// Una vez activado el respaldo, conserva esa partida local hasta terminar o reiniciar.
+// No reenvia al servidor las decisiones tomadas en la demostracion.
 async function request<T>(path: string, options?: RequestInit) {
-  const token = localStorage.getItem('token');
-  const response = await fetch(`${API}${path}`, {
-    ...options,
-    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-  });
+  const date = new URL(path, API).searchParams.get('date') ||
+    (typeof options?.body === 'string' ? JSON.parse(options.body).date : '');
+  const respaldo = () => resolverRespaldoNarrativo(path, options, store.getState().narrativoSelection) as T;
+  const completar = (data: T) => {
+    if (path === '/partida/reiniciar') fechasLocales.delete(date);
+    return data;
+  };
+  if (esPartidaNarrativaLocal(date)) return completar(respaldo());
 
-  if (!response.ok) {
-    const detalle = await response.json().catch(() => null);
-    throw new Error(detalle?.detail || `Error ${response.status}.`);
+  const controller = new AbortController();
+  const timeout = HABILITAR_FALLBACK_NARRATIVO ? setTimeout(() => controller.abort(), ESPERA_SERVIDOR_MS) : undefined;
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API}${path}`, {
+      ...options,
+      signal: controller.signal,
+      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    });
+
+    if (!response.ok) {
+      const detalle = await response.json().catch(() => null);
+      throw new ErrorServidorNarrativo(response.status, detalle?.detail || `Error ${response.status}.`);
+    }
+    return completar(await response.json() as T);
+  } catch (error) {
+    // Los errores de autenticacion, validacion o conflicto siguen visibles con su mensaje real.
+    if (!HABILITAR_FALLBACK_NARRATIVO || (error instanceof ErrorServidorNarrativo && error.status < 500 && error.status !== 404)) throw error;
+    const data = respaldo();
+    fechasLocales.add(date);
+    return completar(data);
+  } finally {
+    clearTimeout(timeout);
   }
-  return response.json() as Promise<T>;
 }
 
 // Carga las opciones de preparacion de la etapa 0.
