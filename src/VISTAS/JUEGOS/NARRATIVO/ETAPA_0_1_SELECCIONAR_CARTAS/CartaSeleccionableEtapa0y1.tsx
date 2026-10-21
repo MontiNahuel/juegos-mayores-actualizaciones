@@ -44,7 +44,7 @@ export default function CartaSeleccionableEtapa0y1({ carta, selected = false, di
   if (soloLectura) return <article className="carta-narrativa carta-narrativa--lectura">{contenido}</article>;
 
   return (
-    <button aria-pressed={selected} className="carta-narrativa" data-selected={selected} disabled={disabled} onClick={onSelect} type="button">
+    <button aria-pressed={selected} className="carta-narrativa" data-selected={selected} data-personaje={!esItem} disabled={disabled} onClick={onSelect} type="button">
       {contenido}
     </button>
   );

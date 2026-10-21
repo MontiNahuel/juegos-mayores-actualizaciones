@@ -120,6 +120,57 @@
   filter: drop-shadow(0 0 5px #f3d78a) drop-shadow(0 6px 8px #0008);
 }
 
+/* Al elegir un personaje, la estrella del marco despierta y la luz recorre
+   sólo el ornamento; el retrato y la descripción permanecen intactos. */
+.carta-narrativa[data-personaje='true'][data-selected='true'] {
+  animation: carta-personaje-elegido 620ms cubic-bezier(.2,.85,.25,1) both;
+}
+
+.carta-narrativa[data-personaje='true'][data-selected='true']::before {
+  content: '';
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  left: 34%;
+  width: 32%;
+  aspect-ratio: 1;
+  pointer-events: none;
+  background: radial-gradient(circle, #ffe8a5a8 0, #e9bd674d 33%, transparent 72%);
+  mix-blend-mode: screen;
+  animation: carta-personaje-estrella 850ms ease-out both;
+}
+
+@supports (mask-image: url('/assets/narrative/card-frame.png')) {
+  .carta-narrativa[data-personaje='true'][data-selected='true']::after {
+    content: '';
+    position: absolute;
+    z-index: 3;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(110deg, transparent 37%, #fff2c9d9 50%, transparent 63%) 120% 0 / 250% 100% no-repeat;
+    mask: url('/assets/narrative/card-frame.png') center / 100% 100% no-repeat;
+    mix-blend-mode: screen;
+    animation: carta-personaje-brillo 1050ms ease-in-out both;
+  }
+}
+
+@keyframes carta-personaje-elegido {
+  0% { transform: scale(1); }
+  42% { transform: scale(1.035); }
+  100% { transform: scale(1); }
+}
+@keyframes carta-personaje-estrella {
+  0% { opacity: 0; transform: scale(.6); }
+  38% { opacity: 1; transform: scale(1.15); }
+  100% { opacity: .25; transform: scale(1); }
+}
+@keyframes carta-personaje-brillo {
+  0%, 12% { opacity: 0; background-position: 120% 0; }
+  28% { opacity: .9; }
+  88% { opacity: .75; }
+  100% { opacity: 0; background-position: -120% 0; }
+}
+
 .carta-narrativa__seleccion {
   position: absolute;
   top: 3%;
@@ -132,6 +183,19 @@
   background: #f3d78a;
   color: #17202a;
   font-family: sans-serif;
+}
+
+.carta-narrativa[data-personaje='true'] .carta-narrativa__seleccion {
+  border: 1px solid #f7dc98;
+  background: radial-gradient(circle at 35% 25%, #7b4227, #2f1c1a 75%);
+  color: #ffe3a0;
+  box-shadow: 0 0 0 2px #1c1414, 0 0 12px #ffcf7588;
+  animation: carta-personaje-sello 480ms cubic-bezier(.15,1.5,.4,1) both;
+}
+
+@keyframes carta-personaje-sello {
+  from { opacity: 0; transform: scale(.35) rotate(-35deg); }
+  to { opacity: 1; transform: scale(1) rotate(0); }
 }
 
 .carta-narrativa:focus-visible { outline: 3px solid #f3d78a; outline-offset: 4px; border-radius: 8px; }
@@ -170,4 +234,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .carta-narrativa { transition: none; }
+  .carta-narrativa[data-personaje='true'][data-selected='true'],
+  .carta-narrativa[data-personaje='true'][data-selected='true']::before,
+  .carta-narrativa[data-personaje='true'][data-selected='true']::after,
+  .carta-narrativa[data-personaje='true'] .carta-narrativa__seleccion { animation: none; }
 }
