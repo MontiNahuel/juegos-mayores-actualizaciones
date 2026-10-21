@@ -1,6 +1,7 @@
 /* Sólo quedan aquí reglas dinámicas o coordinadas que Tailwind no expresa con claridad. */
 .narrativo-contenido {
-  --background: linear-gradient(#10151d55, #10151d99), url('/assets/narrative/court.jpg') center / cover no-repeat;
+  /* El degradado vive en FondoCorte; el respaldo nunca añade otro tinte azul. */
+  --background: var(--narrativo-fondo-base, url('/assets/narrative/court.jpg')) center / cover no-repeat;
 }
 
 /* Adaptación por edad: los valores nacen en configuracionPorEdad. */
@@ -36,8 +37,10 @@
 /* Entrada del diálogo compartida por eventos y conversaciones. */
 .narrativo-fade-dialogo { opacity: 0; visibility: hidden; }
 .narrativo-fade-dialogo[data-intro='listo'] {
-  animation: narrativo-aparecer 600ms ease-out 1800ms both;
+  animation: narrativo-aparecer 600ms ease-out both;
 }
+/* El texto del evento sólo espera cuando entró un elemento nuevo en la corte. */
+.evento-dialogo--espera-fondo[data-intro='listo'] { animation-delay: 1800ms; }
 @keyframes narrativo-aparecer {
   from { opacity: 0; visibility: hidden; }
   to { opacity: 1; visibility: visible; }

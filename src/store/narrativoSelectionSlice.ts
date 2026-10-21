@@ -1,5 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { adaptarValorNegativo } from '../config/adaptacionEdad';
+import { FONDO_CORTE_DEFAULT, GUARDIAS_CORTE, MANOS_CORTE, ORO_CORTE, cantidadManosPorPueblo, cantidadPorTramo, type EstadoFondoCorte } from '../config/fondoCorte';
 
 const initialState: any = {
   jugador: {
@@ -26,9 +27,23 @@ const initialState: any = {
   resultadoActual: null,
   conversacionActual: null,
   finalizacion: null,
+  fondoBase: { src: FONDO_CORTE_DEFAULT, personajes: [], oro: [], manos: [] },
 };
 
 const limitar = (valor: any) => Math.max(0, Math.min(100, valor));
+// Comparte umbrales y conserva cada capa de Redux hasta que cambie de tramo.
+const componerFondoBase = (fondo: EstadoFondoCorte, recursos: { ejercito?: number; oro?: number; pueblo?: number }) => {
+  const guardias = cantidadPorTramo(Number(recursos.ejercito));
+  const oro = cantidadPorTramo(Number(recursos.oro));
+  const valorPueblo = Number(recursos.pueblo);
+  const manos = Number.isFinite(valorPueblo) ? cantidadManosPorPueblo(valorPueblo) : fondo.manos.length;
+  if (guardias !== null && guardias !== fondo.personajes.length)
+    fondo.personajes = GUARDIAS_CORTE.slice(0, guardias).map(elemento => ({ ...elemento }));
+  if (oro !== null && oro !== fondo.oro.length)
+    fondo.oro = ORO_CORTE.slice(0, oro).map(elemento => ({ ...elemento }));
+  if (manos !== fondo.manos.length)
+    fondo.manos = MANOS_CORTE.slice(0, manos).map(elemento => ({ ...elemento }));
+};
 
 // Comprueba si un efecto puede aplicarse con los recursos actuales.
 const cumpleCondiciones = (condiciones: any[] = [], recursos: any) =>
@@ -95,6 +110,8 @@ const narrativoSelectionSlice = createSlice({
       state.resultadoActual = null;
       state.conversacionActual = null;
       state.finalizacion = null;
+      state.fondoBase = { ...initialState.fondoBase };
+      componerFondoBase(state.fondoBase, state.jugador.recursos);
     },
 
     // Actualiza la adaptacion sin reiniciar la partida en curso.
@@ -144,6 +161,11 @@ const narrativoSelectionSlice = createSlice({
     mostrarEvento: (state, action: { payload: any }) => {
       state.eventoActual = action.payload;
       state.jugador.fase_actual = 'decidir_evento';
+    },
+
+    // Conserva el fondo base y su decoración entre pantallas, incluido el resultado.
+    actualizarFondoBase: (state, action: { payload: { ejercito?: number; oro?: number; pueblo?: number } }) => {
+      componerFondoBase(state.fondoBase, action.payload);
     },
 
     // Registra la opcion del evento antes de solicitar su resultado.
@@ -222,6 +244,7 @@ export const {
   guardarCartasDraft,
   elegirCarta,
   mostrarEvento,
+  actualizarFondoBase,
   registrarDecisionEvento,
   guardarResultado,
   limpiarResultado,

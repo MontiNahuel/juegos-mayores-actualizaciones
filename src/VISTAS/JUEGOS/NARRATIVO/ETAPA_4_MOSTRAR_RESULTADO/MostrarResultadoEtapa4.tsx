@@ -1,20 +1,34 @@
 // Muestra el resultado de una decision o el cierre de la partida.
+import { useEffect, useRef, useState } from 'react';
 import type { FinalizacionApi, ResultadoApi } from '../narrativeService';
 import TituloNarrativo from '../COMPARTIDOS/TITULO_NARRATIVO/TituloNarrativo';
 import BotonNarrativo from '../COMPARTIDOS/BOTON_NARRATIVO/BotonNarrativo';
 import PapelUi from '../COMPARTIDOS/PAPEL_UI/PapelUi';
 
 // ETAPA 4: muestra el resultado del evento o el cierre de la partida.
-export default function MostrarResultadoEtapa4({ resultado, finalizacion, efectoTexto, onContinuar, onVerEstadisticas, cargandoEstadisticas, onTerminar, reiniciando }: {
+export default function MostrarResultadoEtapa4({ resultado, finalizacion, efectoTexto, animarSalida = false, onContinuar, onVerEstadisticas, cargandoEstadisticas, onTerminar, reiniciando }: {
   resultado?: ResultadoApi;
   finalizacion?: FinalizacionApi;
   efectoTexto?: string;
+  animarSalida?: boolean;
   onContinuar?: () => void;
   onVerEstadisticas?: () => void;
   cargandoEstadisticas?: boolean;
   onTerminar?: () => void;
   reiniciando?: boolean;
 }) {
+  const [saliendo, setSaliendo] = useState(false);
+  const temporizador = useRef<number | null>(null);
+  useEffect(() => () => { if (temporizador.current !== null) window.clearTimeout(temporizador.current); }, []);
+
+  // Retira el pergamino antes de mostrar la corte; nunca duplica ni descarga su imagen.
+  const continuar = () => {
+    if (!onContinuar || saliendo) return;
+    if (!animarSalida || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return onContinuar();
+    setSaliendo(true);
+    temporizador.current = window.setTimeout(onContinuar, 650);
+  };
+
   const esFinal = Boolean(finalizacion);
   const contenido = finalizacion || resultado;
 
@@ -28,7 +42,7 @@ export default function MostrarResultadoEtapa4({ resultado, finalizacion, efecto
     : resultado?.efectos.map(({ accion }) => `${accion.valor > 0 ? '+' : ''}${accion.valor} ${accion.clave}`).join(', ') || 'Sin cambios');
 
   return (
-    <section className="flex min-h-full w-full flex-col items-center text-center text-[#25170d] [&>.titulo-narrativo]:w-full">
+    <section className={`flex min-h-full w-full flex-col items-center text-center text-[#25170d] motion-safe:transition-opacity motion-safe:duration-[650ms] [&>.titulo-narrativo]:w-full ${saliendo ? 'opacity-0' : ''}`}>
       <TituloNarrativo titulo="Resultado" permanente variante="evento" />
 
       <PapelUi className="w-[min(88vw,44svh,29rem)] origin-center transition-[transform,filter] duration-280 hover:scale-[1.025] hover:drop-shadow-[0_16px_20px_#1a0d09a6]" contenidoClassName="font-[Palatino_Linotype,Book_Antiqua,Palatino,Georgia,serif] leading-[1.45] text-[#482b19] opacity-92 mix-blend-multiply text-shadow-[.2px_0_currentColor]">
@@ -40,7 +54,7 @@ export default function MostrarResultadoEtapa4({ resultado, finalizacion, efecto
       </PapelUi>
 
       <div className="mt-2.5 flex w-[min(88vw,29rem)] flex-wrap justify-center gap-2 max-[480px]:[&_.boton-narrativo]:basis-full">
-        {onContinuar && <BotonNarrativo onClick={onContinuar}>Continuar</BotonNarrativo>}
+        {onContinuar && <BotonNarrativo disabled={saliendo} onClick={continuar}>Continuar</BotonNarrativo>}
         {onVerEstadisticas && <BotonNarrativo disabled={cargandoEstadisticas} onClick={onVerEstadisticas}>{cargandoEstadisticas ? 'Cargando estadisticas...' : 'Ver estadisticas'}</BotonNarrativo>}
         {esFinal && onTerminar && <BotonNarrativo disabled={reiniciando} onClick={onTerminar}>{reiniciando ? 'Reiniciando...' : 'Terminar prueba'}</BotonNarrativo>}
       </div>

@@ -70,11 +70,12 @@ export default function ResponderConversacionEtapa3({ conversacion, personajes, 
 
   return (
     <section className="min-h-[100svh] p-0">
-      <div data-intro={fondoListo ? 'listo' : 'cargando'} className="conversacion-escena relative isolate flex min-h-[100svh] flex-col overflow-x-hidden bg-[#101827] pt-[58px] text-slate-100">
+      <div data-intro={fondoListo ? 'listo' : 'cargando'} className="conversacion-escena relative isolate flex min-h-[100svh] flex-col overflow-x-hidden pt-[58px] text-slate-100">
         <img
           className="conversacion-fondo absolute inset-0 -z-20 h-full w-full object-cover"
           src={fondo}
           alt=""
+          decoding="sync"
           onLoad={() => setFondoListo(true)}
           onError={(e) => { if (!e.currentTarget.src.endsWith(FONDO_DE_CORTE)) e.currentTarget.src = FONDO_DE_CORTE; }}
         />
