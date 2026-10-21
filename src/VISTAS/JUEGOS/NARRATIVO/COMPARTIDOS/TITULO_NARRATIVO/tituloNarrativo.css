@@ -32,16 +32,40 @@
   visibility: hidden;
 }
 
-.titulo-narrativo__arte img { display: block; width: 100%; }
+.titulo-narrativo__conversacion-imagen { display: block; width: 100%; }
 
-/* Eventos: solo la placa, sin la luna. La composicion compacta deja ver el fondo. */
+/* Eventos: dos mitades del mismo PNG. Se expanden juntas sin repetir ornamentos. */
 .titulo-narrativo[data-variante='evento'] .titulo-narrativo__espacio {
-  width: min(30rem, 100%);
-  aspect-ratio: 4.5 / 1;
+  width: min(34rem, 100%);
+  min-height: 86px;
+  aspect-ratio: auto;
 }
-.titulo-narrativo[data-variante='evento'] .titulo-narrativo__arte { inset: 0; }
-.titulo-narrativo[data-variante='evento'] img { height: 100%; object-fit: fill; }
-.titulo-narrativo[data-variante='evento'] .titulo-narrativo__arte p { top: 50%; }
+.titulo-narrativo[data-variante='evento'] .titulo-narrativo__arte {
+  position: relative;
+  inset: auto;
+  display: grid;
+  min-height: 86px;
+  place-items: center;
+  padding: clamp(26px, 7vw, 31px) clamp(24px, 9vw, 46px) clamp(24px, 6vw, 28px);
+}
+.titulo-narrativo[data-variante='evento'] .titulo-narrativo__arte p {
+  position: relative;
+  inset: auto;
+  transform: none;
+  max-width: 100%;
+  overflow-wrap: break-word;
+  text-wrap: balance;
+}
+
+.titulo-narrativo__evento-marco {
+  position: absolute;
+  inset: 0;
+  border-style: solid;
+  border-width: clamp(24px, 7vw, 27px) clamp(24px, 9vw, 40px) clamp(23px, 6vw, 25px);
+  border-image-slice: 260 220 230 fill;
+  border-image-repeat: stretch;
+}
+.titulo-narrativo__evento-marco img { display: none; }
 
 /* Si falla el archivo, muestra una placa legible en lugar del icono de imagen rota. */
 .titulo-narrativo[data-marco='fallido'] .titulo-narrativo__arte {

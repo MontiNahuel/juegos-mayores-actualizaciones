@@ -1,127 +1,106 @@
-// Muestra una conversacion de corte como una escena paso a paso.
+// Conversación de corte: muestra los personajes, sus frases y las decisiones.
 import { useEffect, useRef, useState } from 'react';
-import TituloNarrativo from '../COMPARTIDOS/TITULO_NARRATIVO/TituloNarrativo';
-import BotonNarrativo from '../COMPARTIDOS/BOTON_NARRATIVO/BotonNarrativo';
-import '../COMPARTIDOS/TRANSICION_NARRATIVA/fadeNarrativo.css';
+import TituloConversacion from '../COMPARTIDOS/TITULO_NARRATIVO/TituloConversacion';
+import DialogoNarrativo from '../COMPARTIDOS/DIALOGO_NARRATIVO/DialogoNarrativo';
 import { API_URL } from '../../../../config/api';
 import { ocultarCambiosNumericos } from '../../../../config/adaptacionEdad';
 import './conversacion.css';
 
-// Recursos locales: cambiar estas rutas para reemplazar el fondo de respaldo o el PNG del titulo.
 const FONDO_DE_CORTE = '/assets/narrative/conversation-hall.png';
 
-// Conserva las URLs completas y agrega el host del backend a las rutas relativas.
+// Mantiene URLs absolutas y completa las imágenes del backend.
 const imagenDe = (imagen: string) => imagen?.startsWith('http') ? imagen : `${API_URL}${imagen || ''}`;
 
-// Respaldo visual cuando falta la foto del personaje o su carga falla.
+// Genera iniciales si no existe el retrato.
 const iniciales = (nombre: string) => nombre?.split(' ').map((parte) => parte[0]).join('').slice(0, 2) || '?';
 
-// En modo solo muestra al hablante; con espacio suficiente mantiene los dos retratos.
+// Muestra ambos retratos o solamente al personaje que habla.
 function Retrato({ personaje, activo, lado, solo }: any) {
   if (!personaje) return <div />;
   const visible = !solo || activo;
 
-  // 70svh es la altura del dibujo y 32rem su minimo. shrink-0 impide que se achique.
-  // translate-x-[3%] mueve a la derecha y -translate-x-[3%] a la izquierda, sin rotar.
-  // drop-shadow: desplazamiento horizontal, vertical, desenfoque y color de la sombra.
-  // opacity-45 y grayscale apagan al personaje que no habla; z-20 prioriza al hablante.
   return (
-    <div data-visible={visible} className={`conversacion-retrato ${solo ? `absolute inset-y-0 ${lado === 'derecha' ? 'right-0' : 'left-0'} w-full` : 'relative w-1/2'} ${activo ? 'z-20' : 'z-10'} ${visible ? 'flex' : 'pointer-events-none flex'} h-full max-w-2xl shrink-0 flex-col justify-start px-5 ${lado === 'derecha' ? 'ml-auto mr-0 items-end' : 'ml-0 mr-auto items-start'} ${activo ? 'scale-100 opacity-100' : 'opacity-45 grayscale'}`}>
+    <div
+      data-visible={visible}
+      className={`conversacion-retrato ${solo ? `absolute inset-y-0 ${lado === 'derecha' ? 'right-0' : 'left-0'} w-full` : 'relative w-1/2'} ${activo ? 'z-20' : 'z-10'} flex h-full max-w-2xl shrink-0 flex-col justify-start px-5 ${lado === 'derecha' ? 'ml-auto mr-0 items-end' : 'ml-0 mr-auto items-start'} ${activo ? 'scale-100 opacity-100' : 'opacity-45 grayscale'} ${visible ? '' : 'pointer-events-none'}`}
+    >
       <div className={`relative flex h-[70svh] min-h-[32rem] w-full shrink-0 items-end drop-shadow-[0_6px_12px_rgba(0,0,0,0.35)] transition duration-700 ease-out ${solo ? lado === 'derecha' ? 'translate-x-[2%] justify-end' : '-translate-x-[2%] justify-center' : 'justify-center'}`}>
         <span className="absolute inset-0 grid place-items-center text-4xl font-semibold text-amber-100/70">{iniciales(personaje.nombre)}</span>
-        {personaje.imagen && <img className="relative z-10 block h-full w-auto max-w-none object-contain object-bottom" src={imagenDe(personaje.imagen)} alt={personaje.nombre} onError={(evento) => { evento.currentTarget.classList.add('hidden'); }} />}
+        {personaje.imagen && <img className="relative z-10 block h-full w-auto max-w-none object-contain object-bottom" src={imagenDe(personaje.imagen)} alt={personaje.nombre} onError={(e) => e.currentTarget.classList.add('hidden')} />}
       </div>
     </div>
   );
 }
 
-// ETAPA 3: alterna los dialogos y muestra las decisiones al terminar la escena.
+// Recorre el diálogo y muestra las opciones al llegar a la última frase.
 export default function ResponderConversacionEtapa3({ conversacion, personajes, modoSimple = false, onElegir }: any) {
   const [paso, setPaso] = useState(0);
   const [solo, setSolo] = useState(true);
-  // Dispara la secuencia CSS al cargar el fondo. Los tiempos se editan en conversacion.css.
   const [fondoListo, setFondoListo] = useState(false);
   const escena = useRef<HTMLDivElement>(null);
 
-  // Breakpoint por contacto real entre imagenes, sin depender de un ancho fijo de pantalla.
+  // Detecta cuándo se superponen los retratos y deja visible uno solo.
   useEffect(() => {
     const elemento = escena.current!;
-    // Calcula el ancho de ambos dibujos usando su proporcion original y su altura actual.
     const medir = () => {
       const imagenes = [...elemento.querySelectorAll('img')];
-      if (imagenes.length < 2 || imagenes.some((imagen) => !imagen.naturalHeight)) return;
+      if (imagenes.length < 2 || imagenes.some((img) => !img.naturalHeight)) return;
       const estilo = getComputedStyle(elemento);
       const ancho = elemento.clientWidth - parseFloat(estilo.paddingLeft) - parseFloat(estilo.paddingRight);
-      const alto = Math.max(...imagenes.map((imagen) => imagen.clientHeight));
+      const alto = Math.max(...imagenes.map((img) => img.clientHeight));
       const maximo = parseFloat(getComputedStyle(imagenes[0].parentElement!.parentElement!).maxWidth);
       const separacion = ancho - Math.min(ancho / 2, maximo);
-      // Al tocarse queda solo el hablante. Restar pixeles a separacion * 2 anticipa el cambio.
-      setSolo(imagenes.reduce((total, imagen) => total + alto * imagen.naturalWidth / imagen.naturalHeight, 0) >= separacion * 2);
+      setSolo(imagenes.reduce((total, img) => total + alto * img.naturalWidth / img.naturalHeight, 0) >= separacion * 2);
     };
-    // Recalcula al redimensionar la escena o terminar de cargar una foto.
     const observador = new ResizeObserver(medir);
     observador.observe(elemento);
     elemento.addEventListener('load', medir, true);
     return () => { observador.disconnect(); elemento.removeEventListener('load', medir, true); };
   }, []);
-  // Prioriza el fondo del backend; el onError del img tambien usa el respaldo si la URL falla.
-  const fondo = conversacion.imagen ? imagenDe(conversacion.imagen) : FONDO_DE_CORTE;
-  // Busca sobre la corte ya guardada, sin hacer otra consulta por cada frase.
-  const buscarPersonaje = (id: string) => personajes.find((personaje: any) => personaje._id === id || personaje.id === id);
-  const actores = conversacion.requisitos
-    .map(({ personajeId }: any) => buscarPersonaje(personajeId))
-    .filter(Boolean);
+
+  // Resuelve participantes, hablante y frase actual usando la corte existente.
+  const buscarPersonaje = (id: string) => personajes.find((p: any) => p._id === id || p.id === id);
+  const actores = conversacion.requisitos.map(({ personajeId }: any) => buscarPersonaje(personajeId)).filter(Boolean);
   const participantes = actores.length ? actores : personajes.slice(0, 2);
   const frase = conversacion.frases[paso];
   const quienHabla = buscarPersonaje(frase?.personajeId) || participantes[paso % participantes.length] || { nombre: 'Consejero' };
   const ultimoDialogo = paso >= conversacion.frases.length - 1;
   const idActivo = quienHabla.id || quienHabla._id;
+  const texto = (valor: string) => modoSimple ? ocultarCambiosNumericos(valor) : valor;
+  const fondo = conversacion.imagen ? imagenDe(conversacion.imagen) : FONDO_DE_CORTE;
 
   return (
-    <section className="min-h-screen p-0">
-      {/* flex-col y min-h-screen dejan el panel abajo y permiten crecer si el texto no entra.
-          El scroll lo maneja IonContent scrollY en KingsCourt; no fijar esta raiz con h-screen. */}
-      <div data-intro={fondoListo ? 'listo' : 'cargando'} className="conversacion-escena relative isolate flex min-h-screen flex-col overflow-x-hidden bg-[#101827] text-slate-100">
-        <img className="conversacion-fondo absolute inset-0 -z-20 h-full w-full object-cover" src={fondo} alt="" onLoad={() => setFondoListo(true)} onError={(evento) => { evento.currentTarget.src = FONDO_DE_CORTE; }} />
-        {/* bg-black/25 oscurece el fondo un 25%; subir ese numero lo oscurece mas. */}
+    <section className="min-h-[100svh] p-0">
+      <div data-intro={fondoListo ? 'listo' : 'cargando'} className="conversacion-escena relative isolate flex min-h-[100svh] flex-col overflow-x-hidden bg-[#101827] text-slate-100">
+        <img
+          className="conversacion-fondo absolute inset-0 -z-20 h-full w-full object-cover"
+          src={fondo}
+          alt=""
+          onLoad={() => setFondoListo(true)}
+          onError={(e) => { if (!e.currentTarget.src.endsWith(FONDO_DE_CORTE)) e.currentTarget.src = FONDO_DE_CORTE; }}
+        />
         <div className="absolute inset-0 -z-10 bg-black/25" />
+        <TituloConversacion key={conversacion._id} titulo={conversacion.titulo} listo={fondoListo} />
 
-        <TituloNarrativo key={conversacion._id} titulo={conversacion.titulo} listo={fondoListo} />
-
-        {/* 49svh = 70svh * 0.70 y 22.4rem = 32rem * 0.70: permite cubrir como maximo el 30%.
-            Para dejar 75% visible, usar 52.5svh y 24rem. Actualizar ambos si cambia la altura del dibujo.
-            1.25rem compensa el pt-5. basis-0 y grow usan el espacio libre sin generar scroll extra.
-            overflow-hidden recorta solo los dibujos; el texto y el scroll quedan fuera de este bloque. */}
-        <div ref={escena} className="conversacion-personajes relative z-10 flex min-h-[calc(max(49svh,22.4rem)+1.25rem)] basis-0 grow items-start justify-between overflow-hidden px-2 pt-5 2xl:px-20">
+        <div ref={escena} className="conversacion-personajes relative z-10 flex min-h-[calc(max(45.5svh,20.8rem)+0.25rem)] basis-0 grow items-start justify-between overflow-hidden px-2 pt-1 2xl:px-20">
           <div className="absolute inset-x-0 bottom-0 z-0 h-64 bg-gradient-to-t from-slate-950/90 to-transparent" />
           <Retrato personaje={participantes[0]} activo={[participantes[0]?.id, participantes[0]?._id].includes(idActivo)} lado="izquierda" solo={solo} />
           <Retrato personaje={participantes[1]} activo={[participantes[1]?.id, participantes[1]?._id].includes(idActivo)} lado="derecha" solo={solo} />
         </div>
 
-        {/* Este contenedor permanece al cambiar de frase para no repetir el fade in.
-            px/py ajustan los espacios; text-base y leading-normal compactan el texto en movil.
-            Los prefijos sm: aplican desde 640px y md: desde 768px. */}
-        <div className="conversacion-dialogo narrativo-fade-dialogo relative z-30 shrink-0" data-intro={fondoListo ? 'listo' : 'cargando'}>
-        {!ultimoDialogo ? (
-          <button className="group relative block w-full border-t border-slate-500/50 bg-slate-950/95 px-5 py-4 text-left transition hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-amber-300 sm:px-8 sm:py-5 md:px-20" onClick={() => setPaso((actual) => actual + 1)}>
-            <p className="text-sm font-bold text-amber-300">{quienHabla.nombre}</p>
-            <p className="mt-2 max-w-3xl text-base leading-normal text-slate-100 sm:text-lg sm:leading-relaxed">{modoSimple ? ocultarCambiosNumericos(frase?.texto) : frase?.texto}</p>
-            <p className="mt-4 text-sm text-slate-400 group-hover:text-amber-200">Toca para continuar</p>
-          </button>
-        ) : (
-          <div className="border-t border-slate-500/50 bg-slate-950/95 px-5 py-4 sm:px-8 sm:py-5 md:px-20">
-            <p className="text-sm font-bold text-amber-300">{quienHabla.nombre}</p>
-            <p className="mt-2 max-w-3xl text-base leading-normal text-slate-100 sm:text-lg sm:leading-relaxed">{modoSimple ? ocultarCambiosNumericos(frase?.texto) : frase?.texto}</p>
-            <div className="mt-4 grid gap-2 sm:mt-5 sm:gap-3">
-              {conversacion.decisiones.map((decision: any) => (
-                <BotonNarrativo className="boton-narrativo--decision" key={decision.opcion} onClick={() => onElegir(decision)}>
-                  {modoSimple ? ocultarCambiosNumericos(decision.texto) : decision.texto}
-                </BotonNarrativo>
-              ))}
-            </div>
-          </div>
-        )}
-        </div>
+        <DialogoNarrativo
+          className="conversacion-dialogo"
+          listo={fondoListo}
+          titulo={quienHabla.nombre}
+          texto={texto(frase?.texto)}
+          indicacion={!ultimoDialogo ? 'Tocá para continuar ›' : undefined}
+          onContinuar={!ultimoDialogo ? () => setPaso((actual) => actual + 1) : undefined}
+          opciones={ultimoDialogo ? conversacion.decisiones.map((decision: any) => ({
+            id: decision.opcion,
+            texto: texto(decision.texto),
+            onElegir: () => onElegir(decision),
+          })) : []}
+        />
       </div>
     </section>
   );

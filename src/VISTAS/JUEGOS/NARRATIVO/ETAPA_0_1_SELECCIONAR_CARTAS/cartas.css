@@ -74,10 +74,15 @@
 }
 
 .carta-narrativa__interior[data-imagen='true'] .carta-narrativa__contenido {
-  inset: auto 0 9%;
-  max-height: 44%;
-  padding: 20px 10% 10px;
-  background: linear-gradient(transparent, #080e17eb 25%);
+  inset: auto 0 0;
+  max-height: 53%;
+  padding: 20px 10% 12%;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    #080e17eb 25%,
+    #080e17 100%
+  );
   justify-content: start;
 }
 

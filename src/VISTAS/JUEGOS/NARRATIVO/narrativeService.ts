@@ -95,6 +95,8 @@ export interface SetupPartida {
   atributos_iniciales: Record<string, number>;
   personajes_ofrecidos: PersonajeApi[];
   cartas_ofrecidas: CartaApi[];
+  // Resumen opcional usado solo por la muestra inicial del ciclo.
+  eventos_del_dia?: { titulo?: string; nombre?: string; descripcion?: string; categoria_evento?: string; categoria?: string; tono?: 'positivo' | 'negativo' | 'neutro' }[];
   universo_nombre: string;
   tiene_partida_activa: boolean;
 }

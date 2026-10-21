@@ -4,8 +4,7 @@ import type { EventoApi } from '../narrativeService';
 import TituloNarrativo from '../COMPARTIDOS/TITULO_NARRATIVO/TituloNarrativo';
 import { API_URL } from '../../../../config/api';
 import { ocultarCambiosNumericos } from '../../../../config/adaptacionEdad';
-import BotonNarrativo from '../COMPARTIDOS/BOTON_NARRATIVO/BotonNarrativo';
-import '../COMPARTIDOS/TRANSICION_NARRATIVA/fadeNarrativo.css';
+import DialogoNarrativo from '../COMPARTIDOS/DIALOGO_NARRATIVO/DialogoNarrativo';
 import './evento.css';
 
 const FONDO_DEFAULT = '/assets/narrative/court.jpg';
@@ -37,31 +36,28 @@ export default function ResolverEventoEtapa2({ evento, atributos, modoSimple = f
       />
       <TituloNarrativo key={evento.id} titulo={evento.titulo} listo={fondoListo === fondo} variante="evento" permanente />
       <div className="evento-ilustracion" aria-hidden="true" />
-      {/* El panel conserva su altura durante la introduccion para no mover el fondo. */}
-      <div className="evento-dialogo narrativo-fade-dialogo" data-intro={fondoListo === fondo ? 'listo' : 'cargando'}>
-        <div className="evento-dialogo__interior">
-          <div className="evento-dialogo__cabecera">
-            <p className="evento-descripcion">{evento.descripcion}</p>
-            {!modoSimple ? <details className="evento-recursos">
-              <summary>Recursos del reino</summary>
-              <div className="evento-recursos__lista">
-                {Object.entries(atributos).map(([clave, valor]) => (
-                  <div key={clave}>
-                    <span className="capitalize">{clave}</span>
-                    <strong>{valor}/100</strong>
-                    <progress value={valor} max={100} aria-label={clave} />
-                  </div>
-                ))}
+      <DialogoNarrativo
+        className="evento-dialogo"
+        listo={fondoListo === fondo}
+        texto={evento.descripcion}
+        opciones={evento.opciones.filter(opcion => !opcion.bloqueada).map(opcion => ({
+          id: opcion.id,
+          texto: modoSimple ? ocultarCambiosNumericos(opcion.texto) : opcion.texto,
+          onElegir: () => onElegir(opcion.id),
+        }))}
+        complemento={!modoSimple ? <details className="evento-recursos">
+          <summary>Recursos del reino</summary>
+          <div className="evento-recursos__lista">
+            {Object.entries(atributos).map(([clave, valor]) => (
+              <div key={clave}>
+                <span className="capitalize">{clave}</span>
+                <strong>{valor}/100</strong>
+                <progress value={valor} max={100} aria-label={clave} />
               </div>
-            </details> : null}
-          </div>
-          <div className="evento-opciones">
-            {evento.opciones.filter(opcion => !opcion.bloqueada).map(opcion => (
-              <BotonNarrativo className="boton-narrativo--decision" key={opcion.id} onClick={() => onElegir(opcion.id)}>{modoSimple ? ocultarCambiosNumericos(opcion.texto) : opcion.texto}</BotonNarrativo>
             ))}
           </div>
-        </div>
-      </div>
+        </details> : null}
+      />
     </section>
   );
 }

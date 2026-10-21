@@ -65,11 +65,10 @@
 .narrativo-modo-mayor { font-size: var(--narrativo-texto-adaptado, 18px); line-height: 1.65; }
 .narrativo-modo-mayor .boton-narrativo { min-height: var(--narrativo-control-adaptado, 52px); padding: 13px 20px; font-size: var(--narrativo-texto-adaptado, 18px); }
 .narrativo-modo-mayor .boton-narrativo--decision { min-height: 64px; line-height: 1.45; }
-.narrativo-modo-mayor .evento-descripcion { font-size: var(--narrativo-texto-adaptado, 18px); line-height: 1.65; }
-.narrativo-modo-mayor .evento-opciones { gap: 14px; }
+.narrativo-modo-mayor .dialogo-narrativo__texto { font-size: var(--narrativo-texto-adaptado, 18px); line-height: 1.65; }
+.narrativo-modo-mayor .dialogo-narrativo__opciones { gap: 14px; }
 .narrativo-modo-mayor .narrativo-fade-dialogo { opacity: 1; visibility: visible; animation: none; }
 .narrativo-modo-mayor .titulo-narrativo__arte p { font-size: clamp(18px, 3vw, 24px); }
-.narrativo-modo-mayor .conversacion-dialogo p { font-size: var(--narrativo-texto-adaptado, 18px); line-height: 1.6; }
 .narrativo-modo-mayor .resultado-pergamino__relato { font-size: clamp(17px, 2.8vw, 21px); line-height: 1.6; }
 /* 42svh/19.2rem son el 60% del retrato (70svh/32rem): no se comprime y el resto fluye al scroll de IonContent. */
 .narrativo-modo-mayor .conversacion-personajes {

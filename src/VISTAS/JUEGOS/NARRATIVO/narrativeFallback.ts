@@ -25,6 +25,12 @@ const situaciones = [
   ['La fiesta del santuario', 'La comunidad desea celebrar una ceremonia abierta a todo el reino.'],
   ['El consejo de las aldeas', 'Los representantes del pueblo llegan a la corte para discutir el futuro.'],
 ];
+const eventosDelDia = [
+  { titulo: situaciones[0][0], descripcion: situaciones[0][1], categoria: 'Pueblo', tono: 'positivo' as const },
+  { titulo: situaciones[2][0], descripcion: situaciones[2][1], categoria: 'Pueblo', tono: 'negativo' as const },
+  { titulo: situaciones[4][0], descripcion: situaciones[4][1], categoria: 'Pueblo', tono: 'positivo' as const },
+  { titulo: situaciones[1][0], descripcion: situaciones[1][1], categoria: 'Diplomacia', tono: 'neutro' as const },
+];
 
 interface CartaLocal extends CartaApi { id?: string }
 interface PersonajeLocal extends PersonajeApi { id?: string }
@@ -118,6 +124,7 @@ export function resolverRespaldoNarrativo(path: string, options: RequestInit | u
         date, universo_id: 'corte_local', universo_nombre: 'Reino de prueba',
         atributos_iniciales: { oro: 50, pueblo: 50, ejercito: 50, fe: 50 },
         personajes_ofrecidos: personajes, cartas_ofrecidas: cartas,
+        eventos_del_dia: eventosDelDia,
         tiene_partida_activa: jugador.date === date && jugador.fase_actual !== 'seleccionar_corte',
       };
       return setup;
