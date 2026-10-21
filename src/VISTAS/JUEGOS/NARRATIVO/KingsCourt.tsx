@@ -11,7 +11,7 @@ import {
   registrarDecisionEvento, reiniciarSeleccionNarrativa, resolverConversacion,
 } from '../../../store/narrativoSelectionSlice';
 import {
-  avanzarMes as avisarAvanceMes, decidirEvento, elegirCartaMensual, esPartidaNarrativaLocal,
+  agregarCondicionesSecretas, avanzarMes as avisarAvanceMes, decidirEvento, elegirCartaMensual, esPartidaNarrativaLocal,
   iniciarPartida, obtenerCortePartida, obtenerEstadoPartida, obtenerHistorialPartida,
   obtenerSetup, reiniciarPartida, responderConversacion,
 } from './narrativeService';
@@ -107,11 +107,14 @@ export default function KingsCourt() {
     }
   };
 
+  // Enriquece y guarda cada evento con sus condiciones antes de mostrarlo.
+  const guardarEventoLocal = async (evento: any) => dispatch(mostrarEvento(await agregarCondicionesSecretas(evento)));
+
   // En modo adaptado pide el evento sin agregar la carta al mazo.
   const abrirEventoSinCarta = async (cartas: any[]) => {
     if (!cartas[0]) return;
     const data = await pedir(() => elegirCartaMensual(date, cartas[0].id || cartas[0]._id), 'No se pudo preparar la siguiente decision.');
-    if (data?.evento_actual) dispatch(mostrarEvento(data.evento_actual));
+    if (data?.evento_actual) await guardarEventoLocal(data.evento_actual);
   };
 
   // Abre la selección mensual o salta al evento según la edad.
@@ -130,7 +133,7 @@ export default function KingsCourt() {
     else if (estado.finalizacion) dispatch(finalizarPartida(estado.finalizacion));
     else if (estado.resultado_actual) dispatch(guardarResultado(estado.resultado_actual));
     else if (estado.conversacion_actual) dispatch(mostrarConversacion(estado.conversacion_actual));
-    else if (estado.evento_actual) dispatch(mostrarEvento(estado.evento_actual));
+    else if (estado.evento_actual) await guardarEventoLocal(estado.evento_actual);
     else if (estado.cartas_draft_actual) await cargarDraft(estado.cartas_draft_actual, true);
   };
 
@@ -205,7 +208,7 @@ export default function KingsCourt() {
       return;
     }
     dispatch(elegirCarta(carta));
-    if (data.evento_actual) dispatch(mostrarEvento(data.evento_actual));
+    if (data.evento_actual) await guardarEventoLocal(data.evento_actual);
   };
 
   // Guarda la decisión y procesa resultado, conversación y posible final.
@@ -332,7 +335,7 @@ export default function KingsCourt() {
       pantalla = <ResponderConversacionEtapa3 conversacion={juego.conversacionActual} personajes={personajes} modoSimple={!config.mostrarNumeros} onElegir={responderActual} />;
       break;
     case 'evento':
-      pantalla = <DecidirEventoEtapa2 key={juego.eventoActual.id || juego.eventoActual._id} evento={juego.eventoActual} atributos={jugador.recursos} modoSimple={!config.mostrarNumeros} onElegir={decidirEventoActual} />;
+      pantalla = <DecidirEventoEtapa2 key={juego.eventoActual.id || juego.eventoActual._id} evento={juego.eventoActual} atributos={jugador.recursos} personajes={personajes} afinidad={jugador.afinidad} tags={jugador.tags_activos} cartas={jugador.cartas_en_mano} modoSimple={!config.mostrarNumeros} onElegir={decidirEventoActual} />;
       break;
     case 'seleccionar_corte':
       pantalla = seleccionar('Forma tu corte', 'Elegí tres personajes para comenzar el desafio.', personajesDisponibles, 3, (cartas: any[]) => dispatch(guardarCorte(cartas)));
@@ -347,15 +350,22 @@ export default function KingsCourt() {
 
   const enConversacion = etapa === 'conversacion';
   const enEvento = etapa === 'evento';
-  const claseEscena = enConversacion ? 'narrativo-conversacion min-h-screen bg-slate-950' : enEvento ? 'narrativo-evento' : 'narrativo-escena';
+  const claseEscena = enConversacion
+    ? 'narrativo-conversacion relative min-h-screen bg-slate-950'
+    : enEvento
+      ? 'narrativo-evento relative min-h-full text-white'
+      : 'mx-auto flex min-h-full max-w-[1240px] flex-col gap-3 px-5 pt-[max(8px,env(safe-area-inset-top))] pb-[max(12px,env(safe-area-inset-bottom))] text-white max-md:gap-2 max-md:px-3';
+  const claseHerramientas = `narrativo-herramientas flex min-h-[30px] items-center justify-end gap-2 text-xs max-md:flex-nowrap max-md:[&>p]:hidden [&>p]:mr-auto [&>p]:mb-0 [&>p]:text-shadow-[0_1px_3px_#000] ${enConversacion
+    ? 'absolute inset-x-3 top-[max(8px,env(safe-area-inset-top))] z-[60]'
+    : enEvento ? 'absolute inset-x-4 top-[max(8px,env(safe-area-inset-top))] z-50' : 'flex-wrap'}`;
 
   return (
     <IonPage>
       <IonContent scrollY className={enConversacion ? undefined : 'narrativo-contenido'}>
         <TransicionNarrativa etapa={etapaVisible}>
           <main style={modoMayor ? estiloEdad : undefined} className={`${claseEscena}${modoMayor ? ' narrativo-modo-mayor' : ''}`}>
-            {error && <p role="alert" className="rounded border border-amber-300 bg-amber-50 p-3 text-amber-900">{error}</p>}
-            <div className="narrativo-herramientas">
+            {error && <p role="alert" className="relative z-50 rounded border border-amber-300 bg-amber-50 p-3 text-amber-900">{error}</p>}
+            <div className={claseHerramientas}>
               {esPartidaNarrativaLocal(date) && <p role="status" title="Partida local de seis meses. El progreso dura mientras la app esté abierta.">Prueba sin servidor</p>}
               <MazoUi cartas={config.permitirCartasMensuales ? jugador.cartas_en_mano : []} personajes={personajes} mostrarCantidad={config.mostrarNumeros} />
               <ConfiguracionEdad edad={edad} onGuardar={cambiarEdad} />

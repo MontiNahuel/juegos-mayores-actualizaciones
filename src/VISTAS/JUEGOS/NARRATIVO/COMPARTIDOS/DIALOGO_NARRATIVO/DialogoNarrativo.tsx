@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
 import BotonNarrativo from '../BOTON_NARRATIVO/BotonNarrativo';
-import '../TRANSICION_NARRATIVA/fadeNarrativo.css';
 
 export interface OpcionDialogoNarrativo {
   id: string | number;
@@ -22,7 +21,7 @@ export default function DialogoNarrativo({ titulo, texto, indicacion, opciones =
   // Lectura vertical uniforme: hablante, texto e indicación comparten el mismo borde.
   const contenido = <>
     {titulo ? <h2 className="dialogo-narrativo__titulo m-0 text-lg font-bold leading-tight text-[#e6bd77]">{titulo}</h2> : null}
-    <p className="dialogo-narrativo__texto m-0 mt-1 max-w-3xl whitespace-pre-wrap text-base leading-snug [overflow-wrap:anywhere] sm:text-lg">{texto}</p>
+    <p className="dialogo-narrativo__texto m-0 mt-1 whitespace-pre-wrap text-base leading-snug [overflow-wrap:anywhere] sm:text-lg">{texto}</p>
     {indicacion ? <p className="dialogo-narrativo__indicacion m-0 mt-2 text-sm text-[#bc965d]">{indicacion}</p> : null}
   </>;
 
@@ -38,7 +37,7 @@ export default function DialogoNarrativo({ titulo, texto, indicacion, opciones =
 
         {opciones.length ? <div className="dialogo-narrativo__opciones mt-2 grid gap-2">
           {opciones.map((opcion) => (
-            <BotonNarrativo className="boton-narrativo--decision !min-h-0 !px-4 !py-2" key={opcion.id} onClick={opcion.onElegir}>
+            <BotonNarrativo className="boton-narrativo--decision block w-full !min-h-0 !px-4 !py-2 text-left whitespace-normal" key={opcion.id} onClick={opcion.onElegir}>
               {opcion.texto}
             </BotonNarrativo>
           ))}

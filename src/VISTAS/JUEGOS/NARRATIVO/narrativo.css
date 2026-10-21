@@ -1,67 +1,9 @@
-/* El fondo vive en la capa fija de Ionic: cubre el viewport y no crece con el contenido.
-   Cambiar esta URL reemplaza el fondo default de TODAS las etapas salvo conversacion. */
+/* Sólo quedan aquí reglas dinámicas o coordinadas que Tailwind no expresa con claridad. */
 .narrativo-contenido {
   --background: linear-gradient(#10151d55, #10151d99), url('/assets/narrative/court.jpg') center / cover no-repeat;
 }
 
-.narrativo-transicion { display: contents; }
-.narrativo-transicion-salida {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .narrativo-transicion-salida { display: none; }
-}
-
-.narrativo-escena {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  min-height: 100%;
-  max-width: 1240px;
-  margin-inline: auto;
-  padding: max(8px, env(safe-area-inset-top)) 20px max(12px, env(safe-area-inset-bottom));
-  color: #fff;
-}
-
-.narrativo-herramientas {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 8px;
-  min-height: 30px;
-  font-size: 12px;
-}
-
-.narrativo-herramientas p { margin: 0 auto 0 0; text-shadow: 0 1px 3px #000; }
-
-.narrativo-evento { position: relative; min-height: 100%; color: #fff; }
-.narrativo-evento > .narrativo-herramientas {
-  position: absolute;
-  top: max(8px, env(safe-area-inset-top));
-  left: 16px;
-  right: 16px;
-  z-index: 50;
-}
-.narrativo-evento > [role='alert'] { position: relative; z-index: 50; margin: 0; }
-
-.narrativo-panel {
-  width: 100%;
-  max-width: 900px;
-  margin: auto;
-  padding: clamp(14px, 2.5vh, 24px);
-  border-radius: 12px;
-  background: #0d1827db;
-  color: #fff;
-  text-align: center;
-}
-
-/* Los tamanios vienen de configuracionPorEdad; estos valores son solo el respaldo visual. */
+/* Adaptación por edad: los valores nacen en configuracionPorEdad. */
 .narrativo-modo-mayor { font-size: var(--narrativo-texto-adaptado, 18px); line-height: 1.65; }
 .narrativo-modo-mayor .boton-narrativo { min-height: var(--narrativo-control-adaptado, 52px); padding: 13px 20px; font-size: var(--narrativo-texto-adaptado, 18px); }
 .narrativo-modo-mayor .boton-narrativo--decision { min-height: 64px; line-height: 1.45; }
@@ -70,43 +12,60 @@
 .narrativo-modo-mayor .narrativo-fade-dialogo { opacity: 1; visibility: visible; animation: none; }
 .narrativo-modo-mayor .titulo-narrativo__arte p { font-size: clamp(18px, 3vw, 24px); }
 .narrativo-modo-mayor .resultado-pergamino__relato { font-size: clamp(17px, 2.8vw, 21px); line-height: 1.6; }
-/* 42svh/19.2rem son el 60% del retrato (70svh/32rem): no se comprime y el resto fluye al scroll de IonContent. */
 .narrativo-modo-mayor .conversacion-personajes {
   min-height: calc(max(var(--narrativo-personaje-visible-svh, 42svh), var(--narrativo-personaje-visible-rem, 19.2rem)) + 1.25rem);
 }
 
-.narrativo-estadisticas { text-align: left; }
-.narrativo-panel--claro { background: #f8fafceF; color: #0f172a; }
-.narrativo-panel h2 { margin-top: 0; }
-.narrativo-panel__imagen { width: 100%; height: clamp(80px, 20svh, 180px); object-fit: cover; border-radius: 8px; margin-block: 12px; }
-.narrativo-panel__acciones { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
-.narrativo-recursos { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 16px; }
-.narrativo-recurso { padding: 8px; border: 1px solid #ffffff40; border-radius: 6px; background: #ffffff0d; }
-.narrativo-recurso p { margin: 0; }
-.narrativo-opciones { display: grid; gap: 8px; margin-top: 16px; }
-.narrativo-opciones button { padding: 10px 12px; border: 1px solid #94a3b8; border-radius: 6px; text-align: left; background: #ffffff0d; }
-.narrativo-opciones button:focus-visible { outline: 2px solid #f3d78a; outline-offset: 2px; }
-.narrativo-opciones button:hover { background: #ffffff1a; }
+/* Título: una única secuencia compartida; el layout vive en el componente. */
+.titulo-narrativo[data-intro='listo'] .titulo-narrativo__arte {
+  animation: narrativo-presentar-titulo 3800ms ease-in-out 100ms both;
+}
+.titulo-narrativo[data-intro='listo'][data-permanente='true'] .titulo-narrativo__arte {
+  animation: titulo-narrativo-entrar 760ms ease-in-out 100ms both;
+}
+@keyframes titulo-narrativo-entrar {
+  from { opacity: 0; visibility: hidden; }
+  to { opacity: 1; visibility: visible; }
+}
+@keyframes narrativo-presentar-titulo {
+  0%, 100% { opacity: 0; visibility: hidden; }
+  20%, 75% { opacity: 1; visibility: visible; }
+}
+@keyframes narrativo-retirar-titulo { to { opacity: 0; visibility: hidden; } }
+
+/* Entrada del diálogo compartida por eventos y conversaciones. */
+.narrativo-fade-dialogo { opacity: 0; visibility: hidden; }
+.narrativo-fade-dialogo[data-intro='listo'] {
+  animation: narrativo-aparecer 600ms ease-out 1800ms both;
+}
+@keyframes narrativo-aparecer {
+  from { opacity: 0; visibility: hidden; }
+  to { opacity: 1; visibility: visible; }
+}
+
+/* Conversación: fondo, texto y retratos entran en ese orden. */
+.conversacion-escena :is(.conversacion-fondo, .conversacion-personajes) { opacity: 0; visibility: hidden; }
+.conversacion-escena[data-intro='listo'] .conversacion-fondo { animation: conversacion-aparecer 100ms ease-out both; }
+.conversacion-escena[data-intro='listo'] .conversacion-personajes { animation: conversacion-aparecer 700ms ease-out 1900ms both; }
+.conversacion-dialogo[data-intro='listo'] { animation-delay: 1250ms; }
+.conversacion-retrato { transition: opacity 700ms ease-in-out, transform 700ms ease-in-out, filter 700ms ease-in-out; }
+.conversacion-retrato[data-visible='false'] {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 700ms ease-in-out, filter 700ms ease-in-out, visibility 0s linear 700ms;
+}
+@keyframes conversacion-aparecer {
+  from { opacity: 0; visibility: hidden; }
+  to { opacity: 1; visibility: visible; }
+}
 
 @media (max-width: 767px) {
-  .narrativo-herramientas { flex-wrap: nowrap; }
-  .narrativo-herramientas > p { display: none; }
-  .narrativo-escena { padding-inline: 12px; gap: 8px; }
-  .narrativo-recursos { gap: 4px; font-size: 12px; }
-  .narrativo-recurso { padding: 6px; }
-
-  /* Mobile adaptado: controles iguales arriba, titulo debajo y escena visual amplia.
-     El alto extra queda a cargo del scroll nativo de IonContent. */
-  .narrativo-modo-mayor {
-    --narrativo-barra-superior: var(--narrativo-control-adaptado, 60px);
-  }
-
+  .narrativo-modo-mayor { --narrativo-barra-superior: var(--narrativo-control-adaptado, 60px); }
   .narrativo-modo-mayor > .narrativo-herramientas {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 6px;
   }
-
   .narrativo-modo-mayor > .narrativo-herramientas > button {
     width: 100%;
     min-width: 0;
@@ -116,23 +75,28 @@
     padding: 6px;
     font-size: clamp(13px, 4vw, var(--narrativo-texto-adaptado, 18px));
   }
-
   .narrativo-evento.narrativo-modo-mayor > .narrativo-herramientas,
   .narrativo-conversacion.narrativo-modo-mayor > .narrativo-herramientas {
     inset: max(8px, env(safe-area-inset-top)) 8px auto;
   }
-
   .narrativo-evento.narrativo-modo-mayor .evento-escena > .titulo-narrativo,
   .narrativo-conversacion.narrativo-modo-mayor .conversacion-escena {
     padding-top: calc(max(8px, env(safe-area-inset-top)) + var(--narrativo-barra-superior) + 10px);
   }
+  .narrativo-evento.narrativo-modo-mayor .evento-ilustracion { flex: none; min-height: max(58svh, 28rem); }
+  .narrativo-conversacion.narrativo-modo-mayor .conversacion-personajes { min-height: max(56svh, 28rem); }
+}
 
-  .narrativo-evento.narrativo-modo-mayor .evento-ilustracion {
-    flex: none;
-    min-height: max(58svh, 28rem);
+@media (prefers-reduced-motion: reduce) {
+  .titulo-narrativo[data-intro='listo'] .titulo-narrativo__arte {
+    animation: narrativo-retirar-titulo 1ms steps(1) 2500ms both;
+    opacity: 1;
+    visibility: visible;
   }
-
-  .narrativo-conversacion.narrativo-modo-mayor .conversacion-personajes {
-    min-height: max(56svh, 28rem);
-  }
+  .titulo-narrativo[data-intro='listo'][data-permanente='true'] .titulo-narrativo__arte,
+  .narrativo-fade-dialogo[data-intro='listo'],
+  .conversacion-escena[data-intro='listo'] :is(.conversacion-fondo, .conversacion-personajes),
+  .conversacion-dialogo[data-intro='listo'] { animation-delay: 0s; }
+  .conversacion-retrato,
+  .conversacion-retrato[data-visible='false'] { transition: none; }
 }

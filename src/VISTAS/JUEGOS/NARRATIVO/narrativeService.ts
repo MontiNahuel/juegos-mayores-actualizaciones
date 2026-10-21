@@ -41,8 +41,40 @@ export interface EventoApi {
   titulo: string;
   descripcion: string;
   imagen: string;
-  opciones: { id: string; texto: string; bloqueada: boolean }[];
+  opciones: { id: string; texto: string; bloqueada: boolean; es_secreta?: boolean; secreto?: string; condiciones?: any[] }[];
 }
+
+// El endpoint de turno omite las condiciones; se consultan en la definición del evento.
+let catalogoEventos: Promise<any[]> | null = null;
+export const obtenerDefinicionEvento = async (id: string) => {
+  catalogoEventos ||= (async () => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API}/admin/eventos?limit=500`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!response.ok) throw new Error(`No se pudieron cargar las condiciones del evento (${response.status}).`);
+    return response.json();
+  })();
+  const eventos = await catalogoEventos;
+  return eventos.find((evento: any) => evento._id === id || evento.id === id) || null;
+};
+
+// Guarda en el evento local las condiciones de su opcion secreta.
+export const agregarCondicionesSecretas = async (evento: EventoApi): Promise<EventoApi> => {
+  try {
+    const definicion = await obtenerDefinicionEvento(evento.id);
+    return {
+      ...evento,
+      opciones: evento.opciones.map(opcion => ({
+        ...opcion,
+        es_secreta: opcion.es_secreta ?? definicion?.opciones?.find((x: any) => x.id === opcion.id)?.es_secreta,
+        condiciones: definicion?.opciones?.find((x: any) => x.id === opcion.id)?.condiciones || [],
+      })),
+    };
+  } catch {
+    return evento;
+  }
+};
 
 export interface ResultadoApi {
   titulo: string;

@@ -17,7 +17,7 @@ export default function EstadisticasPartidaEtapa5({ estado, historial, modoSimpl
   const estadoDe = (valor: unknown) => Number(valor) < 30 ? 'Necesita cuidado' : Number(valor) > 70 ? 'Fortalecido' : 'Estable';
 
   return (
-    <section className="narrativo-panel narrativo-panel--claro narrativo-estadisticas">
+    <section className="m-auto w-full max-w-[900px] rounded-xl bg-[#f8fafcef] p-[clamp(14px,2.5vh,24px)] text-left text-slate-900">
       <div className="border-b border-slate-200 pb-3">
         <p className="text-sm font-medium text-slate-500">{estado.modo_local ? 'Registro de la partida local' : 'Registro del servidor'}</p>
         <h2 className="mt-1 text-3xl font-bold text-slate-900">Estadisticas del reinado</h2>
