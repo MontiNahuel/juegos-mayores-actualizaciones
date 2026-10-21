@@ -16,15 +16,12 @@ jobs:
 
       - name: 2. Compilar carpeta dist en contenedor efímero (Se autodestruye al terminar)
         env:
-          # Vacío ("") para usar rutas relativas (/api/*) detrás de Caddy en https://cognijuegos.asistodo.com.ar
-          VITE_API_URL: ${{ secrets.VITE_API_URL || '' }}
           VITE_ADAPTACION_EDAD: ${{ secrets.VITE_ADAPTACION_EDAD || 'true' }}
         run: |
           docker run --rm \
             -u "$(id -u):$(id -g)" \
             -v "$PWD":/app \
             -w /app \
-            -e VITE_API_URL="$VITE_API_URL" \
             -e VITE_ADAPTACION_EDAD="$VITE_ADAPTACION_EDAD" \
             -e HOME=/tmp \
             node:22-alpine sh -c "npm ci && npm run build"
