@@ -26,7 +26,7 @@ import BotonNarrativo from './COMPARTIDOS/BOTON_NARRATIVO/BotonNarrativo';
 import MazoUi from './COMPARTIDOS/MAZO_UI/MazoUi';
 import ConfiguracionEdad from './COMPARTIDOS/CONFIGURACION_EDAD/ConfiguracionEdad';
 import FondoCorte from './COMPARTIDOS/FONDO_CORTE/FondoCorte';
-import { GUARDIAS_CORTE, ORO_CORTE, cantidadPorTramo } from '../../../config/fondoCorte';
+import { GUARDIAS_CORTE, MANOS_CORTE, ORO_CORTE, cantidadManosPorPueblo, cantidadPorTramo } from '../../../config/fondoCorte';
 import './narrativo.css';
 
 // Tiempo para ver el cambio en la corte antes de abrir la próxima escena.
@@ -95,11 +95,13 @@ export default function KingsCourt() {
 
   const config = configuracionPorEdad(edad);
   const modoMayor = config.adaptado;
-  // La pausa sólo corresponde si el nuevo tramo agrega guardias u oro a la corte.
+  // La pausa sólo corresponde si el cambio agrega un elemento nuevo a la corte.
   const guardiasEsperados = cantidadPorTramo(Number(juego.jugador.recursos.ejercito)) ?? juego.fondoBase.personajes.length;
   const oroEsperado = cantidadPorTramo(Number(juego.jugador.recursos.oro)) ?? juego.fondoBase.oro.length;
+  const puebloActual = Number(juego.jugador.recursos.pueblo);
+  const manosEsperadas = Number.isFinite(puebloActual) ? cantidadManosPorPueblo(puebloActual) : juego.fondoBase.manos.length;
   const cambioFondoPendiente = Boolean(juego.resultadoActual) &&
-    (guardiasEsperados > juego.fondoBase.personajes.length || oroEsperado > juego.fondoBase.oro.length);
+    (guardiasEsperados > juego.fondoBase.personajes.length || oroEsperado > juego.fondoBase.oro.length || manosEsperadas > juego.fondoBase.manos.length);
   // Lee el jugador actualizado de Redux, incluso después de un dispatch.
   const jugadorActual = () => (store.getState() as any).narrativoSelection.jugador;
 
@@ -118,8 +120,8 @@ export default function KingsCourt() {
   // El resultado conserva la corte anterior; la nueva composición entra al mostrarla entre escenas.
   useEffect(() => {
     if (juego.resultadoActual) return;
-    dispatch(actualizarFondoBase({ ejercito: juego.jugador.recursos.ejercito, oro: juego.jugador.recursos.oro }));
-  }, [dispatch, juego.jugador.recursos.ejercito, juego.jugador.recursos.oro, juego.resultadoActual]);
+    dispatch(actualizarFondoBase({ ejercito: juego.jugador.recursos.ejercito, oro: juego.jugador.recursos.oro, pueblo: juego.jugador.recursos.pueblo }));
+  }, [dispatch, juego.jugador.recursos.ejercito, juego.jugador.recursos.oro, juego.jugador.recursos.pueblo, juego.resultadoActual]);
 
   // Ejecuta una petición y muestra el error sin interrumpir la partida.
   const pedir = async <T,>(accion: () => Promise<T>, mensaje: string): Promise<T | null> => {
@@ -276,8 +278,10 @@ export default function KingsCourt() {
   const continuarResultado = () => {
     const antesGuardias = juego.fondoBase.personajes.length;
     const antesOro = juego.fondoBase.oro.length;
+    const antesManos = juego.fondoBase.manos.length;
     const despuesGuardias = guardiasEsperados;
     const despuesOro = oroEsperado;
+    const despuesManos = manosEsperadas;
     if (!cambioFondoPendiente) {
       setDemorarDialogoPorFondo(false);
       dispatch(limpiarResultado());
@@ -292,7 +296,11 @@ export default function KingsCourt() {
 
     // Espera la decodificación para que el nuevo asset no aparezca de golpe al terminar la pausa.
     const secuencia = ++secuenciaCambio.current;
-    const nuevos = [...GUARDIAS_CORTE.slice(antesGuardias, despuesGuardias), ...ORO_CORTE.slice(antesOro, despuesOro)];
+    const nuevos = [
+      ...GUARDIAS_CORTE.slice(antesGuardias, despuesGuardias),
+      ...ORO_CORTE.slice(antesOro, despuesOro),
+      ...MANOS_CORTE.slice(antesManos, despuesManos),
+    ];
     void Promise.all(nuevos.map(async ({ src }) => { const imagen = new Image(); imagen.src = src; await imagen.decode().catch(() => {}); }))
       .then(() => {
         if (secuencia !== secuenciaCambio.current) return;
@@ -336,7 +344,7 @@ export default function KingsCourt() {
   if (!setup) return (
     <IonPage><IonContent scrollY className="narrativo-contenido" style={{ '--narrativo-fondo-base': `url("${juego.fondoBase.src}")` } as CSSProperties}>
       {/* Misma capa que en la partida: React conserva la imagen al terminar la carga. */}
-      <FondoCorte fondo={{ ...juego.fondoBase, personajes: [], oro: [] }} atenuado fijo />
+      <FondoCorte fondo={{ ...juego.fondoBase, personajes: [], oro: [], manos: [] }} atenuado fijo />
       <p className="relative z-10 p-6 text-white">Cargando desafio narrativo...</p>
       {error && <p role="alert" className="relative z-10 px-6 text-amber-900">{error}</p>}
     </IonContent></IonPage>
@@ -416,7 +424,7 @@ export default function KingsCourt() {
   const enEvento = etapa === 'evento';
   // La corte permanece montada bajo todas las etapas; sólo su decoración espera a preparación.
   const mostrarDecoracion = !['seleccionar_corte', 'seleccionar_cartas', 'muestra_evento'].includes(etapa);
-  const fondoVisible = mostrarDecoracion ? juego.fondoBase : { ...juego.fondoBase, personajes: [], oro: [] };
+  const fondoVisible = mostrarDecoracion ? juego.fondoBase : { ...juego.fondoBase, personajes: [], oro: [], manos: [] };
   const claseEscena = enConversacion
     ? 'narrativo-conversacion relative z-10 min-h-screen'
     : enEvento

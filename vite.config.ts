@@ -20,11 +20,7 @@ export default defineConfig({
     allowedHosts: true,
     proxy: {
       '/api': {
-        target: API_URL || 'http://127.0.0.1:8087',
-        changeOrigin: true,
-      },
-      '/assets/narrative': {
-        target: API_URL || 'http://127.0.0.1:8087',
+        target: API_URL,
         changeOrigin: true,
       },
     },

@@ -55,7 +55,7 @@ export default function ResolverEventoEtapa2({ evento, atributos, fondoBase, mod
   const contexto = { atributos, personajes, afinidad, tags, cartas };
   const fondo = evento.imagen && evento.imagen !== imagenFallida ? imagenDe(evento.imagen) : fondoBase.src;
   const usaFondoBase = fondo === fondoBase.src;
-  const fondoEscena = { src: fondo, personajes: [], oro: [] };
+  const fondoEscena = { src: fondo, personajes: [], oro: [], manos: [] };
   const escenaLista = usaFondoBase || fondoListo === fondo;
 
   return (

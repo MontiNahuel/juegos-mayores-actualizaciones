@@ -4,9 +4,9 @@ import type { ElementoFondoCorte } from '../../../../../config/fondoCorte';
 const DURACION_ELEMENTO_MS = 1400;
 const claveElemento = (elemento: ElementoFondoCorte) => `${elemento.id}:${elemento.x}:${elemento.y}`;
 
-// Una capa por profundidad: guardias en el plano medio y tesoro en primer plano.
+// Cada tipo de decoración tiene su profundidad y mantiene el mismo fundido de entrada/salida.
 export default function CapaFondoCorte({ tipo, elementos }: {
-  tipo: 'personajes' | 'oro';
+  tipo: 'personajes' | 'oro' | 'manos';
   elementos: ElementoFondoCorte[];
 }) {
   const [visible, setVisible] = useState(false);
@@ -31,6 +31,7 @@ export default function CapaFondoCorte({ tipo, elementos }: {
     {mostrados.map(({ clave, elemento, presente, cargado }) => <div key={clave} className={`fondo-corte__elemento ${presente && cargado ? 'fondo-corte__elemento--visible' : ''}`} style={{
       '--x': `${elemento.x}%`, '--y': `${elemento.y}%`,
       '--tamano': `${elemento.tamano}%`, '--apoyo': `-${elemento.apoyo ?? 100}%`,
+      '--espejo': elemento.invertida ? -1 : 1,
       '--silueta': `url("${elemento.src}")`,
     } as CSSProperties}>
       <img src={elemento.src} alt="" draggable={false} onLoad={evento => {

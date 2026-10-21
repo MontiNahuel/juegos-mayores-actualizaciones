@@ -10,10 +10,18 @@
 }
 .fondo-corte__capa { position: absolute; inset: 0; opacity: 0; transition: opacity 720ms ease-out; }
 .fondo-corte__capa--visible { opacity: 1; }
-.fondo-corte__elemento { position: absolute; left: var(--x); top: var(--y); transform: translate(-50%, var(--apoyo)); opacity: 0; transition: opacity var(--duracion-elemento) ease-out; }
+.fondo-corte__elemento { position: absolute; left: var(--x); top: var(--y); transform: translate(-50%, var(--apoyo)) scaleX(var(--espejo, 1)); opacity: 0; transition: opacity var(--duracion-elemento) ease-out; }
 .fondo-corte__elemento--visible { opacity: 1; }
 .fondo-corte__elemento img { display: block; max-width: none; }
 .fondo-corte__capa--personajes { z-index: 1; }
+.fondo-corte__capa--manos { z-index: 0; }
+.fondo-corte__capa--manos .fondo-corte__elemento { height: var(--tamano); }
+.fondo-corte__capa--manos img {
+  height: 100%; width: auto;
+  opacity: .92;
+  filter: brightness(.42) saturate(.35) contrast(1.2) sepia(.12) blur(.55px) drop-shadow(0 3px 8px #000e);
+  mix-blend-mode: multiply;
+}
 .fondo-corte__capa--personajes .fondo-corte__elemento { height: var(--tamano); }
 .fondo-corte__capa--personajes img {
   height: 100%; width: auto;
@@ -42,6 +50,7 @@
 /* Vertical conserva los guardias centrados; el oro queda en las esquinas bajas. */
 @media (orientation: portrait) {
   .fondo-corte__plano { width: 100%; height: 100%; }
+  .fondo-corte__capa--manos .fondo-corte__elemento { height: min(8cqh, 40px); }
   .fondo-corte__capa--personajes .fondo-corte__elemento { top: 87%; height: min(29cqh, 320px); }
   .fondo-corte__capa--oro .fondo-corte__elemento { top: 98%; width: 57%; }
   .fondo-corte__capa--oro .fondo-corte__elemento:first-child { left: 6%; }
