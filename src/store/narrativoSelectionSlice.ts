@@ -10,6 +10,7 @@ const initialState: any = {
     corte_activa: [],
     afinidad: {},
     cartas_en_mano: [],
+    carta_mes_actual: null,
     tags_activos: [],
     mes_actual: 1,
     fase_actual: 'seleccionar_corte',
@@ -151,6 +152,7 @@ const narrativoSelectionSlice = createSlice({
     // Agrega la carta elegida al inventario local antes de pedir el evento.
     elegirCarta: (state, action: { payload: any }) => {
       state.jugador.cartas_en_mano.push(action.payload);
+      state.jugador.carta_mes_actual = action.payload.id || action.payload._id;
       aplicarEfectosAlObtener(state.jugador, [action.payload]);
       state.cartasDraft = [];
       state.jugador.fase_actual = 'decidir_evento';
@@ -170,9 +172,9 @@ const narrativoSelectionSlice = createSlice({
 
     // Registra la opcion del evento antes de solicitar su resultado.
     registrarDecisionEvento: (state, action: { payload: any }) => {
-      const { evento_id, opcion_id } = action.payload;
+      const { evento_id, opcion_id, evento_titulo, opcion_texto } = action.payload;
       state.jugador.eventos_jugados.push(evento_id);
-      state.jugador.ultima_accion = { tipo: 'decidir_evento', id: opcion_id };
+      state.jugador.ultima_accion = { tipo: 'decidir_evento', id: opcion_id, evento_titulo, opcion_texto };
     },
 
     // Aplica localmente los cambios del resultado sin reemplazar todo el jugador.
@@ -190,6 +192,13 @@ const narrativoSelectionSlice = createSlice({
       state.jugador.historial_mensual.push({
         mes: state.jugador.mes_actual,
         resultado: resultado?.titulo || 'Resultado',
+        evento_id: state.jugador.eventos_jugados.at(-1) || null,
+        opcion_elegida_id: state.jugador.ultima_accion?.tipo === 'decidir_evento' ? state.jugador.ultima_accion.id : null,
+        evento_titulo: state.jugador.ultima_accion?.evento_titulo,
+        opcion_texto: state.jugador.ultima_accion?.opcion_texto,
+        carta_elegida_id: state.jugador.carta_mes_actual,
+        recursos_fin_mes: { ...state.jugador.recursos },
+        resultado_texto: resultado?.texto,
       });
     },
 
@@ -207,9 +216,19 @@ const narrativoSelectionSlice = createSlice({
     // Aplica la afinidad de la decision y marca la conversacion como usada.
     resolverConversacion: (state, action: { payload: any }) => {
       const { conversacionId, decision } = action.payload;
+      const conversacionTitulo = state.conversacionActual?.titulo;
       state.conversacionActual = null;
       state.jugador.conversaciones_jugadas.push(conversacionId);
       state.jugador.ultima_accion = { tipo: 'responder_conversacion', id: decision.opcion };
+      const registroMes = state.jugador.historial_mensual.at(-1);
+      if (registroMes?.mes === state.jugador.mes_actual) {
+        registroMes.conversacion_id = conversacionId;
+        registroMes.decision_conversacion_opcion = decision.opcion;
+        registroMes.conversacion_titulo = conversacionTitulo;
+        registroMes.decision_texto = decision.texto;
+        registroMes.decision_resultado_texto = decision.resultado_texto;
+        registroMes.impacto_afinidad = decision.impacto_afinidad;
+      }
 
       decision.impacto_afinidad?.forEach(({ personaje_id, delta }: any) => {
         const actual = state.jugador.afinidad[personaje_id] || 50;
@@ -220,6 +239,7 @@ const narrativoSelectionSlice = createSlice({
     // Avanza el estado local y deja listas las cartas del proximo mes.
     avanzarMes: (state) => {
       state.jugador.mes_actual += 1;
+      state.jugador.carta_mes_actual = null;
       state.jugador.fase_actual = 'draft_mensual';
       state.jugador.ultima_accion = 'avanzar_mes';
     },

@@ -1,0 +1,29 @@
+/* La misma ilustración del resultado se corta en nueve zonas para que la
+   crónica pueda crecer sin deformar sus bordes ni comprimir los gráficos. */
+.cronica-hoja {
+  border: 30px solid transparent;
+  border-image: url('/assets/narrative/result-paper.png') 120 95 fill / 30px 27px / 0 stretch;
+  background: transparent;
+  padding: clamp(14px, 3vw, 34px);
+  filter: drop-shadow(0 16px 24px #08050299);
+}
+
+.cronica-desplazable { scrollbar-color: #9d7545 transparent; scrollbar-width: thin; }
+.cronica-meses { scrollbar-color: #9d7545 transparent; scrollbar-width: thin; }
+.narrativo-modo-mayor .estadisticas-reino :is(.text-sm, .text-base) {
+  font-size: max(17px, var(--narrativo-texto-adaptado, 18px));
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .cronica-entrada { animation: cronica-entrar 650ms ease-out both; }
+  .cronica-trazo { stroke-dasharray: 1; stroke-dashoffset: 1; animation: cronica-dibujar 1450ms ease-in-out 250ms both; }
+  .cronica-barra { transform-box: fill-box; transform-origin: center; animation: cronica-crecer 800ms ease-out 550ms both; }
+}
+
+@keyframes cronica-entrar { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes cronica-dibujar { to { stroke-dashoffset: 0; } }
+@keyframes cronica-crecer { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+
+@media (max-width: 640px) {
+  .cronica-hoja { border-width: 17px; border-image-width: 17px; padding: 10px; }
+}

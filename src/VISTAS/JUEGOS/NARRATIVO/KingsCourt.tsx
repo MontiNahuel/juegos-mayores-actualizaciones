@@ -12,7 +12,7 @@ import {
 } from '../../../store/narrativoSelectionSlice';
 import {
   agregarCondicionesSecretas, avanzarMes as avisarAvanceMes, decidirEvento, elegirCartaMensual, esPartidaNarrativaLocal,
-  iniciarPartida, obtenerCortePartida, obtenerEstadoPartida, obtenerHistorialPartida,
+  iniciarPartida, obtenerCatalogosCronica, obtenerCortePartida, obtenerEstadoPartida, obtenerHistorialPartida,
   obtenerSetup, reiniciarPartida, responderConversacion,
 } from './narrativeService';
 import SeleccionarCartasEtapa0y1 from './ETAPA_0_1_SELECCIONAR_CARTAS/SeleccionarCartasEtapa0y1';
@@ -242,7 +242,11 @@ export default function KingsCourt() {
   // Guarda la decisión y procesa resultado, conversación y posible final.
   const decidirEventoActual = async (opcionId: string) => {
     const evento = juego.eventoActual;
-    dispatch(registrarDecisionEvento({ evento_id: evento?.id || evento?._id, opcion_id: opcionId }));
+    dispatch(registrarDecisionEvento({
+      evento_id: evento?.id || evento?._id, opcion_id: opcionId,
+      evento_titulo: evento?.titulo,
+      opcion_texto: evento?.opciones?.find((opcion: { id: string; texto: string }) => opcion.id === opcionId)?.texto,
+    }));
     const preferencia = modoMayor ? {
       probabilidad_no_repetida: config.probabilidadConversacionNoRepetida,
       excluir_ids: jugadorActual().conversaciones_jugadas,
@@ -334,8 +338,12 @@ export default function KingsCourt() {
     setCargandoEstadisticas(true);
     try {
       setError('');
-      const [estado, historial] = await Promise.all([obtenerEstadoPartida(date), obtenerHistorialPartida(date)]);
-      setEstadisticas({ estado, historial });
+      const [estado, historial, corte, catalogos] = await Promise.all([
+        obtenerEstadoPartida(date), obtenerHistorialPartida(date),
+        obtenerCortePartida(date).catch(() => null),
+        obtenerCatalogosCronica(date, setup?.universo_id),
+      ]);
+      setEstadisticas({ estado, historial, corte, catalogos });
     } catch (e: any) {
       setError(`No se pudieron cargar las estadisticas. ${e?.message || ''}`);
     } finally { setCargandoEstadisticas(false); }
@@ -379,7 +387,12 @@ export default function KingsCourt() {
       />;
       break;
     case 'estadisticas':
-      pantalla = <EstadisticasPartidaEtapa5 estado={estadisticas.estado} historial={estadisticas.historial} modoSimple={!config.mostrarNumeros} onVolver={() => setEstadisticas(null)} />;
+      pantalla = <EstadisticasPartidaEtapa5
+        estado={estadisticas.estado} historial={estadisticas.historial} corte={estadisticas.corte}
+        catalogos={estadisticas.catalogos} recursosIniciales={setup.atributos_iniciales}
+        personajes={personajes} finalizacion={finalizacion} modoSimple={!config.mostrarNumeros}
+        onVolver={() => setEstadisticas(null)}
+      />;
       break;
     case 'final':
       pantalla = <MostrarResultadoEtapa4 finalizacion={finalizacion} onVerEstadisticas={verEstadisticas} cargandoEstadisticas={cargandoEstadisticas} onTerminar={salirDePrueba} reiniciando={reiniciando} />;
