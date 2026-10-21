@@ -52,7 +52,9 @@ export default class TransicionNarrativa extends Component<Props> {
     });
 
     const salida = document.createElement('div');
-    salida.className = 'narrativo-transicion-salida';
+    Object.assign(salida.style, {
+      position: 'fixed', inset: '0', zIndex: '1000', overflow: 'hidden', pointerEvents: 'none',
+    });
     salida.setAttribute('aria-hidden', 'true');
     salida.inert = true;
     salida.append(copia);
@@ -79,6 +81,6 @@ export default class TransicionNarrativa extends Component<Props> {
 
   render() {
     // No agrega altura ni cambia la distribucion o el centrado de las etapas.
-    return <div ref={this.contenedor} className="narrativo-transicion">{this.props.children}</div>;
+    return <div ref={this.contenedor} className="contents">{this.props.children}</div>;
   }
 }
