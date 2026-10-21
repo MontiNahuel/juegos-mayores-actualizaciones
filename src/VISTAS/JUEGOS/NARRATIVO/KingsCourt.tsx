@@ -1,11 +1,11 @@
-import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { IonContent, IonPage } from '@ionic/react';
 import { useDispatch, useSelector, useStore } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { API_URL } from '../../../config/api';
 import { configuracionPorEdad, guardarEdad, leerEdad } from '../../../config/adaptacionEdad';
 import {
-  avanzarMes as avanzarMesLocal, configurarEdadNarrativa, elegirCarta, finalizarPartida,
+  actualizarFondoBase, avanzarMes as avanzarMesLocal, configurarEdadNarrativa, elegirCarta, finalizarPartida,
   guardarCartasDraft, guardarCartasIniciales, guardarCorte, guardarPersonajesCorte,
   guardarResultado, iniciarJugador, limpiarResultado, mostrarConversacion, mostrarEvento,
   registrarDecisionEvento, reiniciarSeleccionNarrativa, resolverConversacion,
@@ -25,7 +25,12 @@ import TransicionNarrativa from './COMPARTIDOS/TRANSICION_NARRATIVA/TransicionNa
 import BotonNarrativo from './COMPARTIDOS/BOTON_NARRATIVO/BotonNarrativo';
 import MazoUi from './COMPARTIDOS/MAZO_UI/MazoUi';
 import ConfiguracionEdad from './COMPARTIDOS/CONFIGURACION_EDAD/ConfiguracionEdad';
+import FondoCorte from './COMPARTIDOS/FONDO_CORTE/FondoCorte';
+import { GUARDIAS_CORTE, ORO_CORTE, cantidadPorTramo } from '../../../config/fondoCorte';
 import './narrativo.css';
+
+// Tiempo para ver el cambio en la corte antes de abrir la próxima escena.
+const DURACION_CAMBIO_FONDO_MS = 3200;
 
 // Unifica los datos de cada carta y completa la URL de su imagen.
 const prepararCarta = (carta: any) => ({
@@ -78,9 +83,23 @@ export default function KingsCourt() {
   const [error, setError] = useState('');
   const [edad, setEdad] = useState<number | null>(leerEdad);
   const [mostrarMuestraEvento, setMostrarMuestraEvento] = useState(false);
+  const [cambioFondo, setCambioFondo] = useState(false);
+  const [demorarDialogoPorFondo, setDemorarDialogoPorFondo] = useState(false);
+  const temporizadorCambio = useRef<number | null>(null);
+  const secuenciaCambio = useRef(0);
+
+  useEffect(() => () => {
+    secuenciaCambio.current += 1;
+    if (temporizadorCambio.current !== null) window.clearTimeout(temporizadorCambio.current);
+  }, []);
 
   const config = configuracionPorEdad(edad);
   const modoMayor = config.adaptado;
+  // La pausa sólo corresponde si el nuevo tramo agrega guardias u oro a la corte.
+  const guardiasEsperados = cantidadPorTramo(Number(juego.jugador.recursos.ejercito)) ?? juego.fondoBase.personajes.length;
+  const oroEsperado = cantidadPorTramo(Number(juego.jugador.recursos.oro)) ?? juego.fondoBase.oro.length;
+  const cambioFondoPendiente = Boolean(juego.resultadoActual) &&
+    (guardiasEsperados > juego.fondoBase.personajes.length || oroEsperado > juego.fondoBase.oro.length);
   // Lee el jugador actualizado de Redux, incluso después de un dispatch.
   const jugadorActual = () => (store.getState() as any).narrativoSelection.jugador;
 
@@ -95,6 +114,12 @@ export default function KingsCourt() {
   useEffect(() => {
     dispatch(configurarEdadNarrativa({ edad, modo_mayor: modoMayor }));
   }, [dispatch, edad, modoMayor]);
+
+  // El resultado conserva la corte anterior; la nueva composición entra al mostrarla entre escenas.
+  useEffect(() => {
+    if (juego.resultadoActual) return;
+    dispatch(actualizarFondoBase({ ejercito: juego.jugador.recursos.ejercito, oro: juego.jugador.recursos.oro }));
+  }, [dispatch, juego.jugador.recursos.ejercito, juego.jugador.recursos.oro, juego.resultadoActual]);
 
   // Ejecuta una petición y muestra el error sin interrumpir la partida.
   const pedir = async <T,>(accion: () => Promise<T>, mensaje: string): Promise<T | null> => {
@@ -120,9 +145,10 @@ export default function KingsCourt() {
   // Abre la selección mensual o salta al evento según la edad.
   const cargarDraft = async (cartas: any[], desdeServidor = false) => {
     const draft = cartas.map(prepararCarta);
-    if ((desdeServidor ? configuracionPorEdad(leerEdad()) : config).permitirCartasMensuales)
+    if ((desdeServidor ? configuracionPorEdad(leerEdad()) : config).permitirCartasMensuales) {
+      setDemorarDialogoPorFondo(false);
       dispatch(guardarCartasDraft(draft));
-    else await abrirEventoSinCarta(draft);
+    } else await abrirEventoSinCarta(draft);
   };
 
   // Recupera la etapa pendiente del servidor sin reemplazar al jugador local.
@@ -237,13 +263,46 @@ export default function KingsCourt() {
     else if (data?.cartas_draft_actual) await cargarDraft(data.cartas_draft_actual);
   };
 
-  // Después del resultado muestra la conversación pendiente o avanza.
-  const continuarResultado = () => {
-    dispatch(limpiarResultado());
+  // Continúa la secuencia existente una vez que se vio el cambio del fondo.
+  const continuarTrasResultado = () => {
     if (conversacionPendiente) {
+      setDemorarDialogoPorFondo(false);
       dispatch(mostrarConversacion(conversacionPendiente));
       setConversacionPendiente(null);
     } else void avanzarMes();
+  };
+
+  // Sólo intercala la corte si un recurso cruzó un umbral y agregó un asset visible.
+  const continuarResultado = () => {
+    const antesGuardias = juego.fondoBase.personajes.length;
+    const antesOro = juego.fondoBase.oro.length;
+    const despuesGuardias = guardiasEsperados;
+    const despuesOro = oroEsperado;
+    if (!cambioFondoPendiente) {
+      setDemorarDialogoPorFondo(false);
+      dispatch(limpiarResultado());
+      continuarTrasResultado();
+      return;
+    }
+
+    // Sólo el próximo evento directo espera la entrada visual de un asset nuevo.
+    setDemorarDialogoPorFondo(true);
+    setCambioFondo(true);
+    dispatch(limpiarResultado());
+
+    // Espera la decodificación para que el nuevo asset no aparezca de golpe al terminar la pausa.
+    const secuencia = ++secuenciaCambio.current;
+    const nuevos = [...GUARDIAS_CORTE.slice(antesGuardias, despuesGuardias), ...ORO_CORTE.slice(antesOro, despuesOro)];
+    void Promise.all(nuevos.map(async ({ src }) => { const imagen = new Image(); imagen.src = src; await imagen.decode().catch(() => {}); }))
+      .then(() => {
+        if (secuencia !== secuenciaCambio.current) return;
+        const duracion = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : DURACION_CAMBIO_FONDO_MS;
+        temporizadorCambio.current = window.setTimeout(() => {
+          continuarTrasResultado();
+          setCambioFondo(false);
+          temporizadorCambio.current = null;
+        }, duracion);
+      });
   };
 
   // Aplica la respuesta a la conversación y la registra en el servidor.
@@ -275,14 +334,16 @@ export default function KingsCourt() {
   };
 
   if (!setup) return (
-    <IonPage><IonContent scrollY className="narrativo-contenido">
-      <p className="p-6 text-white">Cargando desafio narrativo...</p>
-      {error && <p role="alert" className="px-6 text-amber-900">{error}</p>}
+    <IonPage><IonContent scrollY className="narrativo-contenido" style={{ '--narrativo-fondo-base': `url("${juego.fondoBase.src}")` } as CSSProperties}>
+      {/* Misma capa que en la partida: React conserva la imagen al terminar la carga. */}
+      <FondoCorte fondo={{ ...juego.fondoBase, personajes: [], oro: [] }} atenuado fijo />
+      <p className="relative z-10 p-6 text-white">Cargando desafio narrativo...</p>
+      {error && <p role="alert" className="relative z-10 px-6 text-amber-900">{error}</p>}
     </IonContent></IonPage>
   );
 
   const { jugador, personajesCorte: personajes, finalizacion } = juego;
-  const etapa = estadisticas ? 'estadisticas' : finalizacion ? 'final' : decisionConversacion ? 'consecuencia'
+  const etapa = estadisticas ? 'estadisticas' : finalizacion ? 'final' : cambioFondo ? 'cambio_fondo' : decisionConversacion ? 'consecuencia'
     : juego.resultadoActual ? 'resultado' : juego.conversacionActual ? 'conversacion'
     : juego.eventoActual ? 'evento' : mostrarMuestraEvento ? 'muestra_evento' : jugador.fase_actual;
   const etapaVisible = ({
@@ -300,6 +361,9 @@ export default function KingsCourt() {
   let pantalla: ReactNode = null;
   // Elige una única pantalla según la fase actual de la partida.
   switch (etapa) {
+    case 'cambio_fondo':
+      pantalla = <section className="flex-1" aria-label="La corte muestra el cambio" />;
+      break;
     case 'muestra_evento':
       pantalla = <MuestraEventoEtapa0
         eventos={setup.eventos_del_dia || setup.eventos_ofrecidos || setup.cartas_evento || []}
@@ -329,13 +393,13 @@ export default function KingsCourt() {
       break;
     }
     case 'resultado':
-      pantalla = <MostrarResultadoEtapa4 resultado={juego.resultadoActual} efectoTexto={!config.mostrarNumeros ? describirEfectos(juego.resultadoActual) : undefined} onContinuar={continuarResultado} />;
+      pantalla = <MostrarResultadoEtapa4 resultado={juego.resultadoActual} efectoTexto={!config.mostrarNumeros ? describirEfectos(juego.resultadoActual) : undefined} animarSalida={cambioFondoPendiente} onContinuar={continuarResultado} />;
       break;
     case 'conversacion':
       pantalla = <ResponderConversacionEtapa3 conversacion={juego.conversacionActual} personajes={personajes} modoSimple={!config.mostrarNumeros} onElegir={responderActual} />;
       break;
     case 'evento':
-      pantalla = <DecidirEventoEtapa2 key={juego.eventoActual.id || juego.eventoActual._id} evento={juego.eventoActual} atributos={jugador.recursos} personajes={personajes} afinidad={jugador.afinidad} tags={jugador.tags_activos} cartas={jugador.cartas_en_mano} modoSimple={!config.mostrarNumeros} onElegir={decidirEventoActual} />;
+      pantalla = <DecidirEventoEtapa2 key={juego.eventoActual.id || juego.eventoActual._id} evento={juego.eventoActual} atributos={jugador.recursos} fondoBase={juego.fondoBase} personajes={personajes} afinidad={jugador.afinidad} tags={jugador.tags_activos} cartas={jugador.cartas_en_mano} modoSimple={!config.mostrarNumeros} demorarDialogoPorFondo={demorarDialogoPorFondo} onElegir={decidirEventoActual} />;
       break;
     case 'seleccionar_corte':
       pantalla = seleccionar('Forma tu corte', 'Elegí tres personajes para comenzar el desafio.', personajesDisponibles, 3, (cartas: any[]) => dispatch(guardarCorte(cartas)));
@@ -350,18 +414,23 @@ export default function KingsCourt() {
 
   const enConversacion = etapa === 'conversacion';
   const enEvento = etapa === 'evento';
+  // La corte permanece montada bajo todas las etapas; sólo su decoración espera a preparación.
+  const mostrarDecoracion = !['seleccionar_corte', 'seleccionar_cartas', 'muestra_evento'].includes(etapa);
+  const fondoVisible = mostrarDecoracion ? juego.fondoBase : { ...juego.fondoBase, personajes: [], oro: [] };
   const claseEscena = enConversacion
-    ? 'narrativo-conversacion relative min-h-screen bg-slate-950'
+    ? 'narrativo-conversacion relative z-10 min-h-screen'
     : enEvento
-      ? 'narrativo-evento relative min-h-full text-white'
-      : 'mx-auto flex min-h-full max-w-[1240px] flex-col gap-3 px-5 pt-[max(8px,env(safe-area-inset-top))] pb-[max(12px,env(safe-area-inset-bottom))] text-white max-md:gap-2 max-md:px-3';
+      ? 'narrativo-evento relative z-10 min-h-full text-white'
+      : 'relative z-10 isolate mx-auto flex min-h-full max-w-[1240px] flex-col gap-3 px-5 pt-[max(8px,env(safe-area-inset-top))] pb-[max(12px,env(safe-area-inset-bottom))] text-white max-md:gap-2 max-md:px-3';
   const claseHerramientas = `narrativo-herramientas flex min-h-[30px] items-center justify-end gap-2 text-xs max-md:flex-nowrap max-md:[&>p]:hidden [&>p]:mr-auto [&>p]:mb-0 [&>p]:text-shadow-[0_1px_3px_#000] ${enConversacion
     ? 'absolute inset-x-3 top-[max(8px,env(safe-area-inset-top))] z-[60]'
     : enEvento ? 'absolute inset-x-4 top-[max(8px,env(safe-area-inset-top))] z-50' : 'flex-wrap'}`;
 
   return (
     <IonPage>
-      <IonContent scrollY className={enConversacion ? undefined : 'narrativo-contenido'}>
+      <IonContent scrollY className="narrativo-contenido" style={{ '--narrativo-fondo-base': `url("${juego.fondoBase.src}")` } as CSSProperties}>
+        {/* La corte queda sin azul en eventos; las imágenes propias conservan su velo en la etapa. */}
+        <FondoCorte fondo={fondoVisible} atenuado sinTinte={enEvento || etapa === 'cambio_fondo'} destacado={etapa === 'cambio_fondo'} fijo />
         <TransicionNarrativa etapa={etapaVisible}>
           <main style={modoMayor ? estiloEdad : undefined} className={`${claseEscena}${modoMayor ? ' narrativo-modo-mayor' : ''}`}>
             {error && <p role="alert" className="relative z-50 rounded border border-amber-300 bg-amber-50 p-3 text-amber-900">{error}</p>}

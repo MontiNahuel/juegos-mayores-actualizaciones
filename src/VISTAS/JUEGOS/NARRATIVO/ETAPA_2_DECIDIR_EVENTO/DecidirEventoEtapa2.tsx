@@ -5,8 +5,9 @@ import TituloNarrativo from '../COMPARTIDOS/TITULO_NARRATIVO/TituloNarrativo';
 import { API_URL } from '../../../../config/api';
 import { ocultarCambiosNumericos } from '../../../../config/adaptacionEdad';
 import DialogoNarrativo from '../COMPARTIDOS/DIALOGO_NARRATIVO/DialogoNarrativo';
+import FondoCorte from '../COMPARTIDOS/FONDO_CORTE/FondoCorte';
+import type { EstadoFondoCorte } from '../../../../config/fondoCorte';
 
-const FONDO_DEFAULT = '/assets/narrative/court.jpg';
 const imagenDe = (imagen: string) => imagen.startsWith('/') && !imagen.startsWith('/assets/') && !imagen.startsWith('//')
   ? `${API_URL}${imagen}` : imagen;
 
@@ -37,10 +38,12 @@ const textoOpcion = (opcion: EventoApi['opciones'][number], indice: number, modo
   return `${etiqueta}${modoSimple ? ocultarCambiosNumericos(limpio) : limpio}`;
 };
 
-export default function ResolverEventoEtapa2({ evento, atributos, modoSimple = false, personajes = [], afinidad = {}, tags = [], cartas = [], onElegir }: {
+export default function ResolverEventoEtapa2({ evento, atributos, fondoBase, modoSimple = false, demorarDialogoPorFondo = false, personajes = [], afinidad = {}, tags = [], cartas = [], onElegir }: {
   evento: EventoApi;
   atributos: Record<string, number>;
+  fondoBase: EstadoFondoCorte;
   modoSimple?: boolean;
+  demorarDialogoPorFondo?: boolean;
   personajes?: any[];
   afinidad?: Record<string, number>;
   tags?: string[];
@@ -50,27 +53,29 @@ export default function ResolverEventoEtapa2({ evento, atributos, modoSimple = f
   const [imagenFallida, setImagenFallida] = useState<string | null>(null);
   const [fondoListo, setFondoListo] = useState<string | null>(null);
   const contexto = { atributos, personajes, afinidad, tags, cartas };
-  const fondo = evento.imagen && evento.imagen !== imagenFallida ? imagenDe(evento.imagen) : FONDO_DEFAULT;
+  const fondo = evento.imagen && evento.imagen !== imagenFallida ? imagenDe(evento.imagen) : fondoBase.src;
+  const usaFondoBase = fondo === fondoBase.src;
+  const fondoEscena = { src: fondo, personajes: [], oro: [] };
+  const escenaLista = usaFondoBase || fondoListo === fondo;
 
   return (
-    <section className="evento-escena relative isolate flex min-h-[100svh] flex-col bg-[#101827] text-slate-100 [&>.titulo-narrativo]:pt-[max(48px,calc(env(safe-area-inset-top)+40px))]" aria-label="Evento del reino">
-      <img
+    <section className="evento-escena relative isolate flex min-h-[100svh] flex-col text-slate-100 [&>.titulo-narrativo]:pt-[max(48px,calc(env(safe-area-inset-top)+40px))]" aria-label="Evento del reino">
+      {!usaFondoBase && <FondoCorte
         key={fondo}
-        className="absolute inset-0 -z-20 h-full w-full object-cover object-center"
-        src={fondo}
-        alt=""
+        fondo={fondoEscena}
         onLoad={() => setFondoListo(fondo)}
         onError={() => {
-          if (fondo !== FONDO_DEFAULT) setImagenFallida(evento.imagen);
+          if (fondo !== fondoBase.src) setImagenFallida(evento.imagen);
           else setFondoListo(fondo);
         }}
-      />
-      <div className="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(#0004,transparent_35%,#02061744)]" />
-      <TituloNarrativo key={evento.id} titulo={evento.titulo} listo={fondoListo === fondo} variante="evento" permanente />
+      />}
+      {/* Al usar la corte, sólo queda un degradado neutro y casi imperceptible. */}
+      <div className={`pointer-events-none absolute inset-0 -z-10 ${usaFondoBase ? 'bg-[linear-gradient(#0001,transparent_45%,transparent)]' : 'bg-[linear-gradient(#0004,transparent_35%,#02061744)]'}`} />
+      <TituloNarrativo key={evento.id} titulo={evento.titulo} listo={escenaLista} variante="evento" permanente />
       <div className="evento-ilustracion min-h-[clamp(96px,22svh,300px)] flex-1" aria-hidden="true" />
       <DialogoNarrativo
-        className="evento-dialogo"
-        listo={fondoListo === fondo}
+        className={`evento-dialogo${demorarDialogoPorFondo ? ' evento-dialogo--espera-fondo' : ''}`}
+        listo={escenaLista}
         texto={evento.descripcion}
         opciones={evento.opciones.map((opcion, indice) => ({
           id: opcion.id,

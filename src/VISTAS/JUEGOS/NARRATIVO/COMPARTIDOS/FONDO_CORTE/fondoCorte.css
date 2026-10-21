@@ -1,0 +1,59 @@
+/* El plano conserva las proporciones de la ilustración y su recorte object-cover.
+   Así el apoyo en el suelo permanece fijo al cambiar de etapa o de tamaño. */
+.fondo-corte { container-type: size; overflow: hidden; }
+.fondo-corte__plano {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: max(100cqw, 177.777778cqh);
+  height: max(100cqh, 56.25cqw);
+  transform: translate(-50%, -50%);
+}
+.fondo-corte__capa { position: absolute; inset: 0; opacity: 0; transition: opacity 720ms ease-out; }
+.fondo-corte__capa--visible { opacity: 1; }
+.fondo-corte__elemento { position: absolute; left: var(--x); top: var(--y); transform: translate(-50%, var(--apoyo)); opacity: 0; transition: opacity var(--duracion-elemento) ease-out; }
+.fondo-corte__elemento--visible { opacity: 1; }
+.fondo-corte__elemento img { display: block; max-width: none; }
+.fondo-corte__capa--personajes { z-index: 1; }
+.fondo-corte__capa--personajes .fondo-corte__elemento { height: var(--tamano); }
+.fondo-corte__capa--personajes img {
+  height: 100%; width: auto;
+  filter: sepia(.18) saturate(.65) brightness(.52) contrast(.96) drop-shadow(0 5px 8px #000b);
+}
+/* Oscurece la silueta sin volverla transparente: pies casi negros, rostro más visible.
+   Los valores del gradiente controlan la sombra de cada altura del personaje. */
+.fondo-corte__capa--personajes .fondo-corte__elemento::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(#0001 5%, #0005 40%, #000b 70%, #000f 100%);
+  mask: var(--silueta) center / 100% 100% no-repeat;
+}
+.fondo-corte__capa--oro { z-index: 2; }
+.fondo-corte__capa--oro .fondo-corte__elemento { width: var(--tamano); }
+.fondo-corte__capa--oro img {
+  width: 100%; height: auto;
+  filter: sepia(.12) saturate(.72) brightness(.62) contrast(.94) drop-shadow(0 4px 5px #000b);
+}
+/* Sombra de contacto: fija el tesoro al plano, sin volverlo transparente. */
+.fondo-corte__capa--oro .fondo-corte__elemento::before {
+  content: ''; position: absolute; z-index: -1;
+  left: 9%; right: 9%; bottom: 6%; height: 9%;
+  border-radius: 50%; background: #000b; filter: blur(8px);
+}
+
+/* Vertical conserva los guardias centrados; el oro queda en las esquinas bajas. */
+@media (orientation: portrait) {
+  .fondo-corte__plano { width: 100%; height: 100%; }
+  .fondo-corte__capa--personajes .fondo-corte__elemento { top: 87%; height: min(29cqh, 320px); }
+  .fondo-corte__capa--oro .fondo-corte__elemento { top: 98%; width: 57%; }
+  .fondo-corte__capa--oro .fondo-corte__elemento:first-child { left: 6%; }
+  .fondo-corte__capa--oro .fondo-corte__elemento:nth-child(2) { left: 94%; }
+}
+
+/* Landscape corto mantiene la escala de la sala, con algo más de presencia. */
+@media (orientation: landscape) and (max-height: 600px) {
+  .fondo-corte__capa--personajes .fondo-corte__elemento { height: 27%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fondo-corte__capa { transition: none; }
+  .fondo-corte__elemento { transition: none; }
+}
