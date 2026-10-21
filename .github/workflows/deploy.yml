@@ -1,4 +1,4 @@
-name: CI/CD — Build Frontend (dist) & Deploy to Caddy Volume
+name: CI/CD — Build Frontend (dist) & Deploy to Caddy Volume (8087)
 
 on:
   push:
@@ -7,49 +7,37 @@ on:
 
 jobs:
   build-and-deploy-frontend:
-    name: Compilar React (dist) y Enviar al Volumen de Caddy
-    runs-on: ubuntu-latest
+    name: Compilar Frontend (dist) y Actualizar Volumen de Caddy en Linux
+    runs-on: self-hosted
 
     steps:
-      - name: 1. Checkout del código fuente
+      - name: 1. Descargar código del Frontend en el Runner
         uses: actions/checkout@v4
 
-      - name: 2. Configurar Node.js 20 con caché de npm
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-
-      - name: 3. Instalar dependencias limpias
-        run: npm ci
-
-      - name: 4. Compilar Frontend (npm run build) inyectando variables desde Secrets
+      - name: 2. Instalar dependencias y compilar carpeta dist
         env:
-          # Por defecto vacío ("") para que todas las peticiones usen /api/* relativo detrás de Caddy
+          # Vacío ("") para usar rutas relativas (/api/*) detrás de Caddy en https://cognijuegos.asistodo.com.ar
           VITE_API_URL: ${{ secrets.VITE_API_URL || '' }}
           VITE_ADAPTACION_EDAD: ${{ secrets.VITE_ADAPTACION_EDAD || 'true' }}
-        run: npm run build
+        run: |
+          npm ci
+          npm run build
 
-      - name: 5. Enviar carpeta dist por SCP al servidor Linux (Volumen ./dist:/srv/dist de Caddy)
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT || 22 }}
-          source: "dist/*"
-          target: ${{ secrets.SERVER_BACKEND_PATH || '/home/serverportable/Documentos/JuegosAsistodo/juegos-mayores-actualizaciones-back' }}
-          overwrite: true
+      - name: 3. Copiar carpeta dist en vivo al volumen de Caddy (Sin reiniciar contenedores)
+        run: |
+          set -e
+          # Detectar la carpeta donde está clonado el backend en el servidor Linux
+          if [ -d "/home/serverportable/Documentos/JuegosAsistodo/juegos-mayores-actualizaciones-back" ]; then
+            BACKEND_DIR="/home/serverportable/Documentos/JuegosAsistodo/juegos-mayores-actualizaciones-back"
+          elif [ -d "/home/serverportable/Documentos/juegos-mayores-actualizaciones-back" ]; then
+            BACKEND_DIR="/home/serverportable/Documentos/juegos-mayores-actualizaciones-back"
+          else
+            BACKEND_DIR="${{ secrets.SERVER_BACKEND_PATH || '/home/serverportable/Documentos/JuegosAsistodo/juegos-mayores-actualizaciones-back' }}"
+          fi
 
-      - name: 6. Verificar permisos de lectura para Caddy (Sin reiniciar contenedores)
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT || 22 }}
-          script: |
-            DEPLOY_DIR="${{ secrets.SERVER_BACKEND_PATH || '/home/serverportable/Documentos/JuegosAsistodo/juegos-mayores-actualizaciones-back' }}"
-            mkdir -p "$DEPLOY_DIR/dist"
-            chmod -R a+rX "$DEPLOY_DIR/dist"
-            echo "✅ Carpeta dist actualizada en vivo para Caddy (/srv/dist) sin reiniciar contenedores."
+          mkdir -p "$BACKEND_DIR/dist"
+          rm -rf "$BACKEND_DIR/dist/"*
+          cp -r dist/* "$BACKEND_DIR/dist/"
+          chmod -R a+rX "$BACKEND_DIR/dist"
+          echo "✅ Carpeta dist actualizada en vivo en $BACKEND_DIR/dist (leída por Caddy sin reiniciar contenedores)."
+
