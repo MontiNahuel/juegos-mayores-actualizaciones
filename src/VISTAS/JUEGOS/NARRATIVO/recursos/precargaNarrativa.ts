@@ -2,10 +2,11 @@ import { API_URL } from '../../../../config/api';
 import { FONDO_CORTE_DEFAULT, GUARDIAS_CORTE, MANOS_CORTE, ORO_CORTE } from '../../../../config/fondoCorte';
 import type { ProgresoCargaNarrativa } from '../../../../store/narrativoCargaSlice';
 import marcoEvento from '../../../../assets/narrative/event-title.png';
+import caballoCarga from '../../../../assets/narrative/loading-horse.png';
 import { esPartidaNarrativaLocal, obtenerSetup, type SetupPartida } from '../narrativeService';
 import { ahorraDatos, guardarImagenesEnSegundoPlano, precargarImagenes } from '../../../../services/assetPreloader';
 
-export const CABALLO_CARGA = '/assets/narrative/loading-horse.png';
+export const CABALLO_CARGA = caballoCarga;
 const RECURSOS_INICIALES = [
   FONDO_CORTE_DEFAULT, CABALLO_CARGA, marcoEvento,
   '/assets/narrative/card-frame.png', '/assets/narrative/conversation-title.png',

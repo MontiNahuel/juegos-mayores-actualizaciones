@@ -18,6 +18,25 @@
 }
 
 /* Título: una única secuencia compartida; el layout vive en el componente. */
+.titulo-narrativo[data-variante='evento'] .titulo-narrativo__espacio { isolation: isolate; }
+.titulo-narrativo[data-variante='evento'] .titulo-narrativo__espacio::before {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  inset: 12% 5%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, #17110ad9 0%, #17110a80 52%, transparent 78%);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  -webkit-mask-image: radial-gradient(ellipse, #000 35%, transparent 82%);
+  mask-image: radial-gradient(ellipse, #000 35%, transparent 82%);
+  pointer-events: none;
+}
+.titulo-narrativo[data-variante='evento'] .titulo-narrativo__arte { z-index: 1; }
+.titulo-narrativo__marco-evento {
+  filter: drop-shadow(0 0 3px #110c06cc) drop-shadow(0 0 7px #100a064d);
+  -webkit-filter: drop-shadow(0 0 3px #110c06cc) drop-shadow(0 0 7px #100a064d);
+}
 .titulo-narrativo[data-intro='listo'] .titulo-narrativo__arte {
   animation: narrativo-presentar-titulo 3800ms ease-in-out 100ms both;
 }
@@ -63,6 +82,19 @@
 }
 
 @media (max-width: 767px) {
+  /* En móvil, conversación ocupa el viewport visible; el diálogo no empuja la página. */
+  .narrativo-conversacion { min-height: 100dvh; }
+  .narrativo-conversacion .conversacion-escena { height: 100dvh; min-height: 100dvh; overflow: hidden; }
+  .narrativo-conversacion .conversacion-personajes { min-height: 0; flex: 1 1 0%; }
+  /* El retrato depende del viewport, no del espacio que deja cada frase. El panel recorta el excedente. */
+  .narrativo-conversacion .conversacion-retrato > div { height: 70svh; min-height: 0; }
+  .narrativo-conversacion .conversacion-dialogo {
+    max-height: 42dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+  }
+
   .narrativo-modo-mayor { --narrativo-barra-superior: var(--narrativo-control-adaptado, 60px); }
   .narrativo-modo-mayor > .narrativo-herramientas {
     display: grid;
@@ -87,7 +119,7 @@
     padding-top: calc(max(8px, env(safe-area-inset-top)) + var(--narrativo-barra-superior) + 10px);
   }
   .narrativo-evento.narrativo-modo-mayor .evento-ilustracion { flex: none; min-height: max(58svh, 28rem); }
-  .narrativo-conversacion.narrativo-modo-mayor .conversacion-personajes { min-height: max(56svh, 28rem); }
+  .narrativo-conversacion.narrativo-modo-mayor .conversacion-personajes { min-height: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -480,7 +480,7 @@ export default function KingsCourt() {
 
   return (
     <IonPage>
-      <IonContent scrollY className="narrativo-contenido" style={{ '--narrativo-fondo-base': `url("${imagenPrecargada(juego.fondoBase.src)}")` } as CSSProperties}>
+      <IonContent scrollY={!enConversacion} className="narrativo-contenido" style={{ '--narrativo-fondo-base': `url("${imagenPrecargada(juego.fondoBase.src)}")` } as CSSProperties}>
         {/* La corte queda sin azul en eventos; las imágenes propias conservan su velo en la etapa. */}
         <FondoCorte fondo={fondoVisible} atenuado sinTinte={enEvento || etapa === 'cambio_fondo'} destacado={etapa === 'cambio_fondo'} fijo />
         <TransicionNarrativa etapa={etapaVisible}>

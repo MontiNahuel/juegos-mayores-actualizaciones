@@ -19,7 +19,7 @@ export default function TituloNarrativo({ titulo, listo = true, permanente = fal
           setTerminado(true);
           onTerminar?.();
         }}>
-          {!marcoFallido && esEvento ? <span className="absolute inset-0 border-solid [border-image-slice:260_220_230_fill] [border-image-repeat:stretch] [border-width:clamp(24px,7vw,27px)_clamp(24px,9vw,40px)_clamp(23px,6vw,25px)]" style={{ borderImageSource: `url(${imagenPrecargada(marcoEvento)})` }}>
+          {!marcoFallido && esEvento ? <span className="titulo-narrativo__marco-evento absolute inset-0 border-solid [border-image-slice:260_220_230_fill] [border-image-repeat:stretch] [border-width:clamp(24px,7vw,27px)_clamp(24px,9vw,40px)_clamp(23px,6vw,25px)]" style={{ borderImageSource: `url(${imagenPrecargada(marcoEvento)})` }}>
             {/* Precarga el PNG; el CSS lo divide en nueve partes para expandir el centro. */}
             <img className="hidden" src={imagenPrecargada(marcoEvento)} alt="" onLoad={() => setMarcoListo(true)} onError={() => setMarcoFallido(true)} />
           </span> : null}
