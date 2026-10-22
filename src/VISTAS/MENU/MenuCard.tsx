@@ -33,7 +33,7 @@ const styles: Record<string, CSSProperties> = {
 };
 
 const MenuCard: React.FC<MenuCardProps> = ({ game, onStart }) => (
-  <article style={styles.card}>
+  <article style={styles.card} className={game.group === 'Narrativos' ? 'md:col-span-2' : undefined}>
     <div aria-hidden="true" style={styles.visual}>
       <div style={styles.brain}><BrainIcon className="" size={24} /></div>
       <IonIcon icon={game.icon} style={{ color: game.accent, fontSize: 64 }} />

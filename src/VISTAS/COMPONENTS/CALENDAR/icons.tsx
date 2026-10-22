@@ -80,7 +80,7 @@ export const IconSpinner: React.FC<{ size?: number; color?: string }> = ({ size 
     height={size}
     viewBox="0 0 24 24"
     fill="none"
-    style={{ animation: 'calendarSharedSpin 0.75s linear infinite' }}
+    className="motion-safe:animate-spin"
   >
     <circle cx="12" cy="12" r="9.5" stroke="#E2E8F0" strokeWidth="3" />
     <path d="M12 2.5a9.5 9.5 0 0 1 9.5 9.5" stroke={color} strokeWidth="3" strokeLinecap="round" />

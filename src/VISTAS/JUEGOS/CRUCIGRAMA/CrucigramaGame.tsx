@@ -10,6 +10,8 @@ import {
 } from './crucigramaStorage';
 import { GameHeader } from '../../COMPONENTS/GameHeader';
 import { CrucigramaCompletedModal } from './CrucigramaCompletedModal';
+import { CrucigramaClues } from './CrucigramaClues';
+import { cleanClueText, type WordDef, type CellDef } from './crucigramaTypes';
 import {
   IconChevronLeft,
   IconChevronRight,
@@ -19,38 +21,11 @@ import {
   IconLightbulb,
 } from './CrucigramaIcons';
 
-interface WordDef {
-  id: string;
-  number: number;
-  direction: 'horizontal' | 'vertical';
-  word: string;
-  length: number;
-  row: number;
-  col: number;
-  coords: [number, number][];
-  clue: string;
-}
-
-interface CellDef {
-  row: number;
-  col: number;
-  is_block: boolean;
-  letter: string;
-  number?: number | null;
-  across_num?: number | null;
-  down_num?: number | null;
-}
-
 const KEYBOARD_ROWS = [
   ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
   ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'Ñ'],
   ['Z', 'X', 'C', 'V', 'B', 'N', 'M'],
 ];
-
-function cleanClueText(clue?: string): string {
-  if (!clue) return '';
-  return clue.replace(/^Definici[oó]n\s*[:\-]?\s*/i, '').trim();
-}
 
 export const CrucigramaGame: React.FC = () => {
   const navigate = useNavigate();
@@ -220,6 +195,18 @@ export const CrucigramaGame: React.FC = () => {
   }, [activeWord]);
 
   // 4. Seleccionar celda al hacer clic / toque
+  const selectClue = (word: WordDef) => {
+    const firstCell = word.coords[0];
+    if (!firstCell) return;
+    setSelectedRow(firstCell[0]);
+    setSelectedCol(firstCell[1]);
+    setSelectedDirection(word.direction === 'horizontal' ? 'H' : 'V');
+    setShowClueDrawer(false);
+  };
+  const isWordComplete = (word: WordDef) => word.coords.every(
+    ([r, c]) => (userGrid[r]?.[c] || '').toUpperCase() === cells[r]?.[c]?.letter.toUpperCase()
+  );
+
   const handleCellClick = useCallback(
     (r: number, c: number) => {
       if (cells[r]?.[c]?.is_block) return;
@@ -391,9 +378,13 @@ export const CrucigramaGame: React.FC = () => {
   // 8. Soporte de Teclado Físico
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (isWon || loading) return;
+      if (isWon || loading || e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return;
 
       const key = e.key;
+      const target = e.target instanceof HTMLElement ? e.target : null;
+      // Tab recorre los controles; Enter y Espacio activan normalmente los botones de las pistas.
+      if (key === 'Tab' || target?.closest('input, textarea, select, [contenteditable="true"]')) return;
+      if ((key === 'Enter' || key === ' ') && target?.closest('button') && !target.closest('[data-crucigrama-cell]')) return;
 
       if (/^[a-zA-ZñÑáéíóúÁÉÍÓÚ]$/.test(key)) {
         e.preventDefault();
@@ -426,7 +417,7 @@ export const CrucigramaGame: React.FC = () => {
         if (selectedRow - 1 >= 0 && !cells[selectedRow - 1]?.[selectedCol]?.is_block) {
           setSelectedRow((r) => r - 1);
         }
-      } else if (key === 'Tab' || key === 'Enter') {
+      } else if (key === 'Enter') {
         e.preventDefault();
         handleNavigateClue(1);
       } else if (key === ' ') {
@@ -495,6 +486,7 @@ export const CrucigramaGame: React.FC = () => {
         rightAction={
           <button
             type="button"
+            className="flex min-[900px]:hidden"
             onClick={() => setShowClueDrawer((prev) => !prev)}
             style={{
               background: showClueDrawer ? '#294C6B' : '#F4F6F9',
@@ -502,7 +494,6 @@ export const CrucigramaGame: React.FC = () => {
               borderRadius: 14,
               height: 40,
               width: 40,
-              display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               color: showClueDrawer ? '#FFFFFF' : '#294C6B',
@@ -525,17 +516,8 @@ export const CrucigramaGame: React.FC = () => {
           } as React.CSSProperties
         }
       >
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            minHeight: '100%',
-            maxWidth: 520,
-            margin: '0 auto',
-            padding: '12px 14px calc(env(safe-area-inset-bottom, 0px) + 12px)',
-            boxSizing: 'border-box',
-          }}
-        >
+        <div className="mx-auto grid min-h-full w-full max-w-[520px] grid-cols-1 px-3.5 pt-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)] min-[900px]:max-w-[1180px] min-[900px]:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.9fr)] min-[900px]:items-start min-[900px]:gap-8 min-[900px]:px-6 min-[900px]:py-6">
+          <div className="flex min-w-0 flex-col">
 
           {/* BARRA DE PISTA ACTIVA FLOTANTE */}
           <div
@@ -658,14 +640,7 @@ export const CrucigramaGame: React.FC = () => {
 
           {/* TABLERO 7x7 */}
           <div
-            style={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              margin: '0 auto 12px',
-              width: '100%',
-              maxWidth: 380,
-            }}
+            className="mx-auto mb-3 flex w-full max-w-[380px] items-center justify-center min-[900px]:max-w-[min(640px,calc(100dvh-220px))]"
           >
             {cells.length === 0 ? (
               <div
@@ -782,6 +757,7 @@ export const CrucigramaGame: React.FC = () => {
                     <button
                       key={`${r}-${c}`}
                       type="button"
+                      data-crucigrama-cell
                       onClick={() => handleCellClick(r, c)}
                       style={{
                         position: 'relative',
@@ -813,11 +789,11 @@ export const CrucigramaGame: React.FC = () => {
                       {/* Número pequeño de pista en la esquina superior izquierda */}
                       {cell.number != null && (
                         <span
+                          className="text-[10px] min-[900px]:text-[13px]"
                           style={{
                             position: 'absolute',
                             top: 2,
                             left: 3,
-                            fontSize: 10,
                             fontWeight: 800,
                             color: '#475569',
                             lineHeight: 1,
@@ -831,8 +807,8 @@ export const CrucigramaGame: React.FC = () => {
 
                       {/* Letra del usuario */}
                       <span
+                        className="text-xl min-[900px]:text-[clamp(24px,3vw,36px)]"
                         style={{
-                          fontSize: 20,
                           fontWeight: 900,
                           color: isRevealed ? '#15803D' : '#0F172A',
                           textTransform: 'uppercase',
@@ -910,11 +886,11 @@ export const CrucigramaGame: React.FC = () => {
 
           {/* TECLADO EN PANTALLA TÁCTIL */}
           <div
+            className="flex [@media(hover:hover)_and_(pointer:fine)]:hidden"
             style={{
               background: '#E2E8F0',
               padding: '8px 6px',
               borderRadius: 16,
-              display: 'flex',
               flexDirection: 'column',
               gap: 6,
               marginTop: 'auto',
@@ -1005,9 +981,18 @@ export const CrucigramaGame: React.FC = () => {
             ))}
           </div>
 
+          <p className="m-0 mt-3 hidden text-center text-sm leading-relaxed text-[#64748B] [@media(hover:hover)_and_(pointer:fine)]:block">Escribí con tu teclado. Usá las flechas para moverte y Enter para pasar a la siguiente palabra.</p>
+          </div>
+
+          <aside aria-label="Todas las definiciones" className="hidden rounded-xl border border-[#DEE3EA] bg-white p-5 min-[900px]:block">
+            <h2 className="m-0 mb-5 text-xl font-extrabold text-[#294C6B]">Definiciones</h2>
+            <CrucigramaClues words={words} activeWordId={activeWord?.id} isComplete={isWordComplete} onSelect={selectClue} />
+          </aside>
+
           {/* DRAWER / MODAL CON TODAS LAS PISTAS (LISTA COMPLETA) */}
           {showClueDrawer && (
             <div
+              className="min-[900px]:!hidden"
               style={{
                 position: 'fixed',
                 inset: 0,
@@ -1057,87 +1042,7 @@ export const CrucigramaGame: React.FC = () => {
                   </button>
                 </div>
 
-                {/* HORIZONTALES */}
-                <h4 style={{ color: '#294C6B', fontSize: 14, fontWeight: 800, margin: '10px 0 6px' }}>
-                  HORIZONTALES
-                </h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
-                  {words
-                    .filter((w) => w.direction === 'horizontal')
-                    .map((w) => {
-                      const isComplete = w.coords.every(
-                        ([r, c]) => (userGrid[r]?.[c] || '').toUpperCase() === cells[r]?.[c]?.letter.toUpperCase()
-                      );
-                      const isSelected = activeWord?.id === w.id;
-                      return (
-                        <div
-                          key={w.id}
-                          onClick={() => {
-                            setSelectedRow(w.coords[0][0]);
-                            setSelectedCol(w.coords[0][1]);
-                            setSelectedDirection('H');
-                            setShowClueDrawer(false);
-                          }}
-                          style={{
-                            padding: '8px 10px',
-                            borderRadius: 10,
-                            background: isSelected ? '#FEF9C3' : '#F8FAFC',
-                            border: isSelected ? '1px solid #CA8A04' : '1px solid #E2E8F0',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          <span style={{ fontWeight: 800, color: '#294C6B', marginRight: 6 }}>
-                            {w.number}.
-                          </span>
-                          <span style={{ color: isComplete ? '#059669' : '#1E293B', fontSize: 13 }}>
-                            {cleanClueText(w.clue)}
-                          </span>
-                          {isComplete && <span style={{ marginLeft: 6, color: '#059669', fontWeight: 800 }}>✓</span>}
-                        </div>
-                      );
-                    })}
-                </div>
-
-                {/* VERTICALES */}
-                <h4 style={{ color: '#294C6B', fontSize: 14, fontWeight: 800, margin: '10px 0 6px' }}>
-                  VERTICALES
-                </h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {words
-                    .filter((w) => w.direction === 'vertical')
-                    .map((w) => {
-                      const isComplete = w.coords.every(
-                        ([r, c]) => (userGrid[r]?.[c] || '').toUpperCase() === cells[r]?.[c]?.letter.toUpperCase()
-                      );
-                      const isSelected = activeWord?.id === w.id;
-                      return (
-                        <div
-                          key={w.id}
-                          onClick={() => {
-                            setSelectedRow(w.coords[0][0]);
-                            setSelectedCol(w.coords[0][1]);
-                            setSelectedDirection('V');
-                            setShowClueDrawer(false);
-                          }}
-                          style={{
-                            padding: '8px 10px',
-                            borderRadius: 10,
-                            background: isSelected ? '#FEF9C3' : '#F8FAFC',
-                            border: isSelected ? '1px solid #CA8A04' : '1px solid #E2E8F0',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          <span style={{ fontWeight: 800, color: '#294C6B', marginRight: 6 }}>
-                            {w.number}.
-                          </span>
-                          <span style={{ color: isComplete ? '#059669' : '#1E293B', fontSize: 13 }}>
-                            {cleanClueText(w.clue)}
-                          </span>
-                          {isComplete && <span style={{ marginLeft: 6, color: '#059669', fontWeight: 800 }}>✓</span>}
-                        </div>
-                      );
-                    })}
-                </div>
+                <CrucigramaClues words={words} activeWordId={activeWord?.id} isComplete={isWordComplete} onSelect={selectClue} />
               </div>
             </div>
           )}

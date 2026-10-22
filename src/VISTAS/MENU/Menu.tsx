@@ -60,7 +60,6 @@ const styles: Record<string, CSSProperties> = {
   },
   heading: { color: color.ink, fontSize: 25, lineHeight: 1.18, margin: 0, fontWeight: 800 },
   description: { color: color.ink, fontSize: 16, lineHeight: 1.45, margin: '8px 0 0' },
-  grid: { display: 'grid', gap: 18, gridTemplateColumns: 'repeat(auto-fit, minmax(290px, 1fr))', marginTop: 16 },
 };
 
 const Menu: React.FC = () => {
@@ -92,7 +91,7 @@ const Menu: React.FC = () => {
               <section key={group.title} style={{ marginTop: index ? 38 : 0 }}>
                 <h2 style={{ ...styles.heading, color: '#FFFFFF' }}>{group.title}</h2>
                 <p style={{ ...styles.description, color: '#DCE9F2' }}>{group.description}</p>
-                <div style={styles.grid}>
+                <div className="mt-4 grid grid-cols-1 gap-[18px] md:grid-cols-2">
                   {games.filter((game) => game.group === group.title).map((game) => (
                     <MenuCard game={game} key={game.id} onStart={startGame} />
                   ))}
