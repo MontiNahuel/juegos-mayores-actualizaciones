@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import type { ReactNode } from 'react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
+import { imagenPrecargada } from '../../../../../services/assetPreloader';
 
 const FORMAS_RASGADO = [
   'polygon(0 0,100% 0,100% 1.5%,91% 2.4%,82% 1.3%,72% 2.2%,62% 1.4%,52% 2.5%,42% 1.5%,32% 2.3%,22% 1.4%,11% 2.4%,0 1.6%)',
@@ -38,7 +39,7 @@ export default function PapelUi({ children, className = '', contenidoClassName =
   return (
     <div ref={papel} className={`papel-ui relative aspect-[1028/1450] shrink-0 drop-shadow-[0_10px_12px_#1c0f0870] ${className}`}>
       <div className="papel-ui__entrada invisible absolute inset-0 opacity-0 [will-change:clip-path,transform,opacity]">
-        <img className="pointer-events-none absolute inset-0 h-full w-full object-fill sepia-[.08] saturate-[.86] contrast-[.98]" src={imagen} alt="" aria-hidden="true" />
+        <img className="pointer-events-none absolute inset-0 h-full w-full object-fill sepia-[.08] saturate-[.86] contrast-[.98]" src={imagenPrecargada(imagen)} alt="" aria-hidden="true" />
         <div className={`papel-ui__contenido absolute inset-[12%_13%_11%] overflow-y-auto [scrollbar-color:#7a4b27_transparent] [scrollbar-width:thin] ${contenidoClassName}`}>{children}</div>
       </div>
     </div>

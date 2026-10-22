@@ -47,7 +47,7 @@
   border: 1px solid #b9924f;
   border-radius: 8px;
   background:
-    url('/assets/narrative/card-frame.png') center / 100% 100% no-repeat,
+    var(--marco-carta) center / 100% 100% no-repeat,
     repeating-linear-gradient(45deg, #101820 0 9px, #26313b 9px 18px);
   box-shadow: 0 5px 12px #0009;
   transform: translateX(calc(-50% + var(--indice) * .7px)) rotate(calc((var(--indice) - 4) * .25deg));
@@ -88,7 +88,7 @@
 
 .muestra-evento__seleccionada-dorso {
   background:
-    url('/assets/narrative/card-frame.png') center / 100% 100% no-repeat,
+    var(--marco-carta) center / 100% 100% no-repeat,
     repeating-linear-gradient(45deg, #101820 0 9px, #26313b 9px 18px);
 }
 

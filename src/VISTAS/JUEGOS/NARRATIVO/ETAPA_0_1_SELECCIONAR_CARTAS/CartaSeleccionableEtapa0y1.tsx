@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import './cartas.css';
+import { imagenPrecargada } from '../../../../services/assetPreloader';
 
 interface CartaNarrativaData {
   id?: string;
@@ -30,13 +31,13 @@ export default function CartaSeleccionableEtapa0y1({ carta, selected = false, di
   const etiquetaMarco = esItem ? carta.categoria : carta.nombre;
   const contenido = <>
     <span className="carta-narrativa__interior" data-imagen={mostrarImagen}>
-      {mostrarImagen ? <img alt="" className="carta-narrativa__imagen" src={carta.imagen} onError={() => setImagenFallida(carta.imagen!)} /> : null}
+      {mostrarImagen ? <img alt="" className="carta-narrativa__imagen" src={imagenPrecargada(carta.imagen!)} onError={() => setImagenFallida(carta.imagen!)} /> : null}
       <span className="carta-narrativa__contenido">
         {etiquetaInterior ? <span className="carta-narrativa__categoria">{etiquetaInterior}</span> : null}
         <span className="carta-narrativa__texto">{carta.descripcion || carta.texto}</span>
       </span>
     </span>
-    <img alt="" aria-hidden="true" className="carta-narrativa__marco" src="/assets/narrative/card-frame.png" />
+    <img alt="" aria-hidden="true" className="carta-narrativa__marco" src={imagenPrecargada('/assets/narrative/card-frame.png')} />
     <span className="carta-narrativa__nombre">{etiquetaMarco}</span>
     {selected ? <span className="carta-narrativa__seleccion" aria-label="Seleccionada">✓</span> : null}
   </>;

@@ -1,5 +1,6 @@
 import { useEffect, useState, type CSSProperties } from 'react';
 import type { ElementoFondoCorte } from '../../../../../config/fondoCorte';
+import { imagenPrecargada } from '../../../../../services/assetPreloader';
 
 const DURACION_ELEMENTO_MS = 1400;
 const claveElemento = (elemento: ElementoFondoCorte) => `${elemento.id}:${elemento.x}:${elemento.y}`;
@@ -32,9 +33,9 @@ export default function CapaFondoCorte({ tipo, elementos }: {
       '--x': `${elemento.x}%`, '--y': `${elemento.y}%`,
       '--tamano': `${elemento.tamano}%`, '--apoyo': `-${elemento.apoyo ?? 100}%`,
       '--espejo': elemento.invertida ? -1 : 1,
-      '--silueta': `url("${elemento.src}")`,
+      '--silueta': `url("${imagenPrecargada(elemento.src)}")`,
     } as CSSProperties}>
-      <img src={elemento.src} alt="" draggable={false} onLoad={evento => {
+      <img src={imagenPrecargada(elemento.src)} alt="" draggable={false} onLoad={evento => {
         // Espera un frame tras cargar la imagen para que cada elemento nuevo entre con un fundido real.
         const contenedor = evento.currentTarget.parentElement;
         requestAnimationFrame(() => requestAnimationFrame(() => {

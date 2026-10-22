@@ -1,6 +1,7 @@
 import { FONDO_CORTE_DEFAULT, type EstadoFondoCorte } from '../../../../../config/fondoCorte';
 import CapaFondoCorte from './CapaFondoCorte';
 import './fondoCorte.css';
+import { imagenPrecargada } from '../../../../../services/assetPreloader';
 
 // Imagen y decoración comparten encuadre y oscurecido; nunca se mezclan con otra escena.
 export default function FondoCorte({ fondo, atenuado = false, sinTinte = false, destacado = false, fijo = false, onLoad, onError }: {
@@ -15,7 +16,7 @@ export default function FondoCorte({ fondo, atenuado = false, sinTinte = false, 
   const esFondoDefault = fondo.src === FONDO_CORTE_DEFAULT;
 
   return <div className={`fondo-corte pointer-events-none ${fijo ? 'fixed' : 'absolute'} inset-0 ${fijo ? 'z-0' : '-z-20'}`} aria-hidden="true">
-    <img className={`absolute inset-0 h-full w-full object-cover object-center motion-safe:transition-[filter] motion-safe:duration-1000 ${destacado ? 'brightness-[1.16]' : ''}`} src={fondo.src} alt="" decoding="sync" onLoad={onLoad} onError={onError} />
+    <img className={`absolute inset-0 h-full w-full object-cover object-center motion-safe:transition-[filter] motion-safe:duration-1000 ${destacado ? 'brightness-[1.16]' : ''}`} src={imagenPrecargada(fondo.src)} alt="" decoding="sync" onLoad={onLoad} onError={onError} />
     {esFondoDefault && <div className="fondo-corte__plano">
       <CapaFondoCorte tipo="personajes" elementos={fondo.personajes} />
       <CapaFondoCorte tipo="manos" elementos={fondo.manos} />

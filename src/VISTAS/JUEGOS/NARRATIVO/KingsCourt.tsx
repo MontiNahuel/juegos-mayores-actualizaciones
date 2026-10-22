@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { IonContent, IonPage } from '@ionic/react';
 import { useDispatch, useSelector, useStore } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -13,7 +13,7 @@ import {
 import {
   agregarCondicionesSecretas, avanzarMes as avisarAvanceMes, decidirEvento, elegirCartaMensual, esPartidaNarrativaLocal,
   iniciarPartida, obtenerCatalogosCronica, obtenerCortePartida, obtenerEstadoPartida, obtenerHistorialPartida,
-  obtenerSetup, reiniciarPartida, responderConversacion,
+  reiniciarPartida, responderConversacion,
 } from './narrativeService';
 import SeleccionarCartasEtapa0y1 from './ETAPA_0_1_SELECCIONAR_CARTAS/SeleccionarCartasEtapa0y1';
 import MuestraEventoEtapa0 from './ETAPA_0_MUESTRA_EVENTO/MuestraEventoEtapa0';
@@ -26,7 +26,12 @@ import BotonNarrativo from './COMPARTIDOS/BOTON_NARRATIVO/BotonNarrativo';
 import MazoUi from './COMPARTIDOS/MAZO_UI/MazoUi';
 import ConfiguracionEdad from './COMPARTIDOS/CONFIGURACION_EDAD/ConfiguracionEdad';
 import FondoCorte from './COMPARTIDOS/FONDO_CORTE/FondoCorte';
-import { GUARDIAS_CORTE, MANOS_CORTE, ORO_CORTE, cantidadManosPorPueblo, cantidadPorTramo } from '../../../config/fondoCorte';
+import CargaNarrativa from './COMPARTIDOS/CARGA_NARRATIVA/CargaNarrativa';
+import { CABALLO_CARGA, prepararCargaNarrativa, imagenesDelContenido } from './recursos/precargaNarrativa';
+import { imagenPrecargada, precargarImagenes } from '../../../services/assetPreloader';
+import { iniciarCargaNarrativa, actualizarCargaNarrativa, fallarCargaNarrativa } from '../../../store/narrativoCargaSlice';
+import type { RootState } from '../../../store/store';
+import { GUARDIAS_CORTE, MANOS_CORTE, ORO_CORTE, cantidadManosPorPueblo, cantidadPorTramo, type EstadoFondoCorte } from '../../../config/fondoCorte';
 import './narrativo.css';
 
 // Tiempo para ver el cambio en la corte antes de abrir la próxima escena.
@@ -37,7 +42,7 @@ const prepararCarta = (carta: any) => ({
   ...carta,
   id: carta.id || carta._id,
   nombre: carta.nombre || carta.titulo,
-  imagen: carta.imagen?.startsWith('/') ? `${API_URL}${carta.imagen}` : carta.imagen,
+  imagen: carta.imagen ? imagenPrecargada(carta.imagen.startsWith('/') ? `${API_URL}${carta.imagen}` : carta.imagen) : carta.imagen,
 });
 
 // Genera una derrota si alguno de los recursos llega a cero.
@@ -73,6 +78,10 @@ export default function KingsCourt() {
   const dispatch = useDispatch();
   const store = useStore();
   const juego = useSelector((state: any) => state.narrativoSelection);
+  const carga = useSelector((state: RootState) => state.narrativoCarga);
+  const [mostrarBuffer, setMostrarBuffer] = useState(true);
+  const [intentoCarga, setIntentoCarga] = useState(0);
+  const entrarAlJuego = useCallback(() => setMostrarBuffer(false), []);
   const [setup, setSetup] = useState<any>(null);
   const [personajesDisponibles, setPersonajesDisponibles] = useState<any[]>([]);
   const [decisionConversacion, setDecisionConversacion] = useState<any>(null);
@@ -127,7 +136,10 @@ export default function KingsCourt() {
   const pedir = async <T,>(accion: () => Promise<T>, mensaje: string): Promise<T | null> => {
     try {
       setError('');
-      return await accion();
+      const data = await accion();
+      // Si la API agregó una ilustración nueva, se prepara mientras sigue visible la escena anterior.
+      await precargarImagenes(imagenesDelContenido(data));
+      return data;
     } catch (e: any) {
       setError(`${mensaje}${e?.message ? ` ${e.message}` : ''}`);
       return null;
@@ -173,37 +185,55 @@ export default function KingsCourt() {
 
   // Carga el desafío y, si existe, restaura la partida activa.
   useEffect(() => {
+    let activo = true;
+    setMostrarBuffer(true);
+    dispatch(iniciarCargaNarrativa(date));
+    const trabajo = prepararCargaNarrativa(date, progreso => {
+      if (activo) dispatch(actualizarCargaNarrativa(progreso));
+    });
     // Inicializa el jugador y recupera su corte y su etapa pendiente.
     const cargar = async () => {
-      const data = await pedir(() => obtenerSetup(date), 'No se pudo cargar el desafio de hoy.');
-      if (!data) return;
+      try {
+        const data = await trabajo.promesa;
+        if (!activo) return;
 
-      setSetup(data);
-      // La muestra abre una sola vez al comenzar; una partida restaurada conserva su etapa real.
-      setMostrarMuestraEvento(!data.tiene_partida_activa);
-      setPersonajesDisponibles(data.personajes_ofrecidos.map(prepararCarta));
-      if (jugadorActual().date !== date) {
-        const edadGuardada = leerEdad();
-        dispatch(iniciarJugador({
-          date,
-          universo_id: data.universo_id || data.personajes_ofrecidos?.[0]?.universo_id || 'corte_medieval',
-          recursos: data.atributos_iniciales || { oro: 50, pueblo: 50, ejercito: 50, fe: 50 },
-          edad: edadGuardada,
-          modo_mayor: configuracionPorEdad(edadGuardada).adaptado,
-        }));
+        setSetup(data);
+        // La muestra abre una sola vez al comenzar; una partida restaurada conserva su etapa real.
+        setMostrarMuestraEvento(!data.tiene_partida_activa);
+        setPersonajesDisponibles(data.personajes_ofrecidos.map(prepararCarta));
+        if (jugadorActual().date !== date) {
+          const edadGuardada = leerEdad();
+          dispatch(iniciarJugador({
+            date,
+            universo_id: data.universo_id || data.personajes_ofrecidos?.[0]?.universo_id || 'corte_medieval',
+            recursos: data.atributos_iniciales || { oro: 50, pueblo: 50, ejercito: 50, fe: 50 },
+            edad: edadGuardada,
+            modo_mayor: configuracionPorEdad(edadGuardada).adaptado,
+          }));
+        }
+        if (data.tiene_partida_activa && !esPartidaNarrativaLocal(date)) {
+          const [estado, corte] = await Promise.all([
+            pedir(() => obtenerEstadoPartida(date), 'No se pudo recuperar el contenido de la partida activa.'),
+            pedir(() => obtenerCortePartida(date), 'No se pudo recuperar la corte de la partida activa.'),
+          ]);
+          if (!activo) return;
+          if (!estado) throw new Error('No se pudo recuperar la partida activa. Volvé a intentar.');
+          if (corte?.corte) dispatch(guardarPersonajesCorte(corte.corte.map(({ personaje }: any) => prepararCarta(personaje))));
+          await mostrarEstado(estado, true);
+          const fondo = (store.getState() as RootState).narrativoSelection.fondoBase as EstadoFondoCorte;
+          await precargarImagenes([fondo.src, ...[...fondo.personajes, ...fondo.oro, ...fondo.manos].map(x => x.src)]);
+        }
+        if (activo) {
+          const progreso = (store.getState() as RootState).narrativoCarga;
+          dispatch(actualizarCargaNarrativa({ ...progreso, fase: 'lista', porcentaje: 100 }));
+        }
+      } catch (e) {
+        if (activo) dispatch(fallarCargaNarrativa(e instanceof Error ? e.message : 'No se pudo preparar el juego. Revisá la conexión y volvé a intentar.'));
       }
-      if (!data.tiene_partida_activa || esPartidaNarrativaLocal(date)) return;
-
-      const [estado, corte] = await Promise.all([
-        pedir(() => obtenerEstadoPartida(date), 'No se pudo recuperar el contenido de la partida activa.'),
-        pedir(() => obtenerCortePartida(date), 'No se pudo recuperar la corte de la partida activa.'),
-      ]);
-      if (!estado) return;
-      if (corte?.corte) dispatch(guardarPersonajesCorte(corte.corte.map(({ personaje }: any) => prepararCarta(personaje))));
-      await mostrarEstado(estado, true);
     };
     void cargar();
-  }, [date, dispatch]);
+    return () => { activo = false; trabajo.desconectar(); };
+  }, [date, dispatch, intentoCarga]);
 
   // Reinicia la prueba en el servidor y vuelve al calendario.
   const salirDePrueba = async () => {
@@ -305,7 +335,7 @@ export default function KingsCourt() {
       ...ORO_CORTE.slice(antesOro, despuesOro),
       ...MANOS_CORTE.slice(antesManos, despuesManos),
     ];
-    void Promise.all(nuevos.map(async ({ src }) => { const imagen = new Image(); imagen.src = src; await imagen.decode().catch(() => {}); }))
+    void precargarImagenes(nuevos.map(({ src }) => src))
       .then(() => {
         if (secuencia !== secuenciaCambio.current) return;
         const duracion = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : DURACION_CAMBIO_FONDO_MS;
@@ -349,12 +379,13 @@ export default function KingsCourt() {
     } finally { setCargandoEstadisticas(false); }
   };
 
-  if (!setup) return (
-    <IonPage><IonContent scrollY className="narrativo-contenido" style={{ '--narrativo-fondo-base': `url("${juego.fondoBase.src}")` } as CSSProperties}>
+  if (!setup || mostrarBuffer) return (
+    <IonPage><IonContent scrollY={false} className="narrativo-contenido" style={{ '--narrativo-fondo-base': `url("${imagenPrecargada(juego.fondoBase.src)}")` } as CSSProperties}>
       {/* Misma capa que en la partida: React conserva la imagen al terminar la carga. */}
       <FondoCorte fondo={{ ...juego.fondoBase, personajes: [], oro: [], manos: [] }} atenuado fijo />
-      <p className="relative z-10 p-6 text-white">Cargando desafio narrativo...</p>
-      {error && <p role="alert" className="relative z-10 px-6 text-amber-900">{error}</p>}
+      <CargaNarrativa porcentaje={carga.porcentaje} listo={carga.fase === 'lista'} caballo={imagenPrecargada(CABALLO_CARGA)}
+        mensaje={carga.fase === 'preparando' ? 'Reuniendo las historias del reino…' : 'Preparando personajes y escenarios…'}
+        error={carga.error} onReintentar={() => setIntentoCarga(intento => intento + 1)} onEntrar={entrarAlJuego} />
     </IonContent></IonPage>
   );
 
@@ -449,7 +480,7 @@ export default function KingsCourt() {
 
   return (
     <IonPage>
-      <IonContent scrollY className="narrativo-contenido" style={{ '--narrativo-fondo-base': `url("${juego.fondoBase.src}")` } as CSSProperties}>
+      <IonContent scrollY className="narrativo-contenido" style={{ '--narrativo-fondo-base': `url("${imagenPrecargada(juego.fondoBase.src)}")` } as CSSProperties}>
         {/* La corte queda sin azul en eventos; las imágenes propias conservan su velo en la etapa. */}
         <FondoCorte fondo={fondoVisible} atenuado sinTinte={enEvento || etapa === 'cambio_fondo'} destacado={etapa === 'cambio_fondo'} fijo />
         <TransicionNarrativa etapa={etapaVisible}>

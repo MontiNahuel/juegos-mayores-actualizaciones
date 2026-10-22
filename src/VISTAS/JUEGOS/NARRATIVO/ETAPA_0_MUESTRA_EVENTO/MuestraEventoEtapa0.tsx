@@ -3,6 +3,7 @@ import BotonNarrativo from '../COMPARTIDOS/BOTON_NARRATIVO/BotonNarrativo';
 import TituloConversacion from '../COMPARTIDOS/TITULO_NARRATIVO/TituloConversacion';
 import { calcularTituloCiclo } from './cicloEvento';
 import './muestraEvento.css';
+import { imagenPrecargada } from '../../../../services/assetPreloader';
 
 // ETAPA 0: anticipa el tono del día antes de formar la corte.
 export default function MuestraEventoEtapa0({ eventos, onContinuar }: { eventos: any[]; onContinuar: () => void }) {
@@ -11,7 +12,7 @@ export default function MuestraEventoEtapa0({ eventos, onContinuar }: { eventos:
   const muestra = eventos.find((evento) => evento?.titulo || evento?.nombre) || {};
 
   return (
-    <section className="muestra-evento" aria-label="Muestra de eventos">
+    <section className="muestra-evento" aria-label="Muestra de eventos" style={{ '--marco-carta': `url("${imagenPrecargada('/assets/narrative/card-frame.png')}")` } as CSSProperties}>
       <TituloConversacion titulo={titulo} />
       <div className="muestra-evento__barajado">
           <div className="muestra-evento__mazo" role="group" aria-label={`${cantidad} cartas de evento barajándose`}>

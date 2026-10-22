@@ -7,9 +7,10 @@ import { ocultarCambiosNumericos } from '../../../../config/adaptacionEdad';
 import DialogoNarrativo from '../COMPARTIDOS/DIALOGO_NARRATIVO/DialogoNarrativo';
 import FondoCorte from '../COMPARTIDOS/FONDO_CORTE/FondoCorte';
 import type { EstadoFondoCorte } from '../../../../config/fondoCorte';
+import { imagenPrecargada } from '../../../../services/assetPreloader';
 
-const imagenDe = (imagen: string) => imagen.startsWith('/') && !imagen.startsWith('/assets/') && !imagen.startsWith('//')
-  ? `${API_URL}${imagen}` : imagen;
+const imagenDe = (imagen: string) => imagenPrecargada(imagen.startsWith('/') && !imagen.startsWith('//')
+  ? `${API_URL}${imagen}` : imagen);
 
 // El backend puede enviar el disparador como campo o dejar solo la marca en el texto.
 const cumpleCondicion = (c: any, atributos: Record<string, number>, personajes: any[], afinidad: Record<string, number>, tags: string[], cartas: any[]) => {

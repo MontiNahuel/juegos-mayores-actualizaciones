@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { API_URL } from '../../../../config/api';
+import { imagenPrecargada } from '../../../../services/assetPreloader';
 import type { CatalogosCronica, EstadoPartida, FinalizacionApi, HistorialPartidaApi, PersonajeApi } from '../narrativeService';
 import BotonNarrativo from '../COMPARTIDOS/BOTON_NARRATIVO/BotonNarrativo';
 import TituloNarrativo from '../COMPARTIDOS/TITULO_NARRATIVO/TituloNarrativo';
@@ -92,7 +93,7 @@ function Retrato({ miembro, afinidad, simple }: { miembro: MiembroCorte; afinida
   const imagen = p.imagen?.startsWith('/') ? `${API_URL}${p.imagen}` : p.imagen;
   const trato = afinidad == null ? 'Sin afinidad registrada' : afinidad >= 70 ? 'Relación cercana' : afinidad >= 40 ? 'Relación estable' : 'Relación distante';
   return <article className="flex min-w-0 items-center gap-3 border-b border-[#8d69423f] py-3 last:border-0">
-    <div className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-full border-2 border-[#a8834f] bg-[#2d211b] text-2xl text-[#e4c889] shadow-[0_2px_7px_#34200d66]">{imagen ? <img src={imagen} alt="" className="h-full w-full object-cover object-top" /> : p.nombre.charAt(0)}</div>
+    <div className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-full border-2 border-[#a8834f] bg-[#2d211b] text-2xl text-[#e4c889] shadow-[0_2px_7px_#34200d66]">{imagen ? <img src={imagenPrecargada(imagen)} alt="" className="h-full w-full object-cover object-top" /> : p.nombre.charAt(0)}</div>
     <div className="min-w-0 flex-1"><h4 className="m-0 truncate text-lg leading-tight text-[#412716]">{p.nombre}</h4><p className="m-0 truncate text-sm text-[#69513c]">{p.titulo || 'Miembro de la corte'}</p>
       <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-[#a7835a55]"><span className="block h-full rounded-full bg-[#796033]" style={{ width: `${Math.max(0, Math.min(100, afinidad ?? 0))}%` }} /></div>
       <p className="mt-1 text-sm text-[#614832]">{trato}{!simple && afinidad != null ? ` · ${afinidad}/100` : ''}</p>

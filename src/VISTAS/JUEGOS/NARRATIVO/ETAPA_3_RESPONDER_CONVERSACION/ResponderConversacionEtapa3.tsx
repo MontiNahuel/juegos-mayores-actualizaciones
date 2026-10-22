@@ -4,11 +4,12 @@ import TituloConversacion from '../COMPARTIDOS/TITULO_NARRATIVO/TituloConversaci
 import DialogoNarrativo from '../COMPARTIDOS/DIALOGO_NARRATIVO/DialogoNarrativo';
 import { API_URL } from '../../../../config/api';
 import { ocultarCambiosNumericos } from '../../../../config/adaptacionEdad';
+import { imagenPrecargada } from '../../../../services/assetPreloader';
 
 const FONDO_DE_CORTE = '/assets/narrative/conversation-hall.png';
 
 // Mantiene URLs absolutas y completa las imágenes del backend.
-const imagenDe = (imagen: string) => imagen?.startsWith('http') ? imagen : `${API_URL}${imagen || ''}`;
+const imagenDe = (imagen: string) => imagenPrecargada(/^(https?:|blob:|data:)/.test(imagen) ? imagen : `${API_URL}${imagen || ''}`);
 
 // Genera iniciales si no existe el retrato.
 const iniciales = (nombre: string) => nombre?.split(' ').map((parte) => parte[0]).join('').slice(0, 2) || '?';
@@ -66,7 +67,7 @@ export default function ResponderConversacionEtapa3({ conversacion, personajes, 
   const ultimoDialogo = paso >= conversacion.frases.length - 1;
   const idActivo = quienHabla.id || quienHabla._id;
   const texto = (valor: string) => modoSimple ? ocultarCambiosNumericos(valor) : valor;
-  const fondo = conversacion.imagen ? imagenDe(conversacion.imagen) : FONDO_DE_CORTE;
+  const fondo = conversacion.imagen ? imagenDe(conversacion.imagen) : imagenPrecargada(FONDO_DE_CORTE);
 
   return (
     <section className="min-h-[100svh] p-0">
@@ -77,7 +78,11 @@ export default function ResponderConversacionEtapa3({ conversacion, personajes, 
           alt=""
           decoding="sync"
           onLoad={() => setFondoListo(true)}
-          onError={(e) => { if (!e.currentTarget.src.endsWith(FONDO_DE_CORTE)) e.currentTarget.src = FONDO_DE_CORTE; }}
+          onError={(e) => {
+            const respaldo = imagenPrecargada(FONDO_DE_CORTE);
+            if (e.currentTarget.getAttribute('src') !== respaldo) e.currentTarget.src = respaldo;
+            else setFondoListo(true);
+          }}
         />
         <div className="absolute inset-0 -z-10 bg-black/25" />
         <TituloConversacion key={conversacion._id} titulo={conversacion.titulo} listo={fondoListo} />
