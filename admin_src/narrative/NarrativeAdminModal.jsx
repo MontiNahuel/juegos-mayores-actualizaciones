@@ -10,6 +10,7 @@ import {
   CalendarIcon,
   SkullIcon,
   XIcon,
+  GitBranchIcon,
 } from '../Icons';
 import UniversosTab from './UniversosTab';
 import PersonajesTab from './PersonajesTab';
@@ -19,6 +20,7 @@ import EventosTab from './EventosTab';
 import ConversacionesTab from './ConversacionesTab';
 import FinalizacionesTab from './FinalizacionesTab';
 import CalendarioTab from './CalendarioTab';
+import GrafosV2Tab from './GrafosV2Tab';
 
 export default function NarrativeAdminModal({ abierto, onCerrar }) {
   const [tabActiva, setTabActiva] = useState('universos');
@@ -69,6 +71,7 @@ export default function NarrativeAdminModal({ abierto, onCerrar }) {
     { id: 'conversaciones', label: '6. Diálogos', Icon: MessageSquareIcon },
     { id: 'finalizaciones', label: '7. Finalizaciones', Icon: SkullIcon },
     { id: 'calendario', label: '8. Calendario', Icon: CalendarIcon },
+    { id: 'grafos_v2', label: '9. Grafos V2 (Nodos)', Icon: GitBranchIcon },
   ];
 
   return (
@@ -178,6 +181,10 @@ export default function NarrativeAdminModal({ abierto, onCerrar }) {
 
           {tabActiva === 'calendario' && (
             <CalendarioTab universos={universos} />
+          )}
+
+          {tabActiva === 'grafos_v2' && (
+            <GrafosV2Tab universos={universos} personajes={personajes} />
           )}
         </div>
 
