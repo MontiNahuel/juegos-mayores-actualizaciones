@@ -19,6 +19,7 @@ export const DailyChallengeCalendar: React.FC<DailyChallengeCalendarProps> = ({
   title,
   heroBadge,
   heroSubtitle,
+  difficulty = 'standard',
   playRoute,
   onPlayChallenge,
   year,
@@ -48,6 +49,7 @@ export const DailyChallengeCalendar: React.FC<DailyChallengeCalendarProps> = ({
     goToNextMonth,
   } = useGameCalendar({
     gameId,
+    difficulty,
     year,
     month,
     todayDay,

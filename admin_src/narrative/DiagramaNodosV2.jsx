@@ -35,13 +35,19 @@ export default function DiagramaNodosV2({
       const nodo = nodos[id];
       if (nodo && !nodo.es_final && Array.isArray(nodo.opciones)) {
         for (const opt of nodo.opciones) {
-          const dest = opt.siguiente_nodo;
-          if (dest && nodos[dest]) {
-            const nuevaProf = depth + 1;
-            if (!visitados.has(dest) || nuevaProf > (niveles[dest] || 0)) {
-              niveles[dest] = nuevaProf;
+          // Si la opción define desenlaces ponderados, reemplazan al destino fijo
+          // (misma semántica que el motor de grafos).
+          const desenlaces = Array.isArray(opt.desenlaces) ? opt.desenlaces : [];
+          const destinos = desenlaces.length > 0
+            ? desenlaces.map((d) => d.nodo)
+            : [opt.siguiente_nodo];
+          for (const dest of destinos) {
+            // Cada nodo se visita una única vez (profundidad mínima), lo que
+            // evita bucles infinitos cuando el grafo contiene ciclos.
+            if (dest && nodos[dest] && !visitados.has(dest)) {
+              niveles[dest] = depth + 1;
               visitados.add(dest);
-              cola.push({ id: dest, depth: nuevaProf });
+              cola.push({ id: dest, depth: depth + 1 });
             }
           }
         }
@@ -110,17 +116,38 @@ export default function DiagramaNodosV2({
       const posPadre = posMap[nid];
       if (!posPadre || nodo.es_final || !Array.isArray(nodo.opciones)) continue;
 
-      const optsCount = nodo.opciones.length;
-      nodo.opciones.forEach((opt, optIdx) => {
+      // Aplanar los destinos efectivos de cada opción. Si hay desenlaces
+      // ponderados, reemplazan al destino fijo (misma semántica que el motor).
+      const destinos = [];
+      nodo.opciones.forEach((opt) => {
         totalOpciones++;
-        const dest = opt.siguiente_nodo;
+        const desenlaces = Array.isArray(opt.desenlaces) ? opt.desenlaces : [];
+        if (desenlaces.length > 0) {
+          const sumaPesos = desenlaces.reduce((acc, d) => acc + (parseFloat(d.peso) || 0), 0) || 1;
+          for (const d of desenlaces) {
+            const peso = parseFloat(d.peso) || 0;
+            destinos.push({
+              opt,
+              dest: d.nodo,
+              esDesenlace: true,
+              porcentaje: Math.round((peso / sumaPesos) * 100)
+            });
+          }
+        } else {
+          destinos.push({ opt, dest: opt.siguiente_nodo, esDesenlace: false, porcentaje: null });
+        }
+      });
+
+      const totalEdges = destinos.length;
+
+      destinos.forEach(({ opt, dest, esDesenlace, porcentaje }, edgeIdx) => {
         const posHijo = posMap[dest];
         const esRoto = !posHijo;
         if (esRoto) ramasRotas++;
 
         // Origen: borde derecho del nodo padre, repartido verticalmente
         const x1 = posPadre.x + posPadre.w;
-        const y1 = posPadre.y + 35 + (optIdx + 1) * ((posPadre.h - 40) / (optsCount + 1));
+        const y1 = posPadre.y + 35 + (edgeIdx + 1) * ((posPadre.h - 40) / (totalEdges + 1));
 
         // Destino: borde izquierdo del nodo hijo, centrado verticalmente
         const x2 = posHijo ? posHijo.x : x1 + 60;
@@ -137,19 +164,26 @@ export default function DiagramaNodosV2({
         const esActivo = nid === nodoSeleccionadoId || dest === nodoSeleccionadoId;
         const tieneCondiciones = Array.isArray(opt.condiciones) && opt.condiciones.length > 0;
 
+        const texto = opt.texto || opt.id;
+        const etiqueta =
+          (tieneCondiciones ? '🔒 ' : '') +
+          (esDesenlace ? `🎲 ${porcentaje}% · ` : '') +
+          texto;
+
         linesArr.push({
-          id: `line_${nid}_${opt.id}_${dest}`,
+          id: `line_${nid}_${opt.id}_${dest}_${edgeIdx}`,
           path: pathData,
           esRoto,
           origen: nid,
           dest,
-          textoOpt: opt.texto || opt.id,
+          etiqueta,
           tieneCondiciones,
           bloqueoModo: opt.bloqueo_modo || 'deshabilitada',
           numCondiciones: tieneCondiciones ? opt.condiciones.length : 0,
           midX,
           midY,
-          esActivo
+          esActivo,
+          esDesenlace
         });
       });
     }
@@ -281,6 +315,8 @@ export default function DiagramaNodosV2({
                 ? 'url(#flecha-activa)'
                 : 'url(#flecha-normal)';
 
+              const rectW = Math.max(64, Math.min(180, (linea.etiqueta || '').length * 6 + 22));
+
               return (
                 <g key={linea.id}>
                   {/* Línea principal */}
@@ -295,12 +331,12 @@ export default function DiagramaNodosV2({
                   />
 
                   {/* Etiqueta flotante con el texto de la opción sobre la curva */}
-                  {linea.textoOpt && (
+                  {linea.etiqueta && (
                     <g transform={`translate(${linea.midX}, ${linea.midY})`}>
                       <rect
-                        x="-52"
+                        x={-rectW / 2}
                         y="-10"
-                        width="104"
+                        width={rectW}
                         height="20"
                         rx="10"
                         fill={linea.tieneCondiciones ? "#fffbeb" : "#ffffff"}
@@ -316,10 +352,9 @@ export default function DiagramaNodosV2({
                         fontWeight="bold"
                         fill={linea.esRoto ? '#ef4444' : linea.tieneCondiciones ? '#b45309' : '#475569'}
                       >
-                        {linea.tieneCondiciones ? '🔒 ' : ''}
-                        {linea.textoOpt.length > 12
-                          ? `${linea.textoOpt.slice(0, 11)}…`
-                          : linea.textoOpt}
+                        {linea.etiqueta.length > 26
+                          ? `${linea.etiqueta.slice(0, 25)}…`
+                          : linea.etiqueta}
                       </text>
                     </g>
                   )}

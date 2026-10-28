@@ -15,9 +15,11 @@ export default function ImageUploadField({
   onChange,
   defaultImage = '',
   helperText = '',
+  nullable = false,
 }) {
-  const fallbackUrl = defaultImage || `/assets/narrative/${categoria}/default.webp`;
+  const fallbackUrl = nullable ? '' : (defaultImage || `/assets/narrative/${categoria}/default.webp`);
   const valorActual = value || fallbackUrl;
+  const mostrarRestablecer = nullable ? !!valorActual : valorActual !== fallbackUrl;
 
   const [subiendo, setSubiendo] = useState(false);
   const [error, setError] = useState('');
@@ -108,6 +110,14 @@ export default function ImageUploadField({
     setError('');
   };
 
+  const quitarImagen = () => {
+    if (onChange) {
+      onChange('');
+    }
+    setInfoSubida(null);
+    setError('');
+  };
+
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between">
@@ -139,14 +149,14 @@ export default function ImageUploadField({
               placeholder="/assets/narrative/... o https://..."
               className="flex-1 px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
             />
-            {valorActual !== fallbackUrl && (
+            {mostrarRestablecer && (
               <button
                 type="button"
-                onClick={restablecerPorDefecto}
-                title="Restablecer imagen por defecto"
+                onClick={nullable ? quitarImagen : restablecerPorDefecto}
+                title={nullable ? 'Quitar imagen' : 'Restablecer imagen por defecto'}
                 className="px-2 py-2 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
               >
-                <RefreshIcon size={14} />
+                {nullable ? <XIcon size={14} /> : <RefreshIcon size={14} />}
               </button>
             )}
           </div>
@@ -174,15 +184,21 @@ export default function ImageUploadField({
           <div className="flex items-center gap-3">
             {/* Thumbnail Preview */}
             <div className="relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 bg-slate-200 rounded-lg overflow-hidden border border-slate-300 shadow-xs flex items-center justify-center">
-              <img
-                src={valorActual}
-                alt={label}
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = fallbackUrl;
-                }}
-                className="w-full h-full object-cover"
-              />
+              {valorActual ? (
+                <img
+                  src={valorActual}
+                  alt={label}
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = fallbackUrl;
+                  }}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="flex items-center justify-center text-slate-400">
+                  <ImageIcon size={22} />
+                </div>
+              )}
               {subiendo && (
                 <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center">
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -203,15 +219,15 @@ export default function ImageUploadField({
                   {subiendo ? 'Comprimiendo WebP...' : 'Seleccionar foto'}
                 </button>
 
-                {valorActual !== fallbackUrl && (
+                {mostrarRestablecer && (
                   <button
                     type="button"
                     disabled={subiendo}
-                    onClick={restablecerPorDefecto}
+                    onClick={nullable ? quitarImagen : restablecerPorDefecto}
                     className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 rounded-lg transition-colors cursor-pointer"
                   >
-                    <RefreshIcon size={12} />
-                    Usar por defecto
+                    {nullable ? <XIcon size={12} /> : <RefreshIcon size={12} />}
+                    {nullable ? 'Quitar' : 'Usar por defecto'}
                   </button>
                 )}
               </div>

@@ -8,7 +8,8 @@ import {
   IonToolbar,
   IonIcon,
 } from '@ionic/react';
-import { GameHeader } from '../../COMPONENTS/GameHeader';
+import { GameHeader, LivesBadge } from '../../COMPONENTS/GameHeader';
+import { SopaLetrasCompletedModal } from './SopaLetrasCompletedModal';
 import {
   arrowBackOutline,
   bulbOutline,
@@ -90,6 +91,14 @@ export const SopaLetrasGame: React.FC = () => {
   const [dragCurrent, setDragCurrent] = useState<CellCoord | null>(null);
   const [tapStart, setTapStart] = useState<CellCoord | null>(null);
 
+  // Vidas y Errores
+  const MAX_LIVES = 5;
+  const [lives, setLives] = useState<number>(MAX_LIVES);
+  const [errors, setErrors] = useState<number>(0);
+  const [isGameOver, setIsGameOver] = useState<boolean>(false);
+  const [showGameOverModal, setShowGameOverModal] = useState<boolean>(false);
+  const [invalidCells, setInvalidCells] = useState<Set<string>>(new Set());
+
   // Modales
   const [showVictoryModal, setShowVictoryModal] = useState<boolean>(false);
   const [showHintModal, setShowHintModal] = useState<boolean>(false);
@@ -148,6 +157,12 @@ export const SopaLetrasGame: React.FC = () => {
           .map((g: any) => (typeof g === 'string' ? g : g?.word || ''))
           .filter(Boolean);
         setFoundWords(parsed);
+      }
+      if (saved.gameData?.lives !== undefined) {
+        setLives(saved.gameData.lives);
+      }
+      if (saved.gameData?.errors !== undefined) {
+        setErrors(saved.gameData.errors);
       }
 
       if (saved.status === 'completed' || saved.status === 'won') {
@@ -256,6 +271,7 @@ export const SopaLetrasGame: React.FC = () => {
   // Verificar palabra seleccionada
   const checkSelection = useCallback(
     (start: CellCoord, end: CellCoord) => {
+      if (isGameOver) return false;
       const { row: r1, col: c1 } = start;
       const { row: r2, col: c2 } = end;
 
@@ -284,6 +300,7 @@ export const SopaLetrasGame: React.FC = () => {
         triggerHaptic();
         const nextFound = [...foundWords, match];
         setFoundWords(nextFound);
+        const starsEarned = errors === 0 ? 3 : errors <= 2 ? 2 : 1;
 
         // Guardar progreso en tiempo real
         saveActiveGameProgress({
@@ -294,8 +311,9 @@ export const SopaLetrasGame: React.FC = () => {
           guesses: nextFound,
           status: nextFound.length === targetWords.length ? 'completed' : 'in_progress',
           attempts: nextFound.length,
-          stars: nextFound.length === targetWords.length ? 3 : 1,
+          stars: nextFound.length === targetWords.length ? starsEarned : 1,
           score: nextFound.length * 100,
+          gameData: { lives, errors },
         });
 
         // Micro-interacción de celebración en el chip y en las celdas encontradas
@@ -315,7 +333,8 @@ export const SopaLetrasGame: React.FC = () => {
             status: 'completed',
             word: theme,
             attempts: targetWords.length,
-            stars: 3,
+            stars: starsEarned,
+            gameData: { errors, livesLeft: lives },
             score: 400,
             guesses: nextFound,
           });
@@ -328,13 +347,37 @@ export const SopaLetrasGame: React.FC = () => {
         return true;
       }
 
+      // Si no coincide y la selección tiene al menos 3 letras -> Intento fallido / descuenta vida
+      if (candidate.length >= 3 && !foundWords.includes(candidate)) {
+        try {
+          Haptics.impact({ style: ImpactStyle.Heavy });
+        } catch {}
+
+        setErrors((prev) => prev + 1);
+        setLives((prev) => {
+          const next = Math.max(0, prev - 1);
+          if (next === 0) {
+            setIsGameOver(true);
+            setTimeout(() => setShowGameOverModal(true), 400);
+          }
+          return next;
+        });
+
+        setInvalidCells(new Set(cellsToMark));
+        setTimeout(() => {
+          setInvalidCells(new Set());
+        }, 600);
+      }
+
       return false;
     },
-    [grid, targetWords, foundWords, triggerHaptic, dateStrKey, dayNum, theme]
+    [grid, targetWords, foundWords, triggerHaptic, dateStrKey, dayNum, theme, isGameOver, errors, lives]
   );
 
   // Manejo de eventos Pointer (Unifica mouse y touch)
   const handlePointerDown = (row: number, col: number, e: React.PointerEvent) => {
+    if (isGameOver || showGameOverModal || showVictoryModal) return;
+
     // Si ya había un tap inicial activo:
     if (tapStart) {
       // Si tocó la misma celda -> deseleccionar
@@ -410,11 +453,33 @@ export const SopaLetrasGame: React.FC = () => {
     }
   };
 
-  const handleResetChallenge = () => {
+  const handleRestart = async () => {
     setFoundWords([]);
     setFoundCellKeys(new Set());
     setTapStart(null);
+    setDragStart(null);
+    setDragCurrent(null);
+    setLives(MAX_LIVES);
+    setErrors(0);
+    setIsGameOver(false);
+    setShowGameOverModal(false);
     setShowVictoryModal(false);
+    await saveActiveGameProgress({
+      gameId: 'sopa_letras',
+      date: dateStrKey,
+      day: dayNum,
+      word: theme,
+      guesses: [],
+      status: 'in_progress',
+      attempts: 0,
+      stars: 1,
+      score: 0,
+      gameData: { lives: MAX_LIVES, errors: 0 },
+    });
+  };
+
+  const handleResetChallenge = () => {
+    handleRestart();
   };
 
   const unfoundCount = targetWords.length - foundWords.length;
@@ -426,6 +491,7 @@ export const SopaLetrasGame: React.FC = () => {
           title="Sopa de letras"
           backRoute="/juegos/sopa-letras"
           backLabel="Calendario"
+          badges={<LivesBadge lives={lives} maxLives={MAX_LIVES} />}
           rightAction={
             <button
               onClick={() => setShowHintModal(true)}
@@ -611,12 +677,17 @@ export const SopaLetrasGame: React.FC = () => {
                 const isFound = foundCellKeys.has(cellKey);
                 const isSelected = selectedKeySet.has(cellKey);
                 const isJustFound = justFoundCells.has(cellKey);
+                const isInvalid = invalidCells.has(cellKey);
 
                 let cellBg = '#FFFFFF';
                 let cellColor = '#294C6B';
                 let cellBorder = '1px solid #E2E8F0';
 
-                if (isJustFound) {
+                if (isInvalid) {
+                  cellBg = '#FEE2E2';
+                  cellColor = '#DC2626';
+                  cellBorder = '2px solid #EF4444';
+                } else if (isJustFound) {
                   cellBg = '#A7F3D0';
                   cellColor = '#065F46';
                   cellBorder = '2px solid #059669';
@@ -654,9 +725,9 @@ export const SopaLetrasGame: React.FC = () => {
                       padding: 0,
                       position: 'relative',
                       touchAction: 'none',
-                      transform: isJustFound ? 'scale(1.14)' : isSelected ? 'scale(1.04)' : 'scale(1)',
+                      transform: isInvalid ? 'scale(1.08)' : isJustFound ? 'scale(1.14)' : isSelected ? 'scale(1.04)' : 'scale(1)',
                       zIndex: isJustFound ? 15 : isSelected ? 5 : 1,
-                      boxShadow: isJustFound ? '0 0 14px rgba(5, 150, 105, 0.45)' : 'none',
+                      boxShadow: isInvalid ? '0 0 14px rgba(239, 68, 68, 0.45)' : isJustFound ? '0 0 14px rgba(5, 150, 105, 0.45)' : 'none',
                       transition:
                         'transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, border 0.15s ease, box-shadow 0.25s ease',
                       width: '100%',
@@ -834,152 +905,26 @@ export const SopaLetrasGame: React.FC = () => {
           </div>
         )}
 
-        {/* Modal de Felicitación / Victoria */}
-        {showVictoryModal && (
-          <div
-            style={{
-              alignItems: 'center',
-              background: 'rgba(15, 23, 42, 0.55)',
-              backdropFilter: 'blur(4px)',
-              display: 'flex',
-              inset: 0,
-              justifyContent: 'center',
-              padding: '16px 16px max(calc(env(safe-area-inset-bottom, 0px) + 24px), 48px)',
-              position: 'fixed',
-              zIndex: 1000,
+        {/* Modal de Felicitación / Victoria o Game Over */}
+        {(showVictoryModal || showGameOverModal) && (
+          <SopaLetrasCompletedModal
+            challenge={{
+              dateStr: dateDisplay,
+              config: {
+                theme,
+                words: targetWords,
+              },
+              stars: errors === 0 ? 3 : errors <= 2 ? 2 : 1,
+              completedData: {
+                guesses: foundWords,
+                errors,
+                livesLeft: lives,
+              },
             }}
-          >
-            <div
-              style={{
-                background: '#FFFFFF',
-                border: '1px solid #E2E8F0',
-                borderRadius: 22,
-                boxShadow: '0 12px 36px rgba(0, 0, 0, 0.25)',
-                maxWidth: 360,
-                padding: '24px 20px',
-                textAlign: 'center',
-                width: '100%',
-              }}
-              className="calendar-shared-modal-card"
-            >
-              <div
-                style={{
-                  alignItems: 'center',
-                  background: '#E8F8F5',
-                  borderRadius: 999,
-                  display: 'flex',
-                  height: 52,
-                  justifyContent: 'center',
-                  margin: '0 auto 12px',
-                  width: 52,
-                }}
-              >
-                <IonIcon icon={checkmarkCircle} style={{ color: '#17695F', fontSize: 32 }} />
-              </div>
-
-              <h2
-                style={{
-                  color: '#294C6B',
-                  fontSize: 20,
-                  fontWeight: 900,
-                  margin: 0,
-                }}
-              >
-                ¡Felicitaciones!
-              </h2>
-
-              <p
-                style={{
-                  color: '#64748B',
-                  fontSize: 13,
-                  margin: '6px 0 14px',
-                }}
-              >
-                Completaste la sopa de letras del día:
-                <br />
-                <strong>{theme}</strong>
-              </p>
-
-              <div
-                style={{
-                  display: 'flex',
-                  gap: 4,
-                  justifyContent: 'center',
-                  marginBottom: 16,
-                }}
-              >
-                <IonIcon icon={star} style={{ color: '#F59E0B', fontSize: 24 }} />
-                <IonIcon icon={star} style={{ color: '#F59E0B', fontSize: 24 }} />
-                <IonIcon icon={star} style={{ color: '#F59E0B', fontSize: 24 }} />
-              </div>
-
-              <div
-                style={{
-                  background: '#F8FAFC',
-                  border: '1px solid #E2E8F0',
-                  borderRadius: 14,
-                  marginBottom: 18,
-                  padding: '12px 14px',
-                }}
-              >
-                <p
-                  style={{
-                    color: '#64748B',
-                    fontSize: 11,
-                    fontWeight: 700,
-                    letterSpacing: '0.04em',
-                    margin: '0 0 6px',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  Palabras descubiertas
-                </p>
-                <div
-                  style={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: 6,
-                    justifyContent: 'center',
-                  }}
-                >
-                  {foundWords.map((word, idx) => (
-                    <span
-                      key={idx}
-                      style={{
-                        background: '#E8F8F5',
-                        border: '1px solid #A3E5D9',
-                        borderRadius: 8,
-                        color: '#17695F',
-                        fontSize: 12,
-                        fontWeight: 800,
-                        padding: '4px 8px',
-                      }}
-                    >
-                      {word}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <button
-                onClick={() => navigate('/juegos/sopa-letras')}
-                style={{
-                  background: '#294C6B',
-                  border: 'none',
-                  borderRadius: 14,
-                  color: '#FFFFFF',
-                  cursor: 'pointer',
-                  fontSize: 15,
-                  fontWeight: 800,
-                  padding: '13px 0',
-                  width: '100%',
-                }}
-                className="active:bg-slate-800 transition-colors"
-              >
-                Volver al calendario
-              </button>
-            </div>
-          </div>
+            isGameOver={showGameOverModal}
+            onRestart={handleRestart}
+            onClose={() => navigate('/juegos/sopa-letras')}
+          />
         )}
       </IonContent>
     </IonPage>

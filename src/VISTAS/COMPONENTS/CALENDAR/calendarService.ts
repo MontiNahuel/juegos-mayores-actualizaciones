@@ -43,8 +43,8 @@ async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T |
 /**
  * Consulta el desafío de hoy al backend para sincronizar la fecha real del servidor en vivo.
  */
-export async function fetchServerToday(gameId: string = 'wordle'): Promise<ServerTodayInfo> {
-  const data = await apiFetch<any>(`/api/challenges/today?game_id=${gameId}`);
+export async function fetchServerToday(gameId: string = 'wordle', difficulty: string = 'standard'): Promise<ServerTodayInfo> {
+  const data = await apiFetch<any>(`/api/challenges/today?game_id=${gameId}&difficulty=${difficulty}`);
   if (data && data.date) {
     const [y, m, d] = data.date.split('-').map((v: string) => parseInt(v, 10));
     return {
@@ -83,8 +83,8 @@ export async function fetchChallengeDateRange(gameId: string = 'wordle'): Promis
 /**
  * Consulta los desafíos de un mes al backend.
  */
-export async function fetchMonthChallenges(gameId: string, year: number, month: number) {
-  return await apiFetch<any>(`/api/challenges/month?year=${year}&month=${month}&game_id=${gameId}`);
+export async function fetchMonthChallenges(gameId: string, year: number, month: number, difficulty: string = 'standard') {
+  return await apiFetch<any>(`/api/challenges/month?year=${year}&month=${month}&game_id=${gameId}&difficulty=${difficulty}`);
 }
 
 /**
@@ -163,7 +163,8 @@ export async function getCalendarMonthData(
   gameId: string,
   viewYear?: number,
   viewMonth?: number,
-  serverTodayProp?: ServerTodayInfo
+  serverTodayProp?: ServerTodayInfo,
+  difficulty: string = 'standard'
 ): Promise<{
   challenges: DayChallenge[];
   todayChallenge: DayChallenge;
@@ -176,7 +177,7 @@ export async function getCalendarMonthData(
   cleanupLegacyGameStorage();
 
   // 1. Obtener la fecha de HOY en vivo desde el backend si no fue provista
-  const serverToday = serverTodayProp || (await fetchServerToday(gameId));
+  const serverToday = serverTodayProp || (await fetchServerToday(gameId, difficulty));
   const year = viewYear || serverToday.year;
   const month = viewMonth || serverToday.month;
   const todayDay = serverToday.day;
@@ -234,7 +235,7 @@ export async function getCalendarMonthData(
   }
 
   // 5. Consultar los desafíos del mes
-  const monthData = await fetchMonthChallenges(gameId, year, month);
+  const monthData = await fetchMonthChallenges(gameId, year, month, difficulty);
   const apiChallenges: any[] = monthData?.challenges || [];
 
   // 6. Construir la lista de días del mes

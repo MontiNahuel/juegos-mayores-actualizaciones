@@ -15,6 +15,7 @@ import {
   LockIcon
 } from '../Icons';
 import DiagramaNodosV2 from './DiagramaNodosV2';
+import ImageUploadField from './ImageUploadField';
 
 const RECURSOS_DISPONIBLES = [
   { id: 'oro', label: 'Oro / Tesoro' },
@@ -27,6 +28,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
   const [subTab, setSubTab] = useState('eventos'); // 'eventos' | 'conversaciones'
   const [listaEventos, setListaEventos] = useState([]);
   const [listaConversaciones, setListaConversaciones] = useState([]);
+  const [listaEspeciales, setListaEspeciales] = useState([]);
   const [cargando, setCargando] = useState(false);
   const [busqueda, setBusqueda] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
@@ -54,9 +56,10 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
     setCargando(true);
     setErrorMsg('');
     try {
-      const [resEvts, resConvs] = await Promise.all([
+      const [resEvts, resConvs, resEsps] = await Promise.all([
         fetch('/api/narrative/admin/v2/eventos'),
-        fetch('/api/narrative/admin/v2/conversaciones')
+        fetch('/api/narrative/admin/v2/conversaciones'),
+        fetch('/api/narrative/admin/v2/eventos-especiales')
       ]);
 
       if (resEvts.ok) {
@@ -66,6 +69,10 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
       if (resConvs.ok) {
         const dataConvs = await resConvs.json();
         setListaConversaciones(dataConvs || []);
+      }
+      if (resEsps.ok) {
+        const dataEsps = await resEsps.json();
+        setListaEspeciales(dataEsps || []);
       }
     } catch (e) {
       console.error(e);
@@ -77,18 +84,21 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
 
   const handleNuevoItem = (tipo) => {
     setTipoEdicion(tipo);
-    const nuevoId = tipo === 'evento' ? `evt_nuevo_${Date.now()}` : `conv_nueva_${Date.now()}`;
+    const esEvento = tipo === 'evento';
+    const esEspecial = tipo === 'evento_especial';
+    const prefijo = esEvento ? 'evt_nuevo_' : esEspecial ? 'esp_nuevo_' : 'conv_nueva_';
+    const nuevoId = `${prefijo}${Date.now()}`;
     const base = {
       _id: nuevoId,
       id: nuevoId,
       universo_id: universos[0]?.id || 'corte_medieval',
-      titulo: tipo === 'evento' ? 'Nuevo Evento Ramificado' : 'Nueva Conversación de Corte',
-      imagen: tipo === 'evento' ? '/assets/narrative/eventos/default.webp' : '/assets/narrative/conversation-hall.png',
+      titulo: esEvento ? 'Nuevo Evento Ramificado' : esEspecial ? 'Nuevo Evento Especial de Afinidad' : 'Nueva Conversación de Corte',
+      imagen: esEvento || esEspecial ? '/assets/narrative/eventos/default.webp' : '/assets/narrative/conversation-hall.png',
       nodo_raiz: 'inicio',
       nodos: {
         inicio: {
           id: 'inicio',
-          hablante_id: tipo === 'evento' ? 'narrador' : (personajes[0]?._id || personajes[0]?.id || 'pj_canciller_elena'),
+          hablante_id: esEvento ? 'narrador' : (personajes[0]?._id || personajes[0]?.id || 'pj_canciller_elena'),
           texto: 'Texto del dilema inicial...',
           es_final: false,
           opciones: [
@@ -122,8 +132,11 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
       }
     };
 
-    if (tipo === 'evento') {
+    if (esEvento) {
       base.requisitos_eventos_previos = [];
+    } else if (esEspecial) {
+      base.personaje_id = personajes[0]?._id || personajes[0]?.id || 'pj_canciller_elena';
+      base.direccion = 'lealtad';
     } else {
       base.requisitos = personajes.slice(0, 2).map((p) => p._id || p.id);
     }
@@ -151,7 +164,9 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
     try {
       const url = tipo === 'evento'
         ? `/api/narrative/admin/v2/eventos/${id}`
-        : `/api/narrative/admin/v2/conversaciones/${id}`;
+        : tipo === 'evento_especial'
+          ? `/api/narrative/admin/v2/eventos-especiales/${id}`
+          : `/api/narrative/admin/v2/conversaciones/${id}`;
 
       const res = await fetch(url, { method: 'DELETE' });
       if (res.ok) {
@@ -180,6 +195,16 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
       alert('El título es obligatorio.');
       return;
     }
+    if (tipoEdicion === 'evento_especial') {
+      if (!itemEnEdicion.personaje_id) {
+        alert('Seleccioná el personaje que dispara este evento especial.');
+        return;
+      }
+      if (!itemEnEdicion.direccion) {
+        alert('Seleccioná la dirección (lealtad o traición) del evento especial.');
+        return;
+      }
+    }
     if (!itemEnEdicion.nodos || Object.keys(itemEnEdicion.nodos).length === 0) {
       alert('El grafo debe tener al menos un nodo.');
       return;
@@ -193,7 +218,14 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
     for (const [nid, nodo] of Object.entries(itemEnEdicion.nodos)) {
       if (!nodo.es_final && Array.isArray(nodo.opciones)) {
         for (const opt of nodo.opciones) {
-          if (!nodosKeys.includes(opt.siguiente_nodo)) {
+          if (Array.isArray(opt.desenlaces) && opt.desenlaces.length > 0) {
+            for (const d of opt.desenlaces) {
+              if (!nodosKeys.includes(d.nodo)) {
+                alert(`En el nodo "${nid}", la opción "${opt.texto}" tiene un desenlace hacia "${d.nodo}", que no existe en el grafo.`);
+                return;
+              }
+            }
+          } else if (!nodosKeys.includes(opt.siguiente_nodo)) {
             alert(`En el nodo "${nid}", la opción "${opt.texto}" apunta a "${opt.siguiente_nodo}", que no existe en el grafo.`);
             return;
           }
@@ -206,7 +238,9 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
     try {
       const url = tipoEdicion === 'evento'
         ? '/api/narrative/admin/v2/eventos'
-        : '/api/narrative/admin/v2/conversaciones';
+        : tipoEdicion === 'evento_especial'
+          ? '/api/narrative/admin/v2/eventos-especiales'
+          : '/api/narrative/admin/v2/conversaciones';
 
       const payload = { ...itemEnEdicion, _id: id, id: id };
       const res = await fetch(url, {
@@ -216,7 +250,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
       });
 
       if (res.ok) {
-        setExitoMsg(`¡${tipoEdicion === 'evento' ? 'Evento' : 'Conversación'} V2 guardado con éxito!`);
+        setExitoMsg(`¡${tipoEdicion === 'evento' ? 'Evento' : tipoEdicion === 'evento_especial' ? 'Evento de Afinidad' : 'Conversación'} V2 guardado con éxito!`);
         setTimeout(() => setExitoMsg(''), 3000);
         setModoEdicion(false);
         setItemEnEdicion(null);
@@ -264,7 +298,8 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
       ],
       resultado_texto: '',
       impactos_recursos: [],
-      impactos_afinidad: []
+      impactos_afinidad: [],
+      impactos_tags: []
     };
 
     setItemEnEdicion((prev) => ({
@@ -288,7 +323,8 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
       ],
       resultado_texto: '',
       impactos_recursos: [],
-      impactos_afinidad: []
+      impactos_afinidad: [],
+      impactos_tags: []
     };
 
     const opcionesActuales = Array.isArray(nodoActual.opciones) ? nodoActual.opciones : [];
@@ -387,6 +423,32 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
     handleUpdateOpcion(optIdx, 'condiciones', conds);
   };
 
+  // Desenlaces Ponderados (azar: 40/60, etc.)
+  const handleAgregarDesenlace = (optIdx) => {
+    if (!nodoActual || !nodoActual.opciones) return;
+    const opt = nodoActual.opciones[optIdx];
+    const desenlaces = Array.isArray(opt.desenlaces) ? opt.desenlaces : [];
+    handleUpdateOpcion(optIdx, 'desenlaces', [
+      ...desenlaces,
+      { nodo: itemEnEdicion.nodo_raiz, peso: 50 }
+    ]);
+  };
+
+  const handleUpdateDesenlace = (optIdx, dIdx, campo, valor) => {
+    if (!nodoActual || !nodoActual.opciones) return;
+    const opt = nodoActual.opciones[optIdx];
+    const desenlaces = [...(opt.desenlaces || [])];
+    desenlaces[dIdx] = { ...desenlaces[dIdx], [campo]: campo === 'peso' ? parseFloat(valor) || 0 : valor };
+    handleUpdateOpcion(optIdx, 'desenlaces', desenlaces);
+  };
+
+  const handleEliminarDesenlace = (optIdx, dIdx) => {
+    if (!nodoActual || !nodoActual.opciones) return;
+    const opt = nodoActual.opciones[optIdx];
+    const desenlaces = (opt.desenlaces || []).filter((_, i) => i !== dIdx);
+    handleUpdateOpcion(optIdx, 'desenlaces', desenlaces);
+  };
+
   // Impactos Recursos
   const handleAgregarImpactoRecurso = () => {
     if (!nodoActual) return;
@@ -428,6 +490,25 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
     handleUpdateNodoActual('impactos_afinidad', nuevos);
   };
 
+  // Impactos Tags (pasivas/llaves de contenido)
+  const handleAgregarImpactoTag = () => {
+    if (!nodoActual) return;
+    handleUpdateNodoActual('impactos_tags', [...(nodoActual.impactos_tags || []), 'nuevo_tag']);
+  };
+
+  const handleUpdateImpactoTag = (idx, valor) => {
+    if (!nodoActual) return;
+    const nuevos = [...(nodoActual.impactos_tags || [])];
+    nuevos[idx] = valor;
+    handleUpdateNodoActual('impactos_tags', nuevos);
+  };
+
+  const handleEliminarImpactoTag = (idx) => {
+    if (!nodoActual) return;
+    const nuevos = (nodoActual.impactos_tags || []).filter((_, i) => i !== idx);
+    handleUpdateNodoActual('impactos_tags', nuevos);
+  };
+
   // Simulador
   const iniciarSimulacion = () => {
     if (!itemEnEdicion) return;
@@ -445,8 +526,21 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
         opcionElegida: opt.texto
       }
     ]);
-    if (itemEnEdicion?.nodos?.[opt.siguiente_nodo]) {
-      setNodoSimulacionId(opt.siguiente_nodo);
+    let destino = opt.siguiente_nodo;
+    if (Array.isArray(opt.desenlaces) && opt.desenlaces.length > 0) {
+      const total = opt.desenlaces.reduce((acc, d) => acc + (Number(d.peso) || 0), 0);
+      let r = Math.random() * (total || 1);
+      for (const d of opt.desenlaces) {
+        r -= Number(d.peso) || 0;
+        if (r <= 0) {
+          destino = d.nodo;
+          break;
+        }
+      }
+      if (!destino && opt.desenlaces.length > 0) destino = opt.desenlaces[0].nodo;
+    }
+    if (itemEnEdicion?.nodos?.[destino]) {
+      setNodoSimulacionId(destino);
     }
   };
 
@@ -458,6 +552,12 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
   const conversacionesFiltradas = listaConversaciones.filter((c) =>
     (c.titulo || '').toLowerCase().includes(busqueda.toLowerCase()) ||
     (c._id || c.id || '').toLowerCase().includes(busqueda.toLowerCase())
+  );
+
+  const especialesFiltrados = listaEspeciales.filter((e) =>
+    (e.titulo || '').toLowerCase().includes(busqueda.toLowerCase()) ||
+    (e._id || e.id || '').toLowerCase().includes(busqueda.toLowerCase()) ||
+    (e.personaje_id || '').toLowerCase().includes(busqueda.toLowerCase())
   );
 
   return (
@@ -505,6 +605,18 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                 <SparklesIcon size={14} />
                 <span>Conversaciones de Corte ({listaConversaciones.length})</span>
               </button>
+              <button
+                type="button"
+                onClick={() => setSubTab('especiales')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                  subTab === 'especiales'
+                    ? 'bg-[#002B5E] text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                <CheckIcon size={14} />
+                <span>Eventos de Afinidad ({listaEspeciales.length})</span>
+              </button>
             </div>
 
             <div className="flex items-center gap-3">
@@ -530,11 +642,11 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
 
               <button
                 type="button"
-                onClick={() => handleNuevoItem(subTab === 'eventos' ? 'evento' : 'conversacion')}
+                onClick={() => handleNuevoItem(subTab === 'eventos' ? 'evento' : subTab === 'especiales' ? 'evento_especial' : 'conversacion')}
                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#002B5E] hover:bg-slate-900 text-white font-bold text-xs transition shadow-xs cursor-pointer"
               >
                 <PlusIcon size={15} />
-                <span>{subTab === 'eventos' ? 'Nuevo Evento V2' : 'Nueva Conversación V2'}</span>
+                <span>{subTab === 'eventos' ? 'Nuevo Evento V2' : subTab === 'especiales' ? 'Nuevo Evento de Afinidad' : 'Nueva Conversación V2'}</span>
               </button>
             </div>
           </div>
@@ -606,6 +718,70 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                         <button
                           type="button"
                           onClick={() => handleEliminarItem(id, 'evento')}
+                          className="p-1.5 rounded-xl border border-slate-200 hover:bg-rose-50 hover:text-rose-600 text-slate-400 transition cursor-pointer"
+                          title="Eliminar"
+                        >
+                          <TrashIcon size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )
+          ) : subTab === 'especiales' ? (
+            especialesFiltrados.length === 0 ? (
+              <div className="py-12 text-center text-slate-400 text-xs font-semibold">
+                No se encontraron eventos de afinidad (lealtad/traición).
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {especialesFiltrados.map((esp) => {
+                  const id = esp._id || esp.id;
+                  const numNodos = Object.keys(esp.nodos || {}).length;
+                  const pjInfo = personajes.find((p) => (p._id || p.id) === esp.personaje_id);
+                  const esLealtad = esp.direccion === 'lealtad';
+                  return (
+                    <div
+                      key={id}
+                      className="p-4 rounded-2xl border border-slate-200 bg-slate-50/50 hover:bg-white hover:border-[#002B5E]/40 hover:shadow-sm transition flex flex-col justify-between"
+                    >
+                      <div>
+                        <div className="flex items-center justify-between gap-2 mb-2">
+                          <span className="text-[10px] font-mono px-2 py-0.5 bg-slate-200/70 text-slate-700 rounded font-bold">
+                            {id}
+                          </span>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${esLealtad ? 'text-emerald-700 bg-emerald-50 border border-emerald-200' : 'text-rose-700 bg-rose-50 border border-rose-200'}`}>
+                            <GitBranchIcon size={11} />
+                            {esLealtad ? 'Lealtad ≥95' : 'Traición <15'} · {numNodos} nodos
+                          </span>
+                        </div>
+                        <h4 className="text-sm font-black text-slate-900 mb-1">{esp.titulo}</h4>
+                        <p className="text-xs text-slate-500 line-clamp-2">
+                          {esp.nodos?.[esp.nodo_raiz]?.texto || 'Sin texto inicial'}
+                        </p>
+                        <div className="mt-3 pt-2 border-t border-slate-200/60">
+                          <span className="text-[10px] text-slate-400 block mb-1 font-semibold">
+                            Disparado por afinidad de:
+                          </span>
+                          <span className="text-[10px] px-1.5 py-0.5 bg-purple-50 text-purple-700 border border-purple-200 rounded font-bold">
+                            {pjInfo?.nombre || esp.personaje_id}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 pt-3 border-t border-slate-200/60 flex items-center justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleEditarItem(esp, 'evento_especial')}
+                          className="px-3 py-1 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-xs font-bold text-slate-700 transition flex items-center gap-1 cursor-pointer"
+                        >
+                          <EditIcon size={13} />
+                          <span>Editar Nodos</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleEliminarItem(id, 'evento_especial')}
                           className="p-1.5 rounded-xl border border-slate-200 hover:bg-rose-50 hover:text-rose-600 text-slate-400 transition cursor-pointer"
                           title="Eliminar"
                         >
@@ -864,36 +1040,77 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                         </select>
                       </div>
 
-                      <div>
-                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
-                          Tags Temáticos (Sinergias con Corte y Cartas)
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="militar, diplomacia, iglesia, peste..."
-                          value={(itemEnEdicion?.tags_tematicos || []).join(', ')}
-                          onChange={(e) => {
-                            const arr = e.target.value.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
-                            setItemEnEdicion((prev) => ({ ...prev, tags_tematicos: arr }));
-                          }}
-                          className="w-full text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:border-[#002B5E]"
-                        />
-                      </div>
+                      {tipoEdicion === 'evento_especial' && (
+                        <>
+                          <div>
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
+                              Personaje de Corte
+                            </label>
+                            <select
+                              value={itemEnEdicion?.personaje_id || ''}
+                              onChange={(e) => setItemEnEdicion((prev) => ({ ...prev, personaje_id: e.target.value }))}
+                              className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 font-bold focus:outline-none focus:border-[#002B5E]"
+                            >
+                              <option value="" disabled>Seleccionar personaje…</option>
+                              {personajes.map((p) => {
+                                const pid = p._id || p.id;
+                                return (
+                                  <option key={pid} value={pid}>{p.nombre}</option>
+                                );
+                              })}
+                            </select>
+                          </div>
 
-                      <div>
-                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
-                          Peso Base de Sorteo
-                        </label>
-                        <input
-                          type="number"
-                          value={itemEnEdicion?.peso_base ?? 100}
-                          onChange={(e) => {
-                            const val = parseFloat(e.target.value) || 100;
-                            setItemEnEdicion((prev) => ({ ...prev, peso_base: val }));
-                          }}
-                          className="w-full text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:border-[#002B5E]"
-                        />
-                      </div>
+                          <div>
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
+                              Dirección (Umbral)
+                            </label>
+                            <select
+                              value={itemEnEdicion?.direccion || 'lealtad'}
+                              onChange={(e) => setItemEnEdicion((prev) => ({ ...prev, direccion: e.target.value }))}
+                              className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 font-bold focus:outline-none focus:border-[#002B5E]"
+                            >
+                              <option value="lealtad">Lealtad (afinidad ≥ 95)</option>
+                              <option value="traicion">Traición (afinidad &lt; 15)</option>
+                            </select>
+                          </div>
+                        </>
+                      )}
+
+                      {tipoEdicion !== 'evento_especial' && (
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
+                            Tags Temáticos (Sinergias con Corte y Cartas)
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="militar, diplomacia, iglesia, peste..."
+                            value={(itemEnEdicion?.tags_tematicos || []).join(', ')}
+                            onChange={(e) => {
+                              const arr = e.target.value.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+                              setItemEnEdicion((prev) => ({ ...prev, tags_tematicos: arr }));
+                            }}
+                            className="w-full text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:border-[#002B5E]"
+                          />
+                        </div>
+                      )}
+
+                      {tipoEdicion !== 'evento_especial' && (
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
+                            Peso Base de Sorteo
+                          </label>
+                          <input
+                            type="number"
+                            value={itemEnEdicion?.peso_base ?? 100}
+                            onChange={(e) => {
+                              const val = parseFloat(e.target.value) || 100;
+                              setItemEnEdicion((prev) => ({ ...prev, peso_base: val }));
+                            }}
+                            className="w-full text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:border-[#002B5E]"
+                          />
+                        </div>
+                      )}
 
                       {tipoEdicion === 'evento' && (
                         <div>
@@ -913,35 +1130,37 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                         </div>
                       )}
 
-                      <div>
-                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
-                          Consejeros Requeridos en Corte
-                        </label>
-                        <div className="space-y-1.5 max-h-36 overflow-y-auto bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-                          {personajes.map((p) => {
-                            const pid = p._id || p.id;
-                            const campoReq = tipoEdicion === 'evento' ? 'requisitos_personajes' : 'requisitos';
-                            const marcado = (itemEnEdicion?.[campoReq] || []).includes(pid);
-                            return (
-                              <label key={pid} className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
-                                <input
-                                  type="checkbox"
-                                  checked={marcado}
-                                  onChange={(e) => {
-                                    const actuales = itemEnEdicion?.[campoReq] || [];
-                                    const nuevos = e.target.checked
-                                      ? [...actuales, pid]
-                                      : actuales.filter((x) => x !== pid);
-                                    setItemEnEdicion((prev) => ({ ...prev, [campoReq]: nuevos }));
-                                  }}
-                                  className="rounded text-[#002B5E] focus:ring-0"
-                                />
-                                <span>{p.nombre}</span>
-                              </label>
-                            );
-                          })}
+                      {tipoEdicion !== 'evento_especial' && (
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
+                            Consejeros Requeridos en Corte
+                          </label>
+                          <div className="space-y-1.5 max-h-36 overflow-y-auto bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                            {personajes.map((p) => {
+                              const pid = p._id || p.id;
+                              const campoReq = tipoEdicion === 'evento' ? 'requisitos_personajes' : 'requisitos';
+                              const marcado = (itemEnEdicion?.[campoReq] || []).includes(pid);
+                              return (
+                                <label key={pid} className="flex items-center gap-2 text-xs text-slate-700 cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={marcado}
+                                    onChange={(e) => {
+                                      const actuales = itemEnEdicion?.[campoReq] || [];
+                                      const nuevos = e.target.checked
+                                        ? [...actuales, pid]
+                                        : actuales.filter((x) => x !== pid);
+                                      setItemEnEdicion((prev) => ({ ...prev, [campoReq]: nuevos }));
+                                    }}
+                                    className="rounded text-[#002B5E] focus:ring-0"
+                                  />
+                                  <span>{p.nombre}</span>
+                                </label>
+                              );
+                            })}
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </div>
                   ) : nodoActual ? (
                     /* Configuración del Nodo Seleccionado */
@@ -1023,6 +1242,16 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                           className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:border-[#002B5E]"
                         />
                       </div>
+
+                      {/* Imagen ilustrativa del nodo (opcional) */}
+                      <ImageUploadField
+                        label="Imagen del nodo (opcional)"
+                        categoria={tipoEdicion === 'evento' ? 'eventos' : 'conversaciones'}
+                        value={nodoActual.imagen || ''}
+                        onChange={(url) => handleUpdateNodoActual('imagen', url || null)}
+                        helperText="Sin imagen por defecto; solo se devuelve si cargás una."
+                        nullable
+                      />
 
                       {/* Naturaleza: Opciones vs Final */}
                       <div>
@@ -1109,6 +1338,58 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                                       </option>
                                     ))}
                                   </select>
+                                </div>
+
+                                {/* Desenlaces ponderados (azar) */}
+                                <div className="pt-2 border-t border-slate-200/60 mt-1.5 space-y-1.5">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-[9px] text-slate-500 font-bold flex items-center gap-1">
+                                      <GitBranchIcon size={10} />
+                                      <span>Desenlaces al azar ({opt.desenlaces?.length || 0})</span>
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleAgregarDesenlace(idx)}
+                                      className="text-[10px] text-[#002B5E] hover:underline font-bold"
+                                    >
+                                      + Desenlace
+                                    </button>
+                                  </div>
+                                  {(opt.desenlaces || []).length > 0 && (
+                                    <span className="text-[9px] text-amber-600 font-semibold block">
+                                      Si hay desenlaces, reemplazan al destino fijo "Salta a".
+                                    </span>
+                                  )}
+                                  {(opt.desenlaces || []).map((d, dIdx) => (
+                                    <div key={dIdx} className="flex items-center gap-1.5">
+                                      <select
+                                        value={d.nodo || ''}
+                                        onChange={(e) => handleUpdateDesenlace(idx, dIdx, 'nodo', e.target.value)}
+                                        className="flex-1 text-xs bg-white border border-slate-200 rounded px-1.5 py-0.5 font-mono font-bold text-slate-800"
+                                      >
+                                        {Object.keys(itemEnEdicion?.nodos || {}).map((targetId) => (
+                                          <option key={targetId} value={targetId}>
+                                            {targetId} {itemEnEdicion.nodos[targetId]?.es_final ? '(🏁)' : ''}
+                                          </option>
+                                        ))}
+                                      </select>
+                                      <input
+                                        type="number"
+                                        value={d.peso ?? 50}
+                                        onChange={(e) => handleUpdateDesenlace(idx, dIdx, 'peso', e.target.value)}
+                                        placeholder="peso"
+                                        className="w-14 text-xs bg-white border border-slate-200 rounded px-1 py-0.5 font-mono text-center font-bold"
+                                        title="Peso relativo (ej. 40 y 60)"
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={() => handleEliminarDesenlace(idx, dIdx)}
+                                        className="text-slate-400 hover:text-rose-600 transition cursor-pointer"
+                                      >
+                                        <TrashIcon size={12} />
+                                      </button>
+                                    </div>
+                                  ))}
                                 </div>
 
                                 {/* Condiciones de Desbloqueo */}
@@ -1276,7 +1557,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                           <div className="text-[10px] text-slate-600 bg-emerald-50/60 p-2.5 rounded-xl border border-emerald-200 flex items-center justify-between">
                             <span>Impactos configurados:</span>
                             <span className="font-bold text-emerald-800 font-mono">
-                              {nodoActual.impactos_recursos?.length || 0} recursos / {nodoActual.impactos_afinidad?.length || 0} afinidad
+                              {nodoActual.impactos_recursos?.length || 0} recursos / {nodoActual.impactos_afinidad?.length || 0} afinidad / {nodoActual.impactos_tags?.length || 0} tags
                             </span>
                           </div>
                         </div>
@@ -1609,6 +1890,15 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                     />
                   </div>
 
+                  <ImageUploadField
+                    label="Imagen del nodo (opcional)"
+                    categoria={tipoEdicion === 'evento' ? 'eventos' : 'conversaciones'}
+                    value={nodoActual.imagen || ''}
+                    onChange={(url) => handleUpdateNodoActual('imagen', url || null)}
+                    helperText="Sin imagen por defecto; solo se devuelve si cargás una."
+                    nullable
+                  />
+
                   {!nodoActual.es_final ? (
                     /* OPCIONES */
                     <div className="space-y-3 pt-2">
@@ -1677,6 +1967,62 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                               >
                                 <TrashIcon size={14} />
                               </button>
+                            </div>
+
+                            {/* Desenlaces ponderados en Formulario */}
+                            <div className="pt-2 border-t border-slate-200/60 space-y-1.5">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs font-bold text-slate-600 flex items-center gap-1.5">
+                                  <GitBranchIcon size={12} />
+                                  <span>Desenlaces al azar ({opt.desenlaces?.length || 0})</span>
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleAgregarDesenlace(idx)}
+                                  className="text-xs text-[#002B5E] hover:underline font-bold flex items-center gap-1 cursor-pointer"
+                                >
+                                  <PlusIcon size={12} />
+                                  <span>Agregar Desenlace</span>
+                                </button>
+                              </div>
+                              {(opt.desenlaces || []).length > 0 && (
+                                <span className="text-[10px] text-amber-600 font-semibold block">
+                                  Si hay desenlaces, reemplazan al destino fijo "Salta al Nodo".
+                                </span>
+                              )}
+                              {(opt.desenlaces || []).map((d, dIdx) => (
+                                <div key={dIdx} className="flex items-center gap-2">
+                                  <select
+                                    value={d.nodo || ''}
+                                    onChange={(e) => handleUpdateDesenlace(idx, dIdx, 'nodo', e.target.value)}
+                                    className="flex-1 text-xs bg-white border border-slate-200 rounded-lg px-2 py-1 text-slate-800 font-mono font-bold"
+                                  >
+                                    {Object.keys(itemEnEdicion?.nodos || {}).map((targetId) => (
+                                      <option key={targetId} value={targetId}>
+                                        {targetId} {itemEnEdicion.nodos[targetId]?.es_final ? '(🏁 Final)' : ''}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  <div className="w-28 flex items-center gap-1">
+                                    <input
+                                      type="number"
+                                      value={d.peso ?? 50}
+                                      onChange={(e) => handleUpdateDesenlace(idx, dIdx, 'peso', e.target.value)}
+                                      placeholder="peso"
+                                      className="w-full text-xs bg-white border border-slate-200 rounded-lg px-2 py-1 text-slate-800 font-mono text-center font-bold"
+                                      title="Peso relativo (ej. 40 y 60)"
+                                    />
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleEliminarDesenlace(idx, dIdx)}
+                                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                                    title="Eliminar desenlace"
+                                  >
+                                    <TrashIcon size={14} />
+                                  </button>
+                                </div>
+                              ))}
                             </div>
 
                             {/* Condiciones de Desbloqueo en Formulario */}
@@ -1942,6 +2288,47 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                           ))}
                         </div>
                       </div>
+
+                      {/* Impactos Tags (pasivas/llaves de contenido) */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                            Tags Permanentes Otorgados (pasivas / llaves de contenido)
+                          </span>
+                          <button
+                            type="button"
+                            onClick={handleAgregarImpactoTag}
+                            className="text-xs text-amber-700 hover:underline font-bold flex items-center gap-1 cursor-pointer"
+                          >
+                            <PlusIcon size={13} />
+                            <span>Agregar Tag</span>
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {(nodoActual.impactos_tags || []).map((tag, idx) => (
+                            <div
+                              key={idx}
+                              className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center gap-2"
+                            >
+                              <input
+                                type="text"
+                                value={tag}
+                                onChange={(e) => handleUpdateImpactoTag(idx, e.target.value)}
+                                placeholder="ej: favor_baron"
+                                className="flex-1 text-xs font-mono bg-white border border-slate-200 rounded px-2 py-1 text-slate-800"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleEliminarImpactoTag(idx)}
+                                className="p-1 text-slate-400 hover:text-rose-600 transition cursor-pointer"
+                              >
+                                <TrashIcon size={13} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   )}
                 </>
@@ -2027,7 +2414,9 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                         >
                           <span>{opt.texto}</span>
                           <span className="text-[10px] font-mono opacity-60 flex items-center gap-1">
-                            → {opt.siguiente_nodo}
+                            {Array.isArray(opt.desenlaces) && opt.desenlaces.length > 0
+                              ? `🎲 ${opt.desenlaces.map((d) => d.nodo).join(' / ')}`
+                              : `→ ${opt.siguiente_nodo}`}
                           </span>
                         </button>
                       ))}
