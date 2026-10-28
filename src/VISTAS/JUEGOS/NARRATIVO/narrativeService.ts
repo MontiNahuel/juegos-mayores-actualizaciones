@@ -41,8 +41,40 @@ export interface EventoApi {
   titulo: string;
   descripcion: string;
   imagen: string;
-  opciones: { id: string; texto: string; bloqueada: boolean }[];
+  opciones: { id: string; texto: string; bloqueada: boolean; es_secreta?: boolean; secreto?: string; condiciones?: any[] }[];
 }
+
+// El endpoint de turno omite las condiciones; se consultan en la definición del evento.
+let catalogoEventos: Promise<any[]> | null = null;
+export const obtenerDefinicionEvento = async (id: string) => {
+  catalogoEventos ||= (async () => {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API}/admin/eventos?limit=500`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!response.ok) throw new Error(`No se pudieron cargar las condiciones del evento (${response.status}).`);
+    return response.json();
+  })();
+  const eventos = await catalogoEventos;
+  return eventos.find((evento: any) => evento._id === id || evento.id === id) || null;
+};
+
+// Guarda en el evento local las condiciones de su opcion secreta.
+export const agregarCondicionesSecretas = async (evento: EventoApi): Promise<EventoApi> => {
+  try {
+    const definicion = await obtenerDefinicionEvento(evento.id);
+    return {
+      ...evento,
+      opciones: evento.opciones.map(opcion => ({
+        ...opcion,
+        es_secreta: opcion.es_secreta ?? definicion?.opciones?.find((x: any) => x.id === opcion.id)?.es_secreta,
+        condiciones: definicion?.opciones?.find((x: any) => x.id === opcion.id)?.condiciones || [],
+      })),
+    };
+  } catch {
+    return evento;
+  }
+};
 
 export interface ResultadoApi {
   titulo: string;
@@ -89,12 +121,62 @@ export interface EstadoPartida {
   finalizacion?: FinalizacionApi | null;
 }
 
+export interface HistorialMesApi {
+  mes: number;
+  carta_elegida_id?: string | null;
+  evento_id?: string | null;
+  opcion_elegida_id?: string | null;
+  resultado_id?: string | null;
+  conversacion_id?: string | null;
+  decision_conversacion_opcion?: number | null;
+  recursos_fin_mes?: Record<string, number>;
+  resultado?: string; // Titulo disponible en la partida local.
+  resultado_texto?: string;
+  evento_titulo?: string;
+  opcion_texto?: string;
+  conversacion_titulo?: string;
+  decision_texto?: string;
+  decision_resultado_texto?: string;
+  impacto_afinidad?: { personaje_id: string; delta: number }[];
+}
+
+export interface HistorialPartidaApi {
+  historial_mensual: HistorialMesApi[];
+  mes_actual?: number;
+  status?: string;
+  modo_local?: boolean;
+}
+
+export interface EntradaCatalogoCronica {
+  _id?: string;
+  id?: string;
+  nombre?: string;
+  titulo?: string;
+  texto?: string;
+  opciones?: { id: string; texto: string }[];
+  decisiones?: {
+    opcion: number;
+    texto: string;
+    resultado_texto?: string;
+    impacto_afinidad?: { personaje_id: string; delta: number }[];
+  }[];
+}
+
+export interface CatalogosCronica {
+  cartas: EntradaCatalogoCronica[];
+  eventos: EntradaCatalogoCronica[];
+  resultados: EntradaCatalogoCronica[];
+  conversaciones: EntradaCatalogoCronica[];
+}
+
 export interface SetupPartida {
   date: string;
   universo_id: string;
   atributos_iniciales: Record<string, number>;
   personajes_ofrecidos: PersonajeApi[];
   cartas_ofrecidas: CartaApi[];
+  // Resumen opcional usado solo por la muestra inicial del ciclo.
+  eventos_del_dia?: { titulo?: string; nombre?: string; descripcion?: string; categoria_evento?: string; categoria?: string; tono?: 'positivo' | 'negativo' | 'neutro' }[];
   universo_nombre: string;
   tiene_partida_activa: boolean;
 }
@@ -150,7 +232,36 @@ export const obtenerSetup = (date: string) => request<SetupPartida>(`/partida/se
 export const obtenerEstadoPartida = (date: string) => request<EstadoPartida>(`/v2/partida/estado?date=${date}`);
 
 // Lee el historial mensual solo al abrir las estadisticas finales.
-export const obtenerHistorialPartida = (date: string) => request<any>(`/partida/historial?date=${date}`);
+export const obtenerHistorialPartida = (date: string) => request<HistorialPartidaApi>(`/partida/historial?date=${date}`);
+
+// Resuelve los IDs de la bitácora con los catálogos del mismo universo. Si un
+// catálogo no está disponible, los balances y las demás entradas siguen visibles.
+export const obtenerCatalogosCronica = async (date: string, universoId?: string): Promise<CatalogosCronica> => {
+  const vacios: CatalogosCronica = { cartas: [], eventos: [], resultados: [], conversaciones: [] };
+  if (esPartidaNarrativaLocal(date)) return vacios;
+  const token = localStorage.getItem('token');
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), ESPERA_SERVIDOR_MS);
+  const nombres = Object.keys(vacios) as (keyof CatalogosCronica)[];
+  const consultas = nombres.map(async nombre => {
+    const parametros = new URLSearchParams({ limit: '500' });
+    if (universoId) parametros.set('universo_id', universoId);
+    const respuesta = await fetch(`${API}/admin/${nombre}?${parametros}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      signal: controller.signal,
+    });
+    if (!respuesta.ok) throw new Error(`No se pudo consultar ${nombre}.`);
+    return respuesta.json() as Promise<EntradaCatalogoCronica[]>;
+  });
+  try {
+    const resultados = await Promise.allSettled(consultas);
+    return Object.fromEntries(nombres.map((nombre, indice) => [
+      nombre, resultados[indice].status === 'fulfilled' ? resultados[indice].value : [],
+    ])) as unknown as CatalogosCronica;
+  } finally {
+    clearTimeout(timeout);
+  }
+};
 
 // Lee las cartas y tags que quedaron en la partida terminada.
 export const obtenerInventarioPartida = (date: string) => request<any>(`/partida/inventario?date=${date}`);

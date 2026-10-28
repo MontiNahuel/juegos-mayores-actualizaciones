@@ -1,5 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { adaptarValorNegativo } from '../config/adaptacionEdad';
+import { FONDO_CORTE_DEFAULT, GUARDIAS_CORTE, MANOS_CORTE, ORO_CORTE, cantidadManosPorPueblo, cantidadPorTramo, type EstadoFondoCorte } from '../config/fondoCorte';
 
 const initialState: any = {
   jugador: {
@@ -9,6 +10,7 @@ const initialState: any = {
     corte_activa: [],
     afinidad: {},
     cartas_en_mano: [],
+    carta_mes_actual: null,
     tags_activos: [],
     mes_actual: 1,
     fase_actual: 'seleccionar_corte',
@@ -26,9 +28,23 @@ const initialState: any = {
   resultadoActual: null,
   conversacionActual: null,
   finalizacion: null,
+  fondoBase: { src: FONDO_CORTE_DEFAULT, personajes: [], oro: [], manos: [] },
 };
 
 const limitar = (valor: any) => Math.max(0, Math.min(100, valor));
+// Comparte umbrales y conserva cada capa de Redux hasta que cambie de tramo.
+const componerFondoBase = (fondo: EstadoFondoCorte, recursos: { ejercito?: number; oro?: number; pueblo?: number }) => {
+  const guardias = cantidadPorTramo(Number(recursos.ejercito));
+  const oro = cantidadPorTramo(Number(recursos.oro));
+  const valorPueblo = Number(recursos.pueblo);
+  const manos = Number.isFinite(valorPueblo) ? cantidadManosPorPueblo(valorPueblo) : fondo.manos.length;
+  if (guardias !== null && guardias !== fondo.personajes.length)
+    fondo.personajes = GUARDIAS_CORTE.slice(0, guardias).map(elemento => ({ ...elemento }));
+  if (oro !== null && oro !== fondo.oro.length)
+    fondo.oro = ORO_CORTE.slice(0, oro).map(elemento => ({ ...elemento }));
+  if (manos !== fondo.manos.length)
+    fondo.manos = MANOS_CORTE.slice(0, manos).map(elemento => ({ ...elemento }));
+};
 
 // Comprueba si un efecto puede aplicarse con los recursos actuales.
 const cumpleCondiciones = (condiciones: any[] = [], recursos: any) =>
@@ -95,6 +111,8 @@ const narrativoSelectionSlice = createSlice({
       state.resultadoActual = null;
       state.conversacionActual = null;
       state.finalizacion = null;
+      state.fondoBase = { ...initialState.fondoBase };
+      componerFondoBase(state.fondoBase, state.jugador.recursos);
     },
 
     // Actualiza la adaptacion sin reiniciar la partida en curso.
@@ -134,6 +152,7 @@ const narrativoSelectionSlice = createSlice({
     // Agrega la carta elegida al inventario local antes de pedir el evento.
     elegirCarta: (state, action: { payload: any }) => {
       state.jugador.cartas_en_mano.push(action.payload);
+      state.jugador.carta_mes_actual = action.payload.id || action.payload._id;
       aplicarEfectosAlObtener(state.jugador, [action.payload]);
       state.cartasDraft = [];
       state.jugador.fase_actual = 'decidir_evento';
@@ -146,11 +165,16 @@ const narrativoSelectionSlice = createSlice({
       state.jugador.fase_actual = 'decidir_evento';
     },
 
+    // Conserva el fondo base y su decoración entre pantallas, incluido el resultado.
+    actualizarFondoBase: (state, action: { payload: { ejercito?: number; oro?: number; pueblo?: number } }) => {
+      componerFondoBase(state.fondoBase, action.payload);
+    },
+
     // Registra la opcion del evento antes de solicitar su resultado.
     registrarDecisionEvento: (state, action: { payload: any }) => {
-      const { evento_id, opcion_id } = action.payload;
+      const { evento_id, opcion_id, evento_titulo, opcion_texto } = action.payload;
       state.jugador.eventos_jugados.push(evento_id);
-      state.jugador.ultima_accion = { tipo: 'decidir_evento', id: opcion_id };
+      state.jugador.ultima_accion = { tipo: 'decidir_evento', id: opcion_id, evento_titulo, opcion_texto };
     },
 
     // Aplica localmente los cambios del resultado sin reemplazar todo el jugador.
@@ -168,6 +192,13 @@ const narrativoSelectionSlice = createSlice({
       state.jugador.historial_mensual.push({
         mes: state.jugador.mes_actual,
         resultado: resultado?.titulo || 'Resultado',
+        evento_id: state.jugador.eventos_jugados.at(-1) || null,
+        opcion_elegida_id: state.jugador.ultima_accion?.tipo === 'decidir_evento' ? state.jugador.ultima_accion.id : null,
+        evento_titulo: state.jugador.ultima_accion?.evento_titulo,
+        opcion_texto: state.jugador.ultima_accion?.opcion_texto,
+        carta_elegida_id: state.jugador.carta_mes_actual,
+        recursos_fin_mes: { ...state.jugador.recursos },
+        resultado_texto: resultado?.texto,
       });
     },
 
@@ -185,9 +216,19 @@ const narrativoSelectionSlice = createSlice({
     // Aplica la afinidad de la decision y marca la conversacion como usada.
     resolverConversacion: (state, action: { payload: any }) => {
       const { conversacionId, decision } = action.payload;
+      const conversacionTitulo = state.conversacionActual?.titulo;
       state.conversacionActual = null;
       state.jugador.conversaciones_jugadas.push(conversacionId);
       state.jugador.ultima_accion = { tipo: 'responder_conversacion', id: decision.opcion };
+      const registroMes = state.jugador.historial_mensual.at(-1);
+      if (registroMes?.mes === state.jugador.mes_actual) {
+        registroMes.conversacion_id = conversacionId;
+        registroMes.decision_conversacion_opcion = decision.opcion;
+        registroMes.conversacion_titulo = conversacionTitulo;
+        registroMes.decision_texto = decision.texto;
+        registroMes.decision_resultado_texto = decision.resultado_texto;
+        registroMes.impacto_afinidad = decision.impacto_afinidad;
+      }
 
       decision.impacto_afinidad?.forEach(({ personaje_id, delta }: any) => {
         const actual = state.jugador.afinidad[personaje_id] || 50;
@@ -198,6 +239,7 @@ const narrativoSelectionSlice = createSlice({
     // Avanza el estado local y deja listas las cartas del proximo mes.
     avanzarMes: (state) => {
       state.jugador.mes_actual += 1;
+      state.jugador.carta_mes_actual = null;
       state.jugador.fase_actual = 'draft_mensual';
       state.jugador.ultima_accion = 'avanzar_mes';
     },
@@ -222,6 +264,7 @@ export const {
   guardarCartasDraft,
   elegirCarta,
   mostrarEvento,
+  actualizarFondoBase,
   registrarDecisionEvento,
   guardarResultado,
   limpiarResultado,

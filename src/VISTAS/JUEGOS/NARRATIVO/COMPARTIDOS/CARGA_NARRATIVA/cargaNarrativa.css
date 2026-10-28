@@ -1,0 +1,18 @@
+/* La carga sólo mueve el caballo y la barra; el fondo permanece montado al entrar al juego. */
+.carga-narrativa { transition: opacity 650ms ease, backdrop-filter 650ms ease; }
+.carga-narrativa--lista { opacity: 0; backdrop-filter: blur(0); pointer-events: none; }
+.carga-narrativa__caballo {
+  filter: brightness(0) invert(1) sepia(1) saturate(1.8) drop-shadow(0 4px 5px #0008);
+  -webkit-filter: brightness(0) invert(1) sepia(1) saturate(1.8) drop-shadow(0 4px 5px #0008);
+  transform-origin: 50% 90%;
+  will-change: transform;
+}
+.carga-narrativa__caballo--trotando { animation: caballo-trote 560ms ease-in-out infinite; }
+@keyframes caballo-trote {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50% { transform: translateY(-5px) rotate(3deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .carga-narrativa { transition: none; }
+  .carga-narrativa__caballo--trotando { animation: none; }
+}

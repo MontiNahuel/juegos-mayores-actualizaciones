@@ -41,9 +41,9 @@ export default function SeleccionarCartasEtapa0y1({ titulo, descripcion, cartas,
   };
 
   return (
-    <section className="seleccion-cartas" style={{ '--columnas': Math.max(1, Math.min(cartas.length, 6)) } as CSSProperties}>
-      <header className="seleccion-cartas__cabecera">
-      <h2 className="text-2xl font-bold">
+    <section className="my-auto w-full text-center text-white max-md:my-0" style={{ '--columnas': Math.max(1, Math.min(cartas.length, 6)) } as CSSProperties}>
+      <header className="w-full text-center">
+      <h2 className="m-0 text-2xl font-bold max-md:text-base max-md:font-normal">
         {titulo}
       </h2>
 
@@ -51,12 +51,12 @@ export default function SeleccionarCartasEtapa0y1({ titulo, descripcion, cartas,
         {descripcion}
       </p>
 
-      <p className="seleccion-cartas__contador">
+      <p className="mt-1 mb-0 text-[13px] text-[#e1d8bb]">
         {seleccion.length} de {cantidad} seleccionados
       </p>
       </header>
 
-      <div ref={mazo} className="seleccion-cartas__mazo">
+      <div ref={mazo} className="mx-auto my-4 grid w-[clamp(150px,55vw,210px)] grid-cols-1 items-start justify-center gap-3 md:w-full md:[grid-template-columns:repeat(var(--columnas),minmax(0,1fr))] md:[max-width:min(100%,calc(var(--columnas)*min(220px,(100svh-240px)*2/3)))]">
         {cartas.map((carta: any) => {
           const selected = seleccion.some((item) => item.id === carta.id);
 
@@ -72,8 +72,9 @@ export default function SeleccionarCartasEtapa0y1({ titulo, descripcion, cartas,
         })}
       </div>
 
-      <div className="seleccion-cartas__acciones">
+      <div className="mx-auto w-[clamp(150px,55vw,210px)] text-center md:w-auto">
         <BotonNarrativo
+          className="max-md:w-full"
           disabled={confirmando || seleccion.length !== cantidad}
           onClick={guardar}
         >

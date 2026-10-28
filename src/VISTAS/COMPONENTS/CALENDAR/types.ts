@@ -56,14 +56,14 @@ export const DEFAULT_CALENDAR_THEME: CalendarTheme = {
   completedBorder: '#53BFC9',
   completedText: '#17695F',
   completedIconColor: '#17695F',
-  pendingBg: '#FFF1EE',
-  pendingBorder: '#FB923C',
-  pendingText: '#C2410C',
-  pendingIconColor: '#EA580C',
-  lockedBg: '#F8FAFC',
-  lockedBorder: '#F1F5F9',
-  lockedText: '#94A3B8',
-  lockedIconColor: '#CBD5E1',
+  pendingBg: '#FFF3F0',
+  pendingBorder: '#E88778',
+  pendingText: '#925044',
+  pendingIconColor: '#925044',
+  lockedBg: '#F4F6F9',
+  lockedBorder: '#DEE3EA',
+  lockedText: '#69778D',
+  lockedIconColor: '#69778D',
 };
 
 export interface DailyChallengeCalendarProps {

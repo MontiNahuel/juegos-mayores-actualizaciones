@@ -5,18 +5,36 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { qrcode } from 'vite-plugin-qrcode'
 import { defineConfig, loadEnv } from 'vite'
+import { createHash } from 'node:crypto'
+import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs'
+
+// Invalida la caché persistente al cambiar las ilustraciones, sin depender de recordar una versión manual.
+const revisionAssets = createHash('sha256')
+function incluirAssets(directorio: string) {
+  if (!existsSync(directorio)) return
+  for (const nombre of readdirSync(directorio).sort()) {
+    const archivo = `${directorio}/${nombre}`
+    if (statSync(archivo).isDirectory()) incluirAssets(archivo)
+    else revisionAssets.update(archivo).update(readFileSync(archivo))
+  }
+}
+incluirAssets('public/assets')
+incluirAssets('src/assets')
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  const backendUrl = env.VITE_BACKEND_URL || env.VITE_API_URL || 'http://localhost:8084'
+  const backendUrl = env.VITE_BACKEND_URL || env.VITE_API_URL || 'https://cognijuegos.asistodo.com.ar'
 
   return {
+    define: {
+      __ASSET_CACHE_REVISION__: JSON.stringify(revisionAssets.digest('hex').slice(0, 12)),
+    },
     plugins: [
       react(),
       tailwindcss(),
       legacy(),
-      qrcode()
+      qrcode(),
     ],
     server: {
       port: 5174,
@@ -45,6 +63,6 @@ export default defineConfig(({ mode }) => {
       globals: true,
       environment: 'jsdom',
       setupFiles: './src/setupTests.ts',
-    }
+    },
   }
 })

@@ -1,9 +1,10 @@
-import React from 'react';
+import type { CSSProperties } from 'react';
 import type { DayChallenge, CalendarTheme } from './types';
 import { CalendarCell } from './CalendarCell';
 import { IconCalendar, IconSpinner, IconChevronLeft, IconChevronRight } from './icons';
 
-const WEEKDAYS = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'];
+const WEEKDAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+const monthButton = 'inline-flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-md border border-[#DEE3EA] bg-[#F4F6F9] text-[var(--calendar-primary)] transition-colors hover:bg-[#DEE3EA] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#53BFC9] disabled:cursor-default disabled:opacity-35';
 
 interface CalendarGridProps {
   challenges: DayChallenge[];
@@ -19,251 +20,38 @@ interface CalendarGridProps {
   onCellClick: (item: DayChallenge) => void;
 }
 
-export const CalendarGrid: React.FC<CalendarGridProps> = ({
-  challenges,
-  loading,
-  year,
-  month,
-  monthName,
-  theme,
-  canGoPrev = false,
-  canGoNext = false,
-  onPrevMonth,
-  onNextMonth,
-  onCellClick,
-}) => {
-  // Cálculo del offset del primer día de la semana (LUN=0 .. DOM=6)
-  const firstDayOfMonth = new Date(year, month - 1, 1).getDay();
-  const emptyDaysOffset = (firstDayOfMonth + 6) % 7;
-  // Días vacíos al final para completar simétricamente la última fila (de 7 columnas)
-  const totalOccupiedSlots = emptyDaysOffset + challenges.length;
-  const trailingEmptyOffset = challenges.length > 0 ? (7 - (totalOccupiedSlots % 7)) % 7 : 0;
+export function CalendarGrid({ challenges, loading, year, month, monthName, theme, canGoPrev = false, canGoNext = false, onPrevMonth, onNextMonth, onCellClick }: CalendarGridProps) {
+  // Alinea el primer día con lunes y completa la última semana sin inventar fechas.
+  const leading = (new Date(year, month - 1, 1).getDay() + 6) % 7;
+  const trailing = challenges.length ? (7 - (leading + challenges.length) % 7) % 7 : 0;
 
-  return (
-    <div
-      className="calendar-shared-cal-card"
-      style={{
-        background: '#FFFFFF',
-        border: '1px solid #E2E8F0',
-        borderRadius: 20,
-        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.03)',
-        boxSizing: 'border-box',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 12,
-        padding: '16px 14px',
-        width: '100%',
-      }}
-    >
-      {/* Encabezado del Mes con Navegación Accesible [ ‹ ] Mes Año [ › ] */}
-      <div
-        style={{
-          alignItems: 'center',
-          borderBottom: '1px solid #F1F5F9',
-          display: 'flex',
-          justifyContent: 'space-between',
-          paddingBottom: 10,
-          width: '100%',
-        }}
-      >
-        {/* Botón Mes Anterior */}
-        <button
-          type="button"
-          onClick={onPrevMonth}
-          disabled={!canGoPrev}
-          aria-label="Ver mes anterior"
-          title={canGoPrev ? 'Ver mes anterior' : 'No hay meses anteriores disponibles'}
-          style={{
-            alignItems: 'center',
-            background: canGoPrev ? '#F8FAFC' : '#F1F5F9',
-            border: canGoPrev ? '1.5px solid #CBD5E1' : '1.5px solid #E2E8F0',
-            borderRadius: 14,
-            boxShadow: canGoPrev ? '0 1px 3px rgba(0, 0, 0, 0.05)' : 'none',
-            color: canGoPrev ? theme.primaryBlue : '#94A3B8',
-            cursor: canGoPrev ? 'pointer' : 'not-allowed',
-            display: 'inline-flex',
-            height: 44,
-            justifyContent: 'center',
-            minHeight: 44,
-            minWidth: 44,
-            opacity: canGoPrev ? 1 : 0.4,
-            outline: 'none',
-            padding: 0,
-            transition: 'all 0.15s ease',
-            width: 44,
-          }}
-        >
-          <IconChevronLeft size={22} color={canGoPrev ? theme.primaryBlue : '#94A3B8'} />
-        </button>
-
-        {/* Título Central del Mes y Año */}
-        <div
-          style={{
-            alignItems: 'center',
-            display: 'flex',
-            gap: 8,
-            justifyContent: 'center',
-          }}
-        >
-          <IconCalendar size={22} color={theme.primaryBlue} />
-          <h3
-            style={{
-              color: theme.primaryBlue,
-              fontSize: 18,
-              fontWeight: 900,
-              letterSpacing: '-0.01em',
-              margin: 0,
-            }}
-          >
-            {monthName} {year}
-          </h3>
-        </div>
-
-        {/* Botón Mes Siguiente */}
-        <button
-          type="button"
-          onClick={onNextMonth}
-          disabled={!canGoNext}
-          aria-label="Ver mes siguiente"
-          title={canGoNext ? 'Ver mes siguiente' : 'Mes actual (último disponible)'}
-          style={{
-            alignItems: 'center',
-            background: canGoNext ? '#F8FAFC' : '#F1F5F9',
-            border: canGoNext ? '1.5px solid #CBD5E1' : '1.5px solid #E2E8F0',
-            borderRadius: 14,
-            boxShadow: canGoNext ? '0 1px 3px rgba(0, 0, 0, 0.05)' : 'none',
-            color: canGoNext ? theme.primaryBlue : '#94A3B8',
-            cursor: canGoNext ? 'pointer' : 'not-allowed',
-            display: 'inline-flex',
-            height: 44,
-            justifyContent: 'center',
-            minHeight: 44,
-            minWidth: 44,
-            opacity: canGoNext ? 1 : 0.4,
-            outline: 'none',
-            padding: 0,
-            transition: 'all 0.15s ease',
-            width: 44,
-          }}
-        >
-          <IconChevronRight size={22} color={canGoNext ? theme.primaryBlue : '#94A3B8'} />
-        </button>
-      </div>
-
-      {/* Días de la semana (LUN a DOM) */}
-      <div
-        className="calendar-shared-cal-grid"
-        style={{
-          boxSizing: 'border-box',
-          display: 'grid',
-          gap: 5,
-          gridTemplateColumns: 'repeat(7, minmax(0, 1fr))',
-          textAlign: 'center',
-          width: '100%',
-        }}
-      >
-        {WEEKDAYS.map((wd) => (
-          <div
-            key={wd}
-            className="calendar-shared-cal-weekday"
-            style={{
-              boxSizing: 'border-box',
-              color: '#64748B',
-              fontSize: 11,
-              fontWeight: 800,
-              letterSpacing: '0.02em',
-              minWidth: 0,
-              overflow: 'hidden',
-              padding: '2px 0',
-            }}
-          >
-            {wd}
-          </div>
-        ))}
-      </div>
-
-      {/* Matriz de Días del Calendario (7 Columnas con inline style y responsive) */}
-      <div className="calendar-shared-cal-body">
-        {loading ? (
-          <div
-            style={{
-              alignItems: 'center',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 10,
-              minHeight: 222,
-              justifyContent: 'center',
-              padding: '24px 0',
-              width: '100%',
-            }}
-          >
-            <IconSpinner size={28} color={theme.primaryBlue} />
-            <span
-              style={{
-                color: '#64748B',
-                fontSize: 12,
-                fontWeight: 700,
-                letterSpacing: '0.02em',
-              }}
-            >
-              Cargando desafíos...
-            </span>
-          </div>
-        ) : (
-          <div
-            className="calendar-shared-cal-grid"
-            style={{
-              boxSizing: 'border-box',
-              display: 'grid',
-              gap: 5,
-              gridTemplateColumns: 'repeat(7, minmax(0, 1fr))',
-              width: '100%',
-            }}
-          >
-            {/* Espacios vacíos antes del día 1 */}
-            {Array.from({ length: emptyDaysOffset }).map((_, i) => (
-              <div
-                key={`empty-leading-${i}`}
-                className="calendar-shared-cal-cell-empty"
-                style={{
-                  background: 'transparent',
-                  border: '1px solid transparent',
-                  borderRadius: 12,
-                  boxSizing: 'border-box',
-                  minHeight: 56,
-                  minWidth: 0,
-                }}
-              />
-            ))}
-
-            {/* Celdas interactivas de los días del mes */}
-            {challenges.map((item) => (
-              <CalendarCell
-                key={item.day}
-                item={item}
-                theme={theme}
-                onClick={onCellClick}
-              />
-            ))}
-
-            {/* Espacios vacíos al final de la última semana para completar la fila */}
-            {Array.from({ length: trailingEmptyOffset }).map((_, i) => (
-              <div
-                key={`empty-trailing-${i}`}
-                className="calendar-shared-cal-cell-empty"
-                style={{
-                  background: 'transparent',
-                  border: '1px solid transparent',
-                  borderRadius: 12,
-                  boxSizing: 'border-box',
-                  minHeight: 56,
-                  minWidth: 0,
-                }}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+  return <section className="rounded-lg border border-[#D5DCE5] bg-white p-3 text-[#46556D] sm:p-6" aria-label="Calendario de desafíos"
+    style={{ '--calendar-primary': theme.primaryBlue } as CSSProperties}>
+    <div className="mb-4 flex items-center justify-between gap-2 border-b border-[#DEE3EA] pb-4">
+      <button type="button" className={monthButton} onClick={onPrevMonth} disabled={!canGoPrev} aria-label="Ver mes anterior"><IconChevronLeft size={22} /></button>
+      <h2 aria-live="polite" className="m-0 flex items-center gap-2 text-base leading-tight font-extrabold text-[var(--calendar-primary)] sm:text-xl">
+        <span className="hidden sm:inline" aria-hidden="true"><IconCalendar size={22} color="currentColor" /></span>
+        {monthName} {year}
+      </h2>
+      <button type="button" className={monthButton} onClick={onNextMonth} disabled={!canGoNext} aria-label="Ver mes siguiente"><IconChevronRight size={22} /></button>
     </div>
-  );
-};
+    <div className="mb-2 grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-[#64748B] sm:gap-2 sm:text-sm" aria-hidden="true">
+      {WEEKDAYS.map(day => <span key={day} className="min-w-0 py-1">{day}</span>)}
+    </div>
+    {loading ? <div className="flex min-h-[280px] flex-col items-center justify-center gap-3 text-sm" role="status">
+      <IconSpinner size={28} color={theme.primaryBlue} />
+      Cargando desafíos...
+    </div> : <div className="grid grid-cols-7 gap-1 sm:gap-2">
+      {Array.from({ length: leading }, (_, i) => <span key={`before-${i}`} aria-hidden="true" />)}
+      {challenges.map(item => <CalendarCell key={item.dateKey} item={item} theme={theme} onClick={onCellClick} />)}
+      {Array.from({ length: trailing }, (_, i) => <span key={`after-${i}`} aria-hidden="true" />)}
+    </div>}
+    <ul className="m-0 mt-5 flex list-none flex-wrap gap-x-5 gap-y-2 border-t border-[#DEE3EA] p-0 pt-4 text-xs text-[#46556D] sm:text-sm" aria-label="Estados de los desafíos">
+      {[
+        { label: 'Hoy', color: theme.todayBg },
+        { label: 'Para jugar', color: theme.pendingBorder },
+        { label: 'Completado', color: theme.completedBorder },
+      ].map(({ label, color }) => <li key={label} className="flex items-center gap-2"><span aria-hidden="true" className="size-2.5 rounded-full" style={{ backgroundColor: color }} />{label}</li>)}
+    </ul>
+  </section>;
+}

@@ -29,6 +29,9 @@ export default class TransicionNarrativa extends Component<Props> {
     this.limpiar();
     const actual = this.contenedor.current?.firstElementChild;
     if (this.movimientoReducido() || !(actual instanceof HTMLElement) || !actual.animate) return null;
+    // No duplicar escenas con imágenes: clonar <img> puede redescodificar el asset y producir un titileo.
+    // Estas etapas ya tienen sus propias entradas y el fondo persistente queda montado.
+    if (actual.querySelector('img')) return null;
 
     const limites = actual.getBoundingClientRect();
     const copia = actual.cloneNode(true) as HTMLElement;
@@ -52,7 +55,9 @@ export default class TransicionNarrativa extends Component<Props> {
     });
 
     const salida = document.createElement('div');
-    salida.className = 'narrativo-transicion-salida';
+    Object.assign(salida.style, {
+      position: 'fixed', inset: '0', zIndex: '1000', overflow: 'hidden', pointerEvents: 'none',
+    });
     salida.setAttribute('aria-hidden', 'true');
     salida.inert = true;
     salida.append(copia);
@@ -66,8 +71,11 @@ export default class TransicionNarrativa extends Component<Props> {
 
     this.salida = snapshot;
     document.body.append(snapshot);
-    const salida = snapshot.animate([{ opacity: 1 }, { opacity: 0 }], { duration: DURACION_MS, easing: 'ease-in-out' });
-    const entrada = actual.animate([{ opacity: 0 }, { opacity: 1 }], { duration: DURACION_MS, easing: 'ease-in-out' });
+    // La pausa que enseña la corte se retira más despacio que un cambio de pantalla común.
+    const duracion = prevProps.etapa.startsWith('cambio_fondo') ? 700 : DURACION_MS;
+    const salida = snapshot.animate([{ opacity: 1 }, { opacity: 0 }], { duration: duracion, easing: 'ease-in-out' });
+    // El fondo persistente queda visible bajo ambas etapas durante el fundido.
+    const entrada = actual.animate([{ opacity: 0 }, { opacity: 1 }], { duration: duracion, easing: 'ease-in-out' });
     this.animaciones = [salida, entrada];
     // Un cambio rapido puede cancelar esta animacion; su copia tambien se retira.
     void salida.finished.then(() => {
@@ -79,6 +87,6 @@ export default class TransicionNarrativa extends Component<Props> {
 
   render() {
     // No agrega altura ni cambia la distribucion o el centrado de las etapas.
-    return <div ref={this.contenedor} className="narrativo-transicion">{this.props.children}</div>;
+    return <div ref={this.contenedor} className="contents">{this.props.children}</div>;
   }
 }

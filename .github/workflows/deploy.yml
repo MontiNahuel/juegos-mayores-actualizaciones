@@ -1,0 +1,46 @@
+name: CI/CD — Build Frontend (dist) & Deploy to Caddy Volume (8087)
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy-frontend:
+    name: Compilar Frontend (dist) y Actualizar Volumen de Caddy en Linux
+    runs-on: self-hosted
+
+    steps:
+      - name: 1. Descargar código del Frontend en el Runner
+        uses: actions/checkout@v4
+
+      - name: 2. Compilar carpeta dist en contenedor efímero (Se autodestruye al terminar)
+        env:
+          VITE_ADAPTACION_EDAD: ${{ secrets.VITE_ADAPTACION_EDAD || 'true' }}
+        run: |
+          docker run --rm \
+            -u "$(id -u):$(id -g)" \
+            -v "$PWD":/app \
+            -w /app \
+            -e VITE_ADAPTACION_EDAD="$VITE_ADAPTACION_EDAD" \
+            -e HOME=/tmp \
+            node:22-alpine sh -c "npm ci && npm run build"
+
+      - name: 3. Copiar carpeta dist en vivo al volumen de Caddy (Sin reiniciar contenedores)
+        run: |
+          set -e
+          # Detectar la carpeta donde está clonado el backend en el servidor Linux
+          if [ -d "/home/serverportable/Documentos/JuegosAsistodo/juegos-mayores-actualizaciones-back" ]; then
+            BACKEND_DIR="/home/serverportable/Documentos/JuegosAsistodo/juegos-mayores-actualizaciones-back"
+          elif [ -d "/home/serverportable/Documentos/juegos-mayores-actualizaciones-back" ]; then
+            BACKEND_DIR="/home/serverportable/Documentos/juegos-mayores-actualizaciones-back"
+          else
+            BACKEND_DIR="${{ secrets.SERVER_BACKEND_PATH || '/home/serverportable/Documentos/JuegosAsistodo/juegos-mayores-actualizaciones-back' }}"
+          fi
+
+          mkdir -p "$BACKEND_DIR/dist"
+          rm -rf "$BACKEND_DIR/dist/"*
+          cp -r dist/* "$BACKEND_DIR/dist/"
+          chmod -R a+rX "$BACKEND_DIR/dist"
+          echo "✅ Carpeta dist actualizada en vivo en $BACKEND_DIR/dist (leída por Caddy sin reiniciar contenedores)."

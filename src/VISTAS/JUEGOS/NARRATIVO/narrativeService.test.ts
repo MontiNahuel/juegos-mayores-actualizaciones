@@ -59,7 +59,11 @@ describe('respaldo del juego narrativo', () => {
     expect(store.getState().narrativoSelection.jugador.recursos.oro).toBe(32);
     expect(store.getState().narrativoSelection.jugador.conversaciones_jugadas).toHaveLength(3);
     expect(Object.values(store.getState().narrativoSelection.jugador.afinidad)).toContain(74);
-    expect((await api.obtenerHistorialPartida(date)).historial_mensual).toHaveLength(6);
+    const historial = (await api.obtenerHistorialPartida(date)).historial_mensual;
+    expect(historial).toHaveLength(6);
+    expect(historial[0].recursos_fin_mes).toMatchObject({ oro: expect.any(Number), pueblo: expect.any(Number) });
+    expect(historial[0].carta_elegida_id).toBeTruthy();
+    expect(historial[0].evento_id).toBeTruthy();
     expect((await api.obtenerEstadoPartida(date)).finalizacion?.rango).toBe('A');
     expect(fetch).toHaveBeenCalledTimes(1);
     await api.reiniciarPartida(date);
@@ -74,6 +78,20 @@ describe('respaldo del juego narrativo', () => {
     const { servicio } = await cargarServicio();
     expect((await servicio.obtenerSetup(date)).universo_nombre).toBe('Servidor real');
     expect(servicio.esPartidaNarrativaLocal(date)).toBe(false);
+  });
+
+  it('reconstruye los nombres desde el mismo universo sin perder la crónica si falla un catálogo', async () => {
+    vi.mocked(fetch).mockImplementation(async input => {
+      const url = String(input);
+      if (url.includes('/admin/resultados?')) return new Response('{}', { status: 503 });
+      return new Response(JSON.stringify([{ _id: 'c1', nombre: 'Sello real' }]));
+    });
+    const { servicio } = await cargarServicio(false);
+    const catalogos = await servicio.obtenerCatalogosCronica(date, 'corte_medieval');
+    expect(catalogos.cartas[0].nombre).toBe('Sello real');
+    expect(catalogos.resultados).toEqual([]);
+    expect(fetch).toHaveBeenCalledTimes(4);
+    expect(String(vi.mocked(fetch).mock.calls[0][0])).toContain('universo_id=corte_medieval');
   });
 
   it.each([404, 503])('habilita el respaldo ante HTTP %s', async status => {
