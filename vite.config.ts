@@ -24,7 +24,7 @@ incluirAssets('src/assets')
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  const backendUrl = env.VITE_BACKEND_URL || env.VITE_API_URL || 'https://cognijuegos.asistodo.com.ar'
+  const backendUrl = env.VITE_BACKEND_URL || env.VITE_API_URL || 'http://localhost:8080'
 
   return {
     define: {
