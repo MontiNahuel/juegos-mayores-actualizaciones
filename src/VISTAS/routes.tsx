@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useSearchParams } from 'react-router-dom';
 import Menu from './MENU/Menu';
 import WordleCalendar from './JUEGOS/WORDLE/WordleCalendar';
 import WordleGame from './JUEGOS/WORDLE/WordleGame';
@@ -10,11 +10,33 @@ import CrucigramaCalendar from './JUEGOS/CRUCIGRAMA/CrucigramaCalendar';
 import CrucigramaGame from './JUEGOS/CRUCIGRAMA/CrucigramaGame';
 import KingsCourtCalendar from './JUEGOS/NARRATIVO/KingsCourtCalendar';
 import KingsCourt from './JUEGOS/NARRATIVO/KingsCourt';
+import { AccesoToken } from './LOGIN/AccesoToken';
+
+// Intercepta token en /menu para iniciar sesión de inmediato en vez de quedar como invitado
+const MenuWrapper = () => {
+  const [params] = useSearchParams();
+  const token = params.get('token');
+  if (token) {
+    return <Navigate to={`/acceso?token=${encodeURIComponent(token)}`} replace />;
+  }
+  return <Menu />;
+};
+
+// Redirecciona / o cualquier ruta comodín con ?token=... hacia /acceso para loguear
+const RootRedirection = () => {
+  const [params] = useSearchParams();
+  const token = params.get('token');
+  if (token) {
+    return <Navigate to={`/acceso?token=${encodeURIComponent(token)}`} replace />;
+  }
+  return <Navigate to="/menu" replace />;
+};
 
 const AppRoutes = () => (
   <BrowserRouter>
     <Routes>
-      <Route path="/menu" element={<Menu />} />
+      <Route path="/acceso" element={<AccesoToken />} />
+      <Route path="/menu" element={<MenuWrapper />} />
       <Route path="/juegos/wordle" element={<WordleCalendar />} />
       <Route path="/juegos/wordle/jugar" element={<WordleGame />} />
       <Route path="/juegos/sopa-letras" element={<SopaLetrasCalendar />} />
@@ -25,8 +47,8 @@ const AppRoutes = () => (
       <Route path="/juegos/crucigrama/jugar" element={<CrucigramaGame />} />
       <Route path="/juegos/kings-court" element={<KingsCourtCalendar />} />
       <Route path="/juegos/kings-court/jugar" element={<KingsCourt />} />
-      <Route path="/" element={<Navigate to="/menu" replace />} />
-      <Route path="*" element={<Navigate to="/menu" replace />} />
+      <Route path="/" element={<RootRedirection />} />
+      <Route path="*" element={<RootRedirection />} />
     </Routes>
   </BrowserRouter>
 );

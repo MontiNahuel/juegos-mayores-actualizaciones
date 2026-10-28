@@ -48,6 +48,16 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange }) => 
   const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('abrirLogin') === 'true') {
+      setShowAuthModal(true);
+      params.delete('abrirLogin');
+      const newQuery = params.toString() ? '?' + params.toString() : '';
+      window.history.replaceState({}, '', window.location.pathname + newQuery);
+    }
+  }, []);
+
+  useEffect(() => {
     const handleProgressUpdate = () => {
       try {
         const saved = localStorage.getItem('usuario') || localStorage.getItem('user');

@@ -14,13 +14,51 @@ export default function LoginSistemas() {
   const location = useLocation();
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const ticketParam = params.get('ticket');
+
+    if (ticketParam) {
+      setCargando(true);
+      setErrorMsg('');
+
+      fetch('/api/auth/sso/canjear-ticket', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ticket: ticketParam }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.token) {
+            const sessionData = {
+              user: data.user?.name || data.user?.email || 'Administrador SSO',
+              email: data.user?.email || '',
+              token: data.token,
+              tipoUsuario: 2,
+              loginTime: new Date().toISOString(),
+            };
+            localStorage.setItem(OPERADOR_STORAGE_KEY, JSON.stringify(sessionData));
+            navigate('/', { replace: true });
+          } else {
+            setErrorMsg(data.detail || data.message || 'Ticket SSO inválido o expirado.');
+          }
+        })
+        .catch((err) => {
+          console.error('Error al canjear ticket SSO:', err);
+          setErrorMsg('Error de conexión al canjear ticket SSO.');
+        })
+        .finally(() => {
+          setCargando(false);
+        });
+      return;
+    }
+
     try {
       localStorage.removeItem(OPERADOR_STORAGE_KEY);
       sessionStorage.removeItem(OPERADOR_STORAGE_KEY);
     } catch (e) {
       console.error(e);
     }
-  }, []);
+  }, [navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

@@ -47,7 +47,8 @@ export default function RutaProtegidaSistemas({ children }) {
   }
 
   if (!estaAutenticado) {
-    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+    const search = location.search || '';
+    return <Navigate to={`/login${search}`} state={{ from: location.pathname }} replace />;
   }
 
   return children;
