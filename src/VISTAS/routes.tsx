@@ -11,6 +11,7 @@ import CrucigramaGame from './JUEGOS/CRUCIGRAMA/CrucigramaGame';
 import KingsCourtCalendar from './JUEGOS/NARRATIVO/KingsCourtCalendar';
 import KingsCourt from './JUEGOS/NARRATIVO/KingsCourt';
 import { AccesoToken } from './LOGIN/AccesoToken';
+import NarrativoAdminPage from './ADMIN/NarrativoAdminPage';
 
 // Intercepta token en /menu para iniciar sesión de inmediato en vez de quedar como invitado
 const MenuWrapper = () => {
@@ -47,6 +48,8 @@ const AppRoutes = () => (
       <Route path="/juegos/crucigrama/jugar" element={<CrucigramaGame />} />
       <Route path="/juegos/kings-court" element={<KingsCourtCalendar />} />
       <Route path="/juegos/kings-court/jugar" element={<KingsCourt />} />
+      <Route path="/admin/narrativo" element={<NarrativoAdminPage />} />
+      <Route path="/editor-narrativo" element={<NarrativoAdminPage />} />
       <Route path="/" element={<RootRedirection />} />
       <Route path="*" element={<RootRedirection />} />
     </Routes>
