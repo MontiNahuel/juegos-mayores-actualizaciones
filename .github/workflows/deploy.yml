@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   build-and-deploy-frontend:
@@ -43,4 +44,3 @@ jobs:
           cp -r dist/* "$BACKEND_DIR/dist/"
           chmod -R a+rX "$BACKEND_DIR/dist"
           echo "✅ Carpeta dist actualizada en vivo en $BACKEND_DIR/dist (leída por Caddy sin reiniciar contenedores)."
-
