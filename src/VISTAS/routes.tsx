@@ -48,7 +48,8 @@ const AppRoutes = () => (
       <Route path="/juegos/crucigrama/jugar" element={<CrucigramaGame />} />
       <Route path="/juegos/kings-court" element={<KingsCourtCalendar />} />
       <Route path="/juegos/kings-court/jugar" element={<KingsCourt />} />
-      <Route path="/admin/narrativo" element={<NarrativoAdminPage />} />
+      {/* Redirección automática silenciosa de /admin/narrativo hacia el menú */}
+      <Route path="/admin/narrativo" element={<Navigate to="/menu" replace />} />
       <Route path="/editor-narrativo" element={<NarrativoAdminPage />} />
       <Route path="/" element={<RootRedirection />} />
       <Route path="*" element={<RootRedirection />} />

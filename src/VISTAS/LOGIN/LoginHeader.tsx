@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import type { CSSProperties } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { IonHeader, IonToolbar, IonIcon } from '@ionic/react';
-import { logInOutline, logOutOutline } from 'ionicons/icons';
+import { logInOutline, logOutOutline, bookOutline } from 'ionicons/icons';
 import { FlameIcon, StarIcon } from '../COMPONENTS/Icons/Icons';
 import { AuthModal } from './AuthModal';
+import { esUsuarioAdmin, limpiarTodasLasSesiones } from '../AUTH/authUtils';
 
 export interface Usuario {
   id: number;
@@ -12,6 +14,9 @@ export interface Usuario {
   codigoAcceso?: string;
   racha?: number;
   puntos?: number;
+  tipoUsuario?: number;
+  tipo_usuario?: number;
+  rol?: number;
 }
 
 const color = {
@@ -36,6 +41,7 @@ function getGreeting(): string {
 }
 
 export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange }) => {
+  const navigate = useNavigate();
   const [usuario, setUsuario] = useState<Usuario | null>(() => {
     try {
       const saved = localStorage.getItem('usuario') || localStorage.getItem('user');
@@ -63,21 +69,32 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange }) => 
         const saved = localStorage.getItem('usuario') || localStorage.getItem('user');
         if (saved) {
           setUsuario(JSON.parse(saved));
+        } else {
+          setUsuario(null);
         }
       } catch {}
     };
 
     window.addEventListener('user_progress_updated', handleProgressUpdate);
+    window.addEventListener('storage', handleProgressUpdate);
     return () => {
       window.removeEventListener('user_progress_updated', handleProgressUpdate);
+      window.removeEventListener('storage', handleProgressUpdate);
     };
   }, []);
 
+  // Determina si el usuario logueado posee rol de Administrador (tipoUsuario === 2)
+  const esAdmin = Boolean(
+    usuario &&
+      (Number(usuario.tipoUsuario) === 2 ||
+        Number(usuario.tipo_usuario) === 2 ||
+        Number(usuario.rol) === 2 ||
+        esUsuarioAdmin())
+  );
+
   const handleLogout = () => {
+    limpiarTodasLasSesiones();
     setUsuario(null);
-    localStorage.removeItem('usuario');
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
     onUsuarioChange?.(null);
   };
 
@@ -134,7 +151,7 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange }) => 
                       fontWeight: 600,
                     }}
                   >
-                    Bienvenido a tus juegos
+                    {esAdmin ? 'Panel de Administración' : 'Bienvenido a tus juegos'}
                   </span>
                 </>
               ) : (
@@ -165,7 +182,7 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange }) => 
             </div>
           </div>
 
-          {/* Lado derecho: Sesión activa (Racha + Puntos + Salir) ó Botón Iniciar Sesión */}
+          {/* Lado derecho: Sesión activa ó Botón Iniciar Sesión */}
           {usuario ? (
             <div
               style={{
@@ -175,6 +192,35 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange }) => 
                 flexShrink: 0,
               }}
             >
+              {/* Botón de Acceso al Editor Narrativo - SOLO VISIBLE SI ES ADMIN */}
+              {esAdmin && (
+                <button
+                  type="button"
+                  onClick={() => navigate('/editor-narrativo')}
+                  title="Ingresar a la Suite del Editor Narrativo"
+                  style={{
+                    alignItems: 'center',
+                    background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
+                    border: '1.5px solid #F59E0B',
+                    borderRadius: 14,
+                    boxShadow: '0 3px 10px rgba(245, 158, 11, 0.25)',
+                    color: '#FCD34D',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    fontSize: 13,
+                    fontWeight: 800,
+                    gap: 6,
+                    padding: '7px 12px',
+                    transition: 'all 0.15s ease',
+                  }}
+                  className="hover:scale-105 active:scale-95 hover:border-amber-400"
+                >
+                  <IonIcon icon={bookOutline} style={{ fontSize: 16, color: '#FCD34D' }} />
+                  <span className="hidden sm:inline">Editor Narrativo</span>
+                  <span className="sm:hidden">Editor</span>
+                </button>
+              )}
+
               {/* Racha */}
               <div
                 style={{
@@ -221,6 +267,7 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange }) => 
 
               {/* Botón Salir */}
               <button
+                type="button"
                 onClick={handleLogout}
                 title="Cerrar sesión"
                 style={{
@@ -245,6 +292,7 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange }) => 
           ) : (
             /* Botón para abrir el Modal de Inicio de Sesión / Registro */
             <button
+              type="button"
               onClick={() => setShowAuthModal(true)}
               style={{
                 alignItems: 'center',
@@ -271,7 +319,7 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange }) => 
         </div>
       </IonToolbar>
 
-      {/* Modal de Acceso (Código / Registro por Correo) */}
+      {/* Modal de Acceso (Código / Registro / Admin) */}
       <AuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
