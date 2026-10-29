@@ -33,15 +33,24 @@ export function imagenesDelContenido(contenido: unknown): string[] {
 
 async function imagenesDelUniverso(setup: SetupPartida, date: string) {
   if (esPartidaNarrativaLocal(date)) return [];
+  const token = localStorage.getItem('token');
+  if (!token) return [];
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+    if (payload.tipoUsuario !== 2 && payload.rol !== 2 && payload.tipo_usuario !== 2) {
+      return [];
+    }
+  } catch {
+    return [];
+  }
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), 10_000);
-  const token = localStorage.getItem('token');
   try {
-    // Los catálogos permiten conocer las imágenes de etapas futuras sin adelantar decisiones.
+    // Los catálogos administrativos solo se consultan para pre-cache si la sesión es de operador
     const catalogos = await Promise.allSettled(['personajes', 'cartas', 'eventos', 'resultados', 'conversaciones', 'finalizaciones'].map(async nombre => {
       const parametros = new URLSearchParams({ limit: '500', universo_id: setup.universo_id });
       const respuesta = await fetch(`${API_URL}/api/narrative/admin/${nombre}?${parametros}`, {
-        signal: controller.signal, headers: token ? { Authorization: `Bearer ${token}` } : {},
+        signal: controller.signal, headers: { Authorization: `Bearer ${token}` },
       });
       if (!respuesta.ok) return [];
       return respuesta.json();
