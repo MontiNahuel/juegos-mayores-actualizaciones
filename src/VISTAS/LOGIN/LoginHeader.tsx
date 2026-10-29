@@ -137,10 +137,10 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title
               >
                 <IconHeart filled={economy.vidas > 0} size={16} />
                 <span>{economy.vidas}</span>
-                <span className="hidden sm:inline">
+                <span className="login-header-lives-label hidden sm:inline">
                   {economy.vidas === 1 ? 'vida' : 'vidas'}
                 </span>
-                <span style={{ fontSize: 10, background: '#FDA4AF', color: '#881337', padding: '1px 4px', borderRadius: 6, fontWeight: 900 }}>
+                <span className="login-header-lives-plus" style={{ fontSize: 10, background: '#FDA4AF', color: '#881337', padding: '1px 4px', borderRadius: 6, fontWeight: 900 }}>
                   +
                 </span>
               </button>
@@ -168,6 +168,7 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title
               className="login-header-home" title="Volver al menú principal">
               <img alt="ASISTODO" src="/asistodo-logo.svg" style={{ height: 42, width: 42 }} />
             </button> : <img
+              className="login-header-logo"
               alt="ASISTODO"
               src="/asistodo-logo.svg"
               style={{ height: 42, width: 42, flexShrink: 0 }}
@@ -353,6 +354,7 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title
               <button
                 type="button"
                 onClick={() => setShowAuthModal(true)}
+                aria-label="Iniciar sesión"
                 style={{
                   alignItems: 'center',
                   background: '#294C6B',
@@ -369,7 +371,7 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title
                   padding: '8px 16px',
                   whiteSpace: 'nowrap',
                 }}
-                className="active:bg-slate-800 transition-colors"
+                className="login-header-signin active:bg-slate-800 transition-colors"
               >
                 <IonIcon icon={logInOutline} style={{ fontSize: 18 }} />
                 <span>Iniciar sesión</span>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DailyChallengeCalendar, DayChallenge } from '../../COMPONENTS/CALENDAR';
-import { DifficultyModal, DifficultyLevel } from '../../COMPONENTS/DIFICULTAD';
+import { DailyChallengeCalendar, type DayChallenge } from '../../COMPONENTS/CALENDAR';
+import { DifficultyModal, type DifficultyLevel } from '../../COMPONENTS/DIFICULTAD';
 import { SudokuCompletedModal } from './SudokuCompletedModal';
 import { getSudokuLocalProgress } from './sudokuStorage';
 
@@ -42,8 +42,8 @@ export const SudokuCalendar: React.FC = () => {
     <>
       <DailyChallengeCalendar
         gameId="sudoku"
-        title="Desafíos Diarios de Sudoku"
-        heroBadge="DESAFÍO DEL DÍA"
+        title="Sudoku diario"
+        heroBadge="¡Desafío de hoy!"
         heroSubtitle="Poné a prueba tu concentración y lógica completando el tablero de hoy."
         onPlayChallenge={handlePlayChallenge}
         renderCompletedModal={(challenge, onClose) => (
@@ -54,10 +54,6 @@ export const SudokuCalendar: React.FC = () => {
             onExit={onClose}
           />
         )}
-        theme={{
-          primaryBlue: '#1E3A5F',
-          accentTeal: '#3B9EAA',
-        }}
       />
 
       {/* Modal Reutilizable de Dificultad (Opción C - Editorial) */}

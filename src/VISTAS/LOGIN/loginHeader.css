@@ -74,3 +74,19 @@
     max-width: 240px;
   }
 }
+
+@media (max-width: 479px) {
+  .login-header-home,
+  .login-header-logo,
+  .login-header-lives-label,
+  .login-header-lives-plus,
+  .login-header-signin > span {
+    display: none;
+  }
+
+  .login-header-signin {
+    justify-content: center;
+    width: 42px;
+    padding: 8px !important;
+  }
+}
