@@ -38,7 +38,21 @@ export function decodificarJWT(token: string): any | null {
  */
 export function obtenerSesionAdmin(): AdminSession | null {
   try {
-    // 1. Revisar sesión en asistodo_operador_session
+    // 1. Control de acceso por roles: Si hay un usuario activo y NO es admin (rol 1), NUNCA es admin
+    const userRaw = localStorage.getItem('usuario') || localStorage.getItem('user');
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+
+    if (userRaw) {
+      try {
+        const u = JSON.parse(userRaw);
+        const tipoUser = Number(u.tipoUsuario ?? u.tipo_usuario ?? u.rol ?? 1);
+        if (tipoUser !== 2) {
+          return null;
+        }
+      } catch {}
+    }
+
+    // 2. Revisar sesión en asistodo_operador_session
     const sesionRaw =
       localStorage.getItem(OPERADOR_STORAGE_KEY) ||
       sessionStorage.getItem(OPERADOR_STORAGE_KEY);
@@ -46,14 +60,14 @@ export function obtenerSesionAdmin(): AdminSession | null {
       try {
         const parsed = JSON.parse(sesionRaw);
         const tipo = Number(parsed.tipoUsuario ?? parsed.tipo_usuario ?? parsed.rol);
-        const token = parsed.token;
-        if (tipo === 2 && token && typeof token === 'string') {
-          const payload = decodificarJWT(token);
+        const tok = parsed.token;
+        if (tipo === 2 && tok && typeof tok === 'string') {
+          const payload = decodificarJWT(tok);
           if (!payload || !payload.exp || payload.exp * 1000 > Date.now()) {
             return {
               user: parsed.user || payload?.name || 'Administrador',
               email: parsed.email || payload?.email || '',
-              token,
+              token: tok,
               tipoUsuario: 2,
             };
           }
@@ -61,9 +75,7 @@ export function obtenerSesionAdmin(): AdminSession | null {
       } catch {}
     }
 
-    // 2. Revisar sesión en usuario/user y token de CogniJuegos
-    const userRaw = localStorage.getItem('usuario') || localStorage.getItem('user');
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    // 3. Revisar sesión en usuario/user y token de CogniJuegos
 
     let tipoUser = 1;
     let nombre = 'Administrador';

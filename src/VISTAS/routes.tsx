@@ -12,7 +12,17 @@ import CrucigramaGame from './JUEGOS/CRUCIGRAMA/CrucigramaGame';
 import KingsCourtCalendar from './JUEGOS/NARRATIVO/KingsCourtCalendar';
 import KingsCourt from './JUEGOS/NARRATIVO/KingsCourt';
 import { AccesoToken } from './LOGIN/AccesoToken';
+import { esUsuarioAdmin } from './AUTH/authUtils';
+
 const NarrativoAdminPage = lazy(() => import('./ADMIN/NarrativoAdminPage'));
+
+// Control de acceso basado en roles para rutas administrativas
+const RequireAdmin = ({ children }: { children: React.ReactNode }) => {
+  if (!esUsuarioAdmin()) {
+    return <Navigate to="/menu" replace />;
+  }
+  return <>{children}</>;
+};
 
 // Intercepta token en /menu para iniciar sesión de inmediato en vez de quedar como invitado
 const MenuWrapper = () => {
@@ -54,9 +64,11 @@ const AppRoutes = () => (
       <Route
         path="/editor-narrativo"
         element={
-          <Suspense fallback={<div className="min-h-screen bg-slate-950 flex items-center justify-center text-amber-400 font-bold">Cargando Editor Narrativo...</div>}>
-            <NarrativoAdminPage />
-          </Suspense>
+          <RequireAdmin>
+            <Suspense fallback={<div className="min-h-screen bg-slate-950 flex items-center justify-center text-amber-400 font-bold">Cargando Editor Narrativo...</div>}>
+              <NarrativoAdminPage />
+            </Suspense>
+          </RequireAdmin>
         }
       />
       <Route path="/" element={<RootRedirection />} />

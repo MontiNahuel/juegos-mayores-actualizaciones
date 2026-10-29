@@ -26,7 +26,8 @@ interface AuthModalProps {
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => {
   const [tab, setTab] = useState<'register' | 'code' | 'admin'>('register');
 
-  // Estado pestaña Código
+  // Estado pestaña Código / Acceso Alumno
+  const [codeEmailInput, setCodeEmailInput] = useState('');
   const [codigoInput, setCodigoInput] = useState('');
   const [loadingCode, setLoadingCode] = useState(false);
   const [errorCode, setErrorCode] = useState<string | null>(null);
@@ -65,11 +66,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
 
   if (!isOpen) return null;
 
-  // 1. Ingreso con código PIN
+  // 1. Ingreso con correo y clave de 6 dígitos
   const handleLoginCode = async (e: React.FormEvent) => {
     e.preventDefault();
+    const cleanEmail = codeEmailInput.trim().toLowerCase();
     const cleanCode = codigoInput.trim();
-    if (!cleanCode) return;
+
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      setErrorCode('Por favor, ingresá un correo electrónico válido.');
+      return;
+    }
+    if (!cleanCode) {
+      setErrorCode('Por favor, ingresá tu clave de 6 dígitos.');
+      return;
+    }
 
     setLoadingCode(true);
     setErrorCode(null);
@@ -78,7 +88,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
       const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ codigo: cleanCode }),
+        body: JSON.stringify({ email: cleanEmail, codigo: cleanCode }),
       });
       return await res.json();
     };
@@ -91,6 +101,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
         if (tipo === 2) {
           guardarSesionAdmin(data.user, data.token || '');
         } else {
+          localStorage.removeItem('asistodo_operador_session');
+          sessionStorage.removeItem('asistodo_operador_session');
           localStorage.setItem('usuario', JSON.stringify(data.user));
           localStorage.setItem('user', JSON.stringify(data.user));
           if (data.token) {
@@ -98,11 +110,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
           }
           window.dispatchEvent(new Event('user_progress_updated'));
         }
+        setCodeEmailInput('');
         setCodigoInput('');
         onSuccess(data.user);
         onClose();
       } else {
-        setErrorCode(data?.detail || data?.message || 'Código no válido. Revisá los dígitos ingresados.');
+        setErrorCode(data?.detail || data?.message || 'Correo o clave de 6 dígitos no válida. Revisá los datos ingresados.');
       }
     } catch {
       setErrorCode('No se pudo conectar con el servidor. Revisá tu conexión.');
@@ -462,7 +475,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
             </div>
 
             <p style={{ color: '#64748B', fontSize: 12, margin: '0 0 20px' }}>
-              Anotá este código en un lugar seguro. Con él vas a poder ingresar fácilmente desde cualquier celular o computadora.
+              Anotá este código en un lugar seguro. Con tu correo y este código vas a poder ingresar fácilmente desde cualquier celular o computadora.
             </p>
 
             <button
@@ -543,7 +556,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                   }}
                 >
                   <IonIcon icon={keyOutline} style={{ fontSize: 16 }} />
-                  <span>Tengo mi código</span>
+                  <span>Tengo mi cuenta</span>
                 </button>
               </div>
             )}
@@ -909,7 +922,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
               </>
             )}
 
-            {/* Pestaña: Tengo mi código */}
+            {/* Pestaña: Tengo mi cuenta */}
             {tab === 'code' && (
               <form
                 onSubmit={handleLoginCode}
@@ -926,42 +939,97 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                       color: '#64748B',
                       fontSize: 13,
                       lineHeight: 1.4,
-                      margin: '0 0 20px',
+                      margin: '0 0 16px',
                       textAlign: 'center',
                     }}
                   >
-                    Ingresá el código numérico de 6 dígitos que te brindó tu profesor o institución:
+                    Ingresá tu correo electrónico y tu clave de 6 dígitos para acceder a tu cuenta:
                   </p>
 
-                  <div style={{ marginBottom: 16, textAlign: 'center' }}>
+                  {/* Campo Correo Electrónico */}
+                  <div style={{ marginBottom: 14 }}>
+                    <label
+                      style={{
+                        color: '#294C6B',
+                        display: 'block',
+                        fontSize: 13,
+                        fontWeight: 800,
+                        marginBottom: 5,
+                        textAlign: 'left',
+                      }}
+                    >
+                      Tu correo electrónico
+                    </label>
                     <input
-                      type="text"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      maxLength={10}
-                      placeholder="000000"
-                      value={codigoInput}
+                      type="email"
+                      placeholder="Ej: marta@correo.com"
+                      value={codeEmailInput}
                       onChange={(e) => {
-                        setCodigoInput(e.target.value);
+                        setCodeEmailInput(e.target.value);
                         if (errorCode) setErrorCode(null);
                       }}
                       disabled={loadingCode}
                       style={{
                         background: '#F8FAFC',
-                        border: errorCode ? '2px solid #EF4444' : '2px solid #CBD5E1',
-                        borderRadius: 14,
+                        border: errorCode && (!codeEmailInput.trim() || !codeEmailInput.includes('@'))
+                          ? '2px solid #EF4444'
+                          : '1.5px solid #CBD5E1',
+                        borderRadius: 12,
                         color: '#294C6B',
-                        fontSize: 26,
-                        fontWeight: 900,
-                        letterSpacing: '0.22em',
+                        fontSize: 15,
+                        fontWeight: 700,
                         outline: 'none',
-                        padding: '12px 14px',
-                        textAlign: 'center',
+                        padding: '10px 14px',
                         width: '100%',
-                        maxWidth: 240,
                         boxSizing: 'border-box',
                       }}
                     />
+                  </div>
+
+                  {/* Campo Clave PIN de 6 dígitos */}
+                  <div style={{ marginBottom: 16 }}>
+                    <label
+                      style={{
+                        color: '#294C6B',
+                        display: 'block',
+                        fontSize: 13,
+                        fontWeight: 800,
+                        marginBottom: 5,
+                        textAlign: 'left',
+                      }}
+                    >
+                      Tu clave de 6 dígitos
+                    </label>
+                    <div style={{ textAlign: 'center' }}>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        maxLength={10}
+                        placeholder="000000"
+                        value={codigoInput}
+                        onChange={(e) => {
+                          setCodigoInput(e.target.value);
+                          if (errorCode) setErrorCode(null);
+                        }}
+                        disabled={loadingCode}
+                        style={{
+                          background: '#F8FAFC',
+                          border: errorCode ? '2px solid #EF4444' : '2px solid #CBD5E1',
+                          borderRadius: 14,
+                          color: '#294C6B',
+                          fontSize: 24,
+                          fontWeight: 900,
+                          letterSpacing: '0.22em',
+                          outline: 'none',
+                          padding: '10px 14px',
+                          textAlign: 'center',
+                          width: '100%',
+                          maxWidth: 240,
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                    </div>
                   </div>
 
                   {errorCode && (
@@ -988,16 +1056,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
 
                 <button
                   type="submit"
-                  disabled={loadingCode || !codigoInput.trim()}
+                  disabled={loadingCode || !codigoInput.trim() || !codeEmailInput.trim()}
                   style={{
                     background: '#294C6B',
                     border: 'none',
                     borderRadius: 14,
                     color: '#FFFFFF',
-                    cursor: loadingCode ? 'default' : 'pointer',
+                    cursor: loadingCode || !codigoInput.trim() || !codeEmailInput.trim() ? 'default' : 'pointer',
                     fontSize: 15,
                     fontWeight: 800,
-                    opacity: loadingCode || !codigoInput.trim() ? 0.7 : 1,
+                    opacity: loadingCode || !codigoInput.trim() || !codeEmailInput.trim() ? 0.7 : 1,
                     padding: '13px 0',
                     width: '100%',
                   }}
