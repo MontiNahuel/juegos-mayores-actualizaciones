@@ -150,7 +150,7 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title
     <IonHeader style={{ boxShadow: '0 2px 10px rgba(23, 59, 99, 0.12)' }}>
       <IonToolbar style={{ '--background': '#FFFFFF', '--border-width': 0 } as CSSProperties}>
         <div
-          className={`login-header-layout${title ? ' login-header-layout--titled' : ''}${ocultarSaludoEnMovil ? ' login-header-layout--compact' : ''}`}
+          className={`login-header-layout${title ? ' login-header-layout--titled' : ''}${ocultarSaludoEnMovil ? ' login-header-layout--compact' : ''}${usuario ? ' login-header-layout--authenticated' : ''}`}
           style={{
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -263,7 +263,7 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title
                     padding: '7px 12px',
                     transition: 'all 0.15s ease',
                   }}
-                  className="hover:scale-105 active:scale-95 hover:border-amber-400"
+                  className="login-header-editor hover:scale-105 active:scale-95 hover:border-amber-400"
                 >
                   <IonIcon icon={bookOutline} style={{ fontSize: 16, color: '#FCD34D' }} />
                   <span className="hidden sm:inline">Editor Narrativo</span>
@@ -289,7 +289,7 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title
               >
                 <FlameIcon size={16} />
                 <span>{(usuario as any)?.racha ?? 1}</span>
-                <span className="hidden sm:inline">
+                <span className="login-header-stat-label hidden sm:inline">
                   {(usuario as any)?.racha === 1 ? 'día' : 'días'}
                 </span>
               </div>
@@ -319,7 +319,7 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title
               >
                 <StarIcon size={15} />
                 <span>{economy.puntos}</span>
-                <span className="hidden sm:inline">pts</span>
+                <span className="login-header-stat-label hidden sm:inline">pts</span>
               </button>
 
               {/* Botón Salir */}
@@ -340,7 +340,7 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title
                   gap: 4,
                   padding: '7px 11px',
                 }}
-                className="hover:bg-slate-200 active:bg-slate-300 transition-colors"
+                className="login-header-logout hover:bg-slate-200 active:bg-slate-300 transition-colors"
               >
                 <IonIcon icon={logOutOutline} style={{ fontSize: 16 }} />
                 <span className="hidden sm:inline">Salir</span>

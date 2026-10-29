@@ -75,7 +75,7 @@
   }
 }
 
-@media (max-width: 479px) {
+@media (max-width: 639px) {
   .login-header-home,
   .login-header-logo,
   .login-header-lives-label,
@@ -88,5 +88,23 @@
     justify-content: center;
     width: 42px;
     padding: 8px !important;
+  }
+
+  .login-header-editor,
+  .login-header-logout {
+    display: none !important;
+  }
+
+  .login-header-stat-label,
+  .login-header-layout--authenticated .login-header-greeting {
+    display: none;
+  }
+
+  .login-header-layout--authenticated:not(.login-header-layout--titled) > :first-child {
+    display: none;
+  }
+
+  .login-header-layout--authenticated:not(.login-header-layout--titled) {
+    justify-content: center !important;
   }
 }
