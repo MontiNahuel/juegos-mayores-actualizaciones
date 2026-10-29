@@ -5,7 +5,7 @@ import { IonHeader, IonToolbar, IonIcon } from '@ionic/react';
 import { logInOutline, logOutOutline, bookOutline } from 'ionicons/icons';
 import { FlameIcon, StarIcon } from '../COMPONENTS/Icons/Icons';
 import { IconHeart } from '../COMPONENTS/GameHeader/LivesBadge';
-import { AuthModal } from './AuthModal';
+import { AuthModal } from '../MODALS/AuthModal';
 import { usePlayerEconomy } from '../../context/PlayerEconomyContext';
 import { esUsuarioAdmin, limpiarTodasLasSesiones } from '../AUTH/authUtils';
 import './loginHeader.css';
@@ -119,7 +119,7 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title
   const livesButton = (
     <button
                 type="button"
-                onClick={economy.abrirMiniTienda}
+                onClick={economy.abrirComprarPista}
                 style={{
                   alignItems: 'center',
                   background: '#FFE4E6',
@@ -135,7 +135,7 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title
                   transition: 'all 0.2s ease',
                 }}
                 className="hover:bg-rose-200 active:scale-95"
-                title="Vidas restantes. Hacé clic para abrir la Tienda de Vidas."
+                title="Canjear 1 vida por 1 pista"
               >
                 <IconHeart filled={economy.vidas > 0} size={16} />
                 <span>{economy.vidas}</span>

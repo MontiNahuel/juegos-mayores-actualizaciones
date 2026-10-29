@@ -1,6 +1,6 @@
 import React from 'react';
 import { DailyChallengeCalendar, type DayChallenge } from '../../COMPONENTS/CALENDAR';
-import { SopaLetrasCompletedModal } from './SopaLetrasCompletedModal';
+import { SopaLetrasCompletedModal } from '../../MODALS/SopaLetrasCompletedModal';
 
 export type { DayChallenge };
 

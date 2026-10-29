@@ -1,2 +1,2 @@
 ﻿export * from './types';
-export * from './DifficultyModal';
+export * from '../../MODALS/DifficultyModal';

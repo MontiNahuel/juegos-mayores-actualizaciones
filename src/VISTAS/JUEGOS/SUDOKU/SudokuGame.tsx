@@ -2,7 +2,7 @@ import React from 'react';
 import { useSudokuGame } from './useSudokuGame';
 import { SudokuBoard } from './SudokuBoard';
 import { SudokuKeypad } from './SudokuKeypad';
-import { SudokuCompletedModal } from './SudokuCompletedModal';
+import { SudokuCompletedModal } from '../../MODALS/SudokuCompletedModal';
 import { GameHeader, LivesBadge } from '../../COMPONENTS/GameHeader';
 
 export const SudokuGame: React.FC = () => {

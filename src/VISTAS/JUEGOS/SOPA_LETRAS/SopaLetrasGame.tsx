@@ -10,7 +10,7 @@ import {
 } from '@ionic/react';
 import { GameHeader, LivesBadge } from '../../COMPONENTS/GameHeader';
 import { usePlayerEconomy } from '../../../context/PlayerEconomyContext';
-import { SopaLetrasCompletedModal } from './SopaLetrasCompletedModal';
+import { SopaLetrasCompletedModal } from '../../MODALS/SopaLetrasCompletedModal';
 import {
   arrowBackOutline,
   bulbOutline,

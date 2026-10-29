@@ -38,7 +38,7 @@ export interface LivesBadgeProps {
   heartSize?: number;
   /** Clases CSS adicionales */
   className?: string;
-  /** Callback al hacer click (por defecto abre la mini-tienda) */
+  /** Callback al hacer click (por defecto abre el canje de pistas) */
   onClick?: () => void;
 }
 
@@ -64,7 +64,7 @@ export const LivesBadge: React.FC<LivesBadgeProps> = ({
     if (onClick) {
       onClick();
     } else {
-      economy.abrirMiniTienda();
+      economy.abrirComprarPista();
     }
   };
 
@@ -79,8 +79,8 @@ export const LivesBadge: React.FC<LivesBadgeProps> = ({
           ? 'bg-slate-100 border-slate-300 text-slate-500'
           : 'bg-rose-50/80 border-rose-200 text-rose-700 hover:bg-rose-100/80 active:scale-95'
       } ${className}`}
-      title={`${safeLives} vidas restantes. Hacé clic para abrir la Tienda de Vidas.`}
-      aria-label={`${safeLives} vidas restantes. Hacé clic para abrir la Tienda de Vidas.`}
+      title={`${safeLives} vidas restantes. Canjear 1 vida por 1 pista.`}
+      aria-label={`${safeLives} vidas restantes. Canjear 1 vida por 1 pista.`}
     >
       {showLabel && (
         <span className="text-xs font-bold hidden sm:inline">
@@ -106,7 +106,7 @@ export const LivesBadge: React.FC<LivesBadgeProps> = ({
         </div>
       )}
 
-      {/* Pill de ayuda para abrir tienda */}
+      {/* Acceso al canje de pistas */}
       <span className="text-[10px] bg-rose-200/70 text-rose-800 px-1 py-0.2 rounded-full font-extrabold leading-none">
         +
       </span>

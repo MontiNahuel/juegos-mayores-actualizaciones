@@ -12,7 +12,7 @@ import {
 import { GameHeader, LivesBadge } from '../../COMPONENTS/GameHeader';
 import { usePlayerEconomy } from '../../../context/PlayerEconomyContext';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
-import { CrucigramaCompletedModal } from './CrucigramaCompletedModal';
+import { CrucigramaCompletedModal } from '../../MODALS/CrucigramaCompletedModal';
 import { CrucigramaClues } from './CrucigramaClues';
 import { cleanClueText, type WordDef, type CellDef } from './crucigramaTypes';
 import {

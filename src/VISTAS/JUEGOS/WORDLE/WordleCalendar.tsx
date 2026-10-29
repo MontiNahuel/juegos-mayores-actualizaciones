@@ -1,6 +1,6 @@
 import React from 'react';
 import { DailyChallengeCalendar, type DayChallenge } from '../../COMPONENTS/CALENDAR';
-import { WordleCompletedModal } from './WordleCompletedModal';
+import { WordleCompletedModal } from '../../MODALS/WordleCompletedModal';
 
 export type { DayChallenge };
 

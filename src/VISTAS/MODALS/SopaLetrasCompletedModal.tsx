@@ -1,7 +1,7 @@
 import React from 'react';
-import type { DayChallenge } from '../../COMPONENTS/CALENDAR/types';
-import { IconCheck, IconStarSolid } from '../../COMPONENTS/CALENDAR/icons';
-import { usePlayerEconomy } from '../../../context/PlayerEconomyContext';
+import type { DayChallenge } from '../COMPONENTS/CALENDAR/types';
+import { IconCheck, IconStarSolid } from '../COMPONENTS/CALENDAR/icons';
+import { usePlayerEconomy } from '../../context/PlayerEconomyContext';
 
 interface SopaLetrasCompletedModalProps {
   challenge: Partial<DayChallenge> & { dateStr?: string; config?: any; stars?: number; completedData?: any };

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DailyChallengeCalendar, type DayChallenge } from '../../COMPONENTS/CALENDAR';
 import { DifficultyModal, type DifficultyLevel } from '../../COMPONENTS/DIFICULTAD';
-import { SudokuCompletedModal } from './SudokuCompletedModal';
+import { SudokuCompletedModal } from '../../MODALS/SudokuCompletedModal';
 import { getSudokuLocalProgress } from './sudokuStorage';
 
 export const SudokuCalendar: React.FC = () => {

@@ -1,6 +1,6 @@
 import React from 'react';
-import type { DayChallenge } from '../../COMPONENTS/CALENDAR/types';
-import { IconCheck, IconStarSolid } from '../../COMPONENTS/CALENDAR/icons';
+import type { DayChallenge } from '../COMPONENTS/CALENDAR/types';
+import { IconCheck, IconStarSolid } from '../COMPONENTS/CALENDAR/icons';
 
 interface WordleCompletedModalProps {
   challenge: DayChallenge;

@@ -1,7 +1,8 @@
 import { IonApp, setupIonicReact } from '@ionic/react';
 import AppRoutes from './VISTAS/routes';
 import { PlayerEconomyProvider } from './context/PlayerEconomyContext';
-import MiniTiendaModal from './VISTAS/COMPONENTS/MiniTiendaModal';
+import MiniTiendaModal from './VISTAS/MODALS/MiniTiendaModal';
+import ComprarPistaModal from './VISTAS/MODALS/ComprarPistaModal';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -40,6 +41,7 @@ const App: React.FC = () => (
     <PlayerEconomyProvider>
       <AppRoutes />
       <MiniTiendaModal />
+      <ComprarPistaModal />
     </PlayerEconomyProvider>
   </IonApp>
 );

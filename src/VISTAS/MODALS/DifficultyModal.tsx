@@ -1,5 +1,5 @@
 import React from 'react';
-import { DifficultyModalProps, DEFAULT_DIFFICULTY_OPTIONS } from './types';
+import { DifficultyModalProps, DEFAULT_DIFFICULTY_OPTIONS } from '../COMPONENTS/DIFICULTAD/types';
 
 export const DifficultyModal: React.FC<DifficultyModalProps> = ({
   title = 'Elegí tu Desafío',

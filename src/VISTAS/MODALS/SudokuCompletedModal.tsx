@@ -1,5 +1,5 @@
 ﻿import React from 'react';
-import { usePlayerEconomy } from '../../../context/PlayerEconomyContext';
+import { usePlayerEconomy } from '../../context/PlayerEconomyContext';
 
 interface ModalProps {
   isGameOver?: boolean;

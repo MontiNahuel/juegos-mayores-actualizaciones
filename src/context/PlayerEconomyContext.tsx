@@ -24,6 +24,9 @@ export interface PlayerEconomyContextType {
   vidasMaximas: number | null;
   isLoading: boolean;
   isMiniTiendaOpen: boolean;
+  isComprarPistaOpen: boolean;
+  abrirComprarPista: () => void;
+  cerrarComprarPista: () => void;
   abrirMiniTienda: () => void;
   cerrarMiniTienda: () => void;
   consumirVida: () => Promise<boolean>;
@@ -72,6 +75,9 @@ export const PlayerEconomyProvider: React.FC<{ children: React.ReactNode }> = ({
   const [vidasMaximas, setVidasMaximas] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isMiniTiendaOpen, setIsMiniTiendaOpen] = useState<boolean>(false);
+  const [isComprarPistaOpen, setIsComprarPistaOpen] = useState(false);
+  const abrirComprarPista = useCallback(() => { setIsMiniTiendaOpen(false); setIsComprarPistaOpen(true); }, []);
+  const cerrarComprarPista = useCallback(() => setIsComprarPistaOpen(false), []);
 
   const abrirMiniTienda = useCallback(() => setIsMiniTiendaOpen(true), []);
   const cerrarMiniTienda = useCallback(() => setIsMiniTiendaOpen(false), []);
@@ -389,6 +395,9 @@ export const PlayerEconomyProvider: React.FC<{ children: React.ReactNode }> = ({
         vidasMaximas,
         isLoading,
         isMiniTiendaOpen,
+        isComprarPistaOpen,
+        abrirComprarPista,
+        cerrarComprarPista,
         abrirMiniTienda,
         cerrarMiniTienda,
         consumirVida,

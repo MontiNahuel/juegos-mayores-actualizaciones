@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DailyChallengeCalendar, type DayChallenge } from '../../COMPONENTS/CALENDAR';
 import { DifficultyModal, type DifficultyOptionConfig } from '../../COMPONENTS/DIFICULTAD';
-import { CrucigramaCompletedModal } from './CrucigramaCompletedModal';
+import { CrucigramaCompletedModal } from '../../MODALS/CrucigramaCompletedModal';
 import { loadActiveCrucigrama, type CrucigramaDifficulty } from './crucigramaStorage';
 
 export type { DayChallenge };
