@@ -17,6 +17,8 @@ import {
   bulbOutline,
   chevronDownOutline,
   chevronUpOutline,
+  helpCircleOutline,
+  closeOutline,
 } from 'ionicons/icons';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import {
@@ -71,6 +73,55 @@ function evaluateGuess(guess: string, solution: string): LetterStatus[] {
   return result;
 }
 
+const ColorLegendContent: React.FC = () => (
+  <div className="flex flex-col gap-2.5">
+    {/* Verde */}
+    <div className="flex items-center gap-3 bg-emerald-50/80 p-2.5 rounded-xl border border-emerald-200">
+      <div className="w-10 h-10 rounded-lg bg-emerald-600 border border-emerald-700 text-white font-black flex items-center justify-center text-lg shadow-xs shrink-0">
+        V
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-xs sm:text-sm font-black text-emerald-950 leading-tight">
+          Verde: Posición correcta
+        </p>
+        <p className="text-[11px] sm:text-xs text-emerald-800 font-medium mt-0.5 leading-snug">
+          La letra está en la palabra y en el casillero correcto.
+        </p>
+      </div>
+    </div>
+
+    {/* Amarillo */}
+    <div className="flex items-center gap-3 bg-amber-50/80 p-2.5 rounded-xl border border-amber-200">
+      <div className="w-10 h-10 rounded-lg bg-amber-500 border border-amber-600 text-white font-black flex items-center justify-center text-lg shadow-xs shrink-0">
+        A
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-xs sm:text-sm font-black text-amber-950 leading-tight">
+          Amarillo: En otra posición
+        </p>
+        <p className="text-[11px] sm:text-xs text-amber-900 font-medium mt-0.5 leading-snug">
+          La letra sí está en la palabra, pero va en otra casilla.
+        </p>
+      </div>
+    </div>
+
+    {/* Gris */}
+    <div className="flex items-center gap-3 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+      <div className="w-10 h-10 rounded-lg bg-slate-400 border border-slate-500 text-white font-black flex items-center justify-center text-lg shadow-xs shrink-0">
+        G
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-xs sm:text-sm font-black text-slate-800 leading-tight">
+          Gris: No está en la palabra
+        </p>
+        <p className="text-[11px] sm:text-xs text-slate-600 font-medium mt-0.5 leading-snug">
+          La letra no forma parte del desafío de hoy.
+        </p>
+      </div>
+    </div>
+  </div>
+);
+
 const WordleGame: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -97,6 +148,7 @@ const WordleGame: React.FC = () => {
   const [showHint, setShowHint] = useState<boolean>(false);
   const [hintIndex, setHintIndex] = useState<number>(0);
   const [showEndModal, setShowEndModal] = useState<boolean>(false);
+  const [showColorGuideModal, setShowColorGuideModal] = useState<boolean>(false);
 
   // Restaurar progreso activo o resultado previo si existe
   useEffect(() => {
@@ -333,6 +385,18 @@ const WordleGame: React.FC = () => {
           title="Palabra del día"
           backRoute="/menu"
           backLabel="Menú"
+          rightAction={
+            <button
+              type="button"
+              onClick={() => setShowColorGuideModal(true)}
+              className="lg:hidden flex items-center gap-1.5 bg-[#F4F6F9] hover:bg-slate-200 text-[#294C6B] text-xs font-bold px-2.5 py-1.5 rounded-xl border border-[#DEE3EA] transition-colors"
+              title="Guía de colores"
+              aria-label="Ver qué significa cada color"
+            >
+              <IonIcon icon={helpCircleOutline} className="text-base text-[#294C6B]" />
+              <span className="hidden sm:inline">Colores</span>
+            </button>
+          }
         />
       </IonHeader>
 
@@ -347,12 +411,14 @@ const WordleGame: React.FC = () => {
         } as React.CSSProperties}
       >
         <div
-          className="max-w-md mx-auto px-2.5 py-1.5 sm:py-2.5 flex flex-col justify-between h-full select-none"
+          className="w-full max-w-4xl mx-auto px-2.5 sm:px-4 py-1.5 sm:py-2.5 flex flex-col lg:flex-row items-center justify-center lg:gap-8 h-full select-none"
           style={{
             boxSizing: 'border-box',
             paddingBottom: 'max(calc(env(safe-area-inset-bottom, 0px) + 12px), 32px)',
           }}
         >
+          {/* Columna central del juego */}
+          <div className="w-full max-w-md flex flex-col justify-between h-full">
 
           {/* Mensaje flotante de feedback (sin alterar el layout) */}
           {message && (
@@ -372,7 +438,16 @@ const WordleGame: React.FC = () => {
                   {showHint ? hints[hintIndex] : 'Tocá la bombilla para ver una pista'}
                 </p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowColorGuideModal(true)}
+                  className="lg:hidden flex items-center gap-1 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold px-2 py-1 rounded-lg border border-slate-300 transition-colors"
+                  title="¿Qué significan los colores?"
+                >
+                  <span className="text-xs">🎨</span>
+                  <span>Colores</span>
+                </button>
                 <button
                   onClick={() => {
                     setShowHint(true);
@@ -498,7 +573,91 @@ const WordleGame: React.FC = () => {
             ))}
           </div>
 
+          </div>
+
+          {/* Guía de colores lateral (Escritorio / Pantallas grandes) */}
+          <aside
+            className="hidden lg:flex flex-col w-72 xl:w-80 bg-white rounded-2xl p-5 shadow-xs border border-slate-200 shrink-0 self-center"
+            aria-label="Guía de colores de Wordle"
+          >
+            <div className="flex items-center gap-2 mb-3.5 pb-2.5 border-b border-slate-100">
+              <span className="text-xl">🎨</span>
+              <div>
+                <h2 className="text-sm font-black text-[#294C6B] leading-tight">
+                  Guía de Colores
+                </h2>
+                <p className="text-[11px] text-slate-500 font-medium">
+                  Qué representa cada casilla
+                </p>
+              </div>
+            </div>
+
+            <ColorLegendContent />
+
+            <div className="mt-3.5 pt-3 border-t border-slate-100 flex items-start gap-2 text-[11px] text-slate-500 leading-snug">
+              <span className="text-sm leading-none shrink-0">💡</span>
+              <p>
+                <strong className="text-slate-700">Pista:</strong> Una misma letra puede aparecer más de una vez en la palabra secreta.
+              </p>
+            </div>
+          </aside>
+
         </div>
+
+        {/* Modal accesible de Guía de Colores (solo móvil / tablets) */}
+        {showColorGuideModal && (
+          <div
+            className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 wordle-modal-backdrop lg:hidden"
+            style={{
+              paddingBottom: 'max(calc(env(safe-area-inset-bottom, 0px) + 24px), 32px)',
+            }}
+            onClick={() => setShowColorGuideModal(false)}
+          >
+            <div
+              className="w-full max-w-sm bg-white rounded-2xl p-5 shadow-2xl border border-slate-200 wordle-modal-card"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-3.5 pb-2 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">🎨</span>
+                  <div>
+                    <h2 className="text-base font-black text-[#294C6B] leading-tight">
+                      Guía de Colores
+                    </h2>
+                    <p className="text-xs text-slate-500 font-medium">
+                      Qué representa cada casilla
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowColorGuideModal(false)}
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                  aria-label="Cerrar guía de colores"
+                >
+                  <IonIcon icon={closeOutline} className="text-xl" />
+                </button>
+              </div>
+
+              <ColorLegendContent />
+
+              <div className="mt-3.5 pt-2.5 border-t border-slate-100 flex items-start gap-2 text-xs text-slate-500 leading-snug mb-4">
+                <span className="text-sm leading-none shrink-0">💡</span>
+                <p>
+                  <strong className="text-slate-700">Pista:</strong> Las letras pueden repetirse en una misma palabra.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowColorGuideModal(false)}
+                className="w-full py-2.5 rounded-xl font-black text-sm bg-[#294C6B] hover:bg-[#1E364D] text-white transition-colors shadow-xs"
+              >
+                ¡Entendido!
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* 6. Modal de Victoria o Fin de Partida (Overlay que no desplaza el layout, con 1s de espera y animación suave) */}
         {showEndModal && (

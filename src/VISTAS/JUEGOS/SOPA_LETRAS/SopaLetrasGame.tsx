@@ -9,6 +9,7 @@ import {
   IonIcon,
 } from '@ionic/react';
 import { GameHeader, LivesBadge } from '../../COMPONENTS/GameHeader';
+import { usePlayerEconomy } from '../../../context/PlayerEconomyContext';
 import { SopaLetrasCompletedModal } from './SopaLetrasCompletedModal';
 import {
   arrowBackOutline,
@@ -91,9 +92,10 @@ export const SopaLetrasGame: React.FC = () => {
   const [dragCurrent, setDragCurrent] = useState<CellCoord | null>(null);
   const [tapStart, setTapStart] = useState<CellCoord | null>(null);
 
-  // Vidas y Errores
+  // Vidas Globales y Errores
+  const economy = usePlayerEconomy();
   const MAX_LIVES = 5;
-  const [lives, setLives] = useState<number>(MAX_LIVES);
+  const lives = economy.vidas;
   const [errors, setErrors] = useState<number>(0);
   const [isGameOver, setIsGameOver] = useState<boolean>(false);
   const [showGameOverModal, setShowGameOverModal] = useState<boolean>(false);
@@ -159,7 +161,7 @@ export const SopaLetrasGame: React.FC = () => {
         setFoundWords(parsed);
       }
       if (saved.gameData?.lives !== undefined) {
-        setLives(saved.gameData.lives);
+        // Vidas globales gestionadas vía economy
       }
       if (saved.gameData?.errors !== undefined) {
         setErrors(saved.gameData.errors);
@@ -354,13 +356,11 @@ export const SopaLetrasGame: React.FC = () => {
         } catch {}
 
         setErrors((prev) => prev + 1);
-        setLives((prev) => {
-          const next = Math.max(0, prev - 1);
-          if (next === 0) {
+        economy.consumirVida().then((hasRemaining) => {
+          if (!hasRemaining) {
             setIsGameOver(true);
             setTimeout(() => setShowGameOverModal(true), 400);
           }
-          return next;
         });
 
         setInvalidCells(new Set(cellsToMark));
@@ -454,12 +454,15 @@ export const SopaLetrasGame: React.FC = () => {
   };
 
   const handleRestart = async () => {
+    if (economy.vidas <= 0) {
+      economy.abrirMiniTienda();
+      return;
+    }
     setFoundWords([]);
     setFoundCellKeys(new Set());
     setTapStart(null);
     setDragStart(null);
     setDragCurrent(null);
-    setLives(MAX_LIVES);
     setErrors(0);
     setIsGameOver(false);
     setShowGameOverModal(false);
@@ -474,7 +477,7 @@ export const SopaLetrasGame: React.FC = () => {
       attempts: 0,
       stars: 1,
       score: 0,
-      gameData: { lives: MAX_LIVES, errors: 0 },
+      gameData: { lives: economy.vidas, errors: 0 },
     });
   };
 

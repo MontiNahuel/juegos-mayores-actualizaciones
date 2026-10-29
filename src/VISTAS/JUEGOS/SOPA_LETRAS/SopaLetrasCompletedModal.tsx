@@ -1,6 +1,7 @@
 import React from 'react';
 import type { DayChallenge } from '../../COMPONENTS/CALENDAR/types';
 import { IconCheck, IconStarSolid } from '../../COMPONENTS/CALENDAR/icons';
+import { usePlayerEconomy } from '../../../context/PlayerEconomyContext';
 
 interface SopaLetrasCompletedModalProps {
   challenge: Partial<DayChallenge> & { dateStr?: string; config?: any; stars?: number; completedData?: any };
@@ -15,6 +16,7 @@ export const SopaLetrasCompletedModal: React.FC<SopaLetrasCompletedModalProps> =
   onRestart,
   onClose,
 }) => {
+  const economy = usePlayerEconomy();
   const themeTitle = challenge.config?.theme || 'Palabras temáticas';
   const wordsList: string[] = challenge.config?.words || challenge.completedData?.guesses || [];
   const starsCount = challenge.stars || challenge.completedData?.stars || 3;
@@ -172,6 +174,27 @@ export const SopaLetrasCompletedModal: React.FC<SopaLetrasCompletedModalProps> =
         )}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+          {isGameOver && (
+            <button
+              type="button"
+              onClick={economy.abrirMiniTienda}
+              style={{
+                background: '#BE123C',
+                border: 'none',
+                borderRadius: 14,
+                color: '#FFFFFF',
+                cursor: 'pointer',
+                fontSize: 15,
+                fontWeight: 800,
+                padding: '13px 0',
+                width: '100%',
+              }}
+              className="active:opacity-90 transition-opacity"
+            >
+              ❤️ Conseguir Vidas en la Tienda
+            </button>
+          )}
+
           {isGameOver && onRestart && (
             <button
               type="button"

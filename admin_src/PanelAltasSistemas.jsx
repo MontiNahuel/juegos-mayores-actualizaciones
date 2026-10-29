@@ -20,8 +20,12 @@ import {
   TagIcon,
   CalendarIcon,
   BookOpenIcon,
+  CoinsIcon,
+  HeartIcon,
 } from './Icons';
 import NarrativeAdminModal from './narrative/NarrativeAdminModal';
+import ModalEconomia from './ModalEconomia';
+import ModalAsignarEconomia from './ModalAsignarEconomia';
 import { OPERADOR_STORAGE_KEY } from './LoginSistemas';
 import { solicitarTicketRetorno } from './ssoService';
 
@@ -93,6 +97,7 @@ export default function PanelAltasSistemas() {
   const [editTelefono, setEditTelefono] = useState('');
   const [editActivo, setEditActivo] = useState(true);
   const [editEsBlack, setEditEsBlack] = useState(false);
+  const [editSuscripcion, setEditSuscripcion] = useState('basica');
   const [guardandoEdicion, setGuardandoEdicion] = useState(false);
   const [errorEdicion, setErrorEdicion] = useState('');
   const [exitoEdicion, setExitoEdicion] = useState('');
@@ -128,6 +133,9 @@ export default function PanelAltasSistemas() {
 
   // Estado para Modal del Juego Narrativo
   const [modalNarrativoAbierto, setModalNarrativoAbierto] = useState(false);
+  const [modalEconomiaAbierto, setModalEconomiaAbierto] = useState(false);
+  const [modalAsignarAbierto, setModalAsignarAbierto] = useState(false);
+  const [usuarioParaAsignar, setUsuarioParaAsignar] = useState(null);
 
   const cargarEstadoDesafios = async (anio = desafiosAnio, juego = desafiosJuego) => {
     setCargandoDesafios(true);
@@ -587,6 +595,7 @@ export default function PanelAltasSistemas() {
     setEditTelefono(item.telefono || '');
     setEditActivo(item.activo !== false);
     setEditEsBlack(Boolean(item.black));
+    setEditSuscripcion(item.suscripcion || 'basica');
     setErrorEdicion('');
     setExitoEdicion('');
     setModalEditarAbierto(true);
@@ -606,6 +615,14 @@ export default function PanelAltasSistemas() {
         await fetch(`/usuario/${alumnoAEditar.id}/toggle-activo`, {
           method: 'PUT',
           headers: getAuthHeaders(),
+        });
+      }
+
+      if (editSuscripcion !== (alumnoAEditar.suscripcion || 'basica')) {
+        await fetch(`/api/admin/usuario/${alumnoAEditar.id}/suscripcion`, {
+          method: 'PUT',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ suscripcion: editSuscripcion }),
         });
       }
 
@@ -756,6 +773,27 @@ export default function PanelAltasSistemas() {
             >
               <CalendarIcon size={15} />
               <span>Desafíos Diarios</span>
+            </button>
+
+            <button
+              onClick={() => setModalEconomiaAbierto(true)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs transition shadow-xs cursor-pointer"
+              title="Configuración de Vidas y Economía"
+            >
+              <CoinsIcon size={15} className="text-amber-600" />
+              <span>Economía & Vidas</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setUsuarioParaAsignar(null);
+                setModalAsignarAbierto(true);
+              }}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-rose-200 bg-rose-50/50 hover:bg-rose-100/60 text-rose-800 font-bold text-xs transition shadow-xs cursor-pointer"
+              title="Asignar vidas o puntos a un usuario (Herramienta de Testeo)"
+            >
+              <HeartIcon size={15} className="text-rose-500 fill-rose-500" />
+              <span>Asignar Vidas & Puntos</span>
             </button>
 
             <button
@@ -1069,6 +1107,17 @@ export default function PanelAltasSistemas() {
                             </button>
 
                             <button
+                              onClick={() => {
+                                setUsuarioParaAsignar(item);
+                                setModalAsignarAbierto(true);
+                              }}
+                              title="Asignar vidas o puntos a este usuario"
+                              className="p-1.5 rounded-lg border border-rose-200 bg-white hover:bg-rose-50 text-rose-600 transition cursor-pointer"
+                            >
+                              <HeartIcon size={14} className="fill-rose-500" />
+                            </button>
+
+                            <button
                               onClick={() => handleAbrirModalEditar(item)}
                               title="Editar usuario"
                               className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 transition cursor-pointer"
@@ -1327,6 +1376,23 @@ export default function PanelAltasSistemas() {
                   onChange={(e) => setEditActivo(e.target.checked)}
                   className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                 />
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <div>
+                  <span className="font-bold text-xs text-slate-800 block">Suscripción a Desafíos</span>
+                  <span className="text-[10px] text-slate-500 block">
+                    {editSuscripcion === 'premium' ? '👑 Acceso total e ilimitado' : 'Básica (históricos con puntos)'}
+                  </span>
+                </div>
+                <select
+                  value={editSuscripcion}
+                  onChange={(e) => setEditSuscripcion(e.target.value)}
+                  className="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-300 bg-white text-slate-800 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#002B5E]"
+                >
+                  <option value="basica">Básica</option>
+                  <option value="premium">👑 Premium</option>
+                </select>
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-2">
@@ -1782,6 +1848,22 @@ export default function PanelAltasSistemas() {
       <NarrativeAdminModal
         abierto={modalNarrativoAbierto}
         onCerrar={() => setModalNarrativoAbierto(false)}
+      />
+      {/* MODAL ECONOMIA & VIDAS */}
+      <ModalEconomia
+        abierto={modalEconomiaAbierto}
+        onCerrar={() => setModalEconomiaAbierto(false)}
+        onGuardadoExitoso={() => showToast('Economía actualizada correctamente')}
+      />
+      {/* MODAL ASIGNAR VIDAS & PUNTOS (TESTEO) */}
+      <ModalAsignarEconomia
+        abierto={modalAsignarAbierto}
+        onCerrar={() => setModalAsignarAbierto(false)}
+        usuarioInicial={usuarioParaAsignar}
+        onActualizado={(res) => {
+          showToast(res.message || 'Vidas y puntos actualizados');
+          cargarAlumnos(skip, limit, busqueda, filtroEstado);
+        }}
       />
     </div>
   );

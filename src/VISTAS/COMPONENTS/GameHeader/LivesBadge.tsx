@@ -1,4 +1,5 @@
 import React from 'react';
+import { usePlayerEconomy } from '../../../context/PlayerEconomyContext';
 
 /**
  * Icono de corazón SVG estilizado para contadores de vidas.
@@ -25,8 +26,8 @@ export const IconHeart: React.FC<{
 );
 
 export interface LivesBadgeProps {
-  /** Cantidad actual de vidas */
-  lives: number;
+  /** Cantidad actual de vidas (opcional, si se omite usa el contexto global) */
+  lives?: number;
   /** Cantidad máxima de vidas */
   maxLives?: number;
   /** Etiqueta de texto (por defecto: 'Vidas:') */
@@ -37,6 +38,8 @@ export interface LivesBadgeProps {
   heartSize?: number;
   /** Clases CSS adicionales */
   className?: string;
+  /** Callback al hacer click (por defecto abre la mini-tienda) */
+  onClick?: () => void;
 }
 
 /**
@@ -44,40 +47,69 @@ export interface LivesBadgeProps {
  * en el GameHeader de todos los juegos cognitivos.
  */
 export const LivesBadge: React.FC<LivesBadgeProps> = ({
-  lives,
+  lives: propLives,
   maxLives = 5,
   label = 'Vidas:',
   showLabel = true,
   heartSize = 13,
   className = '',
+  onClick,
 }) => {
-  const safeLives = Math.max(0, Math.min(lives, maxLives));
+  const economy = usePlayerEconomy();
+  const currentLives = propLives !== undefined ? propLives : economy.vidas;
+  const safeLives = Math.max(0, currentLives);
   const isCritical = safeLives === 1;
 
+  const handleClick = () => {
+    if (onClick) {
+      onClick();
+    } else {
+      economy.abrirMiniTienda();
+    }
+  };
+
   return (
-    <div
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border shadow-2xs transition-colors duration-200 select-none ${
+    <button
+      type="button"
+      onClick={handleClick}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border shadow-2xs transition-all duration-200 cursor-pointer select-none ${
         isCritical
           ? 'bg-rose-100/90 border-rose-300 text-rose-800 animate-pulse'
-          : 'bg-rose-50/80 border-rose-200 text-rose-700'
+          : safeLives === 0
+          ? 'bg-slate-100 border-slate-300 text-slate-500'
+          : 'bg-rose-50/80 border-rose-200 text-rose-700 hover:bg-rose-100/80 active:scale-95'
       } ${className}`}
-      title={`${safeLives} de ${maxLives} vidas restantes`}
-      aria-label={`${safeLives} de ${maxLives} vidas restantes`}
+      title={`${safeLives} vidas restantes. Hacé clic para abrir la Tienda de Vidas.`}
+      aria-label={`${safeLives} vidas restantes. Hacé clic para abrir la Tienda de Vidas.`}
     >
       {showLabel && (
         <span className="text-xs font-bold hidden sm:inline">
           {label}
         </span>
       )}
-      <div className="flex items-center gap-0.5">
-        {Array.from({ length: maxLives }).map((_, i) => (
-          <IconHeart
-            key={i}
-            filled={i < safeLives}
-            size={heartSize}
-          />
-        ))}
-      </div>
-    </div>
+      
+      {/* Si tiene hasta 5 vidas, mostramos corazones individuales. Si tiene más de 5, mostramos número con corazón */}
+      {maxLives <= 5 ? (
+        <div className="flex items-center gap-0.5">
+          {Array.from({ length: maxLives }).map((_, i) => (
+            <IconHeart
+              key={i}
+              filled={i < safeLives}
+              size={heartSize}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="flex items-center gap-1 font-bold text-xs">
+          <IconHeart filled={safeLives > 0} size={heartSize} />
+          <span>{safeLives}</span>
+        </div>
+      )}
+
+      {/* Pill de ayuda para abrir tienda */}
+      <span className="text-[10px] bg-rose-200/70 text-rose-800 px-1 py-0.2 rounded-full font-extrabold leading-none">
+        +
+      </span>
+    </button>
   );
 };

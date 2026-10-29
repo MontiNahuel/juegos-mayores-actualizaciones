@@ -45,6 +45,14 @@ export default defineConfig(({ mode }) => {
           target: backendUrl,
           changeOrigin: true,
         },
+        '/admin': {
+          target: backendUrl,
+          changeOrigin: true,
+        },
+        '/auth': {
+          target: backendUrl,
+          changeOrigin: true,
+        },
         '/usuario': {
           target: backendUrl,
           changeOrigin: true,

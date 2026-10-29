@@ -3,7 +3,9 @@ import type { CSSProperties } from 'react';
 import { IonHeader, IonToolbar, IonIcon } from '@ionic/react';
 import { logInOutline, logOutOutline } from 'ionicons/icons';
 import { FlameIcon, StarIcon } from '../COMPONENTS/Icons/Icons';
+import { IconHeart } from '../COMPONENTS/GameHeader/LivesBadge';
 import { AuthModal } from './AuthModal';
+import { usePlayerEconomy } from '../../context/PlayerEconomyContext';
 
 export interface Usuario {
   id: number;
@@ -12,6 +14,7 @@ export interface Usuario {
   codigoAcceso?: string;
   racha?: number;
   puntos?: number;
+  vidas?: number;
 }
 
 const color = {
@@ -36,6 +39,8 @@ function getGreeting(): string {
 }
 
 export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange }) => {
+  const economy = usePlayerEconomy();
+
   const [usuario, setUsuario] = useState<Usuario | null>(() => {
     try {
       const saved = localStorage.getItem('usuario') || localStorage.getItem('user');
@@ -79,11 +84,13 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange }) => 
     localStorage.removeItem('user');
     localStorage.removeItem('token');
     onUsuarioChange?.(null);
+    economy.recargarEconomia();
   };
 
   const handleAuthSuccess = (loggedUser: Usuario) => {
     setUsuario(loggedUser);
     onUsuarioChange?.(loggedUser);
+    economy.recargarEconomia();
   };
 
   return (
@@ -165,7 +172,7 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange }) => 
             </div>
           </div>
 
-          {/* Lado derecho: Sesión activa (Racha + Puntos + Salir) ó Botón Iniciar Sesión */}
+          {/* Lado derecho: Sesión activa (Racha + Vidas + Puntos + Salir) ó Botón Iniciar Sesión */}
           {usuario ? (
             <div
               style={{
@@ -198,26 +205,62 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange }) => 
                 </span>
               </div>
 
-              {/* Puntos */}
-              <div
+              {/* Vidas Globales (Click abre Mini-Tienda) */}
+              <button
+                type="button"
+                onClick={economy.abrirMiniTienda}
+                style={{
+                  alignItems: 'center',
+                  background: '#FFE4E6',
+                  border: '1px solid #FECDD3',
+                  borderRadius: 14,
+                  color: '#BE123C',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  fontSize: 13,
+                  fontWeight: 800,
+                  gap: 4,
+                  padding: '6px 10px',
+                  transition: 'all 0.2s ease',
+                }}
+                className="hover:bg-rose-200 active:scale-95"
+                title="Vidas restantes. Hacé clic para abrir la Tienda de Vidas."
+              >
+                <IconHeart filled={economy.vidas > 0} size={16} />
+                <span>{economy.vidas}</span>
+                <span className="hidden sm:inline">
+                  {economy.vidas === 1 ? 'vida' : 'vidas'}
+                </span>
+                <span style={{ fontSize: 10, background: '#FDA4AF', color: '#881337', padding: '1px 4px', borderRadius: 6, fontWeight: 900 }}>
+                  +
+                </span>
+              </button>
+
+              {/* Puntos (Click abre Mini-Tienda) */}
+              <button
+                type="button"
+                onClick={economy.abrirMiniTienda}
                 style={{
                   alignItems: 'center',
                   background: '#E8F8F5',
                   border: '1px solid #8FD5CA',
                   borderRadius: 14,
                   color: '#17695F',
+                  cursor: 'pointer',
                   display: 'flex',
                   fontSize: 13,
                   fontWeight: 800,
                   gap: 4,
                   padding: '6px 10px',
+                  transition: 'all 0.2s ease',
                 }}
-                title="Puntos acumulados"
+                className="hover:bg-[#d1f2eb] active:scale-95"
+                title="Puntos acumulados. Hacé clic para canjear vidas."
               >
                 <StarIcon size={15} />
-                <span>{(usuario as any)?.puntos ?? 0}</span>
+                <span>{economy.puntos}</span>
                 <span className="hidden sm:inline">pts</span>
-              </div>
+              </button>
 
               {/* Botón Salir */}
               <button
@@ -243,30 +286,62 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange }) => 
               </button>
             </div>
           ) : (
-            /* Botón para abrir el Modal de Inicio de Sesión / Registro */
-            <button
-              onClick={() => setShowAuthModal(true)}
-              style={{
-                alignItems: 'center',
-                background: '#294C6B',
-                border: 'none',
-                borderRadius: 14,
-                boxShadow: '0 3px 10px rgba(41, 76, 107, 0.22)',
-                color: '#FFFFFF',
-                cursor: 'pointer',
-                display: 'inline-flex',
-                fontSize: 14,
-                fontWeight: 800,
-                gap: 6,
-                minHeight: 42,
-                padding: '8px 16px',
-                whiteSpace: 'nowrap',
-              }}
-              className="active:bg-slate-800 transition-colors"
-            >
-              <IonIcon icon={logInOutline} style={{ fontSize: 18 }} />
-              <span>Iniciar sesión</span>
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {/* Vidas para invitado */}
+              <button
+                type="button"
+                onClick={economy.abrirMiniTienda}
+                style={{
+                  alignItems: 'center',
+                  background: '#FFE4E6',
+                  border: '1px solid #FECDD3',
+                  borderRadius: 14,
+                  color: '#BE123C',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  fontSize: 13,
+                  fontWeight: 800,
+                  gap: 4,
+                  padding: '6px 10px',
+                }}
+                className="hover:bg-rose-200 active:scale-95"
+                title="Vidas restantes. Hacé clic para abrir la Tienda de Vidas."
+              >
+                <IconHeart filled={economy.vidas > 0} size={16} />
+                <span>{economy.vidas}</span>
+                <span className="hidden sm:inline">
+                  {economy.vidas === 1 ? 'vida' : 'vidas'}
+                </span>
+                <span style={{ fontSize: 10, background: '#FDA4AF', color: '#881337', padding: '1px 4px', borderRadius: 6, fontWeight: 900 }}>
+                  +
+                </span>
+              </button>
+
+              {/* Botón para abrir el Modal de Inicio de Sesión / Registro */}
+              <button
+                onClick={() => setShowAuthModal(true)}
+                style={{
+                  alignItems: 'center',
+                  background: '#294C6B',
+                  border: 'none',
+                  borderRadius: 14,
+                  boxShadow: '0 3px 10px rgba(41, 76, 107, 0.22)',
+                  color: '#FFFFFF',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  fontSize: 14,
+                  fontWeight: 800,
+                  gap: 6,
+                  minHeight: 42,
+                  padding: '8px 16px',
+                  whiteSpace: 'nowrap',
+                }}
+                className="active:bg-slate-800 transition-colors"
+              >
+                <IonIcon icon={logInOutline} style={{ fontSize: 18 }} />
+                <span>Iniciar sesión</span>
+              </button>
+            </div>
           )}
         </div>
       </IonToolbar>

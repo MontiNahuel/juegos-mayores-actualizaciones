@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { SudokuCell, SudokuGrid, DifficultyLevel } from './types';
 import { generateDailyPuzzle, hasConflict } from './sudokuEngine';
 import { saveFinalGameAttempt } from '../attemptsService';
+import { usePlayerEconomy } from '../../../context/PlayerEconomyContext';
 import {
   getSudokuLocalProgress,
   saveSudokuLocalProgress,
@@ -42,7 +43,8 @@ export function useSudokuGame() {
   const [solution, setSolution] = useState<SudokuGrid>([]);
   const [selectedRow, setSelectedRow] = useState<number | null>(null);
   const [selectedCol, setSelectedCol] = useState<number | null>(null);
-  const [lives, setLives] = useState<number>(() => getMaxLives(difficultyLevel));
+  const economy = usePlayerEconomy();
+  const lives = economy.vidas;
   const [errors, setErrors] = useState<number>(0);
   const [isNotesMode, setIsNotesMode] = useState<boolean>(false);
   const [hintsLeft, setHintsLeft] = useState<number>(999);
@@ -59,7 +61,7 @@ export function useSudokuGame() {
         setCells(saved.cells);
         setSelectedRow(null);
         setSelectedCol(null);
-        setLives(saved.lives);
+        // Vidas globales gestionadas vía economy
         setErrors(saved.errors);
         setHintsLeft(saved.hintsLeft);
         setIsWon(false);
@@ -105,7 +107,7 @@ export function useSudokuGame() {
     setCells(initialCells);
     setSelectedRow(null);
     setSelectedCol(null);
-    setLives(getMaxLives(targetDiff));
+    // Vidas globales administradas por economy
     setErrors(0);
     setHintsLeft(999);
     setIsWon(false);
@@ -199,17 +201,15 @@ export function useSudokuGame() {
 
     // Descontar vida si se equivocó
     if (!isCorrect) {
-      const newLives = lives - 1;
       const newErrors = errors + 1;
-      setLives(newLives);
       setErrors(newErrors);
 
-      if (newLives <= 0) {
-        setIsGameOver(true);
-        // Limpiamos de localStorage para permitir reintento limpio desde cero
-        clearSudokuLocalProgress(dateKey);
-        // NOTA: NO llamamos a saveFinalGameAttempt con 'lost' para no registrar derrota en la DB
-      }
+      economy.consumirVida().then((hasRemaining) => {
+        if (!hasRemaining) {
+          setIsGameOver(true);
+          clearSudokuLocalProgress(dateKey);
+        }
+      });
     }
   };
 

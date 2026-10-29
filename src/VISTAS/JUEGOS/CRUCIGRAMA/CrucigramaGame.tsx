@@ -10,6 +10,7 @@ import {
   type CrucigramaDifficulty,
 } from './crucigramaStorage';
 import { GameHeader, LivesBadge } from '../../COMPONENTS/GameHeader';
+import { usePlayerEconomy } from '../../../context/PlayerEconomyContext';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { CrucigramaCompletedModal } from './CrucigramaCompletedModal';
 import { CrucigramaClues } from './CrucigramaClues';
@@ -92,9 +93,10 @@ export const CrucigramaGame: React.FC = () => {
   const [hintMessage, setHintMessage] = useState<string | null>(null);
   const [revealedCellCoord, setRevealedCellCoord] = useState<{ r: number; c: number } | null>(null);
 
-  // Vidas y Errores (Sistema de 5 vidas)
+  // Vidas Globales y Errores
+  const economy = usePlayerEconomy();
   const MAX_LIVES = 5;
-  const [lives, setLives] = useState<number>(MAX_LIVES);
+  const lives = economy.vidas;
   const [errors, setErrors] = useState<number>(0);
   const [isGameOver, setIsGameOver] = useState<boolean>(false);
   const [showGameOverModal, setShowGameOverModal] = useState<boolean>(false);
@@ -141,7 +143,7 @@ export const CrucigramaGame: React.FC = () => {
           setSelectedCol(saved.selectedCol ?? 0);
           setSelectedDirection(saved.selectedDirection ?? 'H');
           setSeconds(saved.elapsedSeconds ?? 0);
-          if (saved.lives !== undefined) setLives(saved.lives);
+          // Vidas administradas globalmente vía economy
           if (saved.errors !== undefined) setErrors(saved.errors);
         } else {
           setUserGrid(Array.from({ length: size }, () => Array(size).fill('')));
@@ -354,13 +356,11 @@ export const CrucigramaGame: React.FC = () => {
                 setTimeout(() => setFlashingWordId(null), 600);
 
                 setErrors((prev) => prev + 1);
-                setLives((prev) => {
-                  const next = Math.max(0, prev - 1);
-                  if (next === 0) {
+                economy.consumirVida().then((hasRemaining) => {
+                  if (!hasRemaining) {
                     setIsGameOver(true);
                     setTimeout(() => setShowGameOverModal(true), 400);
                   }
-                  return next;
                 });
               }
             }
@@ -530,8 +530,11 @@ export const CrucigramaGame: React.FC = () => {
 
   // Reiniciar crucigrama (para Game Over o reintento)
   const handleRestart = () => {
+    if (economy.vidas <= 0) {
+      economy.abrirMiniTienda();
+      return;
+    }
     setUserGrid(Array.from({ length: gridSize }, () => Array(gridSize).fill('')));
-    setLives(MAX_LIVES);
     setErrors(0);
     setIsGameOver(false);
     setShowGameOverModal(false);

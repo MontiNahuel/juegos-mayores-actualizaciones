@@ -1,4 +1,5 @@
 ﻿import React from 'react';
+import { usePlayerEconomy } from '../../../context/PlayerEconomyContext';
 
 interface ModalProps {
   isGameOver?: boolean;
@@ -15,6 +16,7 @@ export const SudokuCompletedModal: React.FC<ModalProps> = ({
   onRestart,
   onExit,
 }) => {
+  const economy = usePlayerEconomy();
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
       <div className="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl text-center space-y-4 border border-[#E2E8F0]">
@@ -49,13 +51,22 @@ export const SudokuCompletedModal: React.FC<ModalProps> = ({
 
         <div className="flex flex-col gap-2 pt-2">
           {isGameOver ? (
-            <button
-              type="button"
-              onClick={onRestart}
+            <>
+              <button
+                type="button"
+                onClick={economy.abrirMiniTienda}
+                className="w-full h-12 bg-[#BE123C] hover:bg-[#9F1239] active:scale-98 text-white text-base font-bold rounded-2xl shadow-md transition-all"
+              >
+                ❤️ Conseguir Vidas en la Tienda
+              </button>
+              <button
+                type="button"
+                onClick={onRestart}
               className="w-full h-12 bg-[#0284C7] hover:bg-[#0369A1] active:scale-98 text-white text-base font-bold rounded-2xl shadow-md transition-all"
             >
               🔄 Intentar de Nuevo
             </button>
+            </>
           ) : null}
 
           <button
