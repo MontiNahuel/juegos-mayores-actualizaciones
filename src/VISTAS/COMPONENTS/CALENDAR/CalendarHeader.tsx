@@ -8,5 +8,5 @@ interface CalendarHeaderProps {
 
 // El calendario comparte identidad, sesión y acciones con el menú.
 export function CalendarHeader({ title, onBack, primaryColor }: CalendarHeaderProps) {
-  return <LoginHeader title={title} onBack={onBack} primaryColor={primaryColor} ocultarSaludoEnMovil />;
+  return <LoginHeader title={title} onBack={onBack} primaryColor={primaryColor} ocultarSaludoEnMovil ocultarSesion />;
 }

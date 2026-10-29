@@ -3,6 +3,11 @@
   gap: 12px;
 }
 
+.login-header-signin[hidden],
+.login-header-logout[hidden] {
+  display: none !important;
+}
+
 .login-header-layout--titled {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, auto) minmax(0, 1fr);
@@ -58,12 +63,37 @@
     display: none;
   }
 
-  .login-header-layout--titled.login-header-layout--compact .login-header-lives-left {
-    display: inline-flex;
+}
+
+@media (max-width: 639px) {
+  .login-header-layout--titled .login-header-home {
+    display: flex;
   }
 
-  .login-header-layout--titled.login-header-layout--compact .login-header-lives-right {
-    display: none;
+  .login-header-layout--titled .login-header-logo {
+    display: block;
+  }
+
+  .login-header-layout--titled.login-header-layout--authenticated {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .login-header-layout--titled.login-header-layout--authenticated .login-header-title {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    white-space: normal;
+  }
+}
+
+@media (max-width: 399px) {
+  .login-header-layout--titled {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .login-header-layout--titled .login-header-title {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    white-space: normal;
   }
 }
 
@@ -103,17 +133,11 @@
     display: none;
   }
 
-  .login-header-layout--authenticated:not(.login-header-layout--titled) .login-header-greeting > span {
+  .login-header-layout--menu .login-header-greeting {
     display: none;
   }
 
-  .login-header-layout--authenticated:not(.login-header-layout--titled) {
-    flex-direction: column-reverse;
-    gap: 6px;
-    justify-content: center !important;
-  }
-
-  .login-header-layout--authenticated:not(.login-header-layout--titled) .login-header-greeting {
-    text-align: center;
+  .login-header-layout--menu .login-header-logo {
+    display: block;
   }
 }

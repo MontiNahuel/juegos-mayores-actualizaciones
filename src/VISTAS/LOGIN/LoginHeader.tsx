@@ -39,6 +39,8 @@ interface LoginHeaderProps {
   onBack?: () => void;
   primaryColor?: string;
   ocultarSaludoEnMovil?: boolean;
+  menuPrincipal?: boolean;
+  ocultarSesion?: boolean;
 }
 
 function getGreeting(): string {
@@ -48,7 +50,7 @@ function getGreeting(): string {
   return '¡Buenas noches!';
 }
 
-export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title, onBack, primaryColor = color.blue, ocultarSaludoEnMovil = false }) => {
+export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title, onBack, primaryColor = color.blue, ocultarSaludoEnMovil = false, menuPrincipal = false, ocultarSesion = false }) => {
   const economy = usePlayerEconomy();
   const navigate = useNavigate();
   const [usuario, setUsuario] = useState<Usuario | null>(() => {
@@ -150,7 +152,7 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title
     <IonHeader style={{ boxShadow: '0 2px 10px rgba(23, 59, 99, 0.12)' }}>
       <IonToolbar style={{ '--background': '#FFFFFF', '--border-width': 0 } as CSSProperties}>
         <div
-          className={`login-header-layout${title ? ' login-header-layout--titled' : ''}${ocultarSaludoEnMovil ? ' login-header-layout--compact' : ''}${usuario ? ' login-header-layout--authenticated' : ''}`}
+          className={`login-header-layout${title ? ' login-header-layout--titled' : ''}${ocultarSaludoEnMovil ? ' login-header-layout--compact' : ''}${usuario ? ' login-header-layout--authenticated' : ''}${menuPrincipal ? ' login-header-layout--menu' : ''}`}
           style={{
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -341,6 +343,7 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title
                   padding: '7px 11px',
                 }}
                 className="login-header-logout hover:bg-slate-200 active:bg-slate-300 transition-colors"
+                hidden={ocultarSesion}
               >
                 <IonIcon icon={logOutOutline} style={{ fontSize: 16 }} />
                 <span className="hidden sm:inline">Salir</span>
@@ -372,6 +375,7 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title
                   whiteSpace: 'nowrap',
                 }}
                 className="login-header-signin active:bg-slate-800 transition-colors"
+                hidden={ocultarSesion}
               >
                 <IonIcon icon={logInOutline} style={{ fontSize: 18 }} />
                 <span>Iniciar sesión</span>
