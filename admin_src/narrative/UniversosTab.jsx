@@ -1,3 +1,4 @@
+/* Permite editar universos con sus recursos y reglas iniciales. */
 import { useState, useEffect } from 'react';
 import {
   CrownIcon,
@@ -12,6 +13,7 @@ import {
 } from '../Icons';
 import ImageUploadField from './ImageUploadField';
 
+// Permite editar universos con sus recursos y reglas iniciales.
 export default function UniversosTab({ onUniversosChange }) {
   const [universos, setUniversos] = useState([]);
   const [cargando, setCargando] = useState(true);
@@ -36,6 +38,7 @@ export default function UniversosTab({ onUniversosChange }) {
     { clave: 'fe', nombre: 'Fervor Religioso', icono: 'church', min: 0, max: 100, inicial: 50 },
   ]);
 
+  // Carga universos con los datos de este paso.
   const cargarUniversos = async () => {
     setCargando(true);
     setError('');
@@ -56,10 +59,11 @@ export default function UniversosTab({ onUniversosChange }) {
     }
   };
 
-  useEffect(() => {
+  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
     cargarUniversos();
   }, []);
 
+  // Abre el formulario vacío para crear un registro.
   const abrirModalNuevo = () => {
     setEsEdicion(false);
     setId('universo_' + Date.now().toString(36));
@@ -78,6 +82,7 @@ export default function UniversosTab({ onUniversosChange }) {
     setModalAbierto(true);
   };
 
+  // Carga el registro en el formulario de edición.
   const abrirModalEditar = (u) => {
     setEsEdicion(true);
     setId(u._id || u.id);
@@ -91,6 +96,7 @@ export default function UniversosTab({ onUniversosChange }) {
     setModalAbierto(true);
   };
 
+  // Agrega recurso con los datos de este paso.
   const handleAgregarRecurso = () => {
     setRecursos([
       ...recursos,
@@ -98,16 +104,19 @@ export default function UniversosTab({ onUniversosChange }) {
     ]);
   };
 
+  // Quita recurso con los datos de este paso.
   const handleEliminarRecurso = (index) => {
-    setRecursos(recursos.filter((_, idx) => idx !== index));
+    setRecursos(recursos.filter(/* Conserva los elementos que cumplen esta condición. */ (_, idx) => idx !== index));
   };
 
+  // Actualiza recurso con los datos de este paso.
   const handleCambiarRecurso = (index, campo, valor) => {
     const nuevos = [...recursos];
     nuevos[index] = { ...nuevos[index], [campo]: valor };
     setRecursos(nuevos);
   };
 
+  // Valida el formulario y guarda los cambios.
   const handleGuardar = async (e) => {
     e.preventDefault();
     if (!id.trim() || !nombre.trim()) {
@@ -129,7 +138,7 @@ export default function UniversosTab({ onUniversosChange }) {
       descripcion: descripcion.trim(),
       icono: icono.trim() || 'crown',
       imagen: imagen.trim() || '/assets/narrative/universos/default.webp',
-      recursos: recursos.map((r) => ({
+      recursos: recursos.map(/* Prepara el resultado de cada elemento. */ (r) => ({
         clave: r.clave.trim().toLowerCase(),
         nombre: r.nombre.trim(),
         icono: r.icono || 'coins',
@@ -152,7 +161,7 @@ export default function UniversosTab({ onUniversosChange }) {
       }
 
       setExito('Universo guardado correctamente.');
-      setTimeout(() => {
+      setTimeout(/* Ejecuta este paso cuando se cumple la espera. */ () => {
         setModalAbierto(false);
         cargarUniversos();
       }, 600);
@@ -164,6 +173,7 @@ export default function UniversosTab({ onUniversosChange }) {
     }
   };
 
+  // Pide borrar el registro y actualiza la lista.
   const handleEliminar = async (uId) => {
     if (!confirm(`¿Estás seguro de eliminar el universo "${uId}"? Esta acción no se puede deshacer.`)) {
       return;
@@ -241,7 +251,7 @@ export default function UniversosTab({ onUniversosChange }) {
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {universos.map((u) => {
+          {universos.map(/* Prepara el resultado de cada elemento. */ (u) => {
             const uid = u._id || u.id;
             return (
               <div
@@ -255,7 +265,7 @@ export default function UniversosTab({ onUniversosChange }) {
                         <img
                           src={u.imagen || '/assets/narrative/universos/default.webp'}
                           alt={u.nombre}
-                          onError={(e) => {
+                          onError={/* Responde a error desde este control. */ (e) => {
                             e.target.onerror = null;
                             e.target.src = '/assets/narrative/universos/default.webp';
                           }}
@@ -271,7 +281,7 @@ export default function UniversosTab({ onUniversosChange }) {
                     <div className="flex items-center gap-1">
                       <button
                         type="button"
-                        onClick={() => abrirModalEditar(u)}
+                        onClick={/* Responde a click desde este control. */ () => abrirModalEditar(u)}
                         className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 transition cursor-pointer"
                         title="Editar universo"
                       >
@@ -279,7 +289,7 @@ export default function UniversosTab({ onUniversosChange }) {
                       </button>
                       <button
                         type="button"
-                        onClick={() => handleEliminar(uid)}
+                        onClick={/* Responde a click desde este control. */ () => handleEliminar(uid)}
                         className="p-1.5 rounded-lg border border-rose-200 bg-rose-50/50 hover:bg-rose-100 text-rose-600 transition cursor-pointer"
                         title="Eliminar universo"
                       >
@@ -298,7 +308,7 @@ export default function UniversosTab({ onUniversosChange }) {
                       Recursos del Reino ({u.recursos?.length || 0})
                     </span>
                     <div className="flex flex-wrap gap-2">
-                      {(u.recursos || []).map((r) => (
+                      {(u.recursos || []).map(/* Prepara el resultado de cada elemento. */ (r) => (
                         <div
                           key={r.clave}
                           className="px-2.5 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs flex items-center gap-1.5"
@@ -346,7 +356,7 @@ export default function UniversosTab({ onUniversosChange }) {
 
               <button
                 type="button"
-                onClick={() => setModalAbierto(false)}
+                onClick={/* Responde a click desde este control. */ () => setModalAbierto(false)}
                 className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer"
               >
                 <XIcon size={18} />
@@ -376,7 +386,7 @@ export default function UniversosTab({ onUniversosChange }) {
                   <input
                     type="text"
                     value={id}
-                    onChange={(e) => setId(e.target.value)}
+                    onChange={/* Responde a change desde este control. */ (e) => setId(e.target.value)}
                     disabled={esEdicion}
                     placeholder="ej. corte_medieval"
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-mono font-semibold text-slate-800 disabled:bg-slate-100 disabled:text-slate-500 focus:outline-none focus:border-[#002B5E]"
@@ -390,7 +400,7 @@ export default function UniversosTab({ onUniversosChange }) {
                   <input
                     type="text"
                     value={nombre}
-                    onChange={(e) => setNombre(e.target.value)}
+                    onChange={/* Responde a change desde este control. */ (e) => setNombre(e.target.value)}
                     placeholder="ej. Crónicas de la Corte Real"
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-800 focus:outline-none focus:border-[#002B5E]"
                   />
@@ -404,7 +414,7 @@ export default function UniversosTab({ onUniversosChange }) {
                 <textarea
                   rows={2}
                   value={descripcion}
-                  onChange={(e) => setDescripcion(e.target.value)}
+                  onChange={/* Responde a change desde este control. */ (e) => setDescripcion(e.target.value)}
                   placeholder="Describe el contexto del reino..."
                   className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:border-[#002B5E]"
                 />
@@ -435,7 +445,7 @@ export default function UniversosTab({ onUniversosChange }) {
                 </div>
 
                 <div className="space-y-2.5 max-h-56 overflow-y-auto pr-1">
-                  {recursos.map((r, idx) => (
+                  {recursos.map(/* Prepara el resultado de cada elemento. */ (r, idx) => (
                     <div
                       key={idx}
                       className="p-3 rounded-xl border border-slate-200 bg-slate-50/60 flex flex-col sm:flex-row items-center gap-2 text-xs"
@@ -443,14 +453,14 @@ export default function UniversosTab({ onUniversosChange }) {
                       <input
                         type="text"
                         value={r.clave}
-                        onChange={(e) => handleCambiarRecurso(idx, 'clave', e.target.value)}
+                        onChange={/* Responde a change desde este control. */ (e) => handleCambiarRecurso(idx, 'clave', e.target.value)}
                         placeholder="Clave (ej. oro)"
                         className="w-full sm:w-28 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white font-mono text-[11px] font-semibold text-slate-800"
                       />
                       <input
                         type="text"
                         value={r.nombre}
-                        onChange={(e) => handleCambiarRecurso(idx, 'nombre', e.target.value)}
+                        onChange={/* Responde a change desde este control. */ (e) => handleCambiarRecurso(idx, 'nombre', e.target.value)}
                         placeholder="Nombre visible"
                         className="w-full sm:flex-1 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-[11px] font-bold text-slate-800"
                       />
@@ -459,19 +469,19 @@ export default function UniversosTab({ onUniversosChange }) {
                         <input
                           type="number"
                           value={r.inicial}
-                          onChange={(e) => handleCambiarRecurso(idx, 'inicial', parseInt(e.target.value, 10))}
+                          onChange={/* Responde a change desde este control. */ (e) => handleCambiarRecurso(idx, 'inicial', parseInt(e.target.value, 10))}
                           className="w-14 px-2 py-1.5 rounded-lg border border-slate-200 bg-white text-[11px] text-center font-bold"
                         />
                         <span className="text-[10px] text-slate-400 font-bold">Máx:</span>
                         <input
                           type="number"
                           value={r.max}
-                          onChange={(e) => handleCambiarRecurso(idx, 'max', parseInt(e.target.value, 10))}
+                          onChange={/* Responde a change desde este control. */ (e) => handleCambiarRecurso(idx, 'max', parseInt(e.target.value, 10))}
                           className="w-14 px-2 py-1.5 rounded-lg border border-slate-200 bg-white text-[11px] text-center font-bold"
                         />
                         <button
                           type="button"
-                          onClick={() => handleEliminarRecurso(idx)}
+                          onClick={/* Responde a click desde este control. */ () => handleEliminarRecurso(idx)}
                           className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer ml-auto"
                           title="Quitar recurso"
                         >
@@ -487,7 +497,7 @@ export default function UniversosTab({ onUniversosChange }) {
               <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-2">
                 <button
                   type="button"
-                  onClick={() => setModalAbierto(false)}
+                  onClick={/* Responde a click desde este control. */ () => setModalAbierto(false)}
                   className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition cursor-pointer"
                 >
                   Cancelar

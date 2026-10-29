@@ -1,3 +1,4 @@
+/* Define la forma de los datos de sudoku para que sus piezas se entiendan. */
 ﻿import { DifficultyLevel } from '../../COMPONENTS/DIFICULTAD';
 
 export type { DifficultyLevel };

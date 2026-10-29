@@ -1,3 +1,4 @@
+/* Permite elegir, arrastrar, subir o quitar una imagen. */
 import { useState, useRef } from 'react';
 import {
   ImageIcon,
@@ -8,6 +9,7 @@ import {
   XIcon,
 } from '../Icons';
 
+// Permite elegir, arrastrar, subir o quitar una imagen.
 export default function ImageUploadField({
   label = 'Imagen',
   categoria = 'eventos',
@@ -28,6 +30,7 @@ export default function ImageUploadField({
   const [arrastrando, setArrastrando] = useState(false);
   const fileInputRef = useRef(null);
 
+  // Valida y prepara la imagen elegida para subirla.
   const procesarArchivo = async (file) => {
     if (!file) return;
 
@@ -58,7 +61,7 @@ export default function ImageUploadField({
       });
 
       if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
+        const errData = await res.json().catch(/* Maneja el fallo de esta operación. */ () => ({}));
         throw new Error(errData.detail || 'Error al procesar y subir la imagen.');
       }
 
@@ -75,6 +78,7 @@ export default function ImageUploadField({
     }
   };
 
+  // Toma la imagen elegida en el selector de archivos.
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -84,6 +88,7 @@ export default function ImageUploadField({
     e.target.value = '';
   };
 
+  // Recoge la imagen que se soltó en el campo.
   const handleDrop = (e) => {
     e.preventDefault();
     setArrastrando(false);
@@ -93,15 +98,18 @@ export default function ImageUploadField({
     }
   };
 
+  // Permite soltar la imagen y marca la zona activa.
   const handleDragOver = (e) => {
     e.preventDefault();
     setArrastrando(true);
   };
 
+  // Quita la marca cuando la imagen sale del campo.
   const handleDragLeave = () => {
     setArrastrando(false);
   };
 
+  // Vuelve a usar la imagen predeterminada.
   const restablecerPorDefecto = () => {
     if (onChange) {
       onChange(fallbackUrl);
@@ -110,6 +118,7 @@ export default function ImageUploadField({
     setError('');
   };
 
+  // Quita la imagen del formulario.
   const quitarImagen = () => {
     if (onChange) {
       onChange('');
@@ -127,7 +136,7 @@ export default function ImageUploadField({
         </label>
         <button
           type="button"
-          onClick={() => setModoManual(!modoManual)}
+          onClick={/* Responde a click desde este control. */ () => setModoManual(!modoManual)}
           className="text-[10px] text-blue-600 hover:text-blue-800 underline transition-colors"
         >
           {modoManual ? 'Volver a subida asistida' : 'Editar URL manual'}
@@ -145,7 +154,7 @@ export default function ImageUploadField({
             <input
               type="text"
               value={valorActual}
-              onChange={(e) => onChange && onChange(e.target.value)}
+              onChange={/* Responde a change desde este control. */ (e) => onChange && onChange(e.target.value)}
               placeholder="/assets/narrative/... o https://..."
               className="flex-1 px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
             />
@@ -188,7 +197,7 @@ export default function ImageUploadField({
                 <img
                   src={valorActual}
                   alt={label}
-                  onError={(e) => {
+                  onError={/* Responde a error desde este control. */ (e) => {
                     e.target.onerror = null;
                     e.target.src = fallbackUrl;
                   }}
@@ -212,7 +221,7 @@ export default function ImageUploadField({
                 <button
                   type="button"
                   disabled={subiendo}
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={/* Responde a click desde este control. */ () => fileInputRef.current?.click()}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-all disabled:opacity-50 cursor-pointer"
                 >
                   <UploadCloudIcon size={14} />
@@ -253,7 +262,7 @@ export default function ImageUploadField({
           <span className="flex-1">{error}</span>
           <button
             type="button"
-            onClick={() => setError('')}
+            onClick={/* Responde a click desde este control. */ () => setError('')}
             className="text-rose-500 hover:text-rose-700"
           >
             <XIcon size={12} />

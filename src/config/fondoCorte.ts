@@ -1,3 +1,4 @@
+/* Define el fondo de la corte y sus adornos según los recursos del reino. */
 export interface ElementoFondoCorte {
   id: string;
   src: string;

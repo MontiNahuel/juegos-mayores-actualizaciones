@@ -1,3 +1,4 @@
+/* Configura cómo se empaqueta la aplicación para el teléfono. */
 // importante para configuracion android
 import type { CapacitorConfig } from '@capacitor/cli';
 

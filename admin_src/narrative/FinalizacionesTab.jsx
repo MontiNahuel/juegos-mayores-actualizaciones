@@ -1,3 +1,4 @@
+/* Permite configurar finales según el universo y sus recursos. */
 import { useState, useEffect } from 'react';
 import {
   SkullIcon,
@@ -24,6 +25,7 @@ const TIPOS_FINALIZACION = [
 
 const RANGOS = ['F', 'D', 'C', 'B', 'A', 'S'];
 
+// Permite configurar finales según el universo y sus recursos.
 export default function FinalizacionesTab({ universos = [] }) {
   const [finalizaciones, setFinalizaciones] = useState([]);
   const [universoFiltro, setUniversoFiltro] = useState('');
@@ -51,16 +53,17 @@ export default function FinalizacionesTab({ universos = [] }) {
 
   // Recursos disponibles para el filtro actual
   const recursosFiltroDisponibles = universoFiltro
-    ? universos.find((u) => (u._id || u.id) === universoFiltro)?.recursos || []
-    : Array.from(new Set(universos.flatMap((u) => u.recursos || []).map((r) => r.clave))).map((clave) => {
-        const item = universos.flatMap((u) => u.recursos || []).find((r) => r.clave === clave);
+    ? universos.find(/* Busca el primer elemento que cumple esta condición. */ (u) => (u._id || u.id) === universoFiltro)?.recursos || []
+    : Array.from(new Set(universos.flatMap(/* Prepara y reúne los resultados de cada elemento. */ (u) => u.recursos || []).map(/* Prepara el resultado de cada elemento. */ (r) => r.clave))).map(/* Prepara el resultado de cada elemento. */ (clave) => {
+        const item = universos.flatMap(/* Prepara y reúne los resultados de cada elemento. */ (u) => u.recursos || []).find(/* Busca el primer elemento que cumple esta condición. */ (r) => r.clave === clave);
         return item || { clave, nombre: clave };
       });
 
   // Recursos válidos EXCLUSIVAMENTE para el universo seleccionado actualmente en el modal
-  const universoModal = universos.find((u) => (u._id || u.id) === universoId);
+  const universoModal = universos.find(/* Busca el primer elemento que cumple esta condición. */ (u) => (u._id || u.id) === universoId);
   const recursosModalDisponibles = universoModal?.recursos || [];
 
+  // Carga finalizaciones con los datos de este paso.
   const cargarFinalizaciones = async (uId = universoFiltro, rClave = recursoFiltro) => {
     setCargando(true);
     setError('');
@@ -85,13 +88,14 @@ export default function FinalizacionesTab({ universos = [] }) {
     }
   };
 
-  useEffect(() => {
+  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
     cargarFinalizaciones(universoFiltro, recursoFiltro);
   }, [universoFiltro, recursoFiltro]);
 
+  // Abre el formulario vacío para crear un registro.
   const abrirModalNuevo = () => {
     const uDefecto = universoFiltro || universos[0]?._id || universos[0]?.id || 'corte_medieval';
-    const uObj = universos.find((u) => (u._id || u.id) === uDefecto);
+    const uObj = universos.find(/* Busca el primer elemento que cumple esta condición. */ (u) => (u._id || u.id) === uDefecto);
     const primerRec = uObj?.recursos?.[0]?.clave || 'oro';
 
     setEsEdicion(false);
@@ -108,6 +112,7 @@ export default function FinalizacionesTab({ universos = [] }) {
     setModalAbierto(true);
   };
 
+  // Carga el registro en el formulario de edición.
   const abrirModalEditar = (fin) => {
     setEsEdicion(true);
     setId(fin._id || fin.id);
@@ -123,9 +128,10 @@ export default function FinalizacionesTab({ universos = [] }) {
     setModalAbierto(true);
   };
 
+  // Cambia el universo y ajusta los recursos del formulario.
   const handleCambioUniversoModal = (nuevoUid) => {
     setUniversoId(nuevoUid);
-    const uObj = universos.find((u) => (u._id || u.id) === nuevoUid);
+    const uObj = universos.find(/* Busca el primer elemento que cumple esta condición. */ (u) => (u._id || u.id) === nuevoUid);
     const primerRec = uObj?.recursos?.[0]?.clave || '';
     setRecursoClave(primerRec);
     if (!esEdicion) {
@@ -133,6 +139,7 @@ export default function FinalizacionesTab({ universos = [] }) {
     }
   };
 
+  // Actualiza el recurso elegido para configurar el final.
   const handleCambioRecursoModal = (nuevoRec) => {
     setRecursoClave(nuevoRec);
     if (!esEdicion) {
@@ -140,9 +147,10 @@ export default function FinalizacionesTab({ universos = [] }) {
     }
   };
 
+  // Crea las finalizaciones iniciales para los universos configurados.
   const autoSembrarFinalizaciones = async () => {
     const targetUniverso = universoFiltro || universos[0]?._id || universos[0]?.id || 'corte_medieval';
-    const nombreU = universos.find((u) => (u._id || u.id) === targetUniverso)?.nombre || targetUniverso;
+    const nombreU = universos.find(/* Busca el primer elemento que cumple esta condición. */ (u) => (u._id || u.id) === targetUniverso)?.nombre || targetUniverso;
     if (!window.confirm(`¿Deseas autogenerar las finalizaciones base para todos los recursos del universo "${nombreU}"?`)) {
       return;
     }
@@ -158,7 +166,7 @@ export default function FinalizacionesTab({ universos = [] }) {
         setExito(`Finalizaciones sincronizadas para "${nombreU}" (${creadas.length} registradas en catálogo).`);
         cargarFinalizaciones(universoFiltro, recursoFiltro);
       } else {
-        const errData = await res.json().catch(() => ({}));
+        const errData = await res.json().catch(/* Maneja el fallo de esta operación. */ () => ({}));
         setError(errData.detail || 'Error al sembrar finalizaciones.');
       }
     } catch (e) {
@@ -169,6 +177,7 @@ export default function FinalizacionesTab({ universos = [] }) {
     }
   };
 
+  // Guarda finalizacion con los datos de este paso.
   const guardarFinalizacion = async (e) => {
     e.preventDefault();
     if (!id.trim() || !titulo.trim() || !universoId) {
@@ -203,7 +212,7 @@ export default function FinalizacionesTab({ universos = [] }) {
         setModalAbierto(false);
         cargarFinalizaciones(universoFiltro, recursoFiltro);
       } else {
-        const errData = await res.json().catch(() => ({}));
+        const errData = await res.json().catch(/* Maneja el fallo de esta operación. */ () => ({}));
         setError(errData.detail || 'Error al guardar la finalización.');
       }
     } catch (err) {
@@ -214,6 +223,7 @@ export default function FinalizacionesTab({ universos = [] }) {
     }
   };
 
+  // Quita finalizacion con los datos de este paso.
   const eliminarFinalizacion = async (finId) => {
     if (!window.confirm(`¿Estás seguro de que deseas eliminar la finalización "${finId}"?`)) {
       return;
@@ -226,7 +236,7 @@ export default function FinalizacionesTab({ universos = [] }) {
         setExito('Finalización eliminada correctamente.');
         cargarFinalizaciones(universoFiltro, recursoFiltro);
       } else {
-        const errData = await res.json().catch(() => ({}));
+        const errData = await res.json().catch(/* Maneja el fallo de esta operación. */ () => ({}));
         setError(errData.detail || 'Error al eliminar finalización.');
       }
     } catch (err) {
@@ -235,7 +245,7 @@ export default function FinalizacionesTab({ universos = [] }) {
     }
   };
 
-  const finalizacionesFiltradas = finalizaciones.filter((fin) => {
+  const finalizacionesFiltradas = finalizaciones.filter(/* Conserva los elementos que cumplen esta condición. */ (fin) => {
     const matchBusqueda =
       fin.titulo?.toLowerCase().includes(busqueda.toLowerCase()) ||
       fin.texto?.toLowerCase().includes(busqueda.toLowerCase()) ||
@@ -255,14 +265,14 @@ export default function FinalizacionesTab({ universos = [] }) {
             <CrownIcon size={14} className="text-slate-500" />
             <select
               value={universoFiltro}
-              onChange={(e) => {
+              onChange={/* Responde a change desde este control. */ (e) => {
                 setUniversoFiltro(e.target.value);
                 setRecursoFiltro('');
               }}
               className="bg-transparent font-semibold text-slate-700 outline-none cursor-pointer"
             >
               <option value="">Todos los Universos</option>
-              {universos.map((u) => (
+              {universos.map(/* Prepara el resultado de cada elemento. */ (u) => (
                 <option key={u._id || u.id} value={u._id || u.id}>
                   {u.nombre} ({u._id || u.id})
                 </option>
@@ -275,11 +285,11 @@ export default function FinalizacionesTab({ universos = [] }) {
             <CoinsIcon size={14} className="text-slate-500" />
             <select
               value={recursoFiltro}
-              onChange={(e) => setRecursoFiltro(e.target.value)}
+              onChange={/* Responde a change desde este control. */ (e) => setRecursoFiltro(e.target.value)}
               className="bg-transparent font-semibold text-slate-700 outline-none cursor-pointer"
             >
               <option value="">Todos los Recursos</option>
-              {recursosFiltroDisponibles.map((r) => (
+              {recursosFiltroDisponibles.map(/* Prepara el resultado de cada elemento. */ (r) => (
                 <option key={r.clave} value={r.clave}>
                   {r.nombre || r.clave} ({r.clave})
                 </option>
@@ -294,13 +304,13 @@ export default function FinalizacionesTab({ universos = [] }) {
               type="text"
               placeholder="Buscar por título, universo o recurso..."
               value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
+              onChange={/* Responde a change desde este control. */ (e) => setBusqueda(e.target.value)}
               className="bg-transparent text-slate-700 font-medium outline-none w-full placeholder:text-slate-400"
             />
             {busqueda && (
               <button
                 type="button"
-                onClick={() => setBusqueda('')}
+                onClick={/* Responde a click desde este control. */ () => setBusqueda('')}
                 className="text-slate-400 hover:text-slate-600 cursor-pointer"
               >
                 <XIcon size={12} />
@@ -324,7 +334,7 @@ export default function FinalizacionesTab({ universos = [] }) {
 
           <button
             type="button"
-            onClick={() => cargarFinalizaciones(universoFiltro, recursoFiltro)}
+            onClick={/* Responde a click desde este control. */ () => cargarFinalizaciones(universoFiltro, recursoFiltro)}
             className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition cursor-pointer"
             title="Refrescar lista"
           >
@@ -349,7 +359,7 @@ export default function FinalizacionesTab({ universos = [] }) {
             <AlertTriangleIcon size={16} />
             <span>{error}</span>
           </div>
-          <button type="button" onClick={() => setError('')} className="cursor-pointer">
+          <button type="button" onClick={/* Responde a click desde este control. */ () => setError('')} className="cursor-pointer">
             <XIcon size={14} />
           </button>
         </div>
@@ -361,7 +371,7 @@ export default function FinalizacionesTab({ universos = [] }) {
             <CheckIcon size={16} />
             <span>{exito}</span>
           </div>
-          <button type="button" onClick={() => setExito('')} className="cursor-pointer">
+          <button type="button" onClick={/* Responde a click desde este control. */ () => setExito('')} className="cursor-pointer">
             <XIcon size={14} />
           </button>
         </div>
@@ -401,8 +411,8 @@ export default function FinalizacionesTab({ universos = [] }) {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {finalizacionesFiltradas.map((fin) => {
-            const uInfo = universos.find((u) => (u._id || u.id) === fin.universo_id);
+          {finalizacionesFiltradas.map(/* Prepara el resultado de cada elemento. */ (fin) => {
+            const uInfo = universos.find(/* Busca el primer elemento que cumple esta condición. */ (u) => (u._id || u.id) === fin.universo_id);
             const uNombre = uInfo?.nombre || fin.universo_id;
 
             return (
@@ -416,7 +426,7 @@ export default function FinalizacionesTab({ universos = [] }) {
                     src={fin.imagen || '/assets/narrative/finalizaciones/default.webp'}
                     alt={fin.titulo}
                     className="w-full h-full object-cover opacity-90 hover:scale-105 transition duration-300"
-                    onError={(e) => {
+                    onError={/* Responde a error desde este control. */ (e) => {
                       e.target.src = '/assets/narrative/finalizaciones/default.webp';
                     }}
                   />
@@ -480,7 +490,7 @@ export default function FinalizacionesTab({ universos = [] }) {
                     <div className="flex items-center gap-1">
                       <button
                         type="button"
-                        onClick={() => abrirModalEditar(fin)}
+                        onClick={/* Responde a click desde este control. */ () => abrirModalEditar(fin)}
                         className="p-1.5 rounded-lg text-slate-500 hover:text-[#002B5E] hover:bg-slate-100 transition cursor-pointer"
                         title="Editar finalización"
                       >
@@ -488,7 +498,7 @@ export default function FinalizacionesTab({ universos = [] }) {
                       </button>
                       <button
                         type="button"
-                        onClick={() => eliminarFinalizacion(fin._id || fin.id)}
+                        onClick={/* Responde a click desde este control. */ () => eliminarFinalizacion(fin._id || fin.id)}
                         className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition cursor-pointer"
                         title="Eliminar finalización"
                       >
@@ -525,7 +535,7 @@ export default function FinalizacionesTab({ universos = [] }) {
 
               <button
                 type="button"
-                onClick={() => setModalAbierto(false)}
+                onClick={/* Responde a click desde este control. */ () => setModalAbierto(false)}
                 className="text-slate-400 hover:text-white transition cursor-pointer p-1"
               >
                 <XIcon size={18} />
@@ -543,10 +553,10 @@ export default function FinalizacionesTab({ universos = [] }) {
                   <select
                     value={universoId}
                     disabled={esEdicion}
-                    onChange={(e) => handleCambioUniversoModal(e.target.value)}
+                    onChange={/* Responde a change desde este control. */ (e) => handleCambioUniversoModal(e.target.value)}
                     className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-800 font-semibold focus:bg-white focus:border-[#002B5E] outline-none cursor-pointer disabled:opacity-60"
                   >
-                    {universos.map((u) => (
+                    {universos.map(/* Prepara el resultado de cada elemento. */ (u) => (
                       <option key={u._id || u.id} value={u._id || u.id}>
                         {u.nombre} ({u._id || u.id})
                       </option>
@@ -560,11 +570,11 @@ export default function FinalizacionesTab({ universos = [] }) {
                   </label>
                   <select
                     value={recursoClave}
-                    onChange={(e) => handleCambioRecursoModal(e.target.value)}
+                    onChange={/* Responde a change desde este control. */ (e) => handleCambioRecursoModal(e.target.value)}
                     className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-800 font-semibold focus:bg-white focus:border-[#002B5E] outline-none cursor-pointer"
                   >
                     <option value="">(Sin recurso / Victoria especial)</option>
-                    {recursosModalDisponibles.map((r) => (
+                    {recursosModalDisponibles.map(/* Prepara el resultado de cada elemento. */ (r) => (
                       <option key={r.clave} value={r.clave}>
                         {r.nombre || r.clave} ({r.clave})
                       </option>
@@ -589,7 +599,7 @@ export default function FinalizacionesTab({ universos = [] }) {
                     required
                     disabled={esEdicion}
                     value={id}
-                    onChange={(e) => setId(e.target.value)}
+                    onChange={/* Responde a change desde este control. */ (e) => setId(e.target.value)}
                     placeholder="ej: fin_granjero_oro_cero"
                     className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-800 font-mono disabled:opacity-60 focus:bg-white focus:border-[#002B5E] outline-none"
                   />
@@ -601,10 +611,10 @@ export default function FinalizacionesTab({ universos = [] }) {
                   </label>
                   <select
                     value={tipo}
-                    onChange={(e) => setTipo(e.target.value)}
+                    onChange={/* Responde a change desde este control. */ (e) => setTipo(e.target.value)}
                     className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-800 font-semibold focus:bg-white focus:border-[#002B5E] outline-none cursor-pointer"
                   >
-                    {TIPOS_FINALIZACION.map((t) => (
+                    {TIPOS_FINALIZACION.map(/* Prepara el resultado de cada elemento. */ (t) => (
                       <option key={t.id} value={t.id}>
                         {t.label}
                       </option>
@@ -621,10 +631,10 @@ export default function FinalizacionesTab({ universos = [] }) {
                   </label>
                   <select
                     value={rango}
-                    onChange={(e) => setRango(e.target.value)}
+                    onChange={/* Responde a change desde este control. */ (e) => setRango(e.target.value)}
                     className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-800 font-bold focus:bg-white focus:border-[#002B5E] outline-none cursor-pointer"
                   >
-                    {RANGOS.map((rg) => (
+                    {RANGOS.map(/* Prepara el resultado de cada elemento. */ (rg) => (
                       <option key={rg} value={rg}>
                         Rango {rg}
                       </option>
@@ -640,7 +650,7 @@ export default function FinalizacionesTab({ universos = [] }) {
                     type="text"
                     required
                     value={titulo}
-                    onChange={(e) => setTitulo(e.target.value)}
+                    onChange={/* Responde a change desde este control. */ (e) => setTitulo(e.target.value)}
                     placeholder={`ej: Embargo de la Granja, Bancarrota, etc.`}
                     className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-800 font-bold focus:bg-white focus:border-[#002B5E] outline-none"
                   />
@@ -655,7 +665,7 @@ export default function FinalizacionesTab({ universos = [] }) {
                 <textarea
                   rows={4}
                   value={texto}
-                  onChange={(e) => setTexto(e.target.value)}
+                  onChange={/* Responde a change desde este control. */ (e) => setTexto(e.target.value)}
                   placeholder="Describe qué ocurrió en este universo particular al agotarse el recurso o alcanzar este final..."
                   className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-800 font-medium focus:bg-white focus:border-[#002B5E] outline-none leading-relaxed"
                 />
@@ -681,7 +691,7 @@ export default function FinalizacionesTab({ universos = [] }) {
                       src={imagen || '/assets/narrative/finalizaciones/default.webp'}
                       alt="Preview"
                       className="w-full h-full object-cover"
-                      onError={(e) => {
+                      onError={/* Responde a error desde este control. */ (e) => {
                         e.target.src = '/assets/narrative/finalizaciones/default.webp';
                       }}
                     />
@@ -702,7 +712,7 @@ export default function FinalizacionesTab({ universos = [] }) {
               <div className="pt-4 border-t border-slate-200 flex items-center justify-end gap-2">
                 <button
                   type="button"
-                  onClick={() => setModalAbierto(false)}
+                  onClick={/* Responde a click desde este control. */ () => setModalAbierto(false)}
                   className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition cursor-pointer"
                 >
                   Cancelar

@@ -1,3 +1,4 @@
+/* Guarda el crucigrama en el navegador para retomarlo por fecha y dificultad. */
 import { getActiveProgressStorageKey } from '../attemptsService';
 
 export type CrucigramaDifficulty = 'facil' | 'dificil';
@@ -11,14 +12,17 @@ export interface ActiveCrucigramaState {
   selectedDirection: 'H' | 'V';
   elapsedSeconds: number;
   lives?: number;
+  failedWordIds?: string[];
   errors?: number;
   updatedAt: string;
 }
 
+// Arma la clave que separa la partida por jugador, fecha y dificultad.
 function getStorageKey(date: string, difficulty: CrucigramaDifficulty): string {
   return `${getActiveProgressStorageKey('crucigrama', date)}_${difficulty}`;
 }
 
+// Guarda las letras y la selección para seguir el crucigrama al volver.
 export function saveActiveCrucigrama(
   date: string,
   difficulty: CrucigramaDifficulty,
@@ -38,6 +42,7 @@ export function saveActiveCrucigrama(
   }
 }
 
+// Recupera el crucigrama guardado para esa fecha y dificultad.
 export function loadActiveCrucigrama(
   date: string,
   difficulty: CrucigramaDifficulty
@@ -57,6 +62,7 @@ export function loadActiveCrucigrama(
   }
 }
 
+// Borra el guardado de ese crucigrama.
 export function clearActiveCrucigrama(date: string, difficulty: CrucigramaDifficulty): void {
   try {
     const key = getStorageKey(date, difficulty);

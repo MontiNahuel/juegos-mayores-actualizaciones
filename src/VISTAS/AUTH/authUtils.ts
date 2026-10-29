@@ -1,3 +1,4 @@
+/* Ayuda a leer, guardar y limpiar las sesiones de administración. */
 export const OPERADOR_STORAGE_KEY = 'asistodo_operador_session';
 
 export interface AdminSession {
@@ -19,7 +20,7 @@ export function decodificarJWT(token: string): any | null {
     const jsonStr = decodeURIComponent(
       atob(base64)
         .split('')
-        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .map(/* Prepara el resultado de cada elemento. */ (c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
         .join('')
     );
     return JSON.parse(jsonStr);

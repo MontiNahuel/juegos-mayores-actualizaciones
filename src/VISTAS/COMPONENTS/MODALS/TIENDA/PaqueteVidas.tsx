@@ -1,3 +1,4 @@
+/* Presenta un paquete de vidas con su precio y su botón de compra. */
 import type { TiendaPaquete } from '../../../../context/PlayerEconomyContext';
 import { IconHeart } from '../../GameHeader/LivesBadge';
 
@@ -8,6 +9,7 @@ interface Props {
   onCanjear: (paquete: TiendaPaquete) => void;
 }
 
+// Presenta un paquete de vidas con su precio y su botón de compra.
 export function PaqueteVidas({ paquete, puntos, procesandoId, onCanjear }: Props) {
   const puedeComprar = puntos >= paquete.puntos;
   return <article className={`grid min-w-0 shrink-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-3 rounded-2xl border-2 p-3 text-left min-[420px]:grid-cols-[auto_minmax(0,1fr)_auto] ${paquete.popular ? 'border-amber-400 bg-amber-50 shadow-sm' : 'border-slate-200 bg-white'}`}>
@@ -22,7 +24,7 @@ export function PaqueteVidas({ paquete, puntos, procesandoId, onCanjear }: Props
         {paquete.descuento && <span className="ml-1 inline-block text-green-700">({paquete.descuento})</span>}
       </p>
     </div>
-    <button type="button" onClick={() => onCanjear(paquete)} disabled={!puedeComprar || procesandoId !== null}
+    <button type="button" onClick={/* Responde a click desde este control. */ () => onCanjear(paquete)} disabled={!puedeComprar || procesandoId !== null}
       aria-label={`Canjear ${paquete.vidas} ${paquete.vidas === 1 ? 'vida' : 'vidas'} por ${paquete.puntos} puntos`}
       className="col-span-full min-h-11 w-full cursor-pointer rounded-xl bg-[#294C6B] px-3 py-2 text-sm font-extrabold whitespace-normal text-white transition-colors hover:bg-[#1f3a52] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#294C6B] disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400 min-[420px]:col-span-1 min-[420px]:w-auto">
       {procesandoId === paquete.id ? 'Canjeando...' : puedeComprar ? 'Canjear' : `Faltan ${paquete.puntos - puntos}`}

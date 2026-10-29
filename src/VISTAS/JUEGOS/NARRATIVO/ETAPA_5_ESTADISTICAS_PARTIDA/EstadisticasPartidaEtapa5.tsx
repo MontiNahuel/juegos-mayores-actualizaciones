@@ -1,3 +1,4 @@
+/* Muestra el balance, la crónica y la evolución de recursos y afinidades. */
 import { useMemo, useState } from 'react';
 import { API_URL } from '../../../../config/api';
 import { imagenPrecargada } from '../../../../services/assetPreloader';
@@ -20,24 +21,27 @@ interface Props {
   onVolver: () => void;
 }
 
+// Convierte la variación del recurso en un cambio fácil de leer.
 const cambioLegible = (delta: number | null | undefined, simple: boolean) =>
   delta == null ? 'Sin dato' : simple ? delta > 0 ? 'Mejoró' : delta < 0 ? 'Empeoró' : 'Se mantuvo' : delta > 0 ? `+${delta}` : String(delta);
 
 // Las líneas se interrumpen donde faltan balances; no unen meses desconocidos.
 function Trayectoria({ meses, inicial, total, elegido, simple }: { meses: MesCronica[]; inicial: Partial<Record<ClaveRecurso, number>>; total: number; elegido: number; simple: boolean }) {
-  const puntos = [{ numero: 0, valores: inicial }, ...meses.map(mes => ({ numero: mes.numero, valores: mes.valores }))];
+  const puntos = [{ numero: 0, valores: inicial }, ...meses.map(/* Prepara el resultado de cada elemento. */ mes => ({ numero: mes.numero, valores: mes.valores }))];
+  // Convierte el valor a su posición horizontal dentro del gráfico.
   const x = (mes: number) => 75 + mes * 790 / total;
+  // Convierte el valor a su posición vertical dentro del gráfico.
   const y = (valor: number) => 222 - Math.max(0, Math.min(100, valor)) * 1.9;
   return <figure className="m-0">
     <div className="cronica-desplazable overflow-x-auto pb-2">
       <svg className="block min-w-[900px] w-full" viewBox="0 0 900 270" role="img" aria-label="Evolución de oro, pueblo, ejército y fe durante el reinado. El detalle de cada mes está debajo.">
-        {[0, 50, 100].map(valor => <g key={valor}><line x1="75" x2="865" y1={y(valor)} y2={y(valor)} stroke="#8b6a4870" /><text x="64" y={y(valor) + 5} textAnchor="end" fill="#705337" fontSize="15">{simple ? valor === 100 ? 'Alto' : valor === 50 ? 'Medio' : 'Bajo' : valor}</text></g>)}
-        {Array.from({ length: total }, (_, i) => <text key={i} x={x(i + 1)} y="254" textAnchor="middle" fill="#5d442d" fontSize="14">{i + 1}</text>)}
+        {[0, 50, 100].map(/* Prepara el resultado de cada elemento. */ valor => <g key={valor}><line x1="75" x2="865" y1={y(valor)} y2={y(valor)} stroke="#8b6a4870" /><text x="64" y={y(valor) + 5} textAnchor="end" fill="#705337" fontSize="15">{simple ? valor === 100 ? 'Alto' : valor === 50 ? 'Medio' : 'Bajo' : valor}</text></g>)}
+        {Array.from({ length: total }, /* Completa este paso con los datos recibidos por la operación. */ (_, i) => <text key={i} x={x(i + 1)} y="254" textAnchor="middle" fill="#5d442d" fontSize="14">{i + 1}</text>)}
         <line x1={x(elegido)} x2={x(elegido)} y1="27" y2="224" stroke="#6e4a2f" strokeWidth="2" strokeDasharray="4 5" />
-        {RECURSOS.map(recurso => {
+        {RECURSOS.map(/* Prepara el resultado de cada elemento. */ recurso => {
           const tramos: string[] = [];
           let trazo: string[] = [];
-          puntos.forEach((punto, i) => {
+          puntos.forEach(/* Aplica este paso a cada elemento. */ (punto, i) => {
             const valor = punto.valores[recurso.clave];
             if (valor === undefined || (i > 0 && puntos[i - 1].numero !== punto.numero - 1)) {
               if (trazo.length > 1) tramos.push(trazo.join(' '));
@@ -47,32 +51,33 @@ function Trayectoria({ meses, inicial, total, elegido, simple }: { meses: MesCro
           });
           if (trazo.length > 1) tramos.push(trazo.join(' '));
           return <g key={recurso.clave}>
-            {tramos.map((ruta, i) => <path key={i} className="cronica-trazo" d={ruta} pathLength={1} fill="none" stroke={recurso.color} strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />)}
-            {puntos.filter(p => p.valores[recurso.clave] !== undefined).map(p => <circle key={p.numero} cx={x(p.numero)} cy={y(p.valores[recurso.clave]!)} r={p.numero === elegido ? 6 : 3.5} fill={recurso.color} stroke="#f4e5c5" strokeWidth="2"><title>{`Mes ${p.numero || 'inicial'} · ${recurso.nombre}: ${p.valores[recurso.clave]}`}</title></circle>)}
+            {tramos.map(/* Prepara el resultado de cada elemento. */ (ruta, i) => <path key={i} className="cronica-trazo" d={ruta} pathLength={1} fill="none" stroke={recurso.color} strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />)}
+            {puntos.filter(/* Conserva los elementos que cumplen esta condición. */ p => p.valores[recurso.clave] !== undefined).map(/* Prepara el resultado de cada elemento. */ p => <circle key={p.numero} cx={x(p.numero)} cy={y(p.valores[recurso.clave]!)} r={p.numero === elegido ? 6 : 3.5} fill={recurso.color} stroke="#f4e5c5" strokeWidth="2"><title>{`Mes ${p.numero || 'inicial'} · ${recurso.nombre}: ${p.valores[recurso.clave]}`}</title></circle>)}
           </g>;
         })}
       </svg>
     </div>
-    <figcaption className="mt-1 flex flex-wrap gap-x-5 gap-y-1 text-sm text-[#4e3926]">{RECURSOS.map(r => <span key={r.clave} className="inline-flex items-center gap-2"><i className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: r.color }} />{r.nombre}</span>)}</figcaption>
+    <figcaption className="mt-1 flex flex-wrap gap-x-5 gap-y-1 text-sm text-[#4e3926]">{RECURSOS.map(/* Prepara el resultado de cada elemento. */ r => <span key={r.clave} className="inline-flex items-center gap-2"><i className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: r.color }} />{r.nombre}</span>)}</figcaption>
   </figure>;
 }
 
 // Un único gráfico de cambios: cada fila es un recurso y cada columna un mes.
 function Cambios({ meses, total, elegido, simple }: { meses: MesCronica[]; total: number; elegido: number; simple: boolean }) {
-  const porMes = new Map(meses.map(mes => [mes.numero, mes]));
-  const maximo = Math.max(15, ...meses.flatMap(mes => RECURSOS.map(r => Math.abs(mes.cambios[r.clave] || 0))));
+  const porMes = new Map(meses.map(/* Prepara el resultado de cada elemento. */ mes => [mes.numero, mes]));
+  const maximo = Math.max(15, ...meses.flatMap(/* Prepara y reúne los resultados de cada elemento. */ mes => RECURSOS.map(/* Prepara el resultado de cada elemento. */ r => Math.abs(mes.cambios[r.clave] || 0))));
   const columna = 780 / total;
+  // Convierte el valor a su posición horizontal dentro del gráfico.
   const x = (mes: number) => 100 + (mes - .5) * columna;
   return <figure className="m-0">
     <div className="cronica-desplazable overflow-x-auto pb-2">
       <svg className="block min-w-[900px] w-full" viewBox="0 0 900 312" role="img" aria-label="Barras mensuales de oro, pueblo, ejército y fe. Verde significa ganancia y rojo, pérdida.">
         <rect x={x(elegido) - columna / 2} y="4" width={columna} height="280" rx="6" fill="#aa824529" />
-        {RECURSOS.map((r, fila) => {
+        {RECURSOS.map(/* Prepara el resultado de cada elemento. */ (r, fila) => {
           const base = 40 + fila * 62;
           return <g key={r.clave}>
             <text x="2" y={base + 5} fill="#4e3926" fontSize="17">{r.nombre}</text>
             <line x1="100" x2="880" y1={base} y2={base} stroke="#89694b88" />
-            {Array.from({ length: total }, (_, i) => {
+            {Array.from({ length: total }, /* Completa este paso con los datos recibidos por la operación. */ (_, i) => {
               const mes = i + 1;
               const delta = porMes.get(mes)?.cambios[r.clave];
               if (delta == null) return null;
@@ -81,13 +86,14 @@ function Cambios({ meses, total, elegido, simple }: { meses: MesCronica[]; total
             })}
           </g>;
         })}
-        {Array.from({ length: total }, (_, i) => <text key={i} x={x(i + 1)} y="305" textAnchor="middle" fill="#5d442d" fontSize="14">{i + 1}</text>)}
+        {Array.from({ length: total }, /* Completa este paso con los datos recibidos por la operación. */ (_, i) => <text key={i} x={x(i + 1)} y="305" textAnchor="middle" fill="#5d442d" fontSize="14">{i + 1}</text>)}
       </svg>
     </div>
     <figcaption className="mt-1 flex flex-wrap gap-4 text-sm text-[#4e3926]"><span><i className="mr-2 inline-block h-2.5 w-2.5 bg-[#477350]" />Ganó</span><span><i className="mr-2 inline-block h-2.5 w-2.5 bg-[#a44d39]" />Perdió</span><span>La altura muestra cuánto cambió.</span></figcaption>
   </figure>;
 }
 
+// Muestra retrato y conecta sus controles con la pantalla.
 function Retrato({ miembro, afinidad, simple }: { miembro: MiembroCorte; afinidad: number | null; simple: boolean }) {
   const p = miembro.personaje;
   const imagen = p.imagen?.startsWith('/') ? `${API_URL}${p.imagen}` : p.imagen;
@@ -101,15 +107,18 @@ function Retrato({ miembro, afinidad, simple }: { miembro: MiembroCorte; afinida
   </article>;
 }
 
+// Muestra el balance, la crónica y la evolución de recursos y afinidades.
 export default function EstadisticasPartidaEtapa5({ estado, historial, corte, catalogos, recursosIniciales, personajes, finalizacion, modoSimple = false, onVolver }: Props) {
-  const cronica = useMemo(() => construirCronica(historial, estado, recursosIniciales, catalogos), [historial, estado, recursosIniciales, catalogos]);
+  const cronica = useMemo(/* Recalcula este dato cuando cambian sus dependencias. */ () => construirCronica(historial, estado, recursosIniciales, catalogos), [historial, estado, recursosIniciales, catalogos]);
   const [elegido, setElegido] = useState(cronica.meses[0]?.numero || 1);
-  const mes = cronica.meses.find(item => item.numero === elegido);
-  const miembros = corte?.corte?.length ? corte.corte : personajes.map(personaje => ({ personaje }));
+  const mes = cronica.meses.find(/* Busca el primer elemento que cumple esta condición. */ item => item.numero === elegido);
+  const miembros = corte?.corte?.length ? corte.corte : personajes.map(/* Prepara el resultado de cada elemento. */ personaje => ({ personaje }));
   const afinidades = corte?.afinidad || estado.afinidad || {};
   const cierre = estado.finalizacion || finalizacion;
-  const nombreDePersonaje = (id: string) => miembros.find(miembro =>
+  // Busca el nombre del personaje para mostrarlo en la crónica.
+  const nombreDePersonaje = (id: string) => miembros.find(/* Busca el primer elemento que cumple esta condición. */ miembro =>
     (miembro.personaje.id || miembro.personaje._id) === id)?.personaje.nombre || 'Alguien de la corte';
+  // Busca la afinidad del personaje para el balance.
   const afinidadDe = (miembro: MiembroCorte) => {
     const id = miembro.personaje.id || miembro.personaje._id;
     const valor = miembro.afinidad ?? afinidades[id];
@@ -131,9 +140,9 @@ export default function EstadisticasPartidaEtapa5({ estado, historial, corte, ca
           <Trayectoria meses={cronica.meses} inicial={cronica.inicial} total={cronica.totalMeses} elegido={elegido} simple={modoSimple} />
         </div>
         <div className="mt-7 border-t border-[#9c7547a0] pt-6"><h3 className="m-0 text-[clamp(22px,3vw,30px)]">Lo que ganaste y perdiste</h3><p className="mt-1 mb-4 text-sm text-[#6e5134]">Cada columna es un mes. Elegí uno para leer qué decisión lo cambió.</p><Cambios meses={cronica.meses} total={cronica.totalMeses} elegido={elegido} simple={modoSimple} /></div>
-        <nav className="cronica-meses mt-7 flex gap-1.5 overflow-x-auto pb-2" aria-label="Elegir mes del reinado">{Array.from({ length: cronica.totalMeses }, (_, i) => {
+        <nav className="cronica-meses mt-7 flex gap-1.5 overflow-x-auto pb-2" aria-label="Elegir mes del reinado">{Array.from({ length: cronica.totalMeses }, /* Completa este paso con los datos recibidos por la operación. */ (_, i) => {
           const numero = i + 1;
-          return <button key={numero} type="button" aria-label={`Mes ${numero}`} disabled={!cronica.meses.some(item => item.numero === numero)} aria-pressed={elegido === numero} onClick={() => setElegido(numero)} className="min-h-11 min-w-11 rounded-[3px] border border-[#9d7850] px-2 text-sm transition-colors hover:not-disabled:bg-[#c49c61a0] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#633d1e] disabled:cursor-default disabled:opacity-35 aria-pressed:bg-[#634222] aria-pressed:text-[#f9edcf]">{numero}</button>;
+          return <button key={numero} type="button" aria-label={`Mes ${numero}`} disabled={!cronica.meses.some(/* Comprueba si algún elemento cumple esta condición. */ item => item.numero === numero)} aria-pressed={elegido === numero} onClick={/* Responde a click desde este control. */ () => setElegido(numero)} className="min-h-11 min-w-11 rounded-[3px] border border-[#9d7850] px-2 text-sm transition-colors hover:not-disabled:bg-[#c49c61a0] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#633d1e] disabled:cursor-default disabled:opacity-35 aria-pressed:bg-[#634222] aria-pressed:text-[#f9edcf]">{numero}</button>;
         })}</nav>
         {mes ? <article className="mt-2 border-y border-[#9c7547a0] py-5" aria-live="polite">
           <h3 className="m-0 text-2xl">Mes {mes.numero}: {mes.evento || mes.resultado || 'La corte tomó una decisión'}</h3>
@@ -146,10 +155,10 @@ export default function EstadisticasPartidaEtapa5({ estado, historial, corte, ca
               {mes.conversacion && <p><strong>La corte conversó sobre:</strong> {mes.conversacion}</p>}
               {mes.decision && <p><strong>Tu respuesta:</strong> {mes.decision}</p>}
               {mes.decisionResultado && <p className="text-[#5c4330]">{mes.decisionResultado}</p>}
-              {mes.impactoAfinidad.length > 0 && <div className="mt-3 border-t border-[#9c754743] pt-3"><strong>Cómo afectó a la corte</strong><ul className="mt-1 list-none space-y-1 pl-0">{mes.impactoAfinidad.map((impacto, indice) => <li key={`${impacto.personajeId}-${indice}`}>{nombreDePersonaje(impacto.personajeId)}: {modoSimple ? impacto.delta > 0 ? 'la relación mejoró' : impacto.delta < 0 ? 'la relación empeoró' : 'la relación siguió igual' : `${impacto.delta > 0 ? '+' : ''}${impacto.delta} de afinidad`}</li>)}</ul></div>}
+              {mes.impactoAfinidad.length > 0 && <div className="mt-3 border-t border-[#9c754743] pt-3"><strong>Cómo afectó a la corte</strong><ul className="mt-1 list-none space-y-1 pl-0">{mes.impactoAfinidad.map(/* Prepara el resultado de cada elemento. */ (impacto, indice) => <li key={`${impacto.personajeId}-${indice}`}>{nombreDePersonaje(impacto.personajeId)}: {modoSimple ? impacto.delta > 0 ? 'la relación mejoró' : impacto.delta < 0 ? 'la relación empeoró' : 'la relación siguió igual' : `${impacto.delta > 0 ? '+' : ''}${impacto.delta} de afinidad`}</li>)}</ul></div>}
               {!mes.opcion && !mes.resultado && !mes.conversacion && <p>El registro conserva el balance de este mes, pero no el texto de la decisión.</p>}
             </div>
-            <div className="self-start border-l-2 border-[#a47a48] pl-4"><h4 className="m-0 text-lg">Balance del mes</h4>{RECURSOS.map(recurso => {
+            <div className="self-start border-l-2 border-[#a47a48] pl-4"><h4 className="m-0 text-lg">Balance del mes</h4>{RECURSOS.map(/* Prepara el resultado de cada elemento. */ recurso => {
               const delta = mes.cambios[recurso.clave];
               return <div key={recurso.clave} className="flex justify-between gap-4 border-b border-[#9c754743] py-1.5 text-base last:border-0"><span>{recurso.nombre}</span><strong className={delta == null ? 'text-[#735e48]' : delta > 0 ? 'text-[#356644]' : delta < 0 ? 'text-[#963e31]' : 'text-[#6f5a43]'}>{cambioLegible(delta, modoSimple)}</strong></div>;
             })}</div>
@@ -158,8 +167,8 @@ export default function EstadisticasPartidaEtapa5({ estado, historial, corte, ca
       </> : <p className="py-10 text-center text-lg">Todavía no hay meses cerrados para dibujar el recorrido de la corte.</p>}
 
       <div className="mt-7 grid gap-7 border-t border-[#9c7547a0] pt-6 md:grid-cols-[minmax(0,1fr)_minmax(240px,330px)]">
-        <section aria-label="La corte al finalizar"><h3 className="m-0 text-[clamp(22px,3vw,30px)]">Quienes estuvieron a tu lado</h3><p className="mt-1 text-sm text-[#6e5134]">Así terminó tu relación con cada integrante de la corte.</p>{miembros.length ? <div className="mt-3">{miembros.map(miembro => <Retrato key={miembro.personaje.id || miembro.personaje._id} miembro={miembro} afinidad={afinidadDe(miembro)} simple={modoSimple} />)}</div> : <p className="mt-4">La corte no tiene integrantes registrados.</p>}</section>
-        <section aria-label="El reino al cerrar"><h3 className="m-0 text-[clamp(22px,3vw,30px)]">El reino al cerrar</h3><p className="mt-1 text-sm text-[#6e5134]">El estado con el que terminaste este recorrido.</p><div className="mt-4 space-y-4">{RECURSOS.map(recurso => {
+        <section aria-label="La corte al finalizar"><h3 className="m-0 text-[clamp(22px,3vw,30px)]">Quienes estuvieron a tu lado</h3><p className="mt-1 text-sm text-[#6e5134]">Así terminó tu relación con cada integrante de la corte.</p>{miembros.length ? <div className="mt-3">{miembros.map(/* Prepara el resultado de cada elemento. */ miembro => <Retrato key={miembro.personaje.id || miembro.personaje._id} miembro={miembro} afinidad={afinidadDe(miembro)} simple={modoSimple} />)}</div> : <p className="mt-4">La corte no tiene integrantes registrados.</p>}</section>
+        <section aria-label="El reino al cerrar"><h3 className="m-0 text-[clamp(22px,3vw,30px)]">El reino al cerrar</h3><p className="mt-1 text-sm text-[#6e5134]">El estado con el que terminaste este recorrido.</p><div className="mt-4 space-y-4">{RECURSOS.map(/* Prepara el resultado de cada elemento. */ recurso => {
           const valor = cronica.final[recurso.clave];
           return <div key={recurso.clave}><div className="flex justify-between gap-3"><span>{recurso.nombre}</span><strong>{valor == null ? 'Sin registro' : modoSimple ? valor >= 70 ? 'Fuerte' : valor >= 40 ? 'Estable' : 'Necesita cuidado' : `${valor}/100`}</strong></div><div className="mt-1 h-2 overflow-hidden rounded-full bg-[#94734d4a]"><span className="block h-full rounded-full" style={{ width: `${Math.max(0, Math.min(100, valor || 0))}%`, backgroundColor: recurso.color }} /></div></div>;
         })}</div></section>

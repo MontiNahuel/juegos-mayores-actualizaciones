@@ -1,3 +1,4 @@
+/* Habla con el servidor para iniciar la historia, decidir y recuperar la partida. */
 import { store } from '../../../store/store';
 import { resolverRespaldoNarrativo } from './narrativeFallback';
 import { API_URL } from '../../../config/api';
@@ -11,9 +12,11 @@ export const HABILITAR_FALLBACK_NARRATIVO = import.meta.env.VITE_NARRATIVE_FALLB
 const ESPERA_SERVIDOR_MS = 2500;
 const fechasLocales = new Set<string>();
 
+// Comprueba si la partida usa el respaldo local.
 export const esPartidaNarrativaLocal = (date: string) => HABILITAR_FALLBACK_NARRATIVO && fechasLocales.has(date);
 
 class ErrorServidorNarrativo extends Error {
+  // Completa este paso con los datos recibidos por la operación.
   constructor(public status: number, mensaje: string) { super(mensaje); }
 }
 
@@ -47,8 +50,9 @@ export interface EventoApi {
 
 // El endpoint de turno omite las condiciones; se consultan en la definición del evento.
 let catalogoEventos: Promise<any[]> | null = null;
+// Busca definicion evento con los datos de este paso.
 export const obtenerDefinicionEvento = async (id: string) => {
-  catalogoEventos ||= (async () => {
+  catalogoEventos ||= (/* Completa este paso con los datos recibidos por la operación. */ async () => {
     const token = localStorage.getItem('token');
     const response = await fetch(`${API}/admin/eventos?limit=500`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -57,7 +61,7 @@ export const obtenerDefinicionEvento = async (id: string) => {
     return response.json();
   })();
   const eventos = await catalogoEventos;
-  return eventos.find((evento: any) => evento._id === id || evento.id === id) || null;
+  return eventos.find(/* Busca el primer elemento que cumple esta condición. */ (evento: any) => evento._id === id || evento.id === id) || null;
 };
 
 // Guarda en el evento local las condiciones de su opcion secreta.
@@ -68,10 +72,10 @@ export const agregarCondicionesSecretas = async (evento: EventoApi): Promise<Eve
     const definicion = await obtenerDefinicionEvento(evento.id);
     return {
       ...evento,
-      opciones: evento.opciones.map(opcion => ({
+      opciones: evento.opciones.map(/* Prepara el resultado de cada elemento. */ opcion => ({
         ...opcion,
-        es_secreta: opcion.es_secreta ?? definicion?.opciones?.find((x: any) => x.id === opcion.id)?.es_secreta,
-        condiciones: definicion?.opciones?.find((x: any) => x.id === opcion.id)?.condiciones || [],
+        es_secreta: opcion.es_secreta ?? definicion?.opciones?.find(/* Busca el primer elemento que cumple esta condición. */ (x: any) => x.id === opcion.id)?.es_secreta,
+        condiciones: definicion?.opciones?.find(/* Busca el primer elemento que cumple esta condición. */ (x: any) => x.id === opcion.id)?.condiciones || [],
       })),
     };
   } catch {
@@ -156,7 +160,7 @@ function adaptarEstadoGrafo(estado: EstadoPartida): EstadoPartida {
   if (!grafo) return estado;
   const nodo = grafo.nodo_actual;
   const imagen = nodo.imagen || grafo.imagen;
-  const opciones = nodo.opciones.filter(opcion => opcion.disponible);
+  const opciones = nodo.opciones.filter(/* Conserva los elementos que cumplen esta condición. */ opcion => opcion.disponible);
   const base: EstadoPartida = {
     ...estado, evento_actual: null, conversacion_actual: null, resultado_actual: null,
     recursos: grafo.recursos ?? estado.recursos, afinidad: grafo.afinidad ?? estado.afinidad,
@@ -167,7 +171,7 @@ function adaptarEstadoGrafo(estado: EstadoPartida): EstadoPartida {
     resultado_actual: {
       titulo: grafo.titulo, texto: [nodo.texto, nodo.resultado_texto].filter(Boolean).join('\n\n'),
       imagen, tipo_resultado: 'neutro',
-      efectos: nodo.impactos_recursos.map(({ recurso, delta }) => ({ accion: { clave: recurso, valor: delta } })),
+      efectos: nodo.impactos_recursos.map(/* Prepara el resultado de cada elemento. */ ({ recurso, delta }) => ({ accion: { clave: recurso, valor: delta } })),
     },
   };
   if (grafo.tipo === 'conversacion') return {
@@ -176,14 +180,14 @@ function adaptarEstadoGrafo(estado: EstadoPartida): EstadoPartida {
       _id: grafo.grafo_id, nodo_id: nodo.id, titulo: grafo.titulo, imagen,
       requisitos: [{ personajeId: nodo.hablante_id }],
       frases: [{ personajeId: nodo.hablante_id, texto: nodo.texto }],
-      decisiones: opciones.map(opcion => ({ opcion: opcion.id, texto: opcion.texto, resultado_texto: '', impacto_afinidad: [] })),
+      decisiones: opciones.map(/* Prepara el resultado de cada elemento. */ opcion => ({ opcion: opcion.id, texto: opcion.texto, resultado_texto: '', impacto_afinidad: [] })),
     },
   };
   return {
     ...base,
     evento_actual: {
       id: grafo.grafo_id, nodo_id: nodo.id, titulo: grafo.titulo, descripcion: nodo.texto, imagen,
-      opciones: opciones.map(opcion => ({ id: opcion.id, texto: opcion.texto, bloqueada: false })),
+      opciones: opciones.map(/* Prepara el resultado de cada elemento. */ opcion => ({ id: opcion.id, texto: opcion.texto, bloqueada: false })),
     },
   };
 }
@@ -267,7 +271,9 @@ async function request<T>(path: string, options?: RequestInit, permitirRespaldo 
       date = JSON.parse(options.body).date || '';
     } catch {}
   }
+  // Resuelve la acción con datos locales cuando hace falta continuar sin servidor.
   const respaldo = () => resolverRespaldoNarrativo(path, options, store.getState().narrativoSelection) as T;
+  // Completa la respuesta con los datos de la siguiente etapa.
   const completar = (data: T) => {
     if (path === '/partida/reiniciar') fechasLocales.delete(date);
     return data;
@@ -275,7 +281,7 @@ async function request<T>(path: string, options?: RequestInit, permitirRespaldo 
   if (permitirRespaldo && esPartidaNarrativaLocal(date)) return completar(respaldo());
 
   const controller = new AbortController();
-  const timeout = HABILITAR_FALLBACK_NARRATIVO && permitirRespaldo ? setTimeout(() => controller.abort(), ESPERA_SERVIDOR_MS) : undefined;
+  const timeout = HABILITAR_FALLBACK_NARRATIVO && permitirRespaldo ? setTimeout(/* Ejecuta este paso cuando se cumple la espera. */ () => controller.abort(), ESPERA_SERVIDOR_MS) : undefined;
   try {
     const token = localStorage.getItem('token');
     const response = await fetch(`${API}${path}`, {
@@ -285,7 +291,7 @@ async function request<T>(path: string, options?: RequestInit, permitirRespaldo 
     });
 
     if (!response.ok) {
-      const detalle = await response.json().catch(() => null);
+      const detalle = await response.json().catch(/* Maneja el fallo de esta operación. */ () => null);
       throw new ErrorServidorNarrativo(response.status, detalle?.detail || `Error ${response.status}.`);
     }
     return completar(await response.json() as T);
@@ -316,9 +322,9 @@ export const obtenerCatalogosCronica = async (date: string, universoId?: string)
   if (esPartidaNarrativaLocal(date)) return vacios;
   const token = localStorage.getItem('token');
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), ESPERA_SERVIDOR_MS);
+  const timeout = setTimeout(/* Ejecuta este paso cuando se cumple la espera. */ () => controller.abort(), ESPERA_SERVIDOR_MS);
   const nombres = Object.keys(vacios) as (keyof CatalogosCronica)[];
-  const consultas = nombres.map(async nombre => {
+  const consultas = nombres.map(/* Prepara el resultado de cada elemento. */ async nombre => {
     const parametros = new URLSearchParams({ limit: '500' });
     if (universoId) parametros.set('universo_id', universoId);
     const respuesta = await fetch(`${API}/admin/${nombre}?${parametros}`, {
@@ -330,7 +336,7 @@ export const obtenerCatalogosCronica = async (date: string, universoId?: string)
   });
   try {
     const resultados = await Promise.allSettled(consultas);
-    return Object.fromEntries(nombres.map((nombre, indice) => [
+    return Object.fromEntries(nombres.map(/* Prepara el resultado de cada elemento. */ (nombre, indice) => [
       nombre, resultados[indice].status === 'fulfilled' ? resultados[indice].value : [],
     ])) as unknown as CatalogosCronica;
   } finally {

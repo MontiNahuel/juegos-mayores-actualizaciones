@@ -1,3 +1,4 @@
+/* Permite editar y probar nodos y opciones de las historias. */
 import { useState, useEffect } from 'react';
 import {
   XIcon,
@@ -21,6 +22,7 @@ const RECURSOS_DISPONIBLES = [
   { id: 'fe', label: 'Fe / Iglesia' }
 ];
 
+// Permite editar y probar nodos y opciones de las historias.
 export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, showToast }) {
   if (!abierto) return null;
 
@@ -46,10 +48,11 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
   const [historialSimulacion, setHistorialSimulacion] = useState([]);
 
   // Carga inicial de datos
-  useEffect(() => {
+  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
     cargarTodo();
   }, []);
 
+  // Carga todo con los datos de este paso.
   const cargarTodo = async () => {
     setCargando(true);
     setErrorMsg('');
@@ -131,7 +134,7 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
     if (tipo === 'evento') {
       base.requisitos_eventos_previos = [];
     } else {
-      base.requisitos = personajes.slice(0, 2).map((p) => p._id || p.id);
+      base.requisitos = personajes.slice(0, 2).map(/* Prepara el resultado de cada elemento. */ (p) => p._id || p.id);
     }
 
     setItemEnEdicion(base);
@@ -171,7 +174,7 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
         showToast('Elemento eliminado correctamente.');
         cargarTodo();
       } else {
-        const data = await res.json().catch(() => ({}));
+        const data = await res.json().catch(/* Maneja el fallo de esta operación. */ () => ({}));
         setErrorMsg(data.detail || 'Error al eliminar elemento.');
       }
     } catch (e) {
@@ -242,7 +245,7 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
         setItemEnEdicion(null);
         await cargarTodo();
       } else {
-        const data = await res.json().catch(() => ({}));
+        const data = await res.json().catch(/* Maneja el fallo de esta operación. */ () => ({}));
         setErrorMsg(data.detail || data.message || 'Error al guardar el grafo.');
       }
     } catch (e) {
@@ -256,9 +259,10 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
   // Manejadores del Editor de Nodos
   const nodoActual = itemEnEdicion?.nodos?.[nodoSeleccionadoId];
 
+  // Actualiza nodo actual con los datos de este paso.
   const handleUpdateNodoActual = (campo, valor) => {
     if (!itemEnEdicion || !nodoActual) return;
-    setItemEnEdicion((prev) => ({
+    setItemEnEdicion(/* Actualiza item en edicion a partir del valor anterior. */ (prev) => ({
       ...prev,
       nodos: {
         ...prev.nodos,
@@ -270,6 +274,7 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
     }));
   };
 
+  // Agrega nodo con los datos de este paso.
   const handleAgregarNodo = () => {
     if (!itemEnEdicion) return;
     const count = Object.keys(itemEnEdicion.nodos).length + 1;
@@ -287,7 +292,7 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
       impactos_afinidad: []
     };
 
-    setItemEnEdicion((prev) => ({
+    setItemEnEdicion(/* Actualiza item en edicion a partir del valor anterior. */ (prev) => ({
       ...prev,
       nodos: {
         ...prev.nodos,
@@ -297,6 +302,7 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
     setNodoSeleccionadoId(nuevoNodoId);
   };
 
+  // Quita nodo con los datos de este paso.
   const handleEliminarNodo = (nid) => {
     if (Object.keys(itemEnEdicion.nodos).length <= 1) {
       alert('No puedes eliminar el único nodo del grafo.');
@@ -308,7 +314,7 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
     }
     if (!window.confirm(`¿Eliminar nodo "${nid}"?`)) return;
 
-    setItemEnEdicion((prev) => {
+    setItemEnEdicion(/* Actualiza item en edicion a partir del valor anterior. */ (prev) => {
       const copia = { ...prev.nodos };
       delete copia[nid];
       return {
@@ -331,6 +337,7 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
     handleUpdateNodoActual('opciones', [...(nodoActual.opciones || []), nuevaOpt]);
   };
 
+  // Actualiza opcion con los datos de este paso.
   const handleUpdateOpcion = (idx, campo, valor) => {
     if (!nodoActual || !nodoActual.opciones) return;
     const nuevas = [...nodoActual.opciones];
@@ -338,9 +345,10 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
     handleUpdateNodoActual('opciones', nuevas);
   };
 
+  // Quita opcion con los datos de este paso.
   const handleEliminarOpcion = (idx) => {
     if (!nodoActual || !nodoActual.opciones) return;
-    const nuevas = nodoActual.opciones.filter((_, i) => i !== idx);
+    const nuevas = nodoActual.opciones.filter(/* Conserva los elementos que cumplen esta condición. */ (_, i) => i !== idx);
     handleUpdateNodoActual('opciones', nuevas);
   };
 
@@ -351,6 +359,7 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
     handleUpdateNodoActual('impactos_recursos', [...(nodoActual.impactos_recursos || []), nuevo]);
   };
 
+  // Actualiza impacto recurso con los datos de este paso.
   const handleUpdateImpactoRecurso = (idx, campo, valor) => {
     if (!nodoActual) return;
     const nuevos = [...(nodoActual.impactos_recursos || [])];
@@ -358,9 +367,10 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
     handleUpdateNodoActual('impactos_recursos', nuevos);
   };
 
+  // Quita impacto recurso con los datos de este paso.
   const handleEliminarImpactoRecurso = (idx) => {
     if (!nodoActual) return;
-    const nuevos = (nodoActual.impactos_recursos || []).filter((_, i) => i !== idx);
+    const nuevos = (nodoActual.impactos_recursos || []).filter(/* Conserva los elementos que cumplen esta condición. */ (_, i) => i !== idx);
     handleUpdateNodoActual('impactos_recursos', nuevos);
   };
 
@@ -371,6 +381,7 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
     handleUpdateNodoActual('impactos_afinidad', [...(nodoActual.impactos_afinidad || []), nuevo]);
   };
 
+  // Actualiza impacto afinidad con los datos de este paso.
   const handleUpdateImpactoAfinidad = (idx, campo, valor) => {
     if (!nodoActual) return;
     const nuevos = [...(nodoActual.impactos_afinidad || [])];
@@ -378,9 +389,10 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
     handleUpdateNodoActual('impactos_afinidad', nuevos);
   };
 
+  // Quita impacto afinidad con los datos de este paso.
   const handleEliminarImpactoAfinidad = (idx) => {
     if (!nodoActual) return;
-    const nuevos = (nodoActual.impactos_afinidad || []).filter((_, i) => i !== idx);
+    const nuevos = (nodoActual.impactos_afinidad || []).filter(/* Conserva los elementos que cumplen esta condición. */ (_, i) => i !== idx);
     handleUpdateNodoActual('impactos_afinidad', nuevos);
   };
 
@@ -392,9 +404,10 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
     setModoSimulador(true);
   };
 
+  // Aplica la opción elegida y sigue el recorrido de prueba.
   const elegirOpcionSimulada = (opt) => {
     const nodoDestino = itemEnEdicion?.nodos?.[opt.siguiente_nodo];
-    setHistorialSimulacion((prev) => [
+    setHistorialSimulacion(/* Actualiza historial simulacion a partir del valor anterior. */ (prev) => [
       ...prev,
       {
         nodoId: nodoSimulacionId,
@@ -408,12 +421,12 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
   };
 
   // Filtros de búsqueda para listas
-  const eventosFiltrados = listaEventos.filter((e) =>
+  const eventosFiltrados = listaEventos.filter(/* Conserva los elementos que cumplen esta condición. */ (e) =>
     (e.titulo || '').toLowerCase().includes(busqueda.toLowerCase()) ||
     (e._id || e.id || '').toLowerCase().includes(busqueda.toLowerCase())
   );
 
-  const conversacionesFiltradas = listaConversaciones.filter((c) =>
+  const conversacionesFiltradas = listaConversaciones.filter(/* Conserva los elementos que cumplen esta condición. */ (c) =>
     (c.titulo || '').toLowerCase().includes(busqueda.toLowerCase()) ||
     (c._id || c.id || '').toLowerCase().includes(busqueda.toLowerCase())
   );
@@ -480,7 +493,7 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
             <div className="flex flex-wrap items-center justify-between gap-4 px-6 py-3 border-b border-slate-800 bg-slate-900/60">
               <div className="flex items-center gap-2 bg-slate-950 p-1 rounded-xl border border-slate-800">
                 <button
-                  onClick={() => setTabPrincipal('eventos')}
+                  onClick={/* Responde a click desde este control. */ () => setTabPrincipal('eventos')}
                   className={`px-4 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
                     tabPrincipal === 'eventos'
                       ? 'bg-amber-600 text-white shadow-sm'
@@ -491,7 +504,7 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
                   <span>Eventos de Reino ({listaEventos.length})</span>
                 </button>
                 <button
-                  onClick={() => setTabPrincipal('conversaciones')}
+                  onClick={/* Responde a click desde este control. */ () => setTabPrincipal('conversaciones')}
                   className={`px-4 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
                     tabPrincipal === 'conversaciones'
                       ? 'bg-amber-600 text-white shadow-sm'
@@ -510,12 +523,12 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
                     type="text"
                     placeholder="Buscar por ID o título..."
                     value={busqueda}
-                    onChange={(e) => setBusqueda(e.target.value)}
+                    onChange={/* Responde a change desde este control. */ (e) => setBusqueda(e.target.value)}
                     className="pl-8 pr-3 py-1.5 text-xs bg-slate-950 border border-slate-800 rounded-xl text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500 w-64"
                   />
                 </div>
                 <button
-                  onClick={() => handleNuevoItem(tabPrincipal === 'eventos' ? 'evento' : 'conversacion')}
+                  onClick={/* Responde a click desde este control. */ () => handleNuevoItem(tabPrincipal === 'eventos' ? 'evento' : 'conversacion')}
                   className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs transition shadow-sm cursor-pointer"
                 >
                   <PlusIcon size={15} />
@@ -535,7 +548,7 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
                   <div className="h-full flex flex-col items-center justify-center text-slate-500 text-sm gap-2">
                     <p>No se encontraron eventos de reino V2.</p>
                     <button
-                      onClick={() => handleNuevoItem('evento')}
+                      onClick={/* Responde a click desde este control. */ () => handleNuevoItem('evento')}
                       className="text-xs text-amber-400 hover:underline font-bold"
                     >
                       + Crear primer evento de grafo
@@ -543,7 +556,7 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {eventosFiltrados.map((evt) => {
+                    {eventosFiltrados.map(/* Prepara el resultado de cada elemento. */ (evt) => {
                       const id = evt._id || evt.id;
                       const numNodos = Object.keys(evt.nodos || {}).length;
                       const reqs = evt.requisitos_eventos_previos || [];
@@ -575,7 +588,7 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
                                   Requiere haber completado:
                                 </span>
                                 <div className="flex flex-wrap gap-1">
-                                  {reqs.map((r) => (
+                                  {reqs.map(/* Prepara el resultado de cada elemento. */ (r) => (
                                     <span
                                       key={r}
                                       className="text-[9px] px-1.5 py-0.5 bg-indigo-950 text-indigo-300 border border-indigo-800/60 rounded"
@@ -590,14 +603,14 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
 
                           <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-end gap-2">
                             <button
-                              onClick={() => handleEditarItem(evt, 'evento')}
+                              onClick={/* Responde a click desde este control. */ () => handleEditarItem(evt, 'evento')}
                               className="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 transition flex items-center gap-1 cursor-pointer"
                             >
                               <EditIcon size={13} />
                               <span>Editar Nodos</span>
                             </button>
                             <button
-                              onClick={() => handleEliminarItem(id, 'evento')}
+                              onClick={/* Responde a click desde este control. */ () => handleEliminarItem(id, 'evento')}
                               className="p-1.5 rounded-lg bg-slate-800 hover:bg-red-950 text-slate-400 hover:text-red-400 transition cursor-pointer"
                               title="Eliminar"
                             >
@@ -614,7 +627,7 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
                   <div className="h-full flex flex-col items-center justify-center text-slate-500 text-sm gap-2">
                     <p>No se encontraron conversaciones de corte V2.</p>
                     <button
-                      onClick={() => handleNuevoItem('conversacion')}
+                      onClick={/* Responde a click desde este control. */ () => handleNuevoItem('conversacion')}
                       className="text-xs text-amber-400 hover:underline font-bold"
                     >
                       + Crear primera conversación de corte
@@ -622,7 +635,7 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {conversacionesFiltradas.map((conv) => {
+                    {conversacionesFiltradas.map(/* Prepara el resultado de cada elemento. */ (conv) => {
                       const id = conv._id || conv.id;
                       const numNodos = Object.keys(conv.nodos || {}).length;
                       const reqsPjs = conv.requisitos || [];
@@ -654,8 +667,8 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
                                   Consejeros requeridos en corte:
                                 </span>
                                 <div className="flex flex-wrap gap-1">
-                                  {reqsPjs.map((pjId) => {
-                                    const pjInfo = personajes.find((p) => (p._id || p.id) === pjId);
+                                  {reqsPjs.map(/* Prepara el resultado de cada elemento. */ (pjId) => {
+                                    const pjInfo = personajes.find(/* Busca el primer elemento que cumple esta condición. */ (p) => (p._id || p.id) === pjId);
                                     return (
                                       <span
                                         key={pjId}
@@ -672,14 +685,14 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
 
                           <div className="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-end gap-2">
                             <button
-                              onClick={() => handleEditarItem(conv, 'conversacion')}
+                              onClick={/* Responde a click desde este control. */ () => handleEditarItem(conv, 'conversacion')}
                               className="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 transition flex items-center gap-1 cursor-pointer"
                             >
                               <EditIcon size={13} />
                               <span>Editar Nodos</span>
                             </button>
                             <button
-                              onClick={() => handleEliminarItem(id, 'conversacion')}
+                              onClick={/* Responde a click desde este control. */ () => handleEliminarItem(id, 'conversacion')}
                               className="p-1.5 rounded-lg bg-slate-800 hover:bg-red-950 text-slate-400 hover:text-red-400 transition cursor-pointer"
                               title="Eliminar"
                             >
@@ -703,7 +716,7 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
             <div className="flex items-center justify-between px-6 py-3 border-b border-slate-800 bg-slate-950">
               <div className="flex items-center gap-3">
                 <button
-                  onClick={() => setModoEdicion(false)}
+                  onClick={/* Responde a click desde este control. */ () => setModoEdicion(false)}
                   className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition"
                 >
                   ← Volver al listado
@@ -751,9 +764,9 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
                     <input
                       type="text"
                       value={itemEnEdicion?._id || itemEnEdicion?.id || ''}
-                      onChange={(e) => {
+                      onChange={/* Responde a change desde este control. */ (e) => {
                         const val = e.target.value.trim();
-                        setItemEnEdicion((prev) => ({ ...prev, _id: val, id: val }));
+                        setItemEnEdicion(/* Actualiza item en edicion a partir del valor anterior. */ (prev) => ({ ...prev, _id: val, id: val }));
                       }}
                       className="w-full text-xs font-mono bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-amber-500"
                     />
@@ -766,7 +779,7 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
                     <input
                       type="text"
                       value={itemEnEdicion?.titulo || ''}
-                      onChange={(e) => setItemEnEdicion((prev) => ({ ...prev, titulo: e.target.value }))}
+                      onChange={/* Responde a change desde este control. */ (e) => setItemEnEdicion(/* Actualiza item en edicion a partir del valor anterior. */ (prev) => ({ ...prev, titulo: e.target.value }))}
                       className="w-full text-xs bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-amber-500"
                     />
                   </div>
@@ -777,10 +790,10 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
                     </label>
                     <select
                       value={itemEnEdicion?.nodo_raiz || ''}
-                      onChange={(e) => setItemEnEdicion((prev) => ({ ...prev, nodo_raiz: e.target.value }))}
+                      onChange={/* Responde a change desde este control. */ (e) => setItemEnEdicion(/* Actualiza item en edicion a partir del valor anterior. */ (prev) => ({ ...prev, nodo_raiz: e.target.value }))}
                       className="w-full text-xs bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-amber-500"
                     >
-                      {Object.keys(itemEnEdicion?.nodos || {}).map((nid) => (
+                      {Object.keys(itemEnEdicion?.nodos || {}).map(/* Prepara el resultado de cada elemento. */ (nid) => (
                         <option key={nid} value={nid}>{nid}</option>
                       ))}
                     </select>
@@ -796,9 +809,9 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
                         type="text"
                         placeholder="evt_1, evt_2 (separados por coma)"
                         value={(itemEnEdicion?.requisitos_eventos_previos || []).join(', ')}
-                        onChange={(e) => {
-                          const arr = e.target.value.split(',').map((s) => s.trim()).filter(Boolean);
-                          setItemEnEdicion((prev) => ({ ...prev, requisitos_eventos_previos: arr }));
+                        onChange={/* Responde a change desde este control. */ (e) => {
+                          const arr = e.target.value.split(',').map(/* Prepara el resultado de cada elemento. */ (s) => s.trim()).filter(Boolean);
+                          setItemEnEdicion(/* Actualiza item en edicion a partir del valor anterior. */ (prev) => ({ ...prev, requisitos_eventos_previos: arr }));
                         }}
                         className="w-full text-xs font-mono bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-slate-200 focus:outline-none focus:border-amber-500"
                       />
@@ -812,7 +825,7 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
                         Consejeros Requeridos en Corte
                       </label>
                       <div className="space-y-1 max-h-24 overflow-y-auto bg-slate-900 p-2 rounded-lg border border-slate-800">
-                        {personajes.map((p) => {
+                        {personajes.map(/* Prepara el resultado de cada elemento. */ (p) => {
                           const pid = p._id || p.id;
                           const marcado = (itemEnEdicion?.requisitos || []).includes(pid);
                           return (
@@ -820,12 +833,12 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
                               <input
                                 type="checkbox"
                                 checked={marcado}
-                                onChange={(e) => {
+                                onChange={/* Responde a change desde este control. */ (e) => {
                                   const actuales = itemEnEdicion?.requisitos || [];
                                   const nuevos = e.target.checked
                                     ? [...actuales, pid]
-                                    : actuales.filter((x) => x !== pid);
-                                  setItemEnEdicion((prev) => ({ ...prev, requisitos: nuevos }));
+                                    : actuales.filter(/* Conserva los elementos que cumplen esta condición. */ (x) => x !== pid);
+                                  setItemEnEdicion(/* Actualiza item en edicion a partir del valor anterior. */ (prev) => ({ ...prev, requisitos: nuevos }));
                                 }}
                                 className="rounded border-slate-700 bg-slate-800 text-amber-500 focus:ring-0"
                               />
@@ -854,13 +867,13 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
                   </div>
 
                   <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
-                    {Object.entries(itemEnEdicion?.nodos || {}).map(([nid, n]) => {
+                    {Object.entries(itemEnEdicion?.nodos || {}).map(/* Prepara el resultado de cada elemento. */ ([nid, n]) => {
                       const esRaiz = nid === itemEnEdicion.nodo_raiz;
                       const seleccionado = nid === nodoSeleccionadoId;
                       return (
                         <div
                           key={nid}
-                          onClick={() => setNodoSeleccionadoId(nid)}
+                          onClick={/* Responde a click desde este control. */ () => setNodoSeleccionadoId(nid)}
                           className={`p-2.5 rounded-xl border text-xs cursor-pointer transition flex items-center justify-between ${
                             seleccionado
                               ? 'bg-amber-500/10 border-amber-500/50 text-white shadow-xs'
@@ -929,14 +942,14 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
                       <div className="flex items-center gap-2">
                         {nodoActual.id !== itemEnEdicion.nodo_raiz && (
                           <button
-                            onClick={() => setItemEnEdicion((prev) => ({ ...prev, nodo_raiz: nodoActual.id }))}
+                            onClick={/* Responde a click desde este control. */ () => setItemEnEdicion(/* Actualiza item en edicion a partir del valor anterior. */ (prev) => ({ ...prev, nodo_raiz: nodoActual.id }))}
                             className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition"
                           >
                             Hacer Nodo Raíz
                           </button>
                         )}
                         <button
-                          onClick={() => handleEliminarNodo(nodoActual.id)}
+                          onClick={/* Responde a click desde este control. */ () => handleEliminarNodo(nodoActual.id)}
                           className="px-2.5 py-1 rounded-lg bg-red-950/60 hover:bg-red-900 border border-red-800/60 text-red-300 text-xs font-semibold transition flex items-center gap-1"
                         >
                           <TrashIcon size={12} />
@@ -953,11 +966,11 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
                         </label>
                         <select
                           value={nodoActual.hablante_id || 'narrador'}
-                          onChange={(e) => handleUpdateNodoActual('hablante_id', e.target.value)}
+                          onChange={/* Responde a change desde este control. */ (e) => handleUpdateNodoActual('hablante_id', e.target.value)}
                           className="w-full text-xs bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-amber-500"
                         >
                           <option value="narrador">Narrador del Reino (Sin personaje directo)</option>
-                          {personajes.map((p) => (
+                          {personajes.map(/* Prepara el resultado de cada elemento. */ (p) => (
                             <option key={p._id || p.id} value={p._id || p.id}>
                               {p.nombre} ({p.rol || p.titulo || (p._id || p.id)})
                             </option>
@@ -975,7 +988,7 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
                               type="radio"
                               name="tipo_nodo"
                               checked={!nodoActual.es_final}
-                              onChange={() => handleUpdateNodoActual('es_final', false)}
+                              onChange={/* Responde a change desde este control. */ () => handleUpdateNodoActual('es_final', false)}
                               className="text-amber-500 bg-slate-950 border-slate-700"
                             />
                             <span>Dilema con Opciones (Continúa)</span>
@@ -985,7 +998,7 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
                               type="radio"
                               name="tipo_nodo"
                               checked={!!nodoActual.es_final}
-                              onChange={() => handleUpdateNodoActual('es_final', true)}
+                              onChange={/* Responde a change desde este control. */ () => handleUpdateNodoActual('es_final', true)}
                               className="text-emerald-500 bg-slate-950 border-slate-700"
                             />
                             <span className="text-emerald-400 font-bold">Desenlace Final (Concluye Grafo)</span>
@@ -1002,7 +1015,7 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
                       <textarea
                         rows={3}
                         value={nodoActual.texto || ''}
-                        onChange={(e) => handleUpdateNodoActual('texto', e.target.value)}
+                        onChange={/* Responde a change desde este control. */ (e) => handleUpdateNodoActual('texto', e.target.value)}
                         placeholder="El orador expone la situación..."
                         className="w-full text-xs bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-amber-500"
                       />
@@ -1031,7 +1044,7 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
                         </div>
 
                         <div className="space-y-2">
-                          {(nodoActual.opciones || []).map((opt, idx) => (
+                          {(nodoActual.opciones || []).map(/* Prepara el resultado de cada elemento. */ (opt, idx) => (
                             <div
                               key={opt.id || idx}
                               className="p-3 bg-slate-950 border border-slate-800 rounded-xl flex items-center gap-3"
@@ -1041,7 +1054,7 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
                                 <input
                                   type="text"
                                   value={opt.id || ''}
-                                  onChange={(e) => handleUpdateOpcion(idx, 'id', e.target.value)}
+                                  onChange={/* Responde a change desde este control. */ (e) => handleUpdateOpcion(idx, 'id', e.target.value)}
                                   className="w-full text-xs font-mono bg-slate-900 border border-slate-800 rounded px-2 py-1 text-slate-200"
                                 />
                               </div>
@@ -1051,7 +1064,7 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
                                 <input
                                   type="text"
                                   value={opt.texto || ''}
-                                  onChange={(e) => handleUpdateOpcion(idx, 'texto', e.target.value)}
+                                  onChange={/* Responde a change desde este control. */ (e) => handleUpdateOpcion(idx, 'texto', e.target.value)}
                                   placeholder="Ej: Aceptar la propuesta..."
                                   className="w-full text-xs bg-slate-900 border border-slate-800 rounded px-2 py-1 text-slate-200"
                                 />
@@ -1064,10 +1077,10 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
                                 </label>
                                 <select
                                   value={opt.siguiente_nodo || ''}
-                                  onChange={(e) => handleUpdateOpcion(idx, 'siguiente_nodo', e.target.value)}
+                                  onChange={/* Responde a change desde este control. */ (e) => handleUpdateOpcion(idx, 'siguiente_nodo', e.target.value)}
                                   className="w-full text-xs bg-slate-900 border border-slate-800 rounded px-2 py-1 text-amber-300 font-mono"
                                 >
-                                  {Object.keys(itemEnEdicion?.nodos || {}).map((targetId) => (
+                                  {Object.keys(itemEnEdicion?.nodos || {}).map(/* Prepara el resultado de cada elemento. */ (targetId) => (
                                     <option key={targetId} value={targetId}>
                                       {targetId} {itemEnEdicion.nodos[targetId]?.es_final ? '(🏁 Final)' : ''}
                                     </option>
@@ -1076,7 +1089,7 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
                               </div>
 
                               <button
-                                onClick={() => handleEliminarOpcion(idx)}
+                                onClick={/* Responde a click desde este control. */ () => handleEliminarOpcion(idx)}
                                 className="p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-950/40 transition mt-3"
                                 title="Eliminar opción"
                               >
@@ -1103,7 +1116,7 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
                           <textarea
                             rows={2}
                             value={nodoActual.resultado_texto || ''}
-                            onChange={(e) => handleUpdateNodoActual('resultado_texto', e.target.value)}
+                            onChange={/* Responde a change desde este control. */ (e) => handleUpdateNodoActual('resultado_texto', e.target.value)}
                             placeholder="Consecuencia final que se le muestra al jugador..."
                             className="w-full text-xs bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 focus:outline-none focus:border-emerald-500"
                           />
@@ -1125,29 +1138,29 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
                           </div>
 
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                            {(nodoActual.impactos_recursos || []).map((imp, idx) => (
+                            {(nodoActual.impactos_recursos || []).map(/* Prepara el resultado de cada elemento. */ (imp, idx) => (
                               <div
                                 key={idx}
                                 className="p-2.5 bg-slate-950 border border-slate-800 rounded-xl flex items-center gap-2"
                               >
                                 <select
                                   value={imp.recurso}
-                                  onChange={(e) => handleUpdateImpactoRecurso(idx, 'recurso', e.target.value)}
+                                  onChange={/* Responde a change desde este control. */ (e) => handleUpdateImpactoRecurso(idx, 'recurso', e.target.value)}
                                   className="flex-1 text-xs bg-slate-900 border border-slate-800 rounded px-2 py-1 text-slate-200"
                                 >
-                                  {RECURSOS_DISPONIBLES.map((r) => (
+                                  {RECURSOS_DISPONIBLES.map(/* Prepara el resultado de cada elemento. */ (r) => (
                                     <option key={r.id} value={r.id}>{r.label}</option>
                                   ))}
                                 </select>
                                 <input
                                   type="number"
                                   value={imp.delta}
-                                  onChange={(e) => handleUpdateImpactoRecurso(idx, 'delta', e.target.value)}
+                                  onChange={/* Responde a change desde este control. */ (e) => handleUpdateImpactoRecurso(idx, 'delta', e.target.value)}
                                   placeholder="+/- delta"
                                   className="w-20 text-xs font-mono bg-slate-900 border border-slate-800 rounded px-2 py-1 text-amber-300 text-center"
                                 />
                                 <button
-                                  onClick={() => handleEliminarImpactoRecurso(idx)}
+                                  onClick={/* Responde a click desde este control. */ () => handleEliminarImpactoRecurso(idx)}
                                   className="p-1 text-slate-500 hover:text-red-400 transition"
                                 >
                                   <TrashIcon size={13} />
@@ -1173,29 +1186,29 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
                           </div>
 
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                            {(nodoActual.impactos_afinidad || []).map((imp, idx) => (
+                            {(nodoActual.impactos_afinidad || []).map(/* Prepara el resultado de cada elemento. */ (imp, idx) => (
                               <div
                                 key={idx}
                                 className="p-2.5 bg-slate-950 border border-slate-800 rounded-xl flex items-center gap-2"
                               >
                                 <select
                                   value={imp.personaje_id}
-                                  onChange={(e) => handleUpdateImpactoAfinidad(idx, 'personaje_id', e.target.value)}
+                                  onChange={/* Responde a change desde este control. */ (e) => handleUpdateImpactoAfinidad(idx, 'personaje_id', e.target.value)}
                                   className="flex-1 text-xs bg-slate-900 border border-slate-800 rounded px-2 py-1 text-slate-200"
                                 >
-                                  {personajes.map((p) => (
+                                  {personajes.map(/* Prepara el resultado de cada elemento. */ (p) => (
                                     <option key={p._id || p.id} value={p._id || p.id}>{p.nombre}</option>
                                   ))}
                                 </select>
                                 <input
                                   type="number"
                                   value={imp.delta}
-                                  onChange={(e) => handleUpdateImpactoAfinidad(idx, 'delta', e.target.value)}
+                                  onChange={/* Responde a change desde este control. */ (e) => handleUpdateImpactoAfinidad(idx, 'delta', e.target.value)}
                                   placeholder="+/- delta"
                                   className="w-20 text-xs font-mono bg-slate-900 border border-slate-800 rounded px-2 py-1 text-purple-300 text-center"
                                 />
                                 <button
-                                  onClick={() => handleEliminarImpactoAfinidad(idx)}
+                                  onClick={/* Responde a click desde este control. */ () => handleEliminarImpactoAfinidad(idx)}
                                   className="p-1 text-slate-500 hover:text-red-400 transition"
                                 >
                                   <TrashIcon size={13} />
@@ -1231,7 +1244,7 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
                   </h3>
                 </div>
                 <button
-                  onClick={() => setModoSimulador(false)}
+                  onClick={/* Responde a click desde este control. */ () => setModoSimulador(false)}
                   className="p-1 rounded-lg text-slate-400 hover:text-white"
                 >
                   <XIcon size={16} />
@@ -1239,12 +1252,12 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
               </div>
 
               {/* Paso Actual Simulado */}
-              {(() => {
+              {(/* Completa este paso con los datos recibidos por la operación. */ () => {
                 const n = itemEnEdicion.nodos[nodoSimulacionId];
                 if (!n) {
                   return <div className="text-xs text-red-400">Nodo destino no encontrado.</div>;
                 }
-                const pjHablante = personajes.find((p) => (p._id || p.id) === n.hablante_id);
+                const pjHablante = personajes.find(/* Busca el primer elemento que cumple esta condición. */ (p) => (p._id || p.id) === n.hablante_id);
                 return (
                   <div className="space-y-4">
                     <div className="p-4 bg-slate-900 rounded-xl border border-slate-800">
@@ -1268,12 +1281,12 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
                         <p className="text-xs text-slate-300">{n.resultado_texto}</p>
 
                         <div className="pt-2 border-t border-emerald-900/60 flex flex-wrap gap-2">
-                          {(n.impactos_recursos || []).map((imp, i) => (
+                          {(n.impactos_recursos || []).map(/* Prepara el resultado de cada elemento. */ (imp, i) => (
                             <span key={i} className="text-[10px] px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
                               {imp.recurso}: {imp.delta > 0 ? `+${imp.delta}` : imp.delta}
                             </span>
                           ))}
-                          {(n.impactos_afinidad || []).map((imp, i) => (
+                          {(n.impactos_afinidad || []).map(/* Prepara el resultado de cada elemento. */ (imp, i) => (
                             <span key={i} className="text-[10px] px-2 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">
                               {imp.personaje_id}: {imp.delta > 0 ? `+${imp.delta}` : imp.delta}
                             </span>
@@ -1286,10 +1299,10 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                           Elige una decisión:
                         </span>
-                        {(n.opciones || []).map((opt) => (
+                        {(n.opciones || []).map(/* Prepara el resultado de cada elemento. */ (opt) => (
                           <button
                             key={opt.id}
-                            onClick={() => elegirOpcionSimulada(opt)}
+                            onClick={/* Responde a click desde este control. */ () => elegirOpcionSimulada(opt)}
                             className="w-full text-left p-3 rounded-xl bg-slate-900 hover:bg-amber-600/20 border border-slate-800 hover:border-amber-500/50 text-xs font-semibold text-slate-200 hover:text-white transition flex items-center justify-between cursor-pointer"
                           >
                             <span>{opt.texto}</span>
@@ -1309,7 +1322,7 @@ export default function ModalNarrativoV2({ abierto, onClose, getAuthHeaders, sho
                         🔄 Reiniciar Simulación
                       </button>
                       <button
-                        onClick={() => setModoSimulador(false)}
+                        onClick={/* Responde a click desde este control. */ () => setModoSimulador(false)}
                         className="px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white transition"
                       >
                         Cerrar Simulador

@@ -1,3 +1,4 @@
+/* Permite editar precios, paquetes y puntos de los juegos. */
 import { useState, useEffect } from 'react';
 import {
   CoinsIcon,
@@ -19,6 +20,7 @@ const JUEGOS_DEFAULT = [
   { id: 'narrativo', nombre: 'Juego Narrativo (Crónicas)', defaultPts: 80, emoji: '👑' },
 ];
 
+// Permite editar precios, paquetes y puntos de los juegos.
 export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso }) {
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
@@ -39,6 +41,7 @@ export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso }) 
   });
   const [paquetesTienda, setPaquetesTienda] = useState([]);
 
+  // Arma las cabeceras con la sesión para consultar el panel.
   const getAuthHeaders = () => {
     const sesion = localStorage.getItem(OPERADOR_STORAGE_KEY);
     const token = sesion ? JSON.parse(sesion)?.token : null;
@@ -49,6 +52,7 @@ export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso }) 
     return headers;
   };
 
+  // Carga configuracion con los datos de este paso.
   const cargarConfiguracion = async () => {
     setCargando(true);
     setErrorMsg('');
@@ -73,7 +77,7 @@ export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso }) 
         );
         setPaquetesTienda(data.paquetes_tienda || []);
       } else {
-        const err = await res.json().catch(() => ({}));
+        const err = await res.json().catch(/* Maneja el fallo de esta operación. */ () => ({}));
         setErrorMsg(err.detail || 'No se pudo cargar la configuración de economía.');
       }
     } catch (e) {
@@ -84,7 +88,7 @@ export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso }) 
     }
   };
 
-  useEffect(() => {
+  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
     if (abierto) {
       cargarConfiguracion();
       setErrorMsg('');
@@ -94,29 +98,33 @@ export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso }) 
 
   if (!abierto) return null;
 
+  // Actualiza los puntos que entrega el juego al completarlo.
   const handlePuntosJuegoChange = (juegoId, valor) => {
     const num = Math.max(0, parseInt(valor, 10) || 0);
-    setPuntosPorJuego((prev) => ({
+    setPuntosPorJuego(/* Actualiza puntos por juego a partir del valor anterior. */ (prev) => ({
       ...prev,
       [juegoId]: num,
     }));
   };
 
+  // Actualiza el campo editado de un paquete de vidas.
   const handlePaqueteChange = (index, campo, valor) => {
-    setPaquetesTienda((prev) => {
+    setPaquetesTienda(/* Actualiza paquetes tienda a partir del valor anterior. */ (prev) => {
       const copy = [...prev];
       copy[index] = { ...copy[index], [campo]: valor };
       return copy;
     });
   };
 
+  // Quita paquete con los datos de este paso.
   const handleEliminarPaquete = (index) => {
-    setPaquetesTienda((prev) => prev.filter((_, i) => i !== index));
+    setPaquetesTienda(/* Actualiza paquetes tienda a partir del valor anterior. */ (prev) => prev.filter(/* Conserva los elementos que cumplen esta condición. */ (_, i) => i !== index));
   };
 
+  // Agrega paquete con los datos de este paso.
   const handleAgregarPaquete = () => {
     const nuevoId = `pack_${paquetesTienda.length + 1}`;
-    setPaquetesTienda((prev) => [
+    setPaquetesTienda(/* Actualiza paquetes tienda a partir del valor anterior. */ (prev) => [
       ...prev,
       {
         id: nuevoId,
@@ -129,6 +137,7 @@ export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso }) 
     ]);
   };
 
+  // Valida el formulario y guarda los cambios.
   const handleGuardar = async (e) => {
     e.preventDefault();
     setGuardando(true);
@@ -141,7 +150,7 @@ export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso }) 
         costo_vida_puntos: Math.max(1, parseInt(costoVidaPuntos, 10) || 50),
         costo_desbloqueo_dia_puntos: Math.max(0, parseInt(costoDesbloqueoDia, 10) || 100),
         puntos_por_juego: puntosPorJuego,
-        paquetes_tienda: paquetesTienda.map((p, idx) => ({
+        paquetes_tienda: paquetesTienda.map(/* Prepara el resultado de cada elemento. */ (p, idx) => ({
           id: p.id || `pack_${idx + 1}`,
           vidas: Math.max(1, parseInt(p.vidas, 10) || 1),
           puntos: Math.max(1, parseInt(p.puntos, 10) || 1),
@@ -162,9 +171,9 @@ export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso }) 
         const data = await res.json();
         setExitoMsg('¡Configuración de economía y vidas guardada exitosamente!');
         if (onGuardadoExitoso) onGuardadoExitoso(data);
-        setTimeout(() => setExitoMsg(''), 4000);
+        setTimeout(/* Ejecuta este paso cuando se cumple la espera. */ () => setExitoMsg(''), 4000);
       } else {
-        const err = await res.json().catch(() => ({}));
+        const err = await res.json().catch(/* Maneja el fallo de esta operación. */ () => ({}));
         setErrorMsg(err.detail || 'No se pudo guardar la configuración.');
       }
     } catch (e) {
@@ -254,7 +263,7 @@ export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso }) 
                       min="1"
                       max="99"
                       value={vidasIniciales}
-                      onChange={(e) => setVidasIniciales(e.target.value)}
+                      onChange={/* Responde a change desde este control. */ (e) => setVidasIniciales(e.target.value)}
                       required
                       className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#002B5E] focus:outline-hidden font-semibold text-slate-900"
                     />
@@ -271,7 +280,7 @@ export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso }) 
                       type="number"
                       min="1"
                       value={costoVidaPuntos}
-                      onChange={(e) => setCostoVidaPuntos(e.target.value)}
+                      onChange={/* Responde a change desde este control. */ (e) => setCostoVidaPuntos(e.target.value)}
                       required
                       className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#002B5E] focus:outline-hidden font-semibold text-slate-900"
                     />
@@ -289,7 +298,7 @@ export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso }) 
                       min="1"
                       placeholder="Sin límite"
                       value={vidasMaximas}
-                      onChange={(e) => setVidasMaximas(e.target.value)}
+                      onChange={/* Responde a change desde este control. */ (e) => setVidasMaximas(e.target.value)}
                       className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#002B5E] focus:outline-hidden font-semibold text-slate-900"
                     />
                     <p className="text-[10px] text-slate-500 mt-1">
@@ -305,7 +314,7 @@ export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso }) 
                       type="number"
                       min="0"
                       value={costoDesbloqueoDia}
-                      onChange={(e) => setCostoDesbloqueoDia(e.target.value)}
+                      onChange={/* Responde a change desde este control. */ (e) => setCostoDesbloqueoDia(e.target.value)}
                       required
                       className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#002B5E] focus:outline-hidden font-semibold text-slate-900"
                     />
@@ -329,7 +338,7 @@ export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso }) 
                 </p>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                  {JUEGOS_DEFAULT.map((jg) => {
+                  {JUEGOS_DEFAULT.map(/* Prepara el resultado de cada elemento. */ (jg) => {
                     const valorActual = puntosPorJuego[jg.id] ?? jg.defaultPts;
                     return (
                       <div
@@ -348,7 +357,7 @@ export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso }) 
                             type="number"
                             min="0"
                             value={valorActual}
-                            onChange={(e) => handlePuntosJuegoChange(jg.id, e.target.value)}
+                            onChange={/* Responde a change desde este control. */ (e) => handlePuntosJuegoChange(jg.id, e.target.value)}
                             className="w-full text-right px-2 py-1 text-xs font-bold bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#002B5E] focus:outline-hidden"
                           />
                           <span className="text-[11px] font-bold text-amber-700">pts</span>
@@ -384,7 +393,7 @@ export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso }) 
                       No hay paquetes configurados. Hacé clic en "Agregar Paquete".
                     </div>
                   ) : (
-                    paquetesTienda.map((pack, idx) => (
+                    paquetesTienda.map(/* Prepara el resultado de cada elemento. */ (pack, idx) => (
                       <div
                         key={idx}
                         className={`bg-white border rounded-xl p-3 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 shadow-2xs transition ${
@@ -402,7 +411,7 @@ export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso }) 
                                 type="number"
                                 min="1"
                                 value={pack.vidas}
-                                onChange={(e) => handlePaqueteChange(idx, 'vidas', parseInt(e.target.value, 10) || 1)}
+                                onChange={/* Responde a change desde este control. */ (e) => handlePaqueteChange(idx, 'vidas', parseInt(e.target.value, 10) || 1)}
                                 className="w-16 px-2 py-1 text-xs font-bold bg-slate-50 border border-slate-300 rounded-lg text-center"
                               />
                               <span className="text-xs font-bold text-rose-600">vidas</span>
@@ -416,7 +425,7 @@ export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso }) 
                                 type="number"
                                 min="1"
                                 value={pack.puntos}
-                                onChange={(e) => handlePaqueteChange(idx, 'puntos', parseInt(e.target.value, 10) || 1)}
+                                onChange={/* Responde a change desde este control. */ (e) => handlePaqueteChange(idx, 'puntos', parseInt(e.target.value, 10) || 1)}
                                 className="w-20 px-2 py-1 text-xs font-bold bg-slate-50 border border-slate-300 rounded-lg text-center"
                               />
                               <span className="text-xs font-bold text-amber-700">pts</span>
@@ -429,14 +438,14 @@ export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso }) 
                             type="text"
                             placeholder="Badge ej: Popular"
                             value={pack.badge || ''}
-                            onChange={(e) => handlePaqueteChange(idx, 'badge', e.target.value)}
+                            onChange={/* Responde a change desde este control. */ (e) => handlePaqueteChange(idx, 'badge', e.target.value)}
                             className="px-2.5 py-1 text-xs bg-slate-50 border border-slate-300 rounded-lg w-28 placeholder:text-slate-400"
                           />
                           <input
                             type="text"
                             placeholder="Ahorro ej: Ahorrá 30 pts"
                             value={pack.descuento || ''}
-                            onChange={(e) => handlePaqueteChange(idx, 'descuento', e.target.value)}
+                            onChange={/* Responde a change desde este control. */ (e) => handlePaqueteChange(idx, 'descuento', e.target.value)}
                             className="px-2.5 py-1 text-xs bg-slate-50 border border-slate-300 rounded-lg w-32 placeholder:text-slate-400"
                           />
 
@@ -444,7 +453,7 @@ export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso }) 
                             <input
                               type="checkbox"
                               checked={Boolean(pack.popular)}
-                              onChange={(e) => handlePaqueteChange(idx, 'popular', e.target.checked)}
+                              onChange={/* Responde a change desde este control. */ (e) => handlePaqueteChange(idx, 'popular', e.target.checked)}
                               className="rounded-sm text-[#002B5E] focus:ring-[#002B5E]"
                             />
                             <span>Destacado</span>
@@ -452,7 +461,7 @@ export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso }) 
 
                           <button
                             type="button"
-                            onClick={() => handleEliminarPaquete(idx)}
+                            onClick={/* Responde a click desde este control. */ () => handleEliminarPaquete(idx)}
                             className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
                             title="Eliminar este paquete"
                           >

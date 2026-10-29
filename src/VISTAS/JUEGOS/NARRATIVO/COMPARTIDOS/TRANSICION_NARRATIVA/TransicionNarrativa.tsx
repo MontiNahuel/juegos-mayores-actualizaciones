@@ -1,3 +1,4 @@
+/* Coordina la salida y entrada visual al cambiar de pantalla narrativa. */
 import { Component, createRef } from 'react';
 import type { ReactNode } from 'react';
 
@@ -15,15 +16,16 @@ export default class TransicionNarrativa extends Component<Props> {
   private salida: HTMLDivElement | null = null;
   private animaciones: Animation[] = [];
 
-  private movimientoReducido = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  private movimientoReducido = /* Completa este paso con los datos recibidos por la operación. */ () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  private limpiar = () => {
-    this.animaciones.forEach(animacion => animacion.cancel());
+  private limpiar = /* Completa este paso con los datos recibidos por la operación. */ () => {
+    this.animaciones.forEach(/* Aplica este paso a cada elemento. */ animacion => animacion.cancel());
     this.animaciones = [];
     this.salida?.remove();
     this.salida = null;
   };
 
+  // Guarda el estado visual anterior antes de cambiar la pantalla.
   getSnapshotBeforeUpdate(prevProps: Props): HTMLDivElement | null {
     if (prevProps.etapa === this.props.etapa) return null;
     this.limpiar();
@@ -38,7 +40,7 @@ export default class TransicionNarrativa extends Component<Props> {
     // Congela las animaciones internas donde estaban, antes de sustituir la etapa.
     const originales = [actual, ...actual.querySelectorAll<HTMLElement>('*')];
     const copias = [copia, ...copia.querySelectorAll<HTMLElement>('*')];
-    originales.forEach((elemento, indice) => {
+    originales.forEach(/* Aplica este paso a cada elemento. */ (elemento, indice) => {
       const estilo = getComputedStyle(elemento);
       const destino = copias[indice];
       destino.style.animation = 'none';
@@ -64,6 +66,7 @@ export default class TransicionNarrativa extends Component<Props> {
     return salida;
   }
 
+  // Arranca la transición después de actualizar el contenido.
   componentDidUpdate(prevProps: Props, _prevState: unknown, snapshot: HTMLDivElement | null) {
     if (prevProps.etapa === this.props.etapa || !snapshot) return;
     const actual = this.contenedor.current?.firstElementChild;
@@ -78,13 +81,15 @@ export default class TransicionNarrativa extends Component<Props> {
     const entrada = actual.animate([{ opacity: 0 }, { opacity: 1 }], { duration: duracion, easing: 'ease-in-out' });
     this.animaciones = [salida, entrada];
     // Un cambio rapido puede cancelar esta animacion; su copia tambien se retira.
-    void salida.finished.then(() => {
+    void salida.finished.then(/* Continúa cuando está listo el resultado anterior. */ () => {
       if (this.salida === snapshot) this.limpiar();
-    }).catch(() => snapshot.remove());
+    }).catch(/* Maneja el fallo de esta operación. */ () => snapshot.remove());
   }
 
+  // Cancela las animaciones pendientes al salir.
   componentWillUnmount() { this.limpiar(); }
 
+  // Dibuja el contenido que participa en la transición.
   render() {
     // No agrega altura ni cambia la distribucion o el centrado de las etapas.
     return <div ref={this.contenedor} className="contents">{this.props.children}</div>;

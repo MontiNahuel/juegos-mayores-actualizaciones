@@ -1,3 +1,4 @@
+/* Define la forma de los datos de dificultad para que sus piezas se entiendan. */
 export type DifficultyLevel = 1 | 2 | 3;
 
 export interface DifficultyOptionConfig {

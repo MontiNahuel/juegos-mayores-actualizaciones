@@ -1,3 +1,4 @@
+/* Ajusta el trabajo de Pixi cuando la aplicación pasa a segundo plano. */
 import { Application, type ApplicationOptions } from 'pixi.js';
 
 /**
@@ -25,8 +26,9 @@ export function configurarGestionSegundoPlano(
   onPausar?: () => void,
   onReanudar?: () => void
 ): () => void {
-  if (typeof document === 'undefined') return () => {};
+  if (typeof document === 'undefined') return /* Libera los recursos de este efecto cuando deja de usarse. */ () => {};
 
+  // Pausa o reactiva el trabajo visual según la visibilidad.
   const handleVisibilityChange = () => {
     if (document.hidden) {
       // Congelar de inmediato para 0% uso de CPU/GPU y 0 datos en segundo plano
@@ -40,7 +42,7 @@ export function configurarGestionSegundoPlano(
 
   document.addEventListener('visibilitychange', handleVisibilityChange);
 
-  return () => {
+  return /* Libera los recursos de este efecto cuando deja de usarse. */ () => {
     document.removeEventListener('visibilitychange', handleVisibilityChange);
   };
 }

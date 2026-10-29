@@ -1,3 +1,4 @@
+/* Define el fondo de la corte y sus adornos según los recursos del reino. */
 /* El plano conserva las proporciones de la ilustración y su recorte object-cover.
    Así el apoyo en el suelo permanece fijo al cambiar de etapa o de tamaño. */
 .fondo-corte { container-type: size; overflow: hidden; }

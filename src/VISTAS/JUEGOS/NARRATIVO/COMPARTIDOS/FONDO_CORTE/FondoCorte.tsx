@@ -1,3 +1,4 @@
+/* Compone el escenario de la corte con su fondo y sus capas. */
 import { FONDO_CORTE_DEFAULT, type EstadoFondoCorte } from '../../../../../config/fondoCorte';
 import CapaFondoCorte from './CapaFondoCorte';
 import './fondoCorte.css';

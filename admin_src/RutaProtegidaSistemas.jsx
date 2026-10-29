@@ -1,9 +1,11 @@
+/* Comprueba la sesión antes de dejar entrar al panel. */
 import { useState, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { OPERADOR_STORAGE_KEY } from './LoginSistemas';
 import { canjearTicketSSO } from './ssoService';
 import { ShieldIcon, AlertTriangleIcon } from './Icons';
 
+// Comprueba la sesión antes de dejar entrar al panel.
 export default function RutaProtegidaSistemas({ children }) {
   const location = useLocation();
   const [cargandoSSO, setCargandoSSO] = useState(false);
@@ -11,7 +13,7 @@ export default function RutaProtegidaSistemas({ children }) {
   const [ssoAutenticado, setSsoAutenticado] = useState(false);
 
   // Verificar si viene un ticket SSO descartable en la URL (?ticket=sso_tk_...)
-  useEffect(() => {
+  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
     try {
       const searchParams = new URLSearchParams(window.location.search);
       const ticket = searchParams.get('ticket');
@@ -23,11 +25,11 @@ export default function RutaProtegidaSistemas({ children }) {
         setErrorSSO('');
 
         canjearTicketSSO(ticket)
-          .then(() => {
+          .then(/* Continúa cuando está listo el resultado anterior. */ () => {
             setSsoAutenticado(true);
             setCargandoSSO(false);
           })
-          .catch((err) => {
+          .catch(/* Maneja el fallo de esta operación. */ (err) => {
             console.error('Fallo al canjear ticket SSO:', err);
             setErrorSSO(err.message || 'El enlace de acceso expiró o es inválido.');
             setCargandoSSO(false);

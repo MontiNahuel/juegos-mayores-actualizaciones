@@ -1,3 +1,4 @@
+/* Valida el enlace de acceso y prepara la sesión del jugador. */
 import React, { useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
@@ -17,6 +18,7 @@ const color = {
   coral: '#E88778',
 };
 
+// Valida el enlace de acceso y prepara la sesión del jugador.
 export const AccesoToken: React.FC = () => {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
@@ -26,7 +28,7 @@ export const AccesoToken: React.FC = () => {
   const [mensajeError, setMensajeError] = useState<string>('');
   const [nombreUsuario, setNombreUsuario] = useState<string>('');
 
-  useEffect(() => {
+  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
     let cancelado = false;
 
     if (!token || !token.trim()) {
@@ -37,6 +39,7 @@ export const AccesoToken: React.FC = () => {
 
     const cleanToken = token.trim();
 
+    // Comprueba el token del enlace y prepara la sesión si es válido.
     const validarAcceso = async () => {
       try {
         const response = await fetch(`${API_URL}/api/auth/verificar-token`, {
@@ -71,7 +74,7 @@ export const AccesoToken: React.FC = () => {
           setEstado('exito');
 
           // Redirección suave al menú tras confirmar acceso
-          setTimeout(() => {
+          setTimeout(/* Ejecuta este paso cuando se cumple la espera. */ () => {
             if (!cancelado) {
               navigate('/menu', { replace: true });
             }
@@ -90,7 +93,7 @@ export const AccesoToken: React.FC = () => {
 
     validarAcceso();
 
-    return () => {
+    return /* Libera los recursos de este efecto cuando deja de usarse. */ () => {
       cancelado = true;
     };
   }, [token, navigate]);
@@ -248,7 +251,7 @@ export const AccesoToken: React.FC = () => {
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   <button
-                    onClick={() => navigate('/menu?abrirLogin=true', { replace: true })}
+                    onClick={/* Responde a click desde este control. */ () => navigate('/menu?abrirLogin=true', { replace: true })}
                     style={{
                       backgroundColor: color.blue,
                       color: '#FFFFFF',
@@ -269,7 +272,7 @@ export const AccesoToken: React.FC = () => {
                   </button>
 
                   <button
-                    onClick={() => navigate('/menu', { replace: true })}
+                    onClick={/* Responde a click desde este control. */ () => navigate('/menu', { replace: true })}
                     style={{
                       backgroundColor: 'transparent',
                       color: color.ink,

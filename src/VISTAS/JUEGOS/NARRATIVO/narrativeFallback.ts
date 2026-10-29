@@ -1,3 +1,4 @@
+/* Resuelve la historia con datos locales cuando no está disponible el servidor. */
 import type { CartaApi, ConversacionApi, EstadoPartida, EventoApi, FinalizacionApi, PersonajeApi, ResultadoApi, SetupPartida } from './narrativeService';
 import { configuracionPorEdad } from '../../../config/adaptacionEdad';
 
@@ -58,18 +59,21 @@ interface EstadoLocal {
   finalizacion: FinalizacionApi | null;
 }
 
-const draft = (mes: number) => Array.from({ length: 3 }, (_, i) => cartas[(mes + i - 1) % cartas.length]);
+// Elige tres cartas del catálogo local según el mes de la partida.
+const draft = (mes: number) => Array.from({ length: 3 }, /* Completa este paso con los datos recibidos por la operación. */ (_, i) => cartas[(mes + i - 1) % cartas.length]);
 
+// Arma la conversación local con los personajes de la corte y el tema del mes.
 function conversacionDe(estado: EstadoLocal): ConversacionApi {
   const corte = estado.personajesCorte.length ? estado.personajesCorte : personajes;
   const [primero, segundo] = corte;
+  // Obtiene el identificador del personaje sin depender del formato del catálogo.
   const id = (p: PersonajeLocal) => p.id || p._id;
   const [tema, necesidad] = situaciones[(estado.jugador.mes_actual - 1) % situaciones.length];
   return {
     _id: `local-conversacion-${estado.jugador.mes_actual}`,
     // El tema mensual mantiene variadas las conversaciones del respaldo sin cambiar su estructura.
     titulo: tema, imagen: '',
-    requisitos: [primero, segundo].filter(Boolean).map(p => ({ personajeId: id(p) })),
+    requisitos: [primero, segundo].filter(Boolean).map(/* Prepara el resultado de cada elemento. */ p => ({ personajeId: id(p) })),
     frases: [
       { personajeId: id(primero), texto: `${necesidad} El pueblo necesita ver que escuchamos sus preocupaciones.` },
       { personajeId: id(segundo || primero), texto: 'También debemos cuidar las reservas. ¿Qué camino elegimos?' },
@@ -90,8 +94,9 @@ function debeOfrecerConversacion(estado: EstadoLocal, probabilidad: number) {
   return !estado.jugador.conversaciones_jugadas.includes(id) && umbralPorMes < probabilidad;
 }
 
+// Busca el final local según el mes y los recursos que quedan.
 function finalDe(estado: EstadoLocal): FinalizacionApi | null {
-  const agotado = Object.entries(estado.jugador.recursos).find(([, valor]) => valor <= 0)?.[0];
+  const agotado = Object.entries(estado.jugador.recursos).find(/* Busca el primer elemento que cumple esta condición. */ ([, valor]) => valor <= 0)?.[0];
   if (!agotado && estado.jugador.mes_actual <= MESES_DE_PRUEBA) return null;
   return {
     _id: 'local-final', recurso_clave: agotado || null,
@@ -133,7 +138,7 @@ export function resolverRespaldoNarrativo(path: string, options: RequestInit | u
       return { cartas_draft_actual: draft(mes) };
     case '/v2/partida/elegir-carta-mes': {
       const [titulo, descripcion] = situaciones[(mes - 1) % situaciones.length];
-      const carta = estado.cartasDraft.find(c => (c.id || c._id) === body.carta_id);
+      const carta = estado.cartasDraft.find(/* Busca el primer elemento que cumple esta condición. */ c => (c.id || c._id) === body.carta_id);
       const evento: EventoApi = {
         id: `local-evento-${mes}`, titulo, imagen: '',
         descripcion: `${jugador.modo_mayor ? '' : carta ? `${carta.nombre}: ` : ''}${descripcion}`,
@@ -151,7 +156,7 @@ export function resolverRespaldoNarrativo(path: string, options: RequestInit | u
         titulo: ayudar ? 'Ayuda a las aldeas' : 'Un esfuerzo compartido',
         texto: ayudar ? 'Las reservas llegaron a las aldeas. El pueblo agradece tu apoyo.' : 'La corte coordinó una jornada de trabajo. Las reservas y las defensas mejoraron.',
         imagen: '', tipo_resultado: 'neutro',
-        efectos: cambios.map(([clave, valor]) => ({ accion: { clave, valor } })),
+        efectos: cambios.map(/* Prepara el resultado de cada elemento. */ ([clave, valor]) => ({ accion: { clave, valor } })),
       };
       const perfilEdad = configuracionPorEdad(jugador.edad ?? null);
       // El hint opcional usa la misma forma que el servicio real; sin hint manda la regla central por edad.
@@ -171,13 +176,13 @@ export function resolverRespaldoNarrativo(path: string, options: RequestInit | u
     case '/v2/partida/estado':
       return foto;
     case '/partida/corte':
-      return { corte: estado.personajesCorte.map(personaje => ({ personaje, afinidad: jugador.afinidad[personaje.id || personaje._id] ?? 50 })) };
+      return { corte: estado.personajesCorte.map(/* Prepara el resultado de cada elemento. */ personaje => ({ personaje, afinidad: jugador.afinidad[personaje.id || personaje._id] ?? 50 })) };
     case '/partida/historial':
       return {
         modo_local: true, mes_actual: foto.mes_actual, status: jugador.status,
-        historial_mensual: jugador.historial_mensual.map((registro, i) => ({
+        historial_mensual: jugador.historial_mensual.map(/* Prepara el resultado de cada elemento. */ (registro, i) => ({
           ...registro, evento_id: registro.evento_id || jugador.eventos_jugados[i], resultado_id: registro.resultado,
-          conversacion_id: registro.conversacion_id || jugador.conversaciones_jugadas.find(id => id === `local-conversacion-${registro.mes}`),
+          conversacion_id: registro.conversacion_id || jugador.conversaciones_jugadas.find(/* Busca el primer elemento que cumple esta condición. */ id => id === `local-conversacion-${registro.mes}`),
         })),
       };
     case '/partida/inventario':

@@ -1,3 +1,4 @@
+/* Muestra cuánto avanzó la preparación de las imágenes de la historia. */
 import { useEffect } from 'react';
 import BotonNarrativo from '../BOTON_NARRATIVO/BotonNarrativo';
 import TituloNarrativo from '../TITULO_NARRATIVO/TituloNarrativo';
@@ -15,11 +16,11 @@ export default function CargaNarrativa({ porcentaje: valor, listo: preparado, me
 }) {
   const listo = preparado && !error;
   const porcentaje = Math.round(Math.max(0, Math.min(100, valor)));
-  useEffect(() => {
+  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
     if (!listo) return;
     const duracion = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 650;
     const timer = window.setTimeout(onEntrar, duracion);
-    return () => window.clearTimeout(timer);
+    return /* Libera los recursos de este efecto cuando deja de usarse. */ () => window.clearTimeout(timer);
   }, [listo, onEntrar]);
 
   return <section

@@ -1,3 +1,4 @@
+/* Da forma a las pantallas y controles del juego narrativo. */
 /* Sólo quedan aquí reglas dinámicas o coordinadas que Tailwind no expresa con claridad. */
 .narrativo-contenido {
   /* El degradado vive en FondoCorte; el respaldo nunca añade otro tinte azul. */

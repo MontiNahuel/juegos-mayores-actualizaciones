@@ -1,3 +1,4 @@
+/* Configura cómo se sirve y compila la aplicación con sus recursos. */
 /// <reference types="vitest" />
 
 import legacy from '@vitejs/plugin-legacy'
@@ -10,6 +11,7 @@ import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs'
 
 // Invalida la caché persistente al cambiar las ilustraciones, sin depender de recordar una versión manual.
 const revisionAssets = createHash('sha256')
+// Recorre los recursos para calcular la revisión que invalida la caché de imágenes.
 function incluirAssets(directorio: string) {
   if (!existsSync(directorio)) return
   for (const nombre of readdirSync(directorio).sort()) {
@@ -22,7 +24,7 @@ incluirAssets('public/assets')
 incluirAssets('src/assets')
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => {
+export default defineConfig(/* Completa este paso con los datos recibidos por la operación. */ ({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   const backendUrl = env.VITE_BACKEND_URL || env.VITE_API_URL || 'http://localhost:8080'
 
@@ -48,6 +50,7 @@ export default defineConfig(({ mode }) => {
         '^/admin(/|$)': {
           target: backendUrl,
           changeOrigin: true,
+          // Deja que Vite atienda los archivos del panel sin enviarlos al servidor.
           bypass: (req) => {
             if (req.url && (req.url.startsWith('/admin_src') || req.url.includes('admin_src'))) {
               return req.url;

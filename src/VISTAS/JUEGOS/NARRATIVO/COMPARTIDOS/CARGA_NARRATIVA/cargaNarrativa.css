@@ -1,3 +1,4 @@
+/* Da estilo a la pantalla de carga de la historia. */
 /* La carga sólo mueve el caballo y la barra; el fondo permanece montado al entrar al juego. */
 .carga-narrativa { transition: opacity 650ms ease, backdrop-filter 650ms ease; }
 .carga-narrativa--lista { opacity: 0; backdrop-filter: blur(0); pointer-events: none; }

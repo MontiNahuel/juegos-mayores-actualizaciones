@@ -1,3 +1,4 @@
+/* Muestra una carta que se puede elegir para armar la corte o la mano inicial. */
 import { useState } from 'react';
 import './cartas.css';
 import { imagenPrecargada } from '../../../../services/assetPreloader';
@@ -31,7 +32,7 @@ export default function CartaSeleccionableEtapa0y1({ carta, selected = false, di
   const etiquetaMarco = esItem ? carta.categoria : carta.nombre;
   const contenido = <>
     <span className="carta-narrativa__interior" data-imagen={mostrarImagen}>
-      {mostrarImagen ? <img alt="" className="carta-narrativa__imagen" src={imagenPrecargada(carta.imagen!)} onError={() => setImagenFallida(carta.imagen!)} /> : null}
+      {mostrarImagen ? <img alt="" className="carta-narrativa__imagen" src={imagenPrecargada(carta.imagen!)} onError={/* Responde a error desde este control. */ () => setImagenFallida(carta.imagen!)} /> : null}
       <span className="carta-narrativa__contenido">
         {etiquetaInterior ? <span className="carta-narrativa__categoria">{etiquetaInterior}</span> : null}
         <span className="carta-narrativa__texto">{carta.descripcion || carta.texto}</span>

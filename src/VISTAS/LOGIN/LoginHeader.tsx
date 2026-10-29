@@ -1,3 +1,4 @@
+/* Saluda al jugador y muestra su cuenta, su progreso y el acceso. */
 import React, { useState, useEffect } from 'react';
 import type { CSSProperties } from 'react';
 
@@ -41,8 +42,11 @@ interface LoginHeaderProps {
   ocultarSaludoEnMovil?: boolean;
   menuPrincipal?: boolean;
   ocultarSesion?: boolean;
+  gameDetails?: React.ReactNode;
+  rightAction?: React.ReactNode;
 }
 
+// Elige el saludo según la hora del día.
 function getGreeting(): string {
   const hour = new Date().getHours();
   if (hour >= 6 && hour < 13) return '¡Buenos días!';
@@ -50,10 +54,11 @@ function getGreeting(): string {
   return '¡Buenas noches!';
 }
 
-export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title, onBack, primaryColor = color.blue, ocultarSaludoEnMovil = false, menuPrincipal = false, ocultarSesion = false }) => {
+// Saluda al jugador y muestra su cuenta, su progreso y el acceso.
+export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title, onBack, primaryColor = color.blue, ocultarSaludoEnMovil = false, menuPrincipal = false, ocultarSesion = false, gameDetails, rightAction }) => {
   const economy = usePlayerEconomy();
 
-  const [usuario, setUsuario] = useState<Usuario | null>(() => {
+  const [usuario, setUsuario] = useState<Usuario | null>(/* Prepara el valor inicial al montar la pantalla. */ () => {
     try {
       const saved = localStorage.getItem('usuario') || localStorage.getItem('user');
       return saved ? JSON.parse(saved) : null;
@@ -64,7 +69,7 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title
 
   const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
 
-  useEffect(() => {
+  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('abrirLogin') === 'true') {
       setShowAuthModal(true);
@@ -74,7 +79,8 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title
     }
   }, []);
 
-  useEffect(() => {
+  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
+    // Vuelve a leer el progreso cuando otra pantalla o pestaña avisa que cambió.
     const handleProgressUpdate = () => {
       try {
         const saved = localStorage.getItem('usuario') || localStorage.getItem('user');
@@ -88,7 +94,7 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title
 
     window.addEventListener('user_progress_updated', handleProgressUpdate);
     window.addEventListener('storage', handleProgressUpdate);
-    return () => {
+    return /* Libera los recursos de este efecto cuando deja de usarse. */ () => {
       window.removeEventListener('user_progress_updated', handleProgressUpdate);
       window.removeEventListener('storage', handleProgressUpdate);
     };
@@ -103,6 +109,7 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title
         esUsuarioAdmin())
   );
 
+  // Limpia la sesión y actualiza la pantalla.
   const handleLogout = () => {
     limpiarTodasLasSesiones();
     setUsuario(null);
@@ -110,6 +117,7 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title
     economy.recargarEconomia();
   };
 
+  // Actualiza los datos visibles después de entrar a la cuenta.
   const handleAuthSuccess = (loggedUser: Usuario) => {
     setUsuario(loggedUser);
     onUsuarioChange?.(loggedUser);
@@ -152,7 +160,7 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title
     <IonHeader style={{ boxShadow: '0 2px 10px rgba(23, 59, 99, 0.12)' }}>
       <IonToolbar style={{ '--background': '#FFFFFF', '--border-width': 0 } as CSSProperties}>
         <div
-          className={`login-header-layout${title ? ' login-header-layout--titled' : ''}${ocultarSaludoEnMovil ? ' login-header-layout--compact' : ''}${usuario ? ' login-header-layout--authenticated' : ''}${menuPrincipal ? ' login-header-layout--menu' : ''}`}
+          className={`login-header-layout${title ? ' login-header-layout--titled' : ''}${ocultarSaludoEnMovil ? ' login-header-layout--compact' : ''}${usuario ? ' login-header-layout--authenticated' : ''}${menuPrincipal ? ' login-header-layout--menu' : ''}${gameDetails !== undefined ? ' login-header-layout--game' : ''}`}
           style={{
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -175,8 +183,8 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title
               src="/asistodo-logo.svg"
               style={{ height: 42, width: 42, flexShrink: 0 }}
             />}
-            <span className="login-header-lives-left">{livesButton}</span>
-            <div className="login-header-greeting" style={{ minWidth: 0 }}>
+            {gameDetails === undefined && <span className="login-header-lives-left">{livesButton}</span>}
+            <div className="login-header-greeting" hidden={gameDetails !== undefined} style={{ minWidth: 0 }}>
               {usuario ? (
                 /* Con sesión: ¡Hola, [Nombre]! */
                 <>
@@ -232,10 +240,15 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title
             </div>
           </div>
 
-          {title && <h1 className="login-header-title" style={{ color: primaryColor }}>{title}</h1>}
+          {title && (gameDetails !== undefined ? (
+            <div className="login-header-game-title">
+              <h1 className="login-header-title" style={{ color: primaryColor }}>{title}</h1>
+              <div className="flex flex-wrap items-center justify-center gap-1.5">{gameDetails}</div>
+            </div>
+          ) : <h1 className="login-header-title" style={{ color: primaryColor }}>{title}</h1>)}
 
           {/* Lado derecho: Sesión activa (Racha + Vidas + Puntos + Salir) ó Botón Iniciar Sesión */}
-          {usuario ? (
+          {gameDetails !== undefined ? <div className="flex items-center justify-end gap-2">{rightAction}</div> : usuario ? (
             <div
               style={{
                 alignItems: 'center',
@@ -327,7 +340,7 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title
               {/* Botón para abrir el Modal de Inicio de Sesión / Registro */}
               <button
                 type="button"
-                onClick={() => setShowAuthModal(true)}
+                onClick={/* Responde a click desde este control. */ () => setShowAuthModal(true)}
                 aria-label="Iniciar sesión"
                 style={{
                   alignItems: 'center',
@@ -359,7 +372,7 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title
       {/* Modal de Acceso (Código / Registro / Admin) */}
       <AuthModal
         isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
+        onClose={/* Responde a close desde este control. */ () => setShowAuthModal(false)}
         onSuccess={handleAuthSuccess}
       />
     </IonHeader>

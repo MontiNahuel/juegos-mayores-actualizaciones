@@ -1,3 +1,4 @@
+/* Acomoda el saludo y las acciones de cuenta del encabezado. */
 .login-header-layout {
   display: flex;
   gap: 12px;
@@ -140,4 +141,28 @@
   .login-header-layout--menu .login-header-logo {
     display: block;
   }
+}
+
+.login-header-layout.login-header-layout--game {
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+}
+
+.login-header-layout--game .login-header-home {
+  display: flex;
+}
+
+.login-header-layout--game .login-header-greeting {
+  display: none;
+}
+
+.login-header-game-title {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+}
+
+.login-header-layout--game .login-header-title {
+  max-width: none;
+  white-space: normal;
+  overflow: visible;
 }

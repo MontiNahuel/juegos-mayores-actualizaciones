@@ -1,9 +1,11 @@
+/* Comprueba con pruebas que narrative graphs siga funcionando como se espera. */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EstadoGrafoApi } from './narrativeService';
 import { guardarResultado, iniciarJugador, sincronizarPartida } from '../../../store/narrativoSelectionSlice';
 
 const date = '2026-10-28';
 const recursos = { oro: 50, pueblo: 50, ejercito: 50, fe: 50 };
+// Arma un grafo de prueba para comprobar el recorrido narrativo.
 const grafo = (cambios: Partial<EstadoGrafoApi> = {}): EstadoGrafoApi => ({
   fase_actual: 'toma_decision_evento', grafo_id: 'evt_cometa', tipo: 'evento',
   titulo: 'El cometa', imagen: '/assets/narrative/eventos/default.webp',
@@ -17,17 +19,18 @@ const grafo = (cambios: Partial<EstadoGrafoApi> = {}): EstadoGrafoApi => ({
   },
   recursos: null, afinidad: null, status: 'in_progress', ...cambios,
 });
+// Simula la respuesta del servidor para probar el avance del grafo.
 const responder = (datos: unknown) => new Response(JSON.stringify(datos));
 
-beforeEach(() => {
+beforeEach(/* Prepara un entorno limpio antes de cada prueba. */ () => {
   vi.resetModules();
   vi.stubGlobal('localStorage', { getItem: vi.fn().mockReturnValue('token-prueba') });
   vi.stubGlobal('fetch', vi.fn());
 });
-afterEach(() => vi.unstubAllGlobals());
+afterEach(/* Limpia el entorno al terminar cada prueba. */ () => vi.unstubAllGlobals());
 
-describe('contrato de grafos narrativos V2', () => {
-  it('abre el grafo al elegir carta y conserva únicamente las opciones habilitadas', async () => {
+describe('contrato de grafos narrativos V2', /* Agrupa las pruebas de este comportamiento. */ () => {
+  it('abre el grafo al elegir carta y conserva únicamente las opciones habilitadas', /* Comprueba el comportamiento indicado en este caso. */ async () => {
     vi.mocked(fetch).mockResolvedValue(responder({ recursos, evento_actual: null, grafo_actual: grafo() }));
     const api = await import('./narrativeService');
     const estado = await api.elegirCartaMensual(date, 'carta_sello');
@@ -44,7 +47,7 @@ describe('contrato de grafos narrativos V2', () => {
     }));
   });
 
-  it('avanza por nodos intermedios sin aplicar resultados ni borrar los recursos locales', async () => {
+  it('avanza por nodos intermedios sin aplicar resultados ni borrar los recursos locales', /* Comprueba el comportamiento indicado en este caso. */ async () => {
     const intermedio = grafo();
     intermedio.nodo_actual.id = 'analisis';
     vi.mocked(fetch).mockResolvedValue(responder(intermedio));
@@ -63,7 +66,7 @@ describe('contrato de grafos narrativos V2', () => {
     }));
   });
 
-  it('muestra el nodo terminal en la pantalla de resultado y usa los valores ya aplicados por el servidor', async () => {
+  it('muestra el nodo terminal en la pantalla de resultado y usa los valores ya aplicados por el servidor', /* Comprueba el comportamiento indicado en este caso. */ async () => {
     const final = grafo({ fase_actual: 'balance_mes', recursos: { ...recursos, oro: 35, pueblo: 70 }, afinidad: { vera: 65 } });
     final.nodo_actual = {
       ...final.nodo_actual, id: 'cierre', es_final: true, opciones: [], resultado_texto: 'El reino prospera.',
@@ -86,7 +89,7 @@ describe('contrato de grafos narrativos V2', () => {
     expect(jugador.tags_activos).toEqual(['ciencia']);
   });
 
-  it('restaura la conversación con IDs de opción de texto aunque el estado también contenga el draft anterior', async () => {
+  it('restaura la conversación con IDs de opción de texto aunque el estado también contenga el draft anterior', /* Comprueba el comportamiento indicado en este caso. */ async () => {
     const conversacion = grafo({ tipo: 'conversacion', grafo_id: 'conv_tesoro' });
     conversacion.nodo_actual.hablante_id = 'vera';
     vi.mocked(fetch).mockResolvedValue(responder({
@@ -104,7 +107,7 @@ describe('contrato de grafos narrativos V2', () => {
     expect(JSON.parse(String(vi.mocked(fetch).mock.calls[1][1]?.body))).toEqual({ date, opcion_id: 'opt_enviar_guardia' });
   });
 
-  it('recupera recursos y afinidades cuando el backend encadena una conversación u otro evento', async () => {
+  it('recupera recursos y afinidades cuando el backend encadena una conversación u otro evento', /* Comprueba el comportamiento indicado en este caso. */ async () => {
     const conversacion = grafo({ tipo: 'conversacion', grafo_id: 'conv_tesoro' });
     vi.mocked(fetch)
       .mockResolvedValueOnce(responder(conversacion))
@@ -118,13 +121,13 @@ describe('contrato de grafos narrativos V2', () => {
     expect(String(vi.mocked(fetch).mock.calls[1][0])).toContain(`/v2/partida/estado?date=${date}`);
   });
 
-  it('conserva la finalización recibida por colapso de recursos', async () => {
+  it('conserva la finalización recibida por colapso de recursos', /* Comprueba el comportamiento indicado en este caso. */ async () => {
     vi.mocked(fetch).mockResolvedValue(responder(grafo({ finalizacion: { _id: 'fin_oro', tipo: 'derrota_recurso' } as EstadoGrafoApi['finalizacion'] })));
     const api = await import('./narrativeService');
     expect((await api.avanzarNodo(date, 'opt_costosa', 'evt_cometa')).finalizacion?._id).toBe('fin_oro');
   });
 
-  it('mantiene un error del grafo visible sin reemplazarlo por una partida de demostración', async () => {
+  it('mantiene un error del grafo visible sin reemplazarlo por una partida de demostración', /* Comprueba el comportamiento indicado en este caso. */ async () => {
     vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify({ detail: 'Grafo no encontrado' }), { status: 404 }));
     const api = await import('./narrativeService');
     await expect(api.avanzarNodo(date, 'opt_guardia', 'evt_cometa')).rejects.toThrow('Grafo no encontrado');

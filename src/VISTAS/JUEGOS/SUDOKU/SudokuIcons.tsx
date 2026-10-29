@@ -1,3 +1,4 @@
+/* Reúne los iconos de los controles del Sudoku. */
 import React from 'react';
 
 /**

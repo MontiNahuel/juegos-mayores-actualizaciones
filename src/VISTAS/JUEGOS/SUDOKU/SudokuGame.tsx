@@ -1,3 +1,4 @@
+/* Arma la pantalla de Sudoku con tablero, teclado y controles. */
 import React from 'react';
 import { useSudokuGame } from './useSudokuGame';
 import { SudokuBoard } from './SudokuBoard';
@@ -5,6 +6,7 @@ import { SudokuKeypad } from './SudokuKeypad';
 import { CompletedModal } from '../../COMPONENTS/MODALS/CompletedModal';
 import { GameHeader, LivesBadge } from '../../COMPONENTS/GameHeader';
 
+// Arma la pantalla de Sudoku con tablero, teclado y controles.
 export const SudokuGame: React.FC = () => {
   const game = useSudokuGame();
 
@@ -28,6 +30,8 @@ export const SudokuGame: React.FC = () => {
         title="Sudoku"
         onBack={game.goBack}
         backLabel="Calendario"
+        onHint={game.useHint}
+        hintDisabled={!game.progressReady || game.lives <= 0 || game.isWon || game.isGameOver || game.hintsLeft <= 0}
         badges={
           <div className="flex items-center gap-1.5 sm:gap-2">
             <span
@@ -35,11 +39,12 @@ export const SudokuGame: React.FC = () => {
             >
               {diffBadge.label}
             </span>
-            <LivesBadge lives={game.lives} maxLives={game.maxLives} />
+            <LivesBadge lives={game.lives} maxLives={game.maxLives} onClick={game.openRefill} />
           </div>
         }
       />
 
+      {game.lifeModal}
       {/* Área central con Tablero 9x9 y Teclado táctil acotado en desktop */}
       <main className="flex-1 flex flex-col justify-center items-center px-2 sm:px-4 py-2 w-full max-w-xl mx-auto">
         <SudokuBoard
@@ -53,9 +58,7 @@ export const SudokuGame: React.FC = () => {
           onNumber={game.inputNumber}
           onErase={game.eraseCell}
           onToggleNotes={game.toggleNotes}
-          onHint={game.useHint}
           isNotesMode={game.isNotesMode}
-          hintsLeft={game.hintsLeft}
           numberCounts={game.numberCounts}
         />
       </main>

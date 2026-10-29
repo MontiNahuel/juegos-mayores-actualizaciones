@@ -1,3 +1,4 @@
+/* Da el mismo aspecto a los botones de las pantallas narrativas. */
 import type { ButtonHTMLAttributes } from 'react';
 
 const ESTILO_BOTON = [

@@ -1,3 +1,4 @@
+/* Muestra las vidas disponibles y permite abrir la tienda. */
 import React from 'react';
 import { usePlayerEconomy } from '../../../context/PlayerEconomyContext';
 
@@ -60,6 +61,7 @@ export const LivesBadge: React.FC<LivesBadgeProps> = ({
   const safeLives = Math.max(0, currentLives);
   const isCritical = safeLives === 1;
 
+  // Abre la tienda al tocar el contador de vidas.
   const handleClick = () => {
     if (onClick) {
       onClick();
@@ -91,7 +93,7 @@ export const LivesBadge: React.FC<LivesBadgeProps> = ({
       {/* Si tiene hasta 5 vidas, mostramos corazones individuales. Si tiene más de 5, mostramos número con corazón */}
       {maxLives <= 5 ? (
         <div className="flex items-center gap-0.5">
-          {Array.from({ length: maxLives }).map((_, i) => (
+          {Array.from({ length: maxLives }).map(/* Prepara el resultado de cada elemento. */ (_, i) => (
             <IconHeart
               key={i}
               filled={i < safeLives}

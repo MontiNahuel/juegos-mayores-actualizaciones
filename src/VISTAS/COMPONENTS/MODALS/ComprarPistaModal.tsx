@@ -1,3 +1,4 @@
+/* Pide confirmar el gasto de una vida antes de comprar una pista. */
 import { useEffect, useId, useRef, useState } from 'react';
 import { usePlayerEconomy } from '../../../context/PlayerEconomyContext';
 import { IconHeart } from '../GameHeader/LivesBadge';
@@ -10,23 +11,25 @@ export interface ComprarPistaModalProps {
   onComprar?: () => Promise<void>;
 }
 
+// Pide confirmar el gasto de una vida antes de comprar una pista.
 export function ComprarPistaModal({ isOpen, onClose, onComprar }: ComprarPistaModalProps) {
-  const { vidas, isComprarPistaOpen, cerrarComprarPista, comprarPista, abrirMiniTienda } = usePlayerEconomy();
+  const { vidasParaPista: vidas, isComprarPistaOpen, cerrarComprarPista, comprarPista, recargarVidasPista } = usePlayerEconomy();
   const confirmar = onComprar || comprarPista;
   const tituloId = useId();
   const [comprando, setComprando] = useState(false);
   const [error, setError] = useState('');
   const enCurso = useRef(false);
   const visible = isOpen ?? isComprarPistaOpen;
-  useEffect(() => { if (visible) setError(''); }, [visible]);
+  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => { if (visible) setError(''); }, [visible]);
+  // Limpia los avisos y cierra esta ventana.
   const cerrar = () => {
-    if (enCurso.current) return;
     setError('');
     (onClose || cerrarComprarPista)();
   };
+  // Confirma la pista y muestra el resultado de la compra.
   const comprar = async () => {
     if (enCurso.current) return;
-    if (vidas < 1) { cerrar(); abrirMiniTienda(); return; }
+    if (vidas < 1) { cerrar(); recargarVidasPista(); return; }
     enCurso.current = true;
     setComprando(true);
     setError('');

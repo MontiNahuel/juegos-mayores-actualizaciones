@@ -1,3 +1,4 @@
+/* Reúne la gestión de alumnos, accesos y generación de desafíos. */
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -29,11 +30,13 @@ import ModalAsignarEconomia from './ModalAsignarEconomia';
 import { OPERADOR_STORAGE_KEY } from './LoginSistemas';
 import { solicitarTicketRetorno } from './ssoService';
 
+// Reúne la gestión de alumnos, accesos y generación de desafíos.
 export default function PanelAltasSistemas() {
   const navigate = useNavigate();
 
 // Salto SSO al panel central de usuarios
   const [saltandoSSO, setSaltandoSSO] = useState(false);
+  // Abre el sistema de autenticación con el acceso de la sesión actual.
   const handleIrAAutenticador = async () => {
     if (saltandoSSO) return;
     setSaltandoSSO(true);
@@ -68,9 +71,10 @@ export default function PanelAltasSistemas() {
 
   // Notificación toast flotante
   const [toastMsg, setToastMsg] = useState('');
+  // Muestra un aviso breve con el resultado de la acción.
   const showToast = (msg) => {
     setToastMsg(msg);
-    setTimeout(() => setToastMsg(''), 3000);
+    setTimeout(/* Ejecuta este paso cuando se cumple la espera. */ () => setToastMsg(''), 3000);
   };
 
   // Estados para copiar enlace directo (Magic Link) y PIN desde la tabla
@@ -137,6 +141,7 @@ export default function PanelAltasSistemas() {
   const [modalAsignarAbierto, setModalAsignarAbierto] = useState(false);
   const [usuarioParaAsignar, setUsuarioParaAsignar] = useState(null);
 
+  // Carga estado desafios con los datos de este paso.
   const cargarEstadoDesafios = async (anio = desafiosAnio, juego = desafiosJuego) => {
     setCargandoDesafios(true);
     setErrorDesafios('');
@@ -158,6 +163,7 @@ export default function PanelAltasSistemas() {
     }
   };
 
+  // Pide generar los desafíos del mes y actualiza su estado.
   const handleGenerarMes = async (mesNumero) => {
     setGenerandoMes(mesNumero);
     setErrorDesafios('');
@@ -176,7 +182,7 @@ export default function PanelAltasSistemas() {
         await cargarEstadoDesafios(desafiosAnio, desafiosJuego);
         showToast(`Desafíos de ${data.month_name || 'mes'} generados correctamente.`);
       } else {
-        const data = await res.json().catch(() => ({}));
+        const data = await res.json().catch(/* Maneja el fallo de esta operación. */ () => ({}));
         setErrorDesafios(data.detail || data.message || 'Error al generar los desafíos del mes.');
       }
     } catch (e) {
@@ -199,7 +205,7 @@ export default function PanelAltasSistemas() {
   };
 
   // Validar y obtener info del operador al montar
-  useEffect(() => {
+  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
     try {
       const sesion = localStorage.getItem(OPERADOR_STORAGE_KEY);
       if (!sesion) {
@@ -237,7 +243,8 @@ export default function PanelAltasSistemas() {
   };
 
   // Cargar catálogo de estados desde la base de datos
-  useEffect(() => {
+  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
+    // Carga estados con los datos de este paso.
     const cargarEstados = async () => {
       try {
         const res = await fetch('/usuario/estados');
@@ -313,13 +320,13 @@ export default function PanelAltasSistemas() {
   };
 
   // Carga inicial y debounce para la búsqueda
-  useEffect(() => {
-    const timer = setTimeout(() => {
+  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
+    const timer = setTimeout(/* Ejecuta este paso cuando se cumple la espera. */ () => {
       setSkip(0);
       cargarAlumnos(0, busqueda, limit);
     }, 300);
 
-    return () => clearTimeout(timer);
+    return /* Libera los recursos de este efecto cuando deja de usarse. */ () => clearTimeout(timer);
   }, [busqueda, limit]);
 
   // Alternar estado activo / suspendido
@@ -335,8 +342,8 @@ export default function PanelAltasSistemas() {
       }
       if (res.ok) {
         const data = await res.json();
-        setAlumnos((prev) =>
-          prev.map((a) => (a.id === usuarioId ? {
+        setAlumnos(/* Actualiza alumnos a partir del valor anterior. */ (prev) =>
+          prev.map(/* Prepara el resultado de cada elemento. */ (a) => (a.id === usuarioId ? {
             ...a,
             activo: data.activo,
             estadoId: data.activo ? 2 : 3,
@@ -365,8 +372,8 @@ export default function PanelAltasSistemas() {
       }
       if (res.ok) {
         const data = await res.json();
-        setAlumnos((prev) =>
-          prev.map((a) =>
+        setAlumnos(/* Actualiza alumnos a partir del valor anterior. */ (prev) =>
+          prev.map(/* Prepara el resultado de cada elemento. */ (a) =>
             a.id === usuarioId
               ? {
                   ...a,
@@ -379,7 +386,7 @@ export default function PanelAltasSistemas() {
         );
         showToast(data.message || 'Estado actualizado con éxito');
       } else {
-        const errData = await res.json().catch(() => ({}));
+        const errData = await res.json().catch(/* Maneja el fallo de esta operación. */ () => ({}));
         showToast(errData.detail || 'Error al cambiar estado');
       }
     } catch (err) {
@@ -400,14 +407,14 @@ export default function PanelAltasSistemas() {
       });
       if (res.ok) {
         const data = await res.json();
-        setEstadosCatalogo((prev) =>
-          prev.map((est) =>
+        setEstadosCatalogo(/* Actualiza estados catalogo a partir del valor anterior. */ (prev) =>
+          prev.map(/* Prepara el resultado de cada elemento. */ (est) =>
             est.id === estadoId ? { ...est, habilitado: data.habilitado } : est
           )
         );
         showToast(data.message || 'Estado actualizado');
       } else {
-        const errData = await res.json().catch(() => ({}));
+        const errData = await res.json().catch(/* Maneja el fallo de esta operación. */ () => ({}));
         showToast(errData.detail || 'No se pudo modificar el estado');
       }
     } catch (err) {
@@ -442,7 +449,7 @@ export default function PanelAltasSistemas() {
       if (res.ok) {
         const data = await res.json();
         if (data.estado) {
-          setEstadosCatalogo((prev) => [...prev, data.estado]);
+          setEstadosCatalogo(/* Actualiza estados catalogo a partir del valor anterior. */ (prev) => [...prev, data.estado]);
         }
         setExitoEstado(data.message || 'Estado creado con éxito');
         setNuevoEstadoNombre('');
@@ -451,7 +458,7 @@ export default function PanelAltasSistemas() {
         setNuevoEstadoPermiteLogin(false);
         showToast('Nuevo estado agregado al catálogo');
       } else {
-        const errData = await res.json().catch(() => ({}));
+        const errData = await res.json().catch(/* Maneja el fallo de esta operación. */ () => ({}));
         setErrorEstado(errData.detail || 'Error al crear el estado');
       }
     } catch (err) {
@@ -538,7 +545,7 @@ export default function PanelAltasSistemas() {
         const link = `${window.location.origin}/acceso?token=${data.token}`;
         await navigator.clipboard.writeText(link);
         setCopiadoLinkTablaId(item.id);
-        setTimeout(() => setCopiadoLinkTablaId(null), 2000);
+        setTimeout(/* Ejecuta este paso cuando se cumple la espera. */ () => setCopiadoLinkTablaId(null), 2000);
       } else {
         alert('No se pudo generar el enlace: ' + (data.message || 'Código inválido'));
       }
@@ -556,14 +563,14 @@ export default function PanelAltasSistemas() {
     try {
       await navigator.clipboard.writeText(pin);
       setCopiadoPinTablaId(id);
-      setTimeout(() => setCopiadoPinTablaId(null), 2000);
+      setTimeout(/* Ejecuta este paso cuando se cumple la espera. */ () => setCopiadoPinTablaId(null), 2000);
     } catch (err) {
       console.error(err);
     }
   };
 
   // Filtrado local según estado
-  const alumnosFiltrados = alumnos.filter((alumno) => {
+  const alumnosFiltrados = alumnos.filter(/* Conserva los elementos que cumplen esta condición. */ (alumno) => {
     if (filtroEstado === 'TODOS') return true;
     if (filtroEstado === 'PENDIENTE') return alumno.estadoId === 1 || alumno.estadoCodigo === 'PENDIENTE_VERIFICACION';
     if (filtroEstado === 'ACTIVO') return alumno.estadoId === 2 || alumno.estadoCodigo === 'ACTIVO';
@@ -572,14 +579,15 @@ export default function PanelAltasSistemas() {
   });
 
   // Estadísticas rápidas
-  const totalActivos = alumnos.filter((a) => a.estadoId === 2 || (a.activo && a.estadoId !== 1)).length;
-  const totalPendientes = alumnos.filter((a) => a.estadoId === 1 || a.estadoCodigo === 'PENDIENTE_VERIFICACION').length;
-  const totalSuspendidos = alumnos.filter((a) => a.estadoId === 3 || (!a.activo && a.estadoId !== 1)).length;
+  const totalActivos = alumnos.filter(/* Conserva los elementos que cumplen esta condición. */ (a) => a.estadoId === 2 || (a.activo && a.estadoId !== 1)).length;
+  const totalPendientes = alumnos.filter(/* Conserva los elementos que cumplen esta condición. */ (a) => a.estadoId === 1 || a.estadoCodigo === 'PENDIENTE_VERIFICACION').length;
+  const totalSuspendidos = alumnos.filter(/* Conserva los elementos que cumplen esta condición. */ (a) => a.estadoId === 3 || (!a.activo && a.estadoId !== 1)).length;
 
   // Cálculos de paginación
   const totalPaginas = Math.max(1, Math.ceil(totalAlumnos / limit));
   const paginaActual = Math.floor(skip / limit) + 1;
 
+  // Actualiza pagina con los datos de este paso.
   const handleCambiarPagina = (nuevaPagina) => {
     if (nuevaPagina < 1 || nuevaPagina > totalPaginas) return;
     const nuevoSkip = (nuevaPagina - 1) * limit;
@@ -627,7 +635,7 @@ export default function PanelAltasSistemas() {
       }
 
       setExitoEdicion('Cambios guardados con éxito.');
-      setTimeout(() => {
+      setTimeout(/* Ejecuta este paso cuando se cumple la espera. */ () => {
         setModalEditarAbierto(false);
         cargarAlumnos(skip, busqueda, limit);
       }, 700);
@@ -692,6 +700,7 @@ export default function PanelAltasSistemas() {
     }
   };
 
+  // Elige un color estable para el avatar del alumno.
   const getAvatarColor = (name) => {
     const colores = [
       'bg-blue-100 text-blue-700',
@@ -735,7 +744,7 @@ export default function PanelAltasSistemas() {
 
           <div className="flex items-center gap-3">
             <button
-              onClick={() => {
+              onClick={/* Responde a click desde este control. */ () => {
                 setAltaExitosa(null);
                 setNombre('');
                 setEmail('');
@@ -751,7 +760,7 @@ export default function PanelAltasSistemas() {
             </button>
 
             <button
-              onClick={() => {
+              onClick={/* Responde a click desde este control. */ () => {
                 setErrorEstado('');
                 setExitoEstado('');
                 setModalEstadosAbierto(true);
@@ -763,7 +772,7 @@ export default function PanelAltasSistemas() {
             </button>
 
             <button
-              onClick={() => {
+              onClick={/* Responde a click desde este control. */ () => {
                 setErrorDesafios('');
                 setExitoDesafios('');
                 setModalDesafiosAbierto(true);
@@ -776,7 +785,7 @@ export default function PanelAltasSistemas() {
             </button>
 
             <button
-              onClick={() => setModalEconomiaAbierto(true)}
+              onClick={/* Responde a click desde este control. */ () => setModalEconomiaAbierto(true)}
               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs transition shadow-xs cursor-pointer"
               title="Configuración de Vidas y Economía"
             >
@@ -785,7 +794,7 @@ export default function PanelAltasSistemas() {
             </button>
 
             <button
-              onClick={() => {
+              onClick={/* Responde a click desde este control. */ () => {
                 setUsuarioParaAsignar(null);
                 setModalAsignarAbierto(true);
               }}
@@ -797,7 +806,7 @@ export default function PanelAltasSistemas() {
             </button>
 
             <button
-              onClick={() => setModalNarrativoAbierto(true)}
+              onClick={/* Responde a click desde este control. */ () => setModalNarrativoAbierto(true)}
               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs transition shadow-xs cursor-pointer"
             >
               <BookOpenIcon size={15} />
@@ -815,7 +824,7 @@ export default function PanelAltasSistemas() {
             </button>
 
             <button
-              onClick={() => navigate('/menu')}
+              onClick={/* Responde a click desde este control. */ () => navigate('/menu')}
               className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-amber-200 bg-amber-50 hover:bg-amber-100 text-amber-900 font-bold text-xs transition cursor-pointer"
               title="Volver al menú de juegos"
             >
@@ -902,7 +911,7 @@ export default function PanelAltasSistemas() {
             {/* Filtros por pestaña de estado */}
             <div className="flex items-center gap-1.5 overflow-x-auto pb-2 md:pb-0">
               <button
-                onClick={() => setFiltroEstado('TODOS')}
+                onClick={/* Responde a click desde este control. */ () => setFiltroEstado('TODOS')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
                   filtroEstado === 'TODOS'
                     ? 'bg-[#002B5E] text-white'
@@ -912,7 +921,7 @@ export default function PanelAltasSistemas() {
                 Todos ({totalAlumnos})
               </button>
               <button
-                onClick={() => setFiltroEstado('ACTIVO')}
+                onClick={/* Responde a click desde este control. */ () => setFiltroEstado('ACTIVO')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
                   filtroEstado === 'ACTIVO'
                     ? 'bg-emerald-600 text-white'
@@ -922,7 +931,7 @@ export default function PanelAltasSistemas() {
                 Activas ({totalActivos})
               </button>
               <button
-                onClick={() => setFiltroEstado('PENDIENTE')}
+                onClick={/* Responde a click desde este control. */ () => setFiltroEstado('PENDIENTE')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
                   filtroEstado === 'PENDIENTE'
                     ? 'bg-amber-500 text-white'
@@ -932,7 +941,7 @@ export default function PanelAltasSistemas() {
                 Pendientes ({totalPendientes})
               </button>
               <button
-                onClick={() => setFiltroEstado('SUSPENDIDO')}
+                onClick={/* Responde a click desde este control. */ () => setFiltroEstado('SUSPENDIDO')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
                   filtroEstado === 'SUSPENDIDO'
                     ? 'bg-rose-600 text-white'
@@ -952,12 +961,12 @@ export default function PanelAltasSistemas() {
                 type="text"
                 placeholder="Buscar por nombre, email o PIN..."
                 value={busqueda}
-                onChange={(e) => setBusqueda(e.target.value)}
+                onChange={/* Responde a change desde este control. */ (e) => setBusqueda(e.target.value)}
                 className="w-full pl-9 pr-8 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:border-[#002B5E] focus:outline-none transition"
               />
               {busqueda && (
                 <button
-                  onClick={() => setBusqueda('')}
+                  onClick={/* Responde a click desde este control. */ () => setBusqueda('')}
                   className="absolute inset-y-0 right-0 flex items-center pr-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
                 >
                   <XIcon size={14} />
@@ -988,7 +997,7 @@ export default function PanelAltasSistemas() {
                     </td>
                   </tr>
                 ) : alumnosFiltrados.length > 0 ? (
-                  alumnosFiltrados.map((item) => {
+                  alumnosFiltrados.map(/* Prepara el resultado de cada elemento. */ (item) => {
                     const inicial = (item.name || 'A').trim().charAt(0).toUpperCase();
                     const colorAvatar = getAvatarColor(item.name || '');
                     const esPendiente = item.estadoId === 1 || item.estadoCodigo === 'PENDIENTE_VERIFICACION';
@@ -1034,7 +1043,7 @@ export default function PanelAltasSistemas() {
                         {/* PIN */}
                         <td className="py-3 px-4">
                           <button
-                            onClick={() => handleCopiarPinFila(item.codigoAcceso, item.id)}
+                            onClick={/* Responde a click desde este control. */ () => handleCopiarPinFila(item.codigoAcceso, item.id)}
                             title="Clic para copiar PIN"
                             className="inline-flex items-center gap-1.5 font-mono font-bold text-xs text-[#002B5E] bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded-md transition cursor-pointer"
                           >
@@ -1054,14 +1063,14 @@ export default function PanelAltasSistemas() {
                               <select
                                 value={item.estadoId || 2}
                                 disabled={cambiandoEstadoId === item.id}
-                                onChange={(e) => handleCambiarEstado(item.id, Number(e.target.value))}
+                                onChange={/* Responde a change desde este control. */ (e) => handleCambiarEstado(item.id, Number(e.target.value))}
                                 className={`w-full appearance-none pl-3 pr-7 py-1.5 rounded-lg text-xs font-bold border transition cursor-pointer focus:outline-none focus:ring-2 disabled:opacity-50 ${
                                   getEstadoColorStyles(item.estadoId, item.estadoCodigo).bg
                                 }`}
                               >
                                 {estadosCatalogo
-                                  .filter((est) => est.habilitado !== false || est.id === item.estadoId)
-                                  .map((est) => (
+                                  .filter(/* Conserva los elementos que cumplen esta condición. */ (est) => est.habilitado !== false || est.id === item.estadoId)
+                                  .map(/* Prepara el resultado de cada elemento. */ (est) => (
                                     <option
                                       key={est.id}
                                       value={est.id}
@@ -1085,7 +1094,7 @@ export default function PanelAltasSistemas() {
                             {/* Botón rápido para reenviar PIN si está en estado pendiente de verificación */}
                             {item.estadoId === 1 && (
                               <button
-                                onClick={() => handleReenviarCodigo(item.email, item.id)}
+                                onClick={/* Responde a click desde este control. */ () => handleReenviarCodigo(item.email, item.id)}
                                 disabled={reenviandoEmailId === item.id}
                                 title="Reenviar código al correo del alumno"
                                 className="inline-flex items-center justify-center p-1.5 rounded-lg text-amber-700 bg-amber-100 hover:bg-amber-200 border border-amber-300 transition cursor-pointer flex-shrink-0"
@@ -1103,7 +1112,7 @@ export default function PanelAltasSistemas() {
                         <td className="py-3 px-5 text-right whitespace-nowrap">
                           <div className="flex items-center justify-end gap-2">
                             <button
-                              onClick={() => handleCopiarEnlaceFila(item)}
+                              onClick={/* Responde a click desde este control. */ () => handleCopiarEnlaceFila(item)}
                               title="Copiar enlace de acceso directo (Magic Link)"
                               className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 transition cursor-pointer"
                             >
@@ -1115,7 +1124,7 @@ export default function PanelAltasSistemas() {
                             </button>
 
                             <button
-                              onClick={() => {
+                              onClick={/* Responde a click desde este control. */ () => {
                                 setUsuarioParaAsignar(item);
                                 setModalAsignarAbierto(true);
                               }}
@@ -1126,7 +1135,7 @@ export default function PanelAltasSistemas() {
                             </button>
 
                             <button
-                              onClick={() => handleAbrirModalEditar(item)}
+                              onClick={/* Responde a click desde este control. */ () => handleAbrirModalEditar(item)}
                               title="Editar usuario"
                               className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 transition cursor-pointer"
                             >
@@ -1157,7 +1166,7 @@ export default function PanelAltasSistemas() {
 
             <div className="flex items-center gap-2">
               <button
-                onClick={() => handleCambiarPagina(paginaActual - 1)}
+                onClick={/* Responde a click desde este control. */ () => handleCambiarPagina(paginaActual - 1)}
                 disabled={paginaActual <= 1}
                 className="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-semibold transition cursor-pointer"
               >
@@ -1167,7 +1176,7 @@ export default function PanelAltasSistemas() {
                 Pág. {paginaActual} de {totalPaginas}
               </span>
               <button
-                onClick={() => handleCambiarPagina(paginaActual + 1)}
+                onClick={/* Responde a click desde este control. */ () => handleCambiarPagina(paginaActual + 1)}
                 disabled={paginaActual >= totalPaginas}
                 className="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed font-semibold transition cursor-pointer"
               >
@@ -1187,7 +1196,7 @@ export default function PanelAltasSistemas() {
                 {altaExitosa ? '¡Usuario Creado!' : 'Nuevo Alumno / Usuario'}
               </h3>
               <button
-                onClick={() => setModalAbierto(false)}
+                onClick={/* Responde a click desde este control. */ () => setModalAbierto(false)}
                 className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition cursor-pointer"
               >
                 <XIcon size={18} />
@@ -1218,7 +1227,7 @@ export default function PanelAltasSistemas() {
                 </p>
 
                 <button
-                  onClick={() => setModalAbierto(false)}
+                  onClick={/* Responde a click desde este control. */ () => setModalAbierto(false)}
                   className="w-full py-2.5 rounded-xl bg-[#002B5E] text-white font-bold text-xs hover:bg-slate-900 transition cursor-pointer"
                 >
                   Cerrar
@@ -1240,7 +1249,7 @@ export default function PanelAltasSistemas() {
                     type="text"
                     required
                     value={nombre}
-                    onChange={(e) => setNombre(e.target.value)}
+                    onChange={/* Responde a change desde este control. */ (e) => setNombre(e.target.value)}
                     placeholder="Ej: Marta Gómez"
                     className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:border-[#002B5E] focus:outline-none transition"
                   />
@@ -1253,7 +1262,7 @@ export default function PanelAltasSistemas() {
                   <input
                     type="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={/* Responde a change desde este control. */ (e) => setEmail(e.target.value)}
                     placeholder="marta@gmail.com"
                     className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:border-[#002B5E] focus:outline-none transition"
                   />
@@ -1266,7 +1275,7 @@ export default function PanelAltasSistemas() {
                   <input
                     type="tel"
                     value={telefono}
-                    onChange={(e) => setTelefono(e.target.value)}
+                    onChange={/* Responde a change desde este control. */ (e) => setTelefono(e.target.value)}
                     placeholder="Ej: 11 4455-6677"
                     className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:border-[#002B5E] focus:outline-none transition"
                   />
@@ -1280,7 +1289,7 @@ export default function PanelAltasSistemas() {
                   <input
                     type="checkbox"
                     checked={activarInmediato}
-                    onChange={(e) => setActivarInmediato(e.target.checked)}
+                    onChange={/* Responde a change desde este control. */ (e) => setActivarInmediato(e.target.checked)}
                     className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                   />
                 </div>
@@ -1293,7 +1302,7 @@ export default function PanelAltasSistemas() {
                   <input
                     type="checkbox"
                     checked={esBlack}
-                    onChange={(e) => setEsBlack(e.target.checked)}
+                    onChange={/* Responde a change desde este control. */ (e) => setEsBlack(e.target.checked)}
                     className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                   />
                 </div>
@@ -1301,7 +1310,7 @@ export default function PanelAltasSistemas() {
                 <div className="flex items-center justify-end gap-2 pt-2">
                   <button
                     type="button"
-                    onClick={() => setModalAbierto(false)}
+                    onClick={/* Responde a click desde este control. */ () => setModalAbierto(false)}
                     className="px-4 py-2 rounded-xl border border-slate-200 hover:bg-slate-100 text-xs font-bold text-slate-600 transition cursor-pointer"
                   >
                     Cancelar
@@ -1329,7 +1338,7 @@ export default function PanelAltasSistemas() {
                 Editar Alumno #{alumnoAEditar?.id}
               </h3>
               <button
-                onClick={() => setModalEditarAbierto(false)}
+                onClick={/* Responde a click desde este control. */ () => setModalEditarAbierto(false)}
                 className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition cursor-pointer"
               >
                 <XIcon size={18} />
@@ -1356,7 +1365,7 @@ export default function PanelAltasSistemas() {
                   type="text"
                   required
                   value={editNombre}
-                  onChange={(e) => setEditNombre(e.target.value)}
+                  onChange={/* Responde a change desde este control. */ (e) => setEditNombre(e.target.value)}
                   className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:border-[#002B5E] focus:outline-none transition"
                 />
               </div>
@@ -1368,7 +1377,7 @@ export default function PanelAltasSistemas() {
                 <input
                   type="email"
                   value={editEmail}
-                  onChange={(e) => setEditEmail(e.target.value)}
+                  onChange={/* Responde a change desde este control. */ (e) => setEditEmail(e.target.value)}
                   className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:border-[#002B5E] focus:outline-none transition"
                 />
               </div>
@@ -1381,7 +1390,7 @@ export default function PanelAltasSistemas() {
                 <input
                   type="checkbox"
                   checked={editActivo}
-                  onChange={(e) => setEditActivo(e.target.checked)}
+                  onChange={/* Responde a change desde este control. */ (e) => setEditActivo(e.target.checked)}
                   className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                 />
               </div>
@@ -1395,7 +1404,7 @@ export default function PanelAltasSistemas() {
                 </div>
                 <select
                   value={editSuscripcion}
-                  onChange={(e) => setEditSuscripcion(e.target.value)}
+                  onChange={/* Responde a change desde este control. */ (e) => setEditSuscripcion(e.target.value)}
                   className="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-300 bg-white text-slate-800 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#002B5E]"
                 >
                   <option value="basica">Básica</option>
@@ -1406,7 +1415,7 @@ export default function PanelAltasSistemas() {
               <div className="flex items-center justify-end gap-2 pt-2">
                 <button
                   type="button"
-                  onClick={() => setModalEditarAbierto(false)}
+                  onClick={/* Responde a click desde este control. */ () => setModalEditarAbierto(false)}
                   className="px-4 py-2 rounded-xl border border-slate-200 hover:bg-slate-100 text-xs font-bold text-slate-600 transition cursor-pointer"
                 >
                   Cancelar
@@ -1444,7 +1453,7 @@ export default function PanelAltasSistemas() {
                 </div>
               </div>
               <button
-                onClick={() => setModalEstadosAbierto(false)}
+                onClick={/* Responde a click desde este control. */ () => setModalEstadosAbierto(false)}
                 className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition cursor-pointer"
               >
                 <XIcon size={18} />
@@ -1477,7 +1486,7 @@ export default function PanelAltasSistemas() {
                       type="text"
                       placeholder="Ej: En Revisión, En Pausa, Becado..."
                       value={nuevoEstadoNombre}
-                      onChange={(e) => {
+                      onChange={/* Responde a change desde este control. */ (e) => {
                         setNuevoEstadoNombre(e.target.value);
                         if (!nuevoEstadoCodigo || nuevoEstadoCodigo === nuevoEstadoNombre.toUpperCase().replace(/[^A-Z0-9_]/g, '_')) {
                           setNuevoEstadoCodigo(e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, '_'));
@@ -1496,7 +1505,7 @@ export default function PanelAltasSistemas() {
                       type="text"
                       placeholder="EJ: EN_REVISION"
                       value={nuevoEstadoCodigo}
-                      onChange={(e) => setNuevoEstadoCodigo(e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, '_'))}
+                      onChange={/* Responde a change desde este control. */ (e) => setNuevoEstadoCodigo(e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, '_'))}
                       className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-800 focus:border-[#002B5E] focus:outline-none uppercase"
                     />
                   </div>
@@ -1510,7 +1519,7 @@ export default function PanelAltasSistemas() {
                     type="text"
                     placeholder="Breve explicación de cuándo aplica este estado..."
                     value={nuevoEstadoDesc}
-                    onChange={(e) => setNuevoEstadoDesc(e.target.value)}
+                    onChange={/* Responde a change desde este control. */ (e) => setNuevoEstadoDesc(e.target.value)}
                     className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 focus:border-[#002B5E] focus:outline-none"
                   />
                 </div>
@@ -1520,7 +1529,7 @@ export default function PanelAltasSistemas() {
                     <input
                       type="checkbox"
                       checked={nuevoEstadoPermiteLogin}
-                      onChange={(e) => setNuevoEstadoPermiteLogin(e.target.checked)}
+                      onChange={/* Responde a change desde este control. */ (e) => setNuevoEstadoPermiteLogin(e.target.checked)}
                       className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
                     />
                     <span className="font-semibold text-[11px]">Permite iniciar sesión a la plataforma</span>
@@ -1554,7 +1563,7 @@ export default function PanelAltasSistemas() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {estadosCatalogo.map((est) => {
+                    {estadosCatalogo.map(/* Prepara el resultado de cada elemento. */ (est) => {
                       const esProtegido = est.id === 1 || est.id === 2;
                       const styles = getEstadoColorStyles(est.id, est.codigo);
                       const estaHabilitado = est.habilitado !== false;
@@ -1584,7 +1593,7 @@ export default function PanelAltasSistemas() {
                             ) : (
                               <button
                                 type="button"
-                                onClick={() => handleToggleHabilitadoEstado(est.id)}
+                                onClick={/* Responde a click desde este control. */ () => handleToggleHabilitadoEstado(est.id)}
                                 disabled={togglingEstadoId === est.id}
                                 className={`px-2.5 py-0.5 rounded-md text-[10px] font-bold transition cursor-pointer border ${
                                   estaHabilitado
@@ -1612,7 +1621,7 @@ export default function PanelAltasSistemas() {
             <div className="flex items-center justify-end gap-2 pt-4 mt-4 border-t border-slate-100">
               <button
                 type="button"
-                onClick={() => setModalEstadosAbierto(false)}
+                onClick={/* Responde a click desde este control. */ () => setModalEstadosAbierto(false)}
                 className="px-5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 transition cursor-pointer"
               >
                 Cerrar
@@ -1644,7 +1653,7 @@ export default function PanelAltasSistemas() {
 
               <button
                 type="button"
-                onClick={() => setModalDesafiosAbierto(false)}
+                onClick={/* Responde a click desde este control. */ () => setModalDesafiosAbierto(false)}
                 className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-700 transition cursor-pointer"
               >
                 <XIcon size={16} />
@@ -1656,7 +1665,7 @@ export default function PanelAltasSistemas() {
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={/* Responde a click desde este control. */ () => {
                     setDesafiosJuego('sudoku');
                     cargarEstadoDesafios(desafiosAnio, 'sudoku');
                   }}
@@ -1670,7 +1679,7 @@ export default function PanelAltasSistemas() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={/* Responde a click desde este control. */ () => {
                     setDesafiosJuego('wordle');
                     cargarEstadoDesafios(desafiosAnio, 'wordle');
                   }}
@@ -1684,7 +1693,7 @@ export default function PanelAltasSistemas() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={/* Responde a click desde este control. */ () => {
                     setDesafiosJuego('sopa_letras');
                     cargarEstadoDesafios(desafiosAnio, 'sopa_letras');
                   }}
@@ -1698,7 +1707,7 @@ export default function PanelAltasSistemas() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={/* Responde a click desde este control. */ () => {
                     setDesafiosJuego('crucigrama');
                     cargarEstadoDesafios(desafiosAnio, 'crucigrama');
                   }}
@@ -1715,7 +1724,7 @@ export default function PanelAltasSistemas() {
               <div className="flex items-center gap-2">
                 <select
                   value={desafiosAnio}
-                  onChange={(e) => {
+                  onChange={/* Responde a change desde este control. */ (e) => {
                     const anio = parseInt(e.target.value, 10);
                     setDesafiosAnio(anio);
                     cargarEstadoDesafios(anio, desafiosJuego);
@@ -1728,7 +1737,7 @@ export default function PanelAltasSistemas() {
 
                 <button
                   type="button"
-                  onClick={() => cargarEstadoDesafios(desafiosAnio, desafiosJuego)}
+                  onClick={/* Responde a click desde este control. */ () => cargarEstadoDesafios(desafiosAnio, desafiosJuego)}
                   disabled={cargandoDesafios}
                   className="p-1.5 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-600 transition cursor-pointer"
                   title="Refrescar cobertura"
@@ -1760,7 +1769,7 @@ export default function PanelAltasSistemas() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {mesesDesafios.map((mes) => {
+                  {mesesDesafios.map(/* Prepara el resultado de cada elemento. */ (mes) => {
                     const estaGenerando = generandoMes === mes.month;
 
                     return (
@@ -1801,7 +1810,7 @@ export default function PanelAltasSistemas() {
                           {desafiosJuego === 'sudoku' || desafiosJuego === 'wordle' || desafiosJuego === 'sopa_letras' || desafiosJuego === 'crucigrama' ? (
                             <button
                               type="button"
-                              onClick={() => handleGenerarMes(mes.month)}
+                              onClick={/* Responde a click desde este control. */ () => handleGenerarMes(mes.month)}
                               disabled={estaGenerando || generandoMes !== null}
                               className={`px-3 py-1 rounded-xl text-[11px] font-bold transition shadow-xs cursor-pointer ${
                                 estaGenerando
@@ -1843,7 +1852,7 @@ export default function PanelAltasSistemas() {
               </span>
               <button
                 type="button"
-                onClick={() => setModalDesafiosAbierto(false)}
+                onClick={/* Responde a click desde este control. */ () => setModalDesafiosAbierto(false)}
                 className="px-5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 transition cursor-pointer"
               >
                 Cerrar
@@ -1855,20 +1864,20 @@ export default function PanelAltasSistemas() {
       {/* MODAL JUEGO NARRATIVO */}
       <NarrativeAdminModal
         abierto={modalNarrativoAbierto}
-        onCerrar={() => setModalNarrativoAbierto(false)}
+        onCerrar={/* Responde a cerrar desde este control. */ () => setModalNarrativoAbierto(false)}
       />
       {/* MODAL ECONOMIA & VIDAS */}
       <ModalEconomia
         abierto={modalEconomiaAbierto}
-        onCerrar={() => setModalEconomiaAbierto(false)}
-        onGuardadoExitoso={() => showToast('Economía actualizada correctamente')}
+        onCerrar={/* Responde a cerrar desde este control. */ () => setModalEconomiaAbierto(false)}
+        onGuardadoExitoso={/* Responde a guardado exitoso desde este control. */ () => showToast('Economía actualizada correctamente')}
       />
       {/* MODAL ASIGNAR VIDAS & PUNTOS (TESTEO) */}
       <ModalAsignarEconomia
         abierto={modalAsignarAbierto}
-        onCerrar={() => setModalAsignarAbierto(false)}
+        onCerrar={/* Responde a cerrar desde este control. */ () => setModalAsignarAbierto(false)}
         usuarioInicial={usuarioParaAsignar}
-        onActualizado={(res) => {
+        onActualizado={/* Responde a actualizado desde este control. */ (res) => {
           showToast(res.message || 'Vidas y puntos actualizados');
           cargarAlumnos(skip, limit, busqueda, filtroEstado);
         }}

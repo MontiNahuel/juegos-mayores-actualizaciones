@@ -1,3 +1,4 @@
+/* Dibuja un día del calendario con su estado disponible, bloqueado o completado. */
 import type { CSSProperties } from 'react';
 import type { DayChallenge, CalendarTheme } from './types';
 import { IconCheck, IconLock, IconPlay } from './icons';
@@ -9,6 +10,7 @@ interface CalendarCellProps {
   onClick: (item: DayChallenge) => void;
 }
 
+// Dibuja un día del calendario con su estado disponible, bloqueado o completado.
 export function CalendarCell({ item, theme, isHistoricalLocked = false, onClick }: CalendarCellProps) {
   const isCompleted = item.status === 'completed';
   const isPending = item.status === 'pending';
@@ -34,7 +36,7 @@ export function CalendarCell({ item, theme, isHistoricalLocked = false, onClick 
   return (
     <button
       type="button"
-      onClick={() => onClick(item)}
+      onClick={/* Responde a click desde este control. */ () => onClick(item)}
       aria-label={`${item.dateStr}${item.isToday ? ', hoy' : ''}: ${label}`}
       aria-current={item.isToday ? 'date' : undefined}
       title={`Día ${item.day}: ${label}`}

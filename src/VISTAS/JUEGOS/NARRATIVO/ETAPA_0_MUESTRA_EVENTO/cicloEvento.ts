@@ -1,6 +1,8 @@
+/* Resume los eventos jugados para darle un título al ciclo de la historia. */
 const TONOS_POSITIVOS = new Set(['positivo', 'positiva', 'bueno', 'buena', 'soleado', 'soleada']);
 const TONOS_NEGATIVOS = new Set(['negativo', 'negativa', 'malo', 'mala', 'tormentoso', 'tormentosa']);
 
+// Deja el texto en un formato parejo para compararlo.
 const normalizar = (valor: unknown) => String(valor || '').trim().toLocaleLowerCase('es');
 
 // Resume las cartas del día sin exigir un formato nuevo al backend.
@@ -9,7 +11,7 @@ export function calcularTituloCiclo(eventos: any[] = []) {
   let positivos = 0;
   let negativos = 0;
 
-  eventos.forEach((evento) => {
+  eventos.forEach(/* Aplica este paso a cada elemento. */ (evento) => {
     const nombreCategoria = String(evento?.categoria_evento || evento?.categoria || '').trim();
     const categoria = normalizar(nombreCategoria);
     const tono = normalizar(evento?.tono || evento?.polaridad || evento?.tipo_resultado);
@@ -24,7 +26,7 @@ export function calcularTituloCiclo(eventos: any[] = []) {
     }
   });
 
-  const ordenadas = [...categorias.values()].sort((a, b) => b.cantidad - a.cantidad);
+  const ordenadas = [...categorias.values()].sort(/* Ordena los elementos con este criterio. */ (a, b) => b.cantidad - a.cantidad);
   if (ordenadas[0] && ordenadas[0].cantidad > (ordenadas[1]?.cantidad || 0)) return `Ciclo de ${ordenadas[0].nombre}`;
   if (positivos > negativos) return 'Ciclo soleado';
   if (negativos > positivos) return 'Ciclo tormentoso';

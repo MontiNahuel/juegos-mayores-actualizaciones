@@ -1,6 +1,8 @@
+/* Permite elegir la dificultad antes de jugar. */
 import React from 'react';
 import { DifficultyModalProps, DEFAULT_DIFFICULTY_OPTIONS } from '../DIFICULTAD/types';
 
+// Permite elegir la dificultad antes de jugar.
 export const DifficultyModal: React.FC<DifficultyModalProps> = ({
   title = 'Elegí tu Desafío',
   subtitle,
@@ -11,6 +13,7 @@ export const DifficultyModal: React.FC<DifficultyModalProps> = ({
 }) => {
   return (
     <div
+      onClick={/* Responde a click desde este control. */ event => { if (event.target === event.currentTarget) onClose(); }}
       style={{
         alignItems: 'center',
         background: 'rgba(15, 23, 42, 0.60)',
@@ -65,11 +68,11 @@ export const DifficultyModal: React.FC<DifficultyModalProps> = ({
 
         {/* Lista de Opciones de Dificultad (Opción C - Editorial) */}
         <div className="space-y-3 pt-1">
-          {options.map((opt) => (
+          {options.map(/* Prepara el resultado de cada elemento. */ (opt) => (
             <button
               key={opt.level}
               type="button"
-              onClick={() => onSelectDifficulty(opt.level)}
+              onClick={/* Responde a click desde este control. */ () => onSelectDifficulty(opt.level)}
               style={{
                 boxSizing: 'border-box',
                 width: '100%',

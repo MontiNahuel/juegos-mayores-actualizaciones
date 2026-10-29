@@ -1,3 +1,4 @@
+/* Guarda en Redux la partida narrativa, las cartas y lo que va pasando en la corte. */
 import { createSlice } from '@reduxjs/toolkit';
 import { adaptarValorNegativo } from '../config/adaptacionEdad';
 import type { EstadoPartida } from '../VISTAS/JUEGOS/NARRATIVO/narrativeService';
@@ -32,6 +33,7 @@ const initialState: any = {
   fondoBase: { src: FONDO_CORTE_DEFAULT, personajes: [], oro: [], manos: [] },
 };
 
+// Mantiene el recurso entre cero y cien.
 const limitar = (valor: any) => Math.max(0, Math.min(100, valor));
 // Comparte umbrales y conserva cada capa de Redux hasta que cambie de tramo.
 const componerFondoBase = (fondo: EstadoFondoCorte, recursos: { ejercito?: number; oro?: number; pueblo?: number }) => {
@@ -40,16 +42,16 @@ const componerFondoBase = (fondo: EstadoFondoCorte, recursos: { ejercito?: numbe
   const valorPueblo = Number(recursos.pueblo);
   const manos = Number.isFinite(valorPueblo) ? cantidadManosPorPueblo(valorPueblo) : fondo.manos.length;
   if (guardias !== null && guardias !== fondo.personajes.length)
-    fondo.personajes = GUARDIAS_CORTE.slice(0, guardias).map(elemento => ({ ...elemento }));
+    fondo.personajes = GUARDIAS_CORTE.slice(0, guardias).map(/* Prepara el resultado de cada elemento. */ elemento => ({ ...elemento }));
   if (oro !== null && oro !== fondo.oro.length)
-    fondo.oro = ORO_CORTE.slice(0, oro).map(elemento => ({ ...elemento }));
+    fondo.oro = ORO_CORTE.slice(0, oro).map(/* Prepara el resultado de cada elemento. */ elemento => ({ ...elemento }));
   if (manos !== fondo.manos.length)
-    fondo.manos = MANOS_CORTE.slice(0, manos).map(elemento => ({ ...elemento }));
+    fondo.manos = MANOS_CORTE.slice(0, manos).map(/* Prepara el resultado de cada elemento. */ elemento => ({ ...elemento }));
 };
 
 // Comprueba si un efecto puede aplicarse con los recursos actuales.
 const cumpleCondiciones = (condiciones: any[] = [], recursos: any) =>
-  condiciones.every((condicion) => {
+  condiciones.every(/* Comprueba que todos los elementos cumplan esta condición. */ (condicion) => {
     if (condicion.tipo !== 'comparar_recurso' || !condicion.clave) return true;
 
     const actual = recursos[condicion.clave] || 0;
@@ -67,7 +69,7 @@ const cumpleCondiciones = (condiciones: any[] = [], recursos: any) =>
 
 // Aplica los efectos inmediatos de personajes y cartas al obtenerlos.
 const aplicarEfectosAlObtener = (jugador: any, elementos: any[]) => {
-  elementos.forEach((elemento) => {
+  elementos.forEach(/* Aplica este paso a cada elemento. */ (elemento) => {
     const personajeId = elemento.id || elemento._id;
 
     if (typeof elemento.afinidad_inicial === 'number' && personajeId) {
@@ -76,11 +78,12 @@ const aplicarEfectosAlObtener = (jugador: any, elementos: any[]) => {
 
     elemento.efectos
       ?.filter(
+        // Conserva los elementos que cumplen esta condición.
         (efecto: any) =>
           efecto.disparador === 'al_obtener' &&
           cumpleCondiciones(efecto.condiciones, jugador.recursos),
       )
-      .forEach((efecto: any) => {
+      .forEach(/* Aplica este paso a cada elemento. */ (efecto: any) => {
         const accion = efecto.accion;
 
         if (accion?.tipo === 'modificar_recurso' && accion.clave) {
@@ -136,7 +139,7 @@ const narrativoSelectionSlice = createSlice({
     // Guarda los tres personajes elegidos para formar la corte.
     guardarCorte: (state, action: { payload: any }) => {
       state.personajesCorte = action.payload;
-      state.jugador.corte_activa = action.payload.map((personaje: any) => personaje.id);
+      state.jugador.corte_activa = action.payload.map(/* Prepara el resultado de cada elemento. */ (personaje: any) => personaje.id);
       aplicarEfectosAlObtener(state.jugador, action.payload);
       state.jugador.fase_actual = 'seleccionar_cartas';
       state.jugador.ultima_accion = 'elegir_corte';
@@ -198,7 +201,7 @@ const narrativoSelectionSlice = createSlice({
       state.conversacionActual = null;
       state.jugador.fase_actual = 'mostrar_resultado';
 
-      resultado?.efectos?.forEach(({ accion }: any) => {
+      resultado?.efectos?.forEach(/* Aplica este paso a cada elemento. */ ({ accion }: any) => {
         if (!accion?.clave) return;
         const actual = state.jugador.recursos[accion.clave] || 0;
         state.jugador.recursos[accion.clave] = limitar(actual + adaptarValorNegativo(accion.valor, state.jugador.edad));
@@ -245,7 +248,7 @@ const narrativoSelectionSlice = createSlice({
         registroMes.impacto_afinidad = decision.impacto_afinidad;
       }
 
-      decision.impacto_afinidad?.forEach(({ personaje_id, delta }: any) => {
+      decision.impacto_afinidad?.forEach(/* Aplica este paso a cada elemento. */ ({ personaje_id, delta }: any) => {
         const actual = state.jugador.afinidad[personaje_id] || 50;
         state.jugador.afinidad[personaje_id] = limitar(actual + adaptarValorNegativo(delta, state.jugador.edad));
       });
@@ -266,6 +269,7 @@ const narrativoSelectionSlice = createSlice({
       state.jugador.fase_actual = 'finalizada';
     },
 
+    // Deja la partida narrativa como al principio para empezar de nuevo.
     reiniciarSeleccionNarrativa: () => initialState,
   },
 });

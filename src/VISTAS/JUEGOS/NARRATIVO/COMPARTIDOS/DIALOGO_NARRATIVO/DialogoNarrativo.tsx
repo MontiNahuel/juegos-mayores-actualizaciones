@@ -1,3 +1,4 @@
+/* Presenta los textos y las intervenciones de los personajes. */
 import type { ReactNode } from 'react';
 import BotonNarrativo from '../BOTON_NARRATIVO/BotonNarrativo';
 
@@ -36,7 +37,7 @@ export default function DialogoNarrativo({ titulo, texto, indicacion, opciones =
         </div>
 
         {opciones.length ? <div className="dialogo-narrativo__opciones mt-2 grid gap-2">
-          {opciones.map((opcion) => (
+          {opciones.map(/* Prepara el resultado de cada elemento. */ (opcion) => (
             <BotonNarrativo className="boton-narrativo--decision block w-full !min-h-0 !px-4 !py-2 text-left whitespace-normal" key={opcion.id} onClick={opcion.onElegir}>
               {opcion.texto}
             </BotonNarrativo>

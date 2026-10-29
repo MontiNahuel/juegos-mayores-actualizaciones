@@ -1,3 +1,4 @@
+/* Define la forma de los datos de calendar para que sus piezas se entiendan. */
 import type React from 'react';
 
 export interface DayChallenge {

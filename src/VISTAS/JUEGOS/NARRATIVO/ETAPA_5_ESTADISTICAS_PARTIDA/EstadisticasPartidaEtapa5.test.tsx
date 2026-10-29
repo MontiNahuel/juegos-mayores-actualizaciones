@@ -1,11 +1,12 @@
+/* Comprueba con pruebas que estadisticas partida etapa5 siga funcionando como se espera. */
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import EstadisticasPartidaEtapa5 from './EstadisticasPartidaEtapa5';
 
 const recursos = { oro: 50, pueblo: 50, ejercito: 50, fe: 50 };
 
-describe('pantalla de crónica', () => {
-  it('permite explorar cada etapa y leer la decisión y la corte junto a los gráficos', () => {
+describe('pantalla de crónica', /* Agrupa las pruebas de este comportamiento. */ () => {
+  it('permite explorar cada etapa y leer la decisión y la corte junto a los gráficos', /* Comprueba el comportamiento indicado en este caso. */ () => {
     render(<EstadisticasPartidaEtapa5
       estado={{ recursos: { ...recursos, oro: 60 } }}
       historial={{ historial_mensual: [

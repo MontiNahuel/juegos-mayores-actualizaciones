@@ -1,3 +1,4 @@
+/* Arma la aplicación con sus pantallas y las ventanas de tienda y pistas. */
 import { IonApp, setupIonicReact } from '@ionic/react';
 import AppRoutes from './VISTAS/routes';
 import { PlayerEconomyProvider } from './context/PlayerEconomyContext';
@@ -36,6 +37,7 @@ import './theme/variables.css';
 
 setupIonicReact();
 
+// Arma la aplicación con sus pantallas y las ventanas de tienda y pistas.
 const App: React.FC = () => (
   <IonApp>
     <PlayerEconomyProvider>

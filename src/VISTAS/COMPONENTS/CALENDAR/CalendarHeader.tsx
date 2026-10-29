@@ -1,3 +1,4 @@
+/* Muestra el mes y los botones para pasar al anterior o al siguiente. */
 import LoginHeader from '../../LOGIN/LoginHeader';
 
 interface CalendarHeaderProps {

@@ -1,3 +1,4 @@
+/* Permite revisar y generar desafíos narrativos por mes o año. */
 import { useState, useEffect } from 'react';
 import {
   CalendarIcon,
@@ -10,6 +11,7 @@ import {
   XIcon,
 } from '../Icons';
 
+// Permite revisar y generar desafíos narrativos por mes o año.
 export default function CalendarioTab({ universos = [] }) {
   const anioActual = new Date().getFullYear();
   const [anio, setAnio] = useState(anioActual);
@@ -22,8 +24,8 @@ export default function CalendarioTab({ universos = [] }) {
   const [exito, setExito] = useState('');
 
   // Sincronizar universo por defecto si cambia la lista
-  useEffect(() => {
-    if (universos.length > 0 && !universos.some((u) => (u._id || u.id) === universoId)) {
+  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
+    if (universos.length > 0 && !universos.some(/* Comprueba si algún elemento cumple esta condición. */ (u) => (u._id || u.id) === universoId)) {
       setUniversoId(universos[0]._id || universos[0].id);
     }
   }, [universos]);
@@ -48,7 +50,7 @@ export default function CalendarioTab({ universos = [] }) {
     }
   };
 
-  useEffect(() => {
+  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
     cargarEstadoCalendario(anio);
   }, [anio]);
 
@@ -76,7 +78,7 @@ export default function CalendarioTab({ universos = [] }) {
         );
         await cargarEstadoCalendario(anio);
       } else {
-        const errData = await res.json().catch(() => ({}));
+        const errData = await res.json().catch(/* Maneja el fallo de esta operación. */ () => ({}));
         setError(errData.detail || 'Error al generar los desafíos del mes.');
       }
     } catch (err) {
@@ -130,9 +132,9 @@ export default function CalendarioTab({ universos = [] }) {
   };
 
   // Métricas calculadas
-  const totalGenerados = meses.reduce((acc, m) => acc + (m.generated_count || 0), 0);
-  const totalDias = meses.reduce((acc, m) => acc + (m.days_in_month || 0), 0);
-  const mesesCompletos = meses.filter((m) => m.is_complete).length;
+  const totalGenerados = meses.reduce(/* Acumula los valores en un solo resultado. */ (acc, m) => acc + (m.generated_count || 0), 0);
+  const totalDias = meses.reduce(/* Acumula los valores en un solo resultado. */ (acc, m) => acc + (m.days_in_month || 0), 0);
+  const mesesCompletos = meses.filter(/* Conserva los elementos que cumplen esta condición. */ (m) => m.is_complete).length;
   const porcentajeGlobal = totalDias > 0 ? Math.round((totalGenerados / totalDias) * 100) : 0;
 
   return (
@@ -146,10 +148,10 @@ export default function CalendarioTab({ universos = [] }) {
             <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">Universo:</span>
             <select
               value={universoId}
-              onChange={(e) => setUniversoId(e.target.value)}
+              onChange={/* Responde a change desde este control. */ (e) => setUniversoId(e.target.value)}
               className="text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#002B5E]/20"
             >
-              {universos.map((u) => (
+              {universos.map(/* Prepara el resultado de cada elemento. */ (u) => (
                 <option key={u._id || u.id} value={u._id || u.id}>
                   {u.nombre} ({u._id || u.id})
                 </option>
@@ -159,11 +161,11 @@ export default function CalendarioTab({ universos = [] }) {
 
           {/* Selector de Año */}
           <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
-            {[anioActual - 1, anioActual, anioActual + 1, anioActual + 2].map((yr) => (
+            {[anioActual - 1, anioActual, anioActual + 1, anioActual + 2].map(/* Prepara el resultado de cada elemento. */ (yr) => (
               <button
                 key={yr}
                 type="button"
-                onClick={() => setAnio(yr)}
+                onClick={/* Responde a click desde este control. */ () => setAnio(yr)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
                   anio === yr
                     ? 'bg-[#002B5E] text-white shadow-xs'
@@ -177,7 +179,7 @@ export default function CalendarioTab({ universos = [] }) {
 
           <button
             type="button"
-            onClick={() => cargarEstadoCalendario(anio)}
+            onClick={/* Responde a click desde este control. */ () => cargarEstadoCalendario(anio)}
             title="Refrescar calendario"
             className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition cursor-pointer"
           >
@@ -208,7 +210,7 @@ export default function CalendarioTab({ universos = [] }) {
             <CheckIcon size={16} className="text-emerald-600" />
             <span>{exito}</span>
           </div>
-          <button onClick={() => setExito('')} className="text-emerald-600 hover:text-emerald-800 cursor-pointer">
+          <button onClick={/* Responde a click desde este control. */ () => setExito('')} className="text-emerald-600 hover:text-emerald-800 cursor-pointer">
             <XIcon size={14} />
           </button>
         </div>
@@ -220,7 +222,7 @@ export default function CalendarioTab({ universos = [] }) {
             <AlertTriangleIcon size={16} className="text-rose-600" />
             <span>{error}</span>
           </div>
-          <button onClick={() => setError('')} className="text-rose-600 hover:text-rose-800 cursor-pointer">
+          <button onClick={/* Responde a click desde este control. */ () => setError('')} className="text-rose-600 hover:text-rose-800 cursor-pointer">
             <XIcon size={14} />
           </button>
         </div>
@@ -282,7 +284,7 @@ export default function CalendarioTab({ universos = [] }) {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {meses.map((m) => {
+          {meses.map(/* Prepara el resultado de cada elemento. */ (m) => {
             const porcentajeMes =
               m.days_in_month > 0
                 ? Math.round((m.generated_count / m.days_in_month) * 100)
@@ -346,7 +348,7 @@ export default function CalendarioTab({ universos = [] }) {
                 {/* Botón de Acción */}
                 <button
                   type="button"
-                  onClick={() => handleGenerarMes(m.month, m.name)}
+                  onClick={/* Responde a click desde este control. */ () => handleGenerarMes(m.month, m.name)}
                   disabled={estaGenerando || generandoTodo}
                   className={`w-full py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer shadow-2xs ${
                     m.is_complete

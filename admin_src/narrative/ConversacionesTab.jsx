@@ -1,3 +1,4 @@
+/* Permite editar conversaciones, respuestas y cambios de afinidad. */
 import { useState, useEffect } from 'react';
 import {
   MessageSquareIcon,
@@ -15,6 +16,7 @@ import {
 } from '../Icons';
 import ImageUploadField from './ImageUploadField';
 
+// Permite editar conversaciones, respuestas y cambios de afinidad.
 export default function ConversacionesTab({ universos = [], personajes = [] }) {
   const [conversaciones, setConversaciones] = useState([]);
   const [universoFiltro, setUniversoFiltro] = useState('');
@@ -61,16 +63,17 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
     }
   };
 
-  useEffect(() => {
+  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
     cargarConversaciones(universoFiltro);
   }, [universoFiltro]);
 
   // Mapa de personajes para nombres rápidos
-  const mapaPersonajes = personajes.reduce((acc, p) => {
+  const mapaPersonajes = personajes.reduce(/* Acumula los valores en un solo resultado. */ (acc, p) => {
     acc[p._id || p.id] = p;
     return acc;
   }, {});
 
+  // Abre el formulario vacío para crear un registro.
   const abrirModalNuevo = () => {
     setEsEdicion(false);
     const newId = 'conv_' + Date.now().toString(36);
@@ -125,6 +128,7 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
     setModalAbierto(true);
   };
 
+  // Carga el registro en el formulario de edición.
   const abrirModalEditar = (conv) => {
     setEsEdicion(true);
     setId(conv._id || conv.id);
@@ -136,14 +140,14 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
     setReqPj1(reqs[0]?.personajeId || '');
     setReqPj2(reqs[1]?.personajeId || '');
 
-    setFrases((conv.frases || []).map((f) => ({ ...f })));
+    setFrases((conv.frases || []).map(/* Prepara el resultado de cada elemento. */ (f) => ({ ...f })));
 
     setDecisiones(
-      (conv.decisiones || []).map((d) => ({
+      (conv.decisiones || []).map(/* Prepara el resultado de cada elemento. */ (d) => ({
         opcion: d.opcion ?? 1,
         texto: d.texto || '',
         resultado_texto: d.resultado_texto || '',
-        impacto_afinidad: (d.impacto_afinidad || []).map((ia) => ({ ...ia })),
+        impacto_afinidad: (d.impacto_afinidad || []).map(/* Prepara el resultado de cada elemento. */ (ia) => ({ ...ia })),
       }))
     );
 
@@ -161,13 +165,15 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
     setFrases([...frases, { personajeId: proximoPj || reqPj1, texto: '' }]);
   };
 
+  // Quita frase con los datos de este paso.
   const eliminarFrase = (idx) => {
-    setFrases(frases.filter((_, i) => i !== idx));
+    setFrases(frases.filter(/* Conserva los elementos que cumplen esta condición. */ (_, i) => i !== idx));
   };
 
+  // Actualiza frase con los datos de este paso.
   const actualizarFrase = (idx, campo, valor) => {
-    setFrases((prev) =>
-      prev.map((f, i) => (i === idx ? { ...f, [campo]: valor } : f))
+    setFrases(/* Actualiza frases a partir del valor anterior. */ (prev) =>
+      prev.map(/* Prepara el resultado de cada elemento. */ (f, i) => (i === idx ? { ...f, [campo]: valor } : f))
     );
   };
 
@@ -188,19 +194,22 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
     ]);
   };
 
+  // Quita decision con los datos de este paso.
   const eliminarDecision = (idx) => {
-    setDecisiones(decisiones.filter((_, i) => i !== idx));
+    setDecisiones(decisiones.filter(/* Conserva los elementos que cumplen esta condición. */ (_, i) => i !== idx));
   };
 
+  // Actualiza decision con los datos de este paso.
   const actualizarDecision = (idx, campo, valor) => {
-    setDecisiones((prev) =>
-      prev.map((d, i) => (i === idx ? { ...d, [campo]: valor } : d))
+    setDecisiones(/* Actualiza decisiones a partir del valor anterior. */ (prev) =>
+      prev.map(/* Prepara el resultado de cada elemento. */ (d, i) => (i === idx ? { ...d, [campo]: valor } : d))
     );
   };
 
+  // Agrega impacto afinidad con los datos de este paso.
   const agregarImpactoAfinidad = (decIdx) => {
-    setDecisiones((prev) =>
-      prev.map((d, i) => {
+    setDecisiones(/* Actualiza decisiones a partir del valor anterior. */ (prev) =>
+      prev.map(/* Prepara el resultado de cada elemento. */ (d, i) => {
         if (i !== decIdx) return d;
         return {
           ...d,
@@ -213,23 +222,25 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
     );
   };
 
+  // Quita impacto afinidad con los datos de este paso.
   const eliminarImpactoAfinidad = (decIdx, impIdx) => {
-    setDecisiones((prev) =>
-      prev.map((d, i) => {
+    setDecisiones(/* Actualiza decisiones a partir del valor anterior. */ (prev) =>
+      prev.map(/* Prepara el resultado de cada elemento. */ (d, i) => {
         if (i !== decIdx) return d;
         return {
           ...d,
-          impacto_afinidad: d.impacto_afinidad.filter((_, ii) => ii !== impIdx),
+          impacto_afinidad: d.impacto_afinidad.filter(/* Conserva los elementos que cumplen esta condición. */ (_, ii) => ii !== impIdx),
         };
       })
     );
   };
 
+  // Actualiza impacto afinidad con los datos de este paso.
   const actualizarImpactoAfinidad = (decIdx, impIdx, campo, valor) => {
-    setDecisiones((prev) =>
-      prev.map((d, i) => {
+    setDecisiones(/* Actualiza decisiones a partir del valor anterior. */ (prev) =>
+      prev.map(/* Prepara el resultado de cada elemento. */ (d, i) => {
         if (i !== decIdx) return d;
-        const nuevosImpactos = d.impacto_afinidad.map((imp, ii) =>
+        const nuevosImpactos = d.impacto_afinidad.map(/* Prepara el resultado de cada elemento. */ (imp, ii) =>
           ii === impIdx ? { ...imp, [campo]: valor } : imp
         );
         return { ...d, impacto_afinidad: nuevosImpactos };
@@ -274,16 +285,16 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
       titulo: titulo.trim(),
       imagen: imagen.trim() || '/assets/narrative/conversaciones/default.webp',
       requisitos: [{ personajeId: reqPj1 }, { personajeId: reqPj2 }],
-      frases: frases.map((f) => ({
+      frases: frases.map(/* Prepara el resultado de cada elemento. */ (f) => ({
         personajeId: f.personajeId,
         texto: f.texto.trim(),
       })),
-      decisiones: decisiones.map((d, idx) => ({
+      decisiones: decisiones.map(/* Prepara el resultado de cada elemento. */ (d, idx) => ({
         opcion: idx + 1,
         texto: d.texto.trim(),
         condiciones: [],
         resultado_texto: d.resultado_texto.trim(),
-        impacto_afinidad: d.impacto_afinidad.map((ia) => ({
+        impacto_afinidad: d.impacto_afinidad.map(/* Prepara el resultado de cada elemento. */ (ia) => ({
           personaje_id: ia.personaje_id,
           delta: parseInt(ia.delta, 10) || 0,
         })),
@@ -302,7 +313,7 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
         setModalAbierto(false);
         cargarConversaciones(universoFiltro);
       } else {
-        const errData = await res.json().catch(() => ({}));
+        const errData = await res.json().catch(/* Maneja el fallo de esta operación. */ () => ({}));
         setError(errData.detail || 'Error al guardar la conversación.');
       }
     } catch (err) {
@@ -327,7 +338,7 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
         setExito(`Conversación "${convTitulo}" eliminada.`);
         cargarConversaciones(universoFiltro);
       } else {
-        const errData = await res.json().catch(() => ({}));
+        const errData = await res.json().catch(/* Maneja el fallo de esta operación. */ () => ({}));
         setError(errData.detail || 'Error al eliminar conversación.');
       }
     } catch (err) {
@@ -337,15 +348,15 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
   };
 
   // Filtrado en memoria
-  const conversacionesFiltradas = conversaciones.filter((c) => {
+  const conversacionesFiltradas = conversaciones.filter(/* Conserva los elementos que cumplen esta condición. */ (c) => {
     const q = busqueda.toLowerCase().trim();
     if (!q) return true;
     const enTitulo = (c.titulo || '').toLowerCase().includes(q);
     const enId = (c._id || c.id || '').toLowerCase().includes(q);
-    const enRequisitos = (c.requisitos || []).some((r) =>
+    const enRequisitos = (c.requisitos || []).some(/* Comprueba si algún elemento cumple esta condición. */ (r) =>
       (r.personajeId || '').toLowerCase().includes(q)
     );
-    const enFrases = (c.frases || []).some((f) =>
+    const enFrases = (c.frases || []).some(/* Comprueba si algún elemento cumple esta condición. */ (f) =>
       (f.texto || '').toLowerCase().includes(q)
     );
     return enTitulo || enId || enRequisitos || enFrases;
@@ -363,11 +374,11 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
 
           <select
             value={universoFiltro}
-            onChange={(e) => setUniversoFiltro(e.target.value)}
+            onChange={/* Responde a change desde este control. */ (e) => setUniversoFiltro(e.target.value)}
             className="text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-medium text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-[#002B5E]/20"
           >
             <option value="">Todos los Universos</option>
-            {universos.map((u) => (
+            {universos.map(/* Prepara el resultado de cada elemento. */ (u) => (
               <option key={u._id || u.id} value={u._id || u.id}>
                 {u.nombre}
               </option>
@@ -380,14 +391,14 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
               type="text"
               placeholder="Buscar por título, ID o personajes..."
               value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
+              onChange={/* Responde a change desde este control. */ (e) => setBusqueda(e.target.value)}
               className="text-xs w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-2 font-medium text-slate-700 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#002B5E]/20"
             />
           </div>
 
           <button
             type="button"
-            onClick={() => cargarConversaciones(universoFiltro)}
+            onClick={/* Responde a click desde este control. */ () => cargarConversaciones(universoFiltro)}
             title="Refrescar lista"
             className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition cursor-pointer"
           >
@@ -412,7 +423,7 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
             <CheckIcon size={16} className="text-emerald-600" />
             <span>{exito}</span>
           </div>
-          <button onClick={() => setExito('')} className="text-emerald-600 hover:text-emerald-800 cursor-pointer">
+          <button onClick={/* Responde a click desde este control. */ () => setExito('')} className="text-emerald-600 hover:text-emerald-800 cursor-pointer">
             <XIcon size={14} />
           </button>
         </div>
@@ -424,7 +435,7 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
             <AlertTriangleIcon size={16} className="text-rose-600" />
             <span>{error}</span>
           </div>
-          <button onClick={() => setError('')} className="text-rose-600 hover:text-rose-800 cursor-pointer">
+          <button onClick={/* Responde a click desde este control. */ () => setError('')} className="text-rose-600 hover:text-rose-800 cursor-pointer">
             <XIcon size={14} />
           </button>
         </div>
@@ -448,7 +459,7 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {conversacionesFiltradas.map((conv) => {
+          {conversacionesFiltradas.map(/* Prepara el resultado de cada elemento. */ (conv) => {
             const reqs = conv.requisitos || [];
             const pj1 = mapaPersonajes[reqs[0]?.personajeId];
             const pj2 = mapaPersonajes[reqs[1]?.personajeId];
@@ -467,7 +478,7 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
                       src={conv.imagen || '/assets/narrative/conversaciones/default.webp'}
                       alt={conv.titulo}
                       className="w-full h-full object-cover group-hover:scale-105 transition duration-300 opacity-80"
-                      onError={(e) => {
+                      onError={/* Responde a error desde este control. */ (e) => {
                         e.target.onerror = null;
                         e.target.src = '/assets/narrative/conversaciones/default.webp';
                       }}
@@ -523,7 +534,7 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
                       </div>
 
                       <div className="space-y-1.5">
-                        {(conv.frases || []).slice(0, 2).map((fr, fidx) => {
+                        {(conv.frases || []).slice(0, 2).map(/* Prepara el resultado de cada elemento. */ (fr, fidx) => {
                           const hablante = mapaPersonajes[fr.personajeId]?.nombre || fr.personajeId;
                           return (
                             <div
@@ -566,7 +577,7 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
                   <div className="flex items-center gap-1.5">
                     <button
                       type="button"
-                      onClick={() => abrirModalEditar(conv)}
+                      onClick={/* Responde a click desde este control. */ () => abrirModalEditar(conv)}
                       className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-100 transition cursor-pointer"
                     >
                       <EditIcon size={13} />
@@ -575,7 +586,7 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
 
                     <button
                       type="button"
-                      onClick={() => handleEliminar(conv._id || conv.id, conv.titulo)}
+                      onClick={/* Responde a click desde este control. */ () => handleEliminar(conv._id || conv.id, conv.titulo)}
                       className="p-1.5 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition cursor-pointer"
                       title="Eliminar conversación"
                     >
@@ -613,7 +624,7 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
 
               <button
                 type="button"
-                onClick={() => setModalAbierto(false)}
+                onClick={/* Responde a click desde este control. */ () => setModalAbierto(false)}
                 className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition cursor-pointer"
               >
                 <XIcon size={18} />
@@ -637,7 +648,7 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
                       type="text"
                       disabled={esEdicion}
                       value={id}
-                      onChange={(e) => setId(e.target.value)}
+                      onChange={/* Responde a change desde este control. */ (e) => setId(e.target.value)}
                       placeholder="conv_disputa_recursos"
                       className="text-xs w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono text-slate-800 disabled:opacity-60 focus:ring-2 focus:ring-[#002B5E]/20"
                     />
@@ -649,10 +660,10 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
                     </label>
                     <select
                       value={universoId}
-                      onChange={(e) => setUniversoId(e.target.value)}
+                      onChange={/* Responde a change desde este control. */ (e) => setUniversoId(e.target.value)}
                       className="text-xs w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-medium text-slate-800 focus:ring-2 focus:ring-[#002B5E]/20"
                     >
-                      {universos.map((u) => (
+                      {universos.map(/* Prepara el resultado de cada elemento. */ (u) => (
                         <option key={u._id || u.id} value={u._id || u.id}>
                           {u.nombre}
                         </option>
@@ -667,7 +678,7 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
                     <input
                       type="text"
                       value={titulo}
-                      onChange={(e) => setTitulo(e.target.value)}
+                      onChange={/* Responde a change desde este control. */ (e) => setTitulo(e.target.value)}
                       placeholder="Ej: Presupuesto de Campaña Militar"
                       className="text-xs w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold text-slate-800 focus:ring-2 focus:ring-[#002B5E]/20"
                     />
@@ -696,11 +707,11 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
                       </label>
                       <select
                         value={reqPj1}
-                        onChange={(e) => setReqPj1(e.target.value)}
+                        onChange={/* Responde a change desde este control. */ (e) => setReqPj1(e.target.value)}
                         className="text-xs w-full bg-white border border-slate-200 rounded-xl px-3 py-2 font-bold text-slate-800"
                       >
                         <option value="">Seleccionar Personaje 1...</option>
-                        {personajes.map((pj) => (
+                        {personajes.map(/* Prepara el resultado de cada elemento. */ (pj) => (
                           <option key={pj._id || pj.id} value={pj._id || pj.id}>
                             {pj.nombre} ({pj.titulo})
                           </option>
@@ -714,11 +725,11 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
                       </label>
                       <select
                         value={reqPj2}
-                        onChange={(e) => setReqPj2(e.target.value)}
+                        onChange={/* Responde a change desde este control. */ (e) => setReqPj2(e.target.value)}
                         className="text-xs w-full bg-white border border-slate-200 rounded-xl px-3 py-2 font-bold text-slate-800"
                       >
                         <option value="">Seleccionar Personaje 2...</option>
-                        {personajes.map((pj) => (
+                        {personajes.map(/* Prepara el resultado de cada elemento. */ (pj) => (
                           <option key={pj._id || pj.id} value={pj._id || pj.id}>
                             {pj.nombre} ({pj.titulo})
                           </option>
@@ -735,7 +746,7 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
                   <input
                     type="text"
                     value={imagen}
-                    onChange={(e) => setImagen(e.target.value)}
+                    onChange={/* Responde a change desde este control. */ (e) => setImagen(e.target.value)}
                     placeholder="/assets/narrative/conversations/sala_reuniones.webp"
                     className="text-xs w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono text-slate-800 focus:ring-2 focus:ring-[#002B5E]/20"
                   />
@@ -765,7 +776,7 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
                 </div>
 
                 <div className="space-y-3">
-                  {frases.map((fr, fidx) => (
+                  {frases.map(/* Prepara el resultado de cada elemento. */ (fr, fidx) => (
                     <div
                       key={fidx}
                       className="p-3 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center gap-3"
@@ -773,7 +784,7 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
                       <div className="sm:w-1/3 w-full">
                         <select
                           value={fr.personajeId}
-                          onChange={(e) => actualizarFrase(fidx, 'personajeId', e.target.value)}
+                          onChange={/* Responde a change desde este control. */ (e) => actualizarFrase(fidx, 'personajeId', e.target.value)}
                           className="text-xs w-full bg-white border border-slate-200 rounded-xl px-2.5 py-1.5 font-bold text-slate-800"
                         >
                           <option value={reqPj1}>
@@ -789,7 +800,7 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
                         <input
                           type="text"
                           value={fr.texto}
-                          onChange={(e) => actualizarFrase(fidx, 'texto', e.target.value)}
+                          onChange={/* Responde a change desde este control. */ (e) => actualizarFrase(fidx, 'texto', e.target.value)}
                           placeholder="Texto que dice el personaje..."
                           className="text-xs w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 font-medium text-slate-800 focus:ring-2 focus:ring-[#002B5E]/20"
                         />
@@ -797,7 +808,7 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
 
                       <button
                         type="button"
-                        onClick={() => eliminarFrase(fidx)}
+                        onClick={/* Responde a click desde este control. */ () => eliminarFrase(fidx)}
                         className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition cursor-pointer self-end sm:self-center"
                         title="Eliminar línea"
                       >
@@ -831,7 +842,7 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
                 </div>
 
                 <div className="space-y-4">
-                  {decisiones.map((dec, decIdx) => (
+                  {decisiones.map(/* Prepara el resultado de cada elemento. */ (dec, decIdx) => (
                     <div
                       key={decIdx}
                       className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3"
@@ -843,7 +854,7 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
 
                         <button
                           type="button"
-                          onClick={() => eliminarDecision(decIdx)}
+                          onClick={/* Responde a click desde este control. */ () => eliminarDecision(decIdx)}
                           className="p-1 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg cursor-pointer"
                           title="Eliminar esta opción"
                         >
@@ -859,7 +870,7 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
                           <input
                             type="text"
                             value={dec.texto}
-                            onChange={(e) => actualizarDecision(decIdx, 'texto', e.target.value)}
+                            onChange={/* Responde a change desde este control. */ (e) => actualizarDecision(decIdx, 'texto', e.target.value)}
                             placeholder="Ej: Respaldar la propuesta del Canciller..."
                             className="text-xs w-full bg-white border border-slate-200 rounded-xl px-3 py-2 font-bold text-slate-800"
                           />
@@ -872,7 +883,7 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
                           <input
                             type="text"
                             value={dec.resultado_texto}
-                            onChange={(e) =>
+                            onChange={/* Responde a change desde este control. */ (e) =>
                               actualizarDecision(decIdx, 'resultado_texto', e.target.value)
                             }
                             placeholder="Ej: Elena agradece la confianza mientras Marcus se retira..."
@@ -891,7 +902,7 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
 
                           <button
                             type="button"
-                            onClick={() => agregarImpactoAfinidad(decIdx)}
+                            onClick={/* Responde a click desde este control. */ () => agregarImpactoAfinidad(decIdx)}
                             className="text-[10px] font-bold text-[#002B5E] hover:underline cursor-pointer"
                           >
                             + Modificar Afinidad
@@ -899,7 +910,7 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
                         </div>
 
                         <div className="space-y-2">
-                          {dec.impacto_afinidad.map((imp, impIdx) => (
+                          {dec.impacto_afinidad.map(/* Prepara el resultado de cada elemento. */ (imp, impIdx) => (
                             <div
                               key={impIdx}
                               className="p-2 rounded-xl bg-white border border-slate-200 flex items-center gap-3 text-xs"
@@ -907,7 +918,7 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
                               <div className="flex-1">
                                 <select
                                   value={imp.personaje_id}
-                                  onChange={(e) =>
+                                  onChange={/* Responde a change desde este control. */ (e) =>
                                     actualizarImpactoAfinidad(
                                       decIdx,
                                       impIdx,
@@ -917,7 +928,7 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
                                   }
                                   className="text-xs w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 font-bold text-slate-700"
                                 >
-                                  {personajes.map((pj) => (
+                                  {personajes.map(/* Prepara el resultado de cada elemento. */ (pj) => (
                                     <option key={pj._id || pj.id} value={pj._id || pj.id}>
                                       {pj.nombre} ({pj.titulo})
                                     </option>
@@ -932,7 +943,7 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
                                 <input
                                   type="number"
                                   value={imp.delta}
-                                  onChange={(e) =>
+                                  onChange={/* Responde a change desde este control. */ (e) =>
                                     actualizarImpactoAfinidad(
                                       decIdx,
                                       impIdx,
@@ -952,7 +963,7 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
 
                               <button
                                 type="button"
-                                onClick={() => eliminarImpactoAfinidad(decIdx, impIdx)}
+                                onClick={/* Responde a click desde este control. */ () => eliminarImpactoAfinidad(decIdx, impIdx)}
                                 className="p-1 text-slate-400 hover:text-rose-600 cursor-pointer"
                               >
                                 <XIcon size={14} />
@@ -970,7 +981,7 @@ export default function ConversacionesTab({ universos = [], personajes = [] }) {
               <div className="pt-4 border-t border-slate-200 flex items-center justify-end gap-3">
                 <button
                   type="button"
-                  onClick={() => setModalAbierto(false)}
+                  onClick={/* Responde a click desde este control. */ () => setModalAbierto(false)}
                   className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition cursor-pointer"
                 >
                   Cancelar

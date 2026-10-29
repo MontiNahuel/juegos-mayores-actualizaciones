@@ -1,5 +1,7 @@
+/* Reúne los iconos del calendario de desafíos. */
 import React from 'react';
 
+// Dibuja el icono de calendar para reutilizarlo en pantalla.
 export const IconCalendar: React.FC<{ size?: number; color?: string }> = ({ size = 20, color = '#294C6B' }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="3" y="4" width="18" height="18" rx="3" ry="3" />
@@ -9,12 +11,14 @@ export const IconCalendar: React.FC<{ size?: number; color?: string }> = ({ size
   </svg>
 );
 
+// Dibuja el icono de check para reutilizarlo en pantalla.
 export const IconCheck: React.FC<{ size?: number; color?: string; className?: string }> = ({ size = 16, color = '#17695F', className }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
     <polyline points="20 6 9 17 4 12" />
   </svg>
 );
 
+// Dibuja el icono de lock para reutilizarlo en pantalla.
 export const IconLock: React.FC<{ size?: number; color?: string; className?: string }> = ({ size = 13, color = '#CBD5E1', className }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className}>
     <rect x="5" y="11" width="14" height="10" rx="2" />
@@ -22,12 +26,14 @@ export const IconLock: React.FC<{ size?: number; color?: string; className?: str
   </svg>
 );
 
+// Dibuja el icono de play para reutilizarlo en pantalla.
 export const IconPlay: React.FC<{ size?: number; color?: string; className?: string }> = ({ size = 10, color = '#EA580C', className }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill={color} className={className}>
     <polygon points="6 3 20 12 6 21 6 3" />
   </svg>
 );
 
+// Dibuja el icono de arrow right para reutilizarlo en pantalla.
 export const IconArrowRight: React.FC<{ size?: number; color?: string }> = ({ size = 18, color = 'currentColor' }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
     <line x1="5" y1="12" x2="19" y2="12" />
@@ -35,12 +41,14 @@ export const IconArrowRight: React.FC<{ size?: number; color?: string }> = ({ si
   </svg>
 );
 
+// Dibuja el icono de star solid para reutilizarlo en pantalla.
 export const IconStarSolid: React.FC<{ size?: number; color?: string }> = ({ size = 18, color = '#F59E0B' }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
   </svg>
 );
 
+// Dibuja el icono de info para reutilizarlo en pantalla.
 export const IconInfo: React.FC<{ size?: number; color?: string }> = ({ size = 18, color = '#53BFC9' }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="12" cy="12" r="10" />
@@ -49,6 +57,7 @@ export const IconInfo: React.FC<{ size?: number; color?: string }> = ({ size = 1
   </svg>
 );
 
+// Dibuja el icono de close para reutilizarlo en pantalla.
 export const IconClose: React.FC<{ size?: number; color?: string }> = ({ size = 16, color = '#CBD5E1' }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
     <line x1="18" y1="6" x2="6" y2="18" />
@@ -56,24 +65,28 @@ export const IconClose: React.FC<{ size?: number; color?: string }> = ({ size = 
   </svg>
 );
 
+// Dibuja el icono de chevron small para reutilizarlo en pantalla.
 export const IconChevronSmall: React.FC<{ size?: number; color?: string }> = ({ size = 11, color = '#294C6B' }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
     <polyline points="9 18 15 12 9 6" />
   </svg>
 );
 
+// Dibuja el icono de chevron left para reutilizarlo en pantalla.
 export const IconChevronLeft: React.FC<{ size?: number; color?: string }> = ({ size = 20, color = 'currentColor' }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
     <polyline points="15 18 9 12 15 6" />
   </svg>
 );
 
+// Dibuja el icono de chevron right para reutilizarlo en pantalla.
 export const IconChevronRight: React.FC<{ size?: number; color?: string }> = ({ size = 20, color = 'currentColor' }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
     <polyline points="9 18 15 12 9 6" />
   </svg>
 );
 
+// Dibuja el icono de spinner para reutilizarlo en pantalla.
 export const IconSpinner: React.FC<{ size?: number; color?: string }> = ({ size = 28, color = '#294C6B' }) => (
   <svg
     width={size}
@@ -87,6 +100,7 @@ export const IconSpinner: React.FC<{ size?: number; color?: string }> = ({ size 
   </svg>
 );
 
+// Dibuja el icono de coins para reutilizarlo en pantalla.
 export const IconCoins: React.FC<{ size?: number; color?: string; className?: string }> = ({ size = 20, color = '#F59E0B', className }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
     <circle cx="8" cy="8" r="6" />
@@ -96,6 +110,7 @@ export const IconCoins: React.FC<{ size?: number; color?: string; className?: st
   </svg>
 );
 
+// Dibuja el icono de crown para reutilizarlo en pantalla.
 export const IconCrown: React.FC<{ size?: number; color?: string; className?: string }> = ({ size = 20, color = '#F59E0B', className }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
     <path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14" />

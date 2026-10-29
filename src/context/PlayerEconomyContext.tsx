@@ -1,22 +1,19 @@
+/* Conecta los juegos con la economía de Redux y maneja las compras y las ventanas de la tienda. */
+import { useDispatch, useSelector } from 'react-redux';
+import type { RootState, AppDispatch } from '../store/store';
+import { actualizarEconomia, agregarDiaDesbloqueado } from '../store/playerEconomySlice';
 import { API_URL } from '../config/api';
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { ErrorPista, pedirPistaConVida, type SolicitudPista, type RespuestaPista } from '../services/pistasService';
 
 export interface CompraPista extends SolicitudPista {
+  vidasDisponibles?: number;
+  onSinVidas?: () => void;
   onRecibir: (pista: RespuestaPista) => void;
 }
 
-export interface TiendaPaquete {
-  id: string;
-  vidas: number;
-  puntos: number;
-  popular?: boolean;
-  badge?: string | null;
-  descuento?: string | null;
-}
-
-export type SuscripcionTipo = 'basica' | 'premium';
-
+export type { TiendaPaquete, SuscripcionTipo } from '../store/playerEconomySlice';
+import type { TiendaPaquete, SuscripcionTipo } from '../store/playerEconomySlice';
 export interface PlayerEconomyContextType {
   vidas: number;
   puntos: number;
@@ -30,12 +27,15 @@ export interface PlayerEconomyContextType {
   isLoading: boolean;
   isMiniTiendaOpen: boolean;
   isComprarPistaOpen: boolean;
+  vidasParaPista: number;
+  recargarVidasPista: () => void;
   abrirComprarPista: (solicitud: CompraPista) => void;
   comprarPista: () => Promise<void>;
   cerrarComprarPista: () => void;
   abrirMiniTienda: () => void;
   cerrarMiniTienda: () => void;
   consumirVida: () => Promise<boolean>;
+  gastarPuntos: (cantidad: number) => Promise<void>;
   canjearVidas: (paqueteId: string) => Promise<{ success: boolean; message: string }>;
   desbloquearDia: (gameId: string, date: string) => Promise<{ success: boolean; message: string }>;
   isDiaDesbloqueado: (gameId: string, date: string) => boolean;
@@ -43,24 +43,11 @@ export interface PlayerEconomyContextType {
   getPuntosParaJuego: (gameId: string) => number;
 }
 
-const DEFAULT_PAQUETES: TiendaPaquete[] = [
-  { id: 'pack_1', vidas: 1, puntos: 200, popular: false, badge: null, descuento: null },
-  { id: 'pack_3', vidas: 3, puntos: 600, popular: true, badge: 'Popular', descuento: null },
-  { id: 'pack_5', vidas: 5, puntos: 1000, popular: false, badge: null, descuento: null },
-];
-
-const DEFAULT_PUNTOS_POR_JUEGO: Record<string, number> = {
-  wordle: 50,
-  sopa_letras: 50,
-  sudoku: 60,
-  crucigrama: 70,
-  narrativo: 80,
-};
-
 const GUEST_ECONOMY_KEY = 'asistodo_guest_economy';
 
 const PlayerEconomyContext = createContext<PlayerEconomyContextType | undefined>(undefined);
 
+// Busca el token de la sesión sin fallar si el navegador no deja leerlo.
 function getAuthToken(): string | null {
   try {
     return localStorage.getItem('token') || sessionStorage.getItem('token');
@@ -69,37 +56,34 @@ function getAuthToken(): string | null {
   }
 }
 
+// Conecta el saldo de Redux con los juegos y mantiene locales las ventanas y las compras en curso.
 export const PlayerEconomyProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [vidas, setVidas] = useState<number>(5);
-  const [puntos, setPuntos] = useState<number>(0);
-  const [costoVidaPuntos, setCostoVidaPuntos] = useState<number>(200);
-  const [costoDesbloqueoDiaPuntos, setCostoDesbloqueoDiaPuntos] = useState<number>(100);
-  const [suscripcion, setSuscripcion] = useState<SuscripcionTipo>('basica');
-  const [diasDesbloqueados, setDiasDesbloqueados] = useState<string[]>([]);
-  const [paquetesTienda, setPaquetesTienda] = useState<TiendaPaquete[]>(DEFAULT_PAQUETES);
-  const [puntosPorJuego, setPuntosPorJuego] = useState<Record<string, number>>(DEFAULT_PUNTOS_POR_JUEGO);
-  const [vidasMaximas, setVidasMaximas] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const dispatch = useDispatch<AppDispatch>();
+  const { vidas, puntos, costoVidaPuntos, costoDesbloqueoDiaPuntos, suscripcion,
+    diasDesbloqueados, paquetesTienda, puntosPorJuego, vidasMaximas, isLoading,
+  } = useSelector(/* Lee de Redux el dato compartido que necesita la pantalla. */ (state: RootState) => state.playerEconomy);
   const [isMiniTiendaOpen, setIsMiniTiendaOpen] = useState<boolean>(false);
   const [isComprarPistaOpen, setIsComprarPistaOpen] = useState(false);
   const [solicitudPista, setSolicitudPista] = useState<CompraPista | null>(null);
   const comprandoPista = useRef(false);
+  // Abre la confirmación y conserva la función que entregará la pista al juego.
   const abrirComprarPista = useCallback((solicitud: CompraPista) => {
     if (comprandoPista.current) return;
     setSolicitudPista(solicitud); setIsMiniTiendaOpen(false); setIsComprarPistaOpen(true);
   }, []);
+  // Cierra la confirmación y descarta la solicitud de pista pendiente.
   const cerrarComprarPista = useCallback(() => {
-    if (comprandoPista.current) return;
     setIsComprarPistaOpen(false); setSolicitudPista(null);
   }, []);
 
+  // Compra la pista, actualiza las vidas confirmadas y entrega la ayuda al juego.
   const comprarPista = useCallback(async () => {
     if (!solicitudPista || comprandoPista.current) return;
     comprandoPista.current = true;
-    const { onRecibir, ...solicitud } = solicitudPista;
+    const { onRecibir, vidasDisponibles, onSinVidas, ...solicitud } = solicitudPista;
     try {
       const resultado = await pedirPistaConVida(solicitud);
-      setVidas(resultado.vidas_restantes);
+      dispatch(actualizarEconomia({ vidas: resultado.vidas_restantes }));
       for (const clave of ['usuario', 'user']) {
         try {
           const raw = localStorage.getItem(clave);
@@ -111,18 +95,21 @@ export const PlayerEconomyProvider: React.FC<{ children: React.ReactNode }> = ({
       setIsComprarPistaOpen(false); setSolicitudPista(null);
     } catch (error) {
       if (error instanceof ErrorPista && error.status === 400) {
-        setIsComprarPistaOpen(false); setSolicitudPista(null); setIsMiniTiendaOpen(true);
+        setIsComprarPistaOpen(false); setSolicitudPista(null);
+        if (onSinVidas) onSinVidas(); else setIsMiniTiendaOpen(true);
       }
       throw error;
     } finally { comprandoPista.current = false; }
-  }, [solicitudPista]);
+  }, [solicitudPista, dispatch]);
 
+  // Abre la tienda para que el jugador pueda reponer vidas.
   const abrirMiniTienda = useCallback(() => setIsMiniTiendaOpen(true), []);
+  // Cierra la tienda y deja al jugador en su pantalla actual.
   const cerrarMiniTienda = useCallback(() => setIsMiniTiendaOpen(false), []);
 
   // Carga inicial y recarga
   const recargarEconomia = useCallback(async () => {
-    setIsLoading(true);
+    dispatch(actualizarEconomia({ isLoading: true }));
     let configVidasIniciales = 5;
 
     // 1. Obtener configuración pública de economía
@@ -131,15 +118,14 @@ export const PlayerEconomyProvider: React.FC<{ children: React.ReactNode }> = ({
       if (configRes.ok) {
         const configData = await configRes.json();
         configVidasIniciales = configData.vidas_iniciales ?? 5;
-        setCostoVidaPuntos(configData.costo_vida_puntos ?? 200);
-        setCostoDesbloqueoDiaPuntos(configData.costo_desbloqueo_dia_puntos ?? 100);
+        dispatch(actualizarEconomia({ costoVidaPuntos: configData.costo_vida_puntos ?? 200, costoDesbloqueoDiaPuntos: configData.costo_desbloqueo_dia_puntos ?? 100 }));
         if (Array.isArray(configData.paquetes_tienda) && configData.paquetes_tienda.length > 0) {
-          setPaquetesTienda(configData.paquetes_tienda);
+          dispatch(actualizarEconomia({ paquetesTienda: configData.paquetes_tienda }));
         }
         if (configData.puntos_por_juego) {
-          setPuntosPorJuego(configData.puntos_por_juego);
+          dispatch(actualizarEconomia({ puntosPorJuego: configData.puntos_por_juego }));
         }
-        setVidasMaximas(configData.vidas_maximas ?? null);
+        dispatch(actualizarEconomia({ vidasMaximas: configData.vidas_maximas ?? null }));
       }
     } catch (e) {
       console.warn('No se pudo obtener config de economía:', e);
@@ -157,10 +143,7 @@ export const PlayerEconomyProvider: React.FC<{ children: React.ReactNode }> = ({
         });
         if (userRes.ok) {
           const userData = await userRes.json();
-          setVidas(userData.vidas);
-          setPuntos(userData.puntos);
-          setSuscripcion(userData.suscripcion === 'premium' ? 'premium' : 'basica');
-          setDiasDesbloqueados(Array.isArray(userData.dias_desbloqueados) ? userData.dias_desbloqueados : []);
+          dispatch(actualizarEconomia({ vidas: userData.vidas, puntos: userData.puntos, suscripcion: userData.suscripcion === 'premium' ? 'premium' : 'basica', diasDesbloqueados: Array.isArray(userData.dias_desbloqueados) ? userData.dias_desbloqueados : [] }));
 
           // Actualizar snapshot en localStorage usuario
           try {
@@ -175,7 +158,7 @@ export const PlayerEconomyProvider: React.FC<{ children: React.ReactNode }> = ({
               localStorage.setItem('user', JSON.stringify(u));
             }
           } catch {}
-          setIsLoading(false);
+          dispatch(actualizarEconomia({ isLoading: false }));
           return;
         }
       } catch (e) {
@@ -188,38 +171,30 @@ export const PlayerEconomyProvider: React.FC<{ children: React.ReactNode }> = ({
       const rawGuest = localStorage.getItem(GUEST_ECONOMY_KEY);
       if (rawGuest) {
         const guestData = JSON.parse(rawGuest);
-        setVidas(typeof guestData.vidas === 'number' ? guestData.vidas : configVidasIniciales);
-        setPuntos(typeof guestData.puntos === 'number' ? guestData.puntos : 0);
-        setSuscripcion('basica');
-        setDiasDesbloqueados([]);
+        dispatch(actualizarEconomia({ vidas: typeof guestData.vidas === 'number' ? guestData.vidas : configVidasIniciales, puntos: typeof guestData.puntos === 'number' ? guestData.puntos : 0, suscripcion: 'basica', diasDesbloqueados: [] }));
       } else {
         const initialGuest = { vidas: configVidasIniciales, puntos: 0 };
         localStorage.setItem(GUEST_ECONOMY_KEY, JSON.stringify(initialGuest));
-        setVidas(configVidasIniciales);
-        setPuntos(0);
-        setSuscripcion('basica');
-        setDiasDesbloqueados([]);
+        dispatch(actualizarEconomia({ vidas: configVidasIniciales, puntos: 0, suscripcion: 'basica', diasDesbloqueados: [] }));
       }
     } catch {
-      setVidas(configVidasIniciales);
-      setPuntos(0);
-      setSuscripcion('basica');
-      setDiasDesbloqueados([]);
+      dispatch(actualizarEconomia({ vidas: configVidasIniciales, puntos: 0, suscripcion: 'basica', diasDesbloqueados: [] }));
     }
 
-    setIsLoading(false);
-  }, []);
+    dispatch(actualizarEconomia({ isLoading: false }));
+  }, [dispatch]);
 
-  useEffect(() => {
+  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
     recargarEconomia();
 
+    // Vuelve a leer el progreso cuando otra pantalla o pestaña avisa que cambió.
     const handleProgressUpdate = () => {
       recargarEconomia();
     };
 
     window.addEventListener('user_progress_updated', handleProgressUpdate);
     window.addEventListener('storage', handleProgressUpdate);
-    return () => {
+    return /* Libera los recursos de este efecto cuando deja de usarse. */ () => {
       window.removeEventListener('user_progress_updated', handleProgressUpdate);
       window.removeEventListener('storage', handleProgressUpdate);
     };
@@ -243,7 +218,7 @@ export const PlayerEconomyProvider: React.FC<{ children: React.ReactNode }> = ({
 
         if (res.ok) {
           const data = await res.json();
-          setVidas(data.vidas);
+          dispatch(actualizarEconomia({ vidas: data.vidas }));
           try {
             const rawUser = localStorage.getItem('usuario') || localStorage.getItem('user');
             if (rawUser) {
@@ -256,8 +231,8 @@ export const PlayerEconomyProvider: React.FC<{ children: React.ReactNode }> = ({
           window.dispatchEvent(new Event('user_progress_updated'));
           return true;
         } else {
-          const errData = await res.json().catch(() => ({}));
-          setVidas(errData.vidas ?? 0);
+          const errData = await res.json().catch(/* Maneja el fallo de esta operación. */ () => ({}));
+          dispatch(actualizarEconomia({ vidas: errData.vidas ?? 0 }));
           setIsMiniTiendaOpen(true);
           return false;
         }
@@ -273,7 +248,7 @@ export const PlayerEconomyProvider: React.FC<{ children: React.ReactNode }> = ({
     }
 
     const nextVidas = Math.max(0, vidas - 1);
-    setVidas(nextVidas);
+    dispatch(actualizarEconomia({ vidas: nextVidas }));
     try {
       const rawGuest = localStorage.getItem(GUEST_ECONOMY_KEY);
       const guestData = rawGuest ? JSON.parse(rawGuest) : { vidas: 5, puntos: 0 };
@@ -287,7 +262,30 @@ export const PlayerEconomyProvider: React.FC<{ children: React.ReactNode }> = ({
       return false;
     }
     return true;
-  }, [vidas]);
+  }, [vidas, dispatch]);
+
+  // Pide descontar los puntos y guarda el saldo confirmado por el servidor.
+  const gastarPuntos = useCallback(async (cantidad: number) => {
+    const token = getAuthToken();
+    if (!token) throw new Error('Iniciá sesión para restaurar tus vidas.');
+    const raw = localStorage.getItem('usuario') || localStorage.getItem('user');
+    const usuario = raw ? JSON.parse(raw) : null;
+    if (!usuario?.id) throw new Error('No se pudo identificar tu cuenta.');
+    if (puntos < cantidad) throw new Error('No tenés suficientes puntos.');
+    const res = await fetch(API_URL + '/api/admin/economy/user/adjust', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identificador: String(usuario.id), puntos_sumar: -cantidad }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) throw new Error(res.status === 403 ? 'El servidor todavía no permite este canje para jugadores.' : data.detail || 'No se pudo confirmar el descuento.');
+    dispatch(actualizarEconomia({ puntos: data.puntos }));
+    for (const clave of ['usuario', 'user']) {
+      const snapshot = localStorage.getItem(clave);
+      if (snapshot) localStorage.setItem(clave, JSON.stringify({ ...JSON.parse(snapshot), puntos: data.puntos }));
+    }
+    window.dispatchEvent(new Event('user_progress_updated'));
+  }, [puntos, dispatch]);
 
   // Canjear vidas en la mini-tienda
   const canjearVidas = useCallback(async (paqueteId: string): Promise<{ success: boolean; message: string }> => {
@@ -306,8 +304,7 @@ export const PlayerEconomyProvider: React.FC<{ children: React.ReactNode }> = ({
 
         const data = await res.json();
         if (res.ok && data.success) {
-          setVidas(data.vidas);
-          setPuntos(data.puntos);
+          dispatch(actualizarEconomia({ vidas: data.vidas, puntos: data.puntos }));
           try {
             const rawUser = localStorage.getItem('usuario') || localStorage.getItem('user');
             if (rawUser) {
@@ -329,7 +326,7 @@ export const PlayerEconomyProvider: React.FC<{ children: React.ReactNode }> = ({
     }
 
     // Modo invitado local
-    const pack = paquetesTienda.find((p) => p.id === paqueteId);
+    const pack = paquetesTienda.find(/* Busca el primer elemento que cumple esta condición. */ (p) => p.id === paqueteId);
     if (!pack) {
       return { success: false, message: 'El paquete seleccionado no existe.' };
     }
@@ -345,8 +342,7 @@ export const PlayerEconomyProvider: React.FC<{ children: React.ReactNode }> = ({
     const nextPuntos = puntos - pack.puntos;
     const nextVidas = vidasMaximas ? Math.min(vidasMaximas, vidas + pack.vidas) : vidas + pack.vidas;
 
-    setPuntos(nextPuntos);
-    setVidas(nextVidas);
+    dispatch(actualizarEconomia({ puntos: nextPuntos, vidas: nextVidas }));
 
     try {
       const guestData = { vidas: nextVidas, puntos: nextPuntos };
@@ -358,7 +354,7 @@ export const PlayerEconomyProvider: React.FC<{ children: React.ReactNode }> = ({
       success: true,
       message: `¡Excelente! Sumaste ${pack.vidas} vidas. Ahora tenés ${nextVidas} vidas.`,
     };
-  }, [paquetesTienda, puntos, vidas, vidasMaximas]);
+  }, [paquetesTienda, puntos, vidas, vidasMaximas, dispatch]);
 
   // Verificar si un día histórico está desbloqueado
   const isDiaDesbloqueado = useCallback((gameId: string, date: string): boolean => {
@@ -392,10 +388,10 @@ export const PlayerEconomyProvider: React.FC<{ children: React.ReactNode }> = ({
       const data = await res.json();
       if (res.ok && data.success) {
         if (typeof data.puntos === 'number') {
-          setPuntos(data.puntos);
+          dispatch(actualizarEconomia({ puntos: data.puntos }));
         }
         const key = `${gameId.toLowerCase().trim()}:${date.trim()}`;
-        setDiasDesbloqueados((prev) => (prev.includes(key) ? prev : [...prev, key]));
+        dispatch(agregarDiaDesbloqueado(key));
         window.dispatchEvent(new Event('user_progress_updated'));
         return {
           success: true,
@@ -413,8 +409,9 @@ export const PlayerEconomyProvider: React.FC<{ children: React.ReactNode }> = ({
         message: 'Error de conexión con el servidor al intentar desbloquear el desafío.',
       };
     }
-  }, []);
+  }, [dispatch]);
 
+  // Devuelve cuántos puntos entrega ese juego al completarlo.
   const getPuntosParaJuego = useCallback((gameId: string): number => {
     return puntosPorJuego[gameId] ?? 50;
   }, [puntosPorJuego]);
@@ -434,12 +431,15 @@ export const PlayerEconomyProvider: React.FC<{ children: React.ReactNode }> = ({
         isLoading,
         isMiniTiendaOpen,
         isComprarPistaOpen,
+        vidasParaPista: solicitudPista?.vidasDisponibles ?? vidas,
+        recargarVidasPista: solicitudPista?.onSinVidas ?? abrirMiniTienda,
         abrirComprarPista,
         comprarPista,
         cerrarComprarPista,
         abrirMiniTienda,
         cerrarMiniTienda,
         consumirVida,
+        gastarPuntos,
         canjearVidas,
         desbloquearDia,
         isDiaDesbloqueado,
@@ -452,6 +452,7 @@ export const PlayerEconomyProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 };
 
+// Entrega el saldo y las acciones de la tienda al componente que los necesita.
 export const usePlayerEconomy = (): PlayerEconomyContextType => {
   const context = useContext(PlayerEconomyContext);
   if (!context) {
