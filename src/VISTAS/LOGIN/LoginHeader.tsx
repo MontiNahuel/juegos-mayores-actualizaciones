@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import type { CSSProperties } from 'react';
-import { useNavigate } from 'react-router-dom';
+
 import { IonHeader, IonToolbar, IonIcon } from '@ionic/react';
-import { logInOutline, logOutOutline, bookOutline } from 'ionicons/icons';
+import { logInOutline, logOutOutline } from 'ionicons/icons';
 import { FlameIcon, StarIcon } from '../COMPONENTS/Icons/Icons';
 import { IconHeart } from '../COMPONENTS/GameHeader/LivesBadge';
 import { AuthModal } from '../MODALS/AuthModal';
@@ -52,7 +52,7 @@ function getGreeting(): string {
 
 export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title, onBack, primaryColor = color.blue, ocultarSaludoEnMovil = false, menuPrincipal = false, ocultarSesion = false }) => {
   const economy = usePlayerEconomy();
-  const navigate = useNavigate();
+
   const [usuario, setUsuario] = useState<Usuario | null>(() => {
     try {
       const saved = localStorage.getItem('usuario') || localStorage.getItem('user');
@@ -119,7 +119,7 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title
   const livesButton = (
     <button
                 type="button"
-                onClick={economy.abrirComprarPista}
+                onClick={economy.abrirMiniTienda}
                 style={{
                   alignItems: 'center',
                   background: '#FFE4E6',
@@ -135,7 +135,7 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title
                   transition: 'all 0.2s ease',
                 }}
                 className="hover:bg-rose-200 active:scale-95"
-                title="Canjear 1 vida por 1 pista"
+                title="Vidas restantes. Hacé clic para abrir la Tienda de Vidas."
               >
                 <IconHeart filled={economy.vidas > 0} size={16} />
                 <span>{economy.vidas}</span>
@@ -244,35 +244,6 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title
                 flexShrink: 0,
               }}
             >
-              {/* Botón de Acceso al Editor Narrativo - SOLO VISIBLE SI ES ADMIN */}
-              {esAdmin && (
-                <button
-                  type="button"
-                  onClick={() => navigate('/editor-narrativo')}
-                  title="Ingresar a la Suite del Editor Narrativo"
-                  style={{
-                    alignItems: 'center',
-                    background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
-                    border: '1.5px solid #F59E0B',
-                    borderRadius: 14,
-                    boxShadow: '0 3px 10px rgba(245, 158, 11, 0.25)',
-                    color: '#FCD34D',
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    fontSize: 13,
-                    fontWeight: 800,
-                    gap: 6,
-                    padding: '7px 12px',
-                    transition: 'all 0.15s ease',
-                  }}
-                  className="login-header-editor hover:scale-105 active:scale-95 hover:border-amber-400"
-                >
-                  <IonIcon icon={bookOutline} style={{ fontSize: 16, color: '#FCD34D' }} />
-                  <span className="hidden sm:inline">Editor Narrativo</span>
-                  <span className="sm:hidden">Editor</span>
-                </button>
-              )}
-
               {/* Racha */}
               <div
                 style={{

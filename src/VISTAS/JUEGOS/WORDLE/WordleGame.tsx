@@ -9,6 +9,7 @@ import {
   IonIcon,
 } from '@ionic/react';
 import { GameHeader } from '../../COMPONENTS/GameHeader';
+import { usePlayerEconomy } from '../../../context/PlayerEconomyContext';
 import {
   arrowBackOutline,
   refreshOutline,
@@ -123,6 +124,7 @@ const ColorLegendContent: React.FC = () => (
 );
 
 const WordleGame: React.FC = () => {
+  const { abrirComprarPista } = usePlayerEconomy();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -449,10 +451,7 @@ const WordleGame: React.FC = () => {
                   <span>Colores</span>
                 </button>
                 <button
-                  onClick={() => {
-                    setShowHint(true);
-                    setHintIndex((prev) => (prev + 1) % hints.length);
-                  }}
+                  onClick={abrirComprarPista}
                   className="flex items-center gap-1 bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-bold px-2.5 py-1 rounded-lg border border-amber-300 transition-colors"
                   title="Pistas"
                 >

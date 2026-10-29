@@ -975,7 +975,7 @@ export const CrucigramaGame: React.FC = () => {
 
             <button
               type="button"
-              onClick={handleRevealCell}
+              onClick={economy.abrirComprarPista}
               style={{
                 background: '#FEF3C7',
                 border: '1px solid #FCD34D',

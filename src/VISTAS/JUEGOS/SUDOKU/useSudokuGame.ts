@@ -228,56 +228,11 @@ export function useSudokuGame() {
     });
   };
 
-  // Pista: revela el número correcto y disminuye el contador en 1 garantizado.
-  // Si no hay celda seleccionada (o es fija/correcta), busca automáticamente una celda vacía.
+  // El canje se confirma en el modal antes de revelar la pista.
   const useHint = () => {
-    if (hintsLeft <= 0 || isWon || isGameOver || !solution.length || !cells.length) return;
-
-    let targetRow = selectedRow;
-    let targetCol = selectedCol;
-
-    const isCurrentEligible =
-      targetRow !== null &&
-      targetCol !== null &&
-      !cells[targetRow][targetCol].initial &&
-      cells[targetRow][targetCol].value !== solution[targetRow][targetCol];
-
-    if (!isCurrentEligible) {
-      // Buscar la primera celda vacía o incorrecta en el tablero
-      let found = false;
-      for (let r = 0; r < 9; r++) {
-        for (let c = 0; c < 9; c++) {
-          if (!cells[r][c].initial && cells[r][c].value !== solution[r][c]) {
-            targetRow = r;
-            targetCol = c;
-            found = true;
-            break;
-          }
-        }
-        if (found) break;
-      }
-      if (!found) return; // Tablero ya resuelto
-    }
-
-    if (targetRow === null || targetCol === null) return;
-
-    const correct = solution[targetRow][targetCol];
-
-    // Enfocar y seleccionar la celda revelada
-    setSelectedRow(targetRow);
-    setSelectedCol(targetCol);
-
-    setCells(prev => {
-      const copy = prev.map(r => r.map(c => ({ ...c })));
-      copy[targetRow!][targetCol!].value = correct;
-      copy[targetRow!][targetCol!].notes = [];
-      copy[targetRow!][targetCol!].error = false;
-      return copy;
-    });
-
-    setHintsLeft(prev => Math.max(0, prev - 1));
+    if (isWon || isGameOver || !solution.length || !cells.length) return;
+    economy.abrirComprarPista();
   };
-
   // Verificación de victoria
   useEffect(() => {
     if (!cells.length || !solution.length || isWon || isGameOver) return;

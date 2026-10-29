@@ -497,7 +497,7 @@ export const SopaLetrasGame: React.FC = () => {
           badges={<LivesBadge lives={lives} maxLives={MAX_LIVES} />}
           rightAction={
             <button
-              onClick={() => setShowHintModal(true)}
+              onClick={economy.abrirComprarPista}
               style={{
                 alignItems: 'center',
                 background: '#F4F6F9',
