@@ -101,6 +101,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
         if (tipo === 2) {
           guardarSesionAdmin(data.user, data.token || '');
         } else {
+          localStorage.removeItem('asistodo_operador_session');
+          sessionStorage.removeItem('asistodo_operador_session');
           localStorage.setItem('usuario', JSON.stringify(data.user));
           localStorage.setItem('user', JSON.stringify(data.user));
           if (data.token) {

@@ -5,6 +5,7 @@ import { IonPage, IonContent, IonSpinner, IonIcon } from '@ionic/react';
 import { alertCircleOutline, checkmarkCircleOutline, arrowForwardOutline, keyOutline } from 'ionicons/icons';
 import { BrainIcon } from '../COMPONENTS/Icons/Icons';
 import { API_URL } from '../../config/api';
+import { guardarSesionAdmin, OPERADOR_STORAGE_KEY } from '../AUTH/authUtils';
 
 const color = {
   blue: '#294C6B',
@@ -52,11 +53,19 @@ export const AccesoToken: React.FC = () => {
           const userObj = data.user;
           const jwtToken = data.token || cleanToken;
 
-          localStorage.setItem('usuario', JSON.stringify(userObj));
-          localStorage.setItem('user', JSON.stringify(userObj));
-          localStorage.setItem('token', jwtToken);
-
-          window.dispatchEvent(new Event('user_progress_updated'));
+          const tipo = Number(userObj.tipoUsuario ?? userObj.tipo_usuario ?? userObj.rol ?? 1);
+          if (tipo === 2) {
+            guardarSesionAdmin(userObj, jwtToken);
+          } else {
+            localStorage.removeItem(OPERADOR_STORAGE_KEY);
+            sessionStorage.removeItem(OPERADOR_STORAGE_KEY);
+            localStorage.setItem('usuario', JSON.stringify(userObj));
+            localStorage.setItem('user', JSON.stringify(userObj));
+            if (jwtToken) {
+              localStorage.setItem('token', jwtToken);
+            }
+            window.dispatchEvent(new Event('user_progress_updated'));
+          }
 
           setNombreUsuario(userObj.name || userObj.nombre || '¡Hola!');
           setEstado('exito');

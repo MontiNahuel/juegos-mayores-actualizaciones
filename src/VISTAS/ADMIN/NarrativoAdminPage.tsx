@@ -56,9 +56,10 @@ export default function NarrativoAdminPage() {
     };
   }, [adminSession]);
 
-  // Si no es admin o no está autenticado: NUNCA se muestra ninguna pantalla de login ni error.
-  // Redirige de forma automática y silenciosa al menú.
-  if (!adminSession) {
+  // Control de acceso estricto basado en roles:
+  // Si no es admin (rol 2) o no está autenticado, NUNCA ingresa.
+  // Redirige inmediatamente al menú aunque se coloque la URL directa en el navegador.
+  if (!adminSession || !obtenerSesionAdmin()) {
     return <Navigate to="/menu" replace />;
   }
 

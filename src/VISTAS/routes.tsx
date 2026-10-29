@@ -12,6 +12,15 @@ import KingsCourtCalendar from './JUEGOS/NARRATIVO/KingsCourtCalendar';
 import KingsCourt from './JUEGOS/NARRATIVO/KingsCourt';
 import { AccesoToken } from './LOGIN/AccesoToken';
 import NarrativoAdminPage from './ADMIN/NarrativoAdminPage';
+import { esUsuarioAdmin } from './AUTH/authUtils';
+
+// Control de acceso basado en roles para rutas administrativas
+const RequireAdmin = ({ children }: { children: React.ReactNode }) => {
+  if (!esUsuarioAdmin()) {
+    return <Navigate to="/menu" replace />;
+  }
+  return <>{children}</>;
+};
 
 // Intercepta token en /menu para iniciar sesión de inmediato en vez de quedar como invitado
 const MenuWrapper = () => {
@@ -50,7 +59,14 @@ const AppRoutes = () => (
       <Route path="/juegos/kings-court/jugar" element={<KingsCourt />} />
       {/* Redirección automática silenciosa de /admin/narrativo hacia el menú */}
       <Route path="/admin/narrativo" element={<Navigate to="/menu" replace />} />
-      <Route path="/editor-narrativo" element={<NarrativoAdminPage />} />
+      <Route
+        path="/editor-narrativo"
+        element={
+          <RequireAdmin>
+            <NarrativoAdminPage />
+          </RequireAdmin>
+        }
+      />
       <Route path="/" element={<RootRedirection />} />
       <Route path="*" element={<RootRedirection />} />
     </Routes>

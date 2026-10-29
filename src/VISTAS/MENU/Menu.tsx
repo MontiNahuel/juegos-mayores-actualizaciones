@@ -89,7 +89,7 @@ const Menu: React.FC = () => {
 
   return (
     <IonPage>
-      <LoginHeader />
+      <LoginHeader onUsuarioChange={() => setEsAdmin(esUsuarioAdmin())} />
       <IonContent style={{ '--background': color.blue } as CSSProperties}>
         <div style={{ background: color.blue, minHeight: '100%' }}>
           <main style={styles.shell}>
