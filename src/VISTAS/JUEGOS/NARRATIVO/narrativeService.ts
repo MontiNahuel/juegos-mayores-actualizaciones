@@ -190,8 +190,16 @@ export interface PreferenciaConversacion {
 // Una vez activado el respaldo, conserva esa partida local hasta terminar o reiniciar.
 // No reenvia al servidor las decisiones tomadas en la demostracion.
 async function request<T>(path: string, options?: RequestInit) {
-  const date = new URL(path, API).searchParams.get('date') ||
-    (typeof options?.body === 'string' ? JSON.parse(options.body).date : '');
+  let date = '';
+  try {
+    const base = typeof window !== 'undefined' && window.location?.origin ? window.location.origin : 'http://localhost';
+    date = new URL(path, base).searchParams.get('date') || '';
+  } catch {}
+  if (!date && typeof options?.body === 'string') {
+    try {
+      date = JSON.parse(options.body).date || '';
+    } catch {}
+  }
   const respaldo = () => resolverRespaldoNarrativo(path, options, store.getState().narrativoSelection) as T;
   const completar = (data: T) => {
     if (path === '/partida/reiniciar') fechasLocales.delete(date);
