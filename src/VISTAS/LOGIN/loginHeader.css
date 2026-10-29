@@ -5,22 +5,33 @@
 
 .login-header-layout--titled {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) minmax(0, auto) minmax(0, 1fr);
 }
 
 .login-header-layout--titled > :last-child {
   justify-self: end;
 }
 
+.login-header-lives-left {
+  display: none;
+}
+
+.login-header-lives-right {
+  display: inline-flex;
+}
+
 .login-header-title {
-  grid-column: 1 / -1;
-  grid-row: 2;
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
   margin: 0;
   text-align: center;
   font-size: clamp(18px, 2.4vw, 22px);
   font-weight: 900;
   line-height: 1.25;
-  overflow-wrap: anywhere;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .login-header-home {
@@ -36,6 +47,20 @@
 .login-header-home:focus-visible {
   outline: 2px solid #294c6b;
   outline-offset: 4px;
+}
+
+@media (max-width: 799px) {
+  .login-header-layout--compact .login-header-greeting {
+    display: none;
+  }
+
+  .login-header-layout--titled.login-header-layout--compact .login-header-lives-left {
+    display: inline-flex;
+  }
+
+  .login-header-layout--titled.login-header-layout--compact .login-header-lives-right {
+    display: none;
+  }
 }
 
 @media (min-width: 800px) {

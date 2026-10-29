@@ -38,6 +38,7 @@ interface LoginHeaderProps {
   title?: string;
   onBack?: () => void;
   primaryColor?: string;
+  ocultarSaludoEnMovil?: boolean;
 }
 
 function getGreeting(): string {
@@ -47,7 +48,7 @@ function getGreeting(): string {
   return '¡Buenas noches!';
 }
 
-export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title, onBack, primaryColor = color.blue }) => {
+export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title, onBack, primaryColor = color.blue, ocultarSaludoEnMovil = false }) => {
   const economy = usePlayerEconomy();
   const navigate = useNavigate();
   const [usuario, setUsuario] = useState<Usuario | null>(() => {
@@ -113,11 +114,43 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title
     economy.recargarEconomia();
   };
 
+  const livesButton = (
+    <button
+                type="button"
+                onClick={economy.abrirMiniTienda}
+                style={{
+                  alignItems: 'center',
+                  background: '#FFE4E6',
+                  border: '1px solid #FECDD3',
+                  borderRadius: 14,
+                  color: '#BE123C',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  fontSize: 13,
+                  fontWeight: 800,
+                  gap: 4,
+                  padding: '6px 10px',
+                  transition: 'all 0.2s ease',
+                }}
+                className="hover:bg-rose-200 active:scale-95"
+                title="Vidas restantes. Hacé clic para abrir la Tienda de Vidas."
+              >
+                <IconHeart filled={economy.vidas > 0} size={16} />
+                <span>{economy.vidas}</span>
+                <span className="hidden sm:inline">
+                  {economy.vidas === 1 ? 'vida' : 'vidas'}
+                </span>
+                <span style={{ fontSize: 10, background: '#FDA4AF', color: '#881337', padding: '1px 4px', borderRadius: 6, fontWeight: 900 }}>
+                  +
+                </span>
+              </button>
+  );
+
   return (
     <IonHeader style={{ boxShadow: '0 2px 10px rgba(23, 59, 99, 0.12)' }}>
       <IonToolbar style={{ '--background': '#FFFFFF', '--border-width': 0 } as CSSProperties}>
         <div
-          className={`login-header-layout${title ? ' login-header-layout--titled' : ''}`}
+          className={`login-header-layout${title ? ' login-header-layout--titled' : ''}${ocultarSaludoEnMovil ? ' login-header-layout--compact' : ''}`}
           style={{
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -139,7 +172,8 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title
               src="/asistodo-logo.svg"
               style={{ height: 42, width: 42, flexShrink: 0 }}
             />}
-            <div style={{ minWidth: 0 }}>
+            <span className="login-header-lives-left">{livesButton}</span>
+            <div className="login-header-greeting" style={{ minWidth: 0 }}>
               {usuario ? (
                 /* Con sesión: ¡Hola, [Nombre]! */
                 <>
@@ -259,36 +293,7 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title
                 </span>
               </div>
 
-              {/* Vidas Globales (Click abre Mini-Tienda) */}
-              <button
-                type="button"
-                onClick={economy.abrirMiniTienda}
-                style={{
-                  alignItems: 'center',
-                  background: '#FFE4E6',
-                  border: '1px solid #FECDD3',
-                  borderRadius: 14,
-                  color: '#BE123C',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  fontSize: 13,
-                  fontWeight: 800,
-                  gap: 4,
-                  padding: '6px 10px',
-                  transition: 'all 0.2s ease',
-                }}
-                className="hover:bg-rose-200 active:scale-95"
-                title="Vidas restantes. Hacé clic para abrir la Tienda de Vidas."
-              >
-                <IconHeart filled={economy.vidas > 0} size={16} />
-                <span>{economy.vidas}</span>
-                <span className="hidden sm:inline">
-                  {economy.vidas === 1 ? 'vida' : 'vidas'}
-                </span>
-                <span style={{ fontSize: 10, background: '#FDA4AF', color: '#881337', padding: '1px 4px', borderRadius: 6, fontWeight: 900 }}>
-                  +
-                </span>
-              </button>
+              <span className="login-header-lives-right">{livesButton}</span>
 
               {/* Puntos (Click abre Mini-Tienda) */}
               <button
@@ -342,35 +347,7 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title
             </div>
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {/* Vidas para invitado */}
-              <button
-                type="button"
-                onClick={economy.abrirMiniTienda}
-                style={{
-                  alignItems: 'center',
-                  background: '#FFE4E6',
-                  border: '1px solid #FECDD3',
-                  borderRadius: 14,
-                  color: '#BE123C',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  fontSize: 13,
-                  fontWeight: 800,
-                  gap: 4,
-                  padding: '6px 10px',
-                }}
-                className="hover:bg-rose-200 active:scale-95"
-                title="Vidas restantes. Hacé clic para abrir la Tienda de Vidas."
-              >
-                <IconHeart filled={economy.vidas > 0} size={16} />
-                <span>{economy.vidas}</span>
-                <span className="hidden sm:inline">
-                  {economy.vidas === 1 ? 'vida' : 'vidas'}
-                </span>
-                <span style={{ fontSize: 10, background: '#FDA4AF', color: '#881337', padding: '1px 4px', borderRadius: 6, fontWeight: 900 }}>
-                  +
-                </span>
-              </button>
+              <span className="login-header-lives-right">{livesButton}</span>
 
               {/* Botón para abrir el Modal de Inicio de Sesión / Registro */}
               <button
