@@ -42,7 +42,7 @@ export default function PanelAltasSistemas() {
       if (data && data.ticket) {
         const defaultAuthUrl = (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'))
           ? 'http://localhost:5173'
-          : 'https://autenticador.asistodo.com.ar';
+          : 'https://autenticacion.asistodo.com.ar';
         const authFrontUrl = import.meta.env.VITE_AUTH_FRONTEND_URL || defaultAuthUrl;
         window.location.href = `${authFrontUrl}?ticket=${encodeURIComponent(data.ticket)}`;
       }
