@@ -556,7 +556,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                   }}
                 >
                   <IonIcon icon={keyOutline} style={{ fontSize: 16 }} />
-                  <span>Tengo mi código</span>
+                  <span>Tengo mi cuenta</span>
                 </button>
               </div>
             )}
@@ -922,7 +922,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
               </>
             )}
 
-            {/* Pestaña: Tengo mi código */}
+            {/* Pestaña: Tengo mi cuenta */}
             {tab === 'code' && (
               <form
                 onSubmit={handleLoginCode}
@@ -943,7 +943,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                       textAlign: 'center',
                     }}
                   >
-                    Ingresá tu correo registrado y tu clave de 6 dígitos para acceder:
+                    Ingresá tu correo electrónico y tu clave de 6 dígitos para acceder a tu cuenta:
                   </p>
 
                   {/* Campo Correo Electrónico */}
