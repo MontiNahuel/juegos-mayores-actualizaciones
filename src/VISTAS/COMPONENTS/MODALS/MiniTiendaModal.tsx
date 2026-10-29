@@ -1,6 +1,6 @@
 import { useId, useRef, useState } from 'react';
-import { usePlayerEconomy, type TiendaPaquete } from '../../context/PlayerEconomyContext';
-import { IconHeart } from '../COMPONENTS/GameHeader/LivesBadge';
+import { usePlayerEconomy, type TiendaPaquete } from '../../../context/PlayerEconomyContext';
+import { IconHeart } from '../GameHeader/LivesBadge';
 import { ModalBase } from './ModalBase';
 import { PaqueteVidas } from './TIENDA/PaqueteVidas';
 import { SaldoTienda } from './TIENDA/SaldoTienda';

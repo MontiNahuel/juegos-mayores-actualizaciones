@@ -12,10 +12,10 @@ import {
   shieldCheckmarkOutline,
   arrowBackOutline,
 } from 'ionicons/icons';
-import type { Usuario } from '../LOGIN/LoginHeader';
-import { migrateGuestProgressToNewUser } from '../JUEGOS/attemptsService';
-import { API_URL } from '../../config/api';
-import { guardarSesionAdmin } from '../AUTH/authUtils';
+import type { Usuario } from '../../LOGIN/LoginHeader';
+import { migrateGuestProgressToNewUser } from '../../JUEGOS/attemptsService';
+import { API_URL } from '../../../config/api';
+import { guardarSesionAdmin } from '../../AUTH/authUtils';
 
 interface AuthModalProps {
   isOpen: boolean;

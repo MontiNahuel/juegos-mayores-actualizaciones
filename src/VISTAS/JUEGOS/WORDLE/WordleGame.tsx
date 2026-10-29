@@ -1,3 +1,4 @@
+import { CompletedModal } from '../../COMPONENTS/MODALS/CompletedModal';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -13,8 +14,6 @@ import { usePlayerEconomy } from '../../../context/PlayerEconomyContext';
 import {
   arrowBackOutline,
   refreshOutline,
-  closeCircleOutline,
-  checkmarkCircleOutline,
   bulbOutline,
   chevronDownOutline,
   chevronUpOutline,
@@ -664,71 +663,19 @@ const WordleGame: React.FC = () => {
           </div>
         )}
 
-        {/* 6. Modal de Victoria o Fin de Partida (Overlay que no desplaza el layout, con 1s de espera y animación suave) */}
         {showEndModal && (
-          <div
-            className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 wordle-modal-backdrop"
-            style={{
-              paddingBottom: 'max(calc(env(safe-area-inset-bottom, 0px) + 24px), 48px)',
+          <CompletedModal
+            gameId="wordle"
+            isGameOver={gameStatus === 'lost'}
+            challenge={{
+              attempts: guesses.length,
+              stars: Math.max(1, 4 - Math.floor(guesses.length / 2)),
+              config: { solution: activeSolution },
             }}
-          >
-            <div className="w-full max-w-sm bg-white rounded-2xl p-5 shadow-2xl border border-slate-200 text-center wordle-modal-card">
-              {gameStatus === 'won' ? (
-                <div>
-                  <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-2 text-2xl">
-                    <IonIcon icon={checkmarkCircleOutline} />
-                  </div>
-                  <h3 className="text-lg font-black text-[#294C6B]">¡Felicitaciones!</h3>
-                  <p className="text-xs text-slate-600 mt-1">
-                    Adivinaste la palabra en <strong>{guesses.length}</strong> de {MAX_ATTEMPTS} intentos.
-                  </p>
-                  <div className="flex justify-center gap-1 my-2.5 text-xl text-amber-400">
-                    {Array.from({ length: Math.max(1, 4 - Math.floor(guesses.length / 2)) }).map((_, i) => (
-                      <span key={i}>⭐</span>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div>
-                  <div className="w-12 h-12 bg-slate-100 text-slate-500 rounded-full flex items-center justify-center mx-auto mb-2 text-2xl">
-                    <IonIcon icon={closeCircleOutline} />
-                  </div>
-                  <h3 className="text-lg font-black text-[#294C6B]">¡Buen intento!</h3>
-                  <p className="text-xs text-slate-600 mt-1">
-                    La palabra de hoy era: <span className="font-black text-emerald-700 tracking-wider">{activeSolution}</span>.
-                  </p>
-                  <p className="text-[11px] text-slate-500 mt-0.5">
-                    El ejercicio diario mantiene tu mente ágil.
-                  </p>
-                </div>
-              )}
-
-              <div className="flex gap-2.5 justify-center mt-4">
-                <button
-                  onClick={handleRestart}
-                  className="flex-1 py-2 rounded-xl font-bold text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
-                  style={{
-                    padding: "12px",
-                    borderRadius: "5px",
-                    border: "1px none"
-                  }}
-                >
-                  Jugar de nuevo
-                </button>
-                <button
-                  onClick={() => navigate('/menu')}
-                  className="flex-1 py-2 rounded-xl font-bold text-xs bg-[#294C6B] hover:bg-[#1E364D] text-white transition-colors shadow-xs"
-                  style={{
-                    padding: "12px",
-                    borderRadius: "5px",
-                    border: "1px none"
-                  }}
-                >
-                  Volver al Menú
-                </button>
-              </div>
-            </div>
-          </div>
+            onRestart={handleRestart}
+            onClose={() => navigate('/menu')}
+            closeLabel="Volver al menú"
+          />
         )}
       </IonContent>
     </IonPage>

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DailyChallengeCalendar, type DayChallenge } from '../../COMPONENTS/CALENDAR';
 import { DifficultyModal, type DifficultyLevel } from '../../COMPONENTS/DIFICULTAD';
-import { SudokuCompletedModal } from '../../MODALS/SudokuCompletedModal';
+import { CompletedModal } from '../../COMPONENTS/MODALS/CompletedModal';
 import { getSudokuLocalProgress } from './sudokuStorage';
 
 export const SudokuCalendar: React.FC = () => {
@@ -47,11 +47,11 @@ export const SudokuCalendar: React.FC = () => {
         heroSubtitle="Poné a prueba tu concentración y lógica completando el tablero de hoy."
         onPlayChallenge={handlePlayChallenge}
         renderCompletedModal={(challenge, onClose) => (
-          <SudokuCompletedModal
+          <CompletedModal gameId="sudoku"
             dateStr={challenge.dateStr}
-            stars={challenge.stars || 3}
+            stars={challenge.stars ?? 3}
             onRestart={onClose}
-            onExit={onClose}
+            onClose={onClose}
           />
         )}
       />

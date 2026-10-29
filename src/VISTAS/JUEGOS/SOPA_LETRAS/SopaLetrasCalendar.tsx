@@ -1,6 +1,6 @@
 import React from 'react';
 import { DailyChallengeCalendar, type DayChallenge } from '../../COMPONENTS/CALENDAR';
-import { SopaLetrasCompletedModal } from '../../MODALS/SopaLetrasCompletedModal';
+import { CompletedModal } from '../../COMPONENTS/MODALS/CompletedModal';
 
 export type { DayChallenge };
 
@@ -13,7 +13,7 @@ export const SopaLetrasCalendar: React.FC = () => {
       heroSubtitle="4 palabras temáticas para ejercitar tu atención visual, rastreo y memoria."
       playRoute="/juegos/sopa-letras/jugar"
       renderCompletedModal={(challenge, onClose) => (
-        <SopaLetrasCompletedModal challenge={challenge} onClose={onClose} />
+        <CompletedModal gameId="sopa_letras" challenge={challenge} onClose={onClose} />
       )}
     />
   );

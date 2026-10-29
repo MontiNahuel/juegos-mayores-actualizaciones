@@ -1,5 +1,5 @@
-import type { TiendaPaquete } from '../../../context/PlayerEconomyContext';
-import { IconHeart } from '../../COMPONENTS/GameHeader/LivesBadge';
+import type { TiendaPaquete } from '../../../../context/PlayerEconomyContext';
+import { IconHeart } from '../../GameHeader/LivesBadge';
 
 interface Props {
   paquete: TiendaPaquete;

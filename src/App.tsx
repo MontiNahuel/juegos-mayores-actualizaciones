@@ -1,8 +1,8 @@
 import { IonApp, setupIonicReact } from '@ionic/react';
 import AppRoutes from './VISTAS/routes';
 import { PlayerEconomyProvider } from './context/PlayerEconomyContext';
-import MiniTiendaModal from './VISTAS/MODALS/MiniTiendaModal';
-import ComprarPistaModal from './VISTAS/MODALS/ComprarPistaModal';
+import MiniTiendaModal from './VISTAS/COMPONENTS/MODALS/MiniTiendaModal';
+import ComprarPistaModal from './VISTAS/COMPONENTS/MODALS/ComprarPistaModal';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';

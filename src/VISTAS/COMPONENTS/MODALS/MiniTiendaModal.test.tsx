@@ -6,7 +6,7 @@ const economia = vi.hoisted(() => ({
   isMiniTiendaOpen: true, cerrarMiniTienda: vi.fn(), vidas: 5, puntos: 200,
   paquetesTienda: [{ id: 'uno', vidas: 1, puntos: 200 }], canjearVidas: vi.fn(),
 }));
-vi.mock('../../context/PlayerEconomyContext', () => ({ usePlayerEconomy: () => economia }));
+vi.mock('../../../context/PlayerEconomyContext', () => ({ usePlayerEconomy: () => economia }));
 
 beforeEach(() => { vi.clearAllMocks(); economia.puntos = 200; });
 afterEach(cleanup);

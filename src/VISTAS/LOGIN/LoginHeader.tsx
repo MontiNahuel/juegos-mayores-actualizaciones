@@ -5,7 +5,7 @@ import { IonHeader, IonToolbar, IonIcon } from '@ionic/react';
 import { logInOutline, logOutOutline } from 'ionicons/icons';
 import { FlameIcon, StarIcon } from '../COMPONENTS/Icons/Icons';
 import { IconHeart } from '../COMPONENTS/GameHeader/LivesBadge';
-import { AuthModal } from '../MODALS/AuthModal';
+import { AuthModal } from '../COMPONENTS/MODALS/AuthModal';
 import { usePlayerEconomy } from '../../context/PlayerEconomyContext';
 import { esUsuarioAdmin, limpiarTodasLasSesiones } from '../AUTH/authUtils';
 import './loginHeader.css';

@@ -12,7 +12,7 @@ import {
 import { GameHeader, LivesBadge } from '../../COMPONENTS/GameHeader';
 import { usePlayerEconomy } from '../../../context/PlayerEconomyContext';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
-import { CrucigramaCompletedModal } from '../../MODALS/CrucigramaCompletedModal';
+import { CompletedModal } from '../../COMPONENTS/MODALS/CompletedModal';
 import { CrucigramaClues } from './CrucigramaClues';
 import { cleanClueText, type WordDef, type CellDef } from './crucigramaTypes';
 import {
@@ -1162,7 +1162,7 @@ export const CrucigramaGame: React.FC = () => {
 
           {/* MODAL DE VICTORIA O GAME OVER */}
           {(showVictoryModal || showGameOverModal) && (
-            <CrucigramaCompletedModal
+            <CompletedModal gameId="crucigrama"
               challenge={{
                 dateStr: targetDate,
                 stars: errors === 0 ? 3 : errors <= 2 ? 2 : 1,

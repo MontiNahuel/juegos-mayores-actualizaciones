@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DailyChallengeCalendar, type DayChallenge } from '../../COMPONENTS/CALENDAR';
 import { DifficultyModal, type DifficultyOptionConfig } from '../../COMPONENTS/DIFICULTAD';
-import { CrucigramaCompletedModal } from '../../MODALS/CrucigramaCompletedModal';
+import { CompletedModal } from '../../COMPONENTS/MODALS/CompletedModal';
 import { loadActiveCrucigrama, type CrucigramaDifficulty } from './crucigramaStorage';
 
 export type { DayChallenge };
@@ -85,7 +85,7 @@ export const CrucigramaCalendar: React.FC = () => {
         difficulty="facil"
         onPlayChallenge={handlePlayChallenge}
         renderCompletedModal={(challenge, onClose) => (
-          <CrucigramaCompletedModal challenge={challenge} onClose={onClose} />
+          <CompletedModal gameId="crucigrama" challenge={challenge} onClose={onClose} />
         )}
       />
 

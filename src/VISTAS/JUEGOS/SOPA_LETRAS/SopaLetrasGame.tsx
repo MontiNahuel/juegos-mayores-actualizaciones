@@ -10,7 +10,7 @@ import {
 } from '@ionic/react';
 import { GameHeader, LivesBadge } from '../../COMPONENTS/GameHeader';
 import { usePlayerEconomy } from '../../../context/PlayerEconomyContext';
-import { SopaLetrasCompletedModal } from '../../MODALS/SopaLetrasCompletedModal';
+import { CompletedModal } from '../../COMPONENTS/MODALS/CompletedModal';
 import {
   arrowBackOutline,
   bulbOutline,
@@ -921,7 +921,7 @@ export const SopaLetrasGame: React.FC = () => {
 
         {/* Modal de Felicitación / Victoria o Game Over */}
         {(showVictoryModal || showGameOverModal) && (
-          <SopaLetrasCompletedModal
+          <CompletedModal gameId="sopa_letras"
             challenge={{
               dateStr: dateDisplay,
               config: {

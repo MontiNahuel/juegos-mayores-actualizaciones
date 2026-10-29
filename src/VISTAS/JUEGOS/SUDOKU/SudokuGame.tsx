@@ -2,7 +2,7 @@ import React from 'react';
 import { useSudokuGame } from './useSudokuGame';
 import { SudokuBoard } from './SudokuBoard';
 import { SudokuKeypad } from './SudokuKeypad';
-import { SudokuCompletedModal } from '../../MODALS/SudokuCompletedModal';
+import { CompletedModal } from '../../COMPONENTS/MODALS/CompletedModal';
 import { GameHeader, LivesBadge } from '../../COMPONENTS/GameHeader';
 
 export const SudokuGame: React.FC = () => {
@@ -62,12 +62,12 @@ export const SudokuGame: React.FC = () => {
 
       {/* Modal accesible de Victoria / Game Over por vidas */}
       {(game.isWon || game.isGameOver) && (
-        <SudokuCompletedModal
+        <CompletedModal gameId="sudoku"
           isGameOver={game.isGameOver}
           stars={game.stars}
           dateStr={game.dateStr}
           onRestart={game.restart}
-          onExit={game.goBack}
+          onClose={game.goBack}
         />
       )}
     </div>

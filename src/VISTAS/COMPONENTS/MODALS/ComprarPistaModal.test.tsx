@@ -1,11 +1,11 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { PlayerEconomyProvider, usePlayerEconomy } from '../../context/PlayerEconomyContext';
-import { ErrorPista } from '../../services/pistasService';
+import { PlayerEconomyProvider, usePlayerEconomy } from '../../../context/PlayerEconomyContext';
+import { ErrorPista } from '../../../services/pistasService';
 import ComprarPistaModal from './ComprarPistaModal';
 
 const mocks = vi.hoisted(() => ({ pedir: vi.fn(), entregar: vi.fn() }));
-vi.mock('../../services/pistasService', async original => ({ ...await original<typeof import('../../services/pistasService')>(), pedirPistaConVida: mocks.pedir }));
+vi.mock('../../../services/pistasService', async original => ({ ...await original<typeof import('../../../services/pistasService')>(), pedirPistaConVida: mocks.pedir }));
 let saldo = 5;
 
 function Juego() {

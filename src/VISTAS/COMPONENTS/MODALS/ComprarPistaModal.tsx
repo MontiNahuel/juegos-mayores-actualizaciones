@@ -1,8 +1,8 @@
 import { useEffect, useId, useRef, useState } from 'react';
-import { usePlayerEconomy } from '../../context/PlayerEconomyContext';
-import { IconHeart } from '../COMPONENTS/GameHeader/LivesBadge';
+import { usePlayerEconomy } from '../../../context/PlayerEconomyContext';
+import { IconHeart } from '../GameHeader/LivesBadge';
 import { ModalBase } from './ModalBase';
-import { ErrorPista } from '../../services/pistasService';
+import { ErrorPista } from '../../../services/pistasService';
 
 export interface ComprarPistaModalProps {
   isOpen?: boolean;
