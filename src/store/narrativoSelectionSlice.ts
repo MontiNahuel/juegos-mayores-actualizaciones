@@ -1,5 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { adaptarValorNegativo } from '../config/adaptacionEdad';
+import type { EstadoPartida } from '../VISTAS/JUEGOS/NARRATIVO/narrativeService';
 import { FONDO_CORTE_DEFAULT, GUARDIAS_CORTE, MANOS_CORTE, ORO_CORTE, cantidadManosPorPueblo, cantidadPorTramo, type EstadoFondoCorte } from '../config/fondoCorte';
 
 const initialState: any = {
@@ -102,6 +103,17 @@ const narrativoSelectionSlice = createSlice({
   name: 'narrativoSelection',
   initialState,
   reducers: {
+    // Los deltas V2 pueden omitir recursos y afinidad en nodos intermedios.
+    sincronizarPartida: (state, action: { payload: EstadoPartida }) => {
+      const datos = action.payload;
+      if (datos.recursos) state.jugador.recursos = datos.recursos;
+      if (datos.afinidad) state.jugador.afinidad = datos.afinidad;
+      if (datos.mes_actual !== undefined) state.jugador.mes_actual = datos.mes_actual;
+      if (datos.status) state.jugador.status = datos.status;
+      for (const tag of datos.grafo_actual?.nodo_actual.impactos_tags || []) {
+        if (!state.jugador.tags_activos.includes(tag)) state.jugador.tags_activos.push(tag);
+      }
+    },
     // Crea el estado local del jugador con los recursos iniciales del universo.
     iniciarJugador: (state, action: { payload: any }) => {
       state.jugador = { ...initialState.jugador, ...action.payload };
@@ -162,6 +174,7 @@ const narrativoSelectionSlice = createSlice({
     // Guarda el evento puntual que el servidor sorteo para este mes.
     mostrarEvento: (state, action: { payload: any }) => {
       state.eventoActual = action.payload;
+      state.conversacionActual = null;
       state.jugador.fase_actual = 'decidir_evento';
     },
 
@@ -182,6 +195,7 @@ const narrativoSelectionSlice = createSlice({
       const resultado = action.payload;
       state.resultadoActual = resultado;
       state.eventoActual = null;
+      state.conversacionActual = null;
       state.jugador.fase_actual = 'mostrar_resultado';
 
       resultado?.efectos?.forEach(({ accion }: any) => {
@@ -210,6 +224,7 @@ const narrativoSelectionSlice = createSlice({
     // Guarda una conversacion posible elegida para este mes.
     mostrarConversacion: (state, action: { payload: any }) => {
       state.conversacionActual = action.payload;
+      state.eventoActual = null;
       state.jugador.fase_actual = 'responder_conversacion';
     },
 
@@ -256,6 +271,7 @@ const narrativoSelectionSlice = createSlice({
 });
 
 export const {
+  sincronizarPartida,
   iniciarJugador,
   configurarEdadNarrativa,
   guardarCorte,

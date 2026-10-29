@@ -38,6 +38,7 @@ export interface CartaApi {
 
 export interface EventoApi {
   id: string;
+  nodo_id?: string;
   titulo: string;
   descripcion: string;
   imagen: string;
@@ -61,6 +62,8 @@ export const obtenerDefinicionEvento = async (id: string) => {
 
 // Guarda en el evento local las condiciones de su opcion secreta.
 export const agregarCondicionesSecretas = async (evento: EventoApi): Promise<EventoApi> => {
+  // Los grafos ya entregan opciones sanitizadas; no consultar su definición interna.
+  if (evento.nodo_id) return evento;
   try {
     const definicion = await obtenerDefinicionEvento(evento.id);
     return {
@@ -96,12 +99,13 @@ export interface FinalizacionApi {
 
 export interface ConversacionApi {
   _id: string;
+  nodo_id?: string;
   titulo: string;
   imagen: string;
   requisitos: { personajeId: string }[];
   frases: { personajeId: string; texto: string }[];
   decisiones: {
-    opcion: number;
+    opcion: number | string;
     texto: string;
     resultado_texto: string;
     impacto_afinidad: { personaje_id: string; delta: number }[];
@@ -119,6 +123,69 @@ export interface EstadoPartida {
   resultado_actual?: ResultadoApi | null;
   conversacion_actual?: ConversacionApi | null;
   finalizacion?: FinalizacionApi | null;
+  grafo_actual?: EstadoGrafoApi | null;
+}
+
+export interface EstadoGrafoApi {
+  fase_actual: string;
+  grafo_id: string;
+  tipo: 'evento' | 'conversacion' | 'evento_especial';
+  titulo: string;
+  imagen: string;
+  nodo_actual: {
+    id: string;
+    hablante_id: string;
+    texto: string;
+    imagen?: string | null;
+    es_final: boolean;
+    opciones: { id: string; texto: string; disponible: boolean; motivo_bloqueo?: string | null }[];
+    resultado_texto: string;
+    impactos_recursos: { recurso: string; delta: number }[];
+    impactos_afinidad: { personaje_id: string; delta: number }[];
+    impactos_tags: string[];
+  };
+  recursos?: Record<string, number> | null;
+  afinidad?: Record<string, number> | null;
+  finalizacion?: FinalizacionApi | null;
+  status: string;
+}
+
+// Conserva las pantallas existentes: cada nodo se presenta como evento, diálogo o resultado.
+function adaptarEstadoGrafo(estado: EstadoPartida): EstadoPartida {
+  const grafo = estado.grafo_actual;
+  if (!grafo) return estado;
+  const nodo = grafo.nodo_actual;
+  const imagen = nodo.imagen || grafo.imagen;
+  const opciones = nodo.opciones.filter(opcion => opcion.disponible);
+  const base: EstadoPartida = {
+    ...estado, evento_actual: null, conversacion_actual: null, resultado_actual: null,
+    recursos: grafo.recursos ?? estado.recursos, afinidad: grafo.afinidad ?? estado.afinidad,
+    finalizacion: grafo.finalizacion ?? estado.finalizacion,
+  };
+  if (nodo.es_final) return {
+    ...base,
+    resultado_actual: {
+      titulo: grafo.titulo, texto: [nodo.texto, nodo.resultado_texto].filter(Boolean).join('\n\n'),
+      imagen, tipo_resultado: 'neutro',
+      efectos: nodo.impactos_recursos.map(({ recurso, delta }) => ({ accion: { clave: recurso, valor: delta } })),
+    },
+  };
+  if (grafo.tipo === 'conversacion') return {
+    ...base,
+    conversacion_actual: {
+      _id: grafo.grafo_id, nodo_id: nodo.id, titulo: grafo.titulo, imagen,
+      requisitos: [{ personajeId: nodo.hablante_id }],
+      frases: [{ personajeId: nodo.hablante_id, texto: nodo.texto }],
+      decisiones: opciones.map(opcion => ({ opcion: opcion.id, texto: opcion.texto, resultado_texto: '', impacto_afinidad: [] })),
+    },
+  };
+  return {
+    ...base,
+    evento_actual: {
+      id: grafo.grafo_id, nodo_id: nodo.id, titulo: grafo.titulo, descripcion: nodo.texto, imagen,
+      opciones: opciones.map(opcion => ({ id: opcion.id, texto: opcion.texto, bloqueada: false })),
+    },
+  };
 }
 
 export interface HistorialMesApi {
@@ -189,7 +256,7 @@ export interface PreferenciaConversacion {
 
 // Una vez activado el respaldo, conserva esa partida local hasta terminar o reiniciar.
 // No reenvia al servidor las decisiones tomadas en la demostracion.
-async function request<T>(path: string, options?: RequestInit) {
+async function request<T>(path: string, options?: RequestInit, permitirRespaldo = true) {
   const date = new URL(path, API).searchParams.get('date') ||
     (typeof options?.body === 'string' ? JSON.parse(options.body).date : '');
   const respaldo = () => resolverRespaldoNarrativo(path, options, store.getState().narrativoSelection) as T;
@@ -197,10 +264,10 @@ async function request<T>(path: string, options?: RequestInit) {
     if (path === '/partida/reiniciar') fechasLocales.delete(date);
     return data;
   };
-  if (esPartidaNarrativaLocal(date)) return completar(respaldo());
+  if (permitirRespaldo && esPartidaNarrativaLocal(date)) return completar(respaldo());
 
   const controller = new AbortController();
-  const timeout = HABILITAR_FALLBACK_NARRATIVO ? setTimeout(() => controller.abort(), ESPERA_SERVIDOR_MS) : undefined;
+  const timeout = HABILITAR_FALLBACK_NARRATIVO && permitirRespaldo ? setTimeout(() => controller.abort(), ESPERA_SERVIDOR_MS) : undefined;
   try {
     const token = localStorage.getItem('token');
     const response = await fetch(`${API}${path}`, {
@@ -216,7 +283,7 @@ async function request<T>(path: string, options?: RequestInit) {
     return completar(await response.json() as T);
   } catch (error) {
     // Los errores de autenticacion, validacion o conflicto siguen visibles con su mensaje real.
-    if (!HABILITAR_FALLBACK_NARRATIVO || (error instanceof ErrorServidorNarrativo && error.status < 500 && error.status !== 404)) throw error;
+    if (!permitirRespaldo || !HABILITAR_FALLBACK_NARRATIVO || (error instanceof ErrorServidorNarrativo && error.status < 500 && error.status !== 404)) throw error;
     const data = respaldo();
     fechasLocales.add(date);
     return completar(data);
@@ -229,7 +296,7 @@ async function request<T>(path: string, options?: RequestInit) {
 export const obtenerSetup = (date: string) => request<SetupPartida>(`/partida/setup?date=${date}`);
 
 // Lee solo el contenido de la fase activa para reanudar una partida existente.
-export const obtenerEstadoPartida = (date: string) => request<EstadoPartida>(`/v2/partida/estado?date=${date}`);
+export const obtenerEstadoPartida = (date: string) => request<EstadoPartida>(`/v2/partida/estado?date=${date}`).then(adaptarEstadoGrafo);
 
 // Lee el historial mensual solo al abrir las estadisticas finales.
 export const obtenerHistorialPartida = (date: string) => request<HistorialPartidaApi>(`/partida/historial?date=${date}`);
@@ -285,7 +352,19 @@ export const iniciarPartida = (date: string, corte: string[], cartas: string[]) 
 // Pide el evento generado por la carta mensual elegida.
 export const elegirCartaMensual = (date: string, cartaId: string) => request<EstadoPartida>('/v2/partida/elegir-carta-mes', {
   method: 'POST', body: JSON.stringify({ date, carta_id: cartaId }),
-});
+}).then(adaptarEstadoGrafo);
+
+// Eventos y conversaciones del motor de grafos usan el mismo endpoint e IDs de opción.
+export const avanzarNodo = async (date: string, opcionId: string, grafoAnteriorId: string): Promise<EstadoPartida> => {
+  const grafo = await request<EstadoGrafoApi>('/v2/partida/avanzar-nodo', {
+    method: 'POST', body: JSON.stringify({ date, opcion_id: opcionId }),
+  }, false);
+  // Al encadenar otro grafo la respuesta omite los impactos del anterior.
+  if (grafo.grafo_id !== grafoAnteriorId) {
+    return adaptarEstadoGrafo(await request<EstadoPartida>(`/v2/partida/estado?date=${date}`, undefined, false));
+  }
+  return adaptarEstadoGrafo({ grafo_actual: grafo, fase_actual: grafo.fase_actual });
+};
 
 // Pide el resultado, la conversacion o la finalizacion del evento.
 export const decidirEvento = (date: string, opcionId: string, preferenciaConversacion?: PreferenciaConversacion) => request<EstadoPartida>('/v2/partida/decidir-evento', {
@@ -299,7 +378,7 @@ export const decidirEvento = (date: string, opcionId: string, preferenciaConvers
 });
 
 // Registra la mediacion elegida y cierra la conversacion.
-export const responderConversacion = (date: string, opcionNumero: number) => request<EstadoPartida>('/v2/partida/responder-conversacion', {
+export const responderConversacion = (date: string, opcionNumero: number | string) => request<EstadoPartida>('/v2/partida/responder-conversacion', {
   method: 'POST', body: JSON.stringify({ date, opcion_numero: opcionNumero }),
 });
 

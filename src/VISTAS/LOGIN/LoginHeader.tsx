@@ -4,6 +4,9 @@ import { IonHeader, IonToolbar, IonIcon } from '@ionic/react';
 import { logInOutline, logOutOutline } from 'ionicons/icons';
 import { FlameIcon, StarIcon } from '../COMPONENTS/Icons/Icons';
 import { AuthModal } from './AuthModal';
+import './loginHeader.css';
+import { usePlayerEconomy } from '../../context/PlayerEconomyContext';
+import { IconHeart } from '../COMPONENTS/GameHeader/LivesBadge';
 
 export interface Usuario {
   id: number;
@@ -26,6 +29,9 @@ const color = {
 
 interface LoginHeaderProps {
   onUsuarioChange?: (user: Usuario | null) => void;
+  title?: string;
+  onBack?: () => void;
+  primaryColor?: string;
 }
 
 function getGreeting(): string {
@@ -35,7 +41,8 @@ function getGreeting(): string {
   return '¡Buenas noches!';
 }
 
-export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange }) => {
+export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title, onBack, primaryColor = color.blue }) => {
+  const economy = usePlayerEconomy();
   const [usuario, setUsuario] = useState<Usuario | null>(() => {
     try {
       const saved = localStorage.getItem('usuario') || localStorage.getItem('user');
@@ -80,9 +87,9 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange }) => 
     <IonHeader style={{ boxShadow: '0 2px 10px rgba(23, 59, 99, 0.12)' }}>
       <IonToolbar style={{ '--background': '#FFFFFF', '--border-width': 0 } as CSSProperties}>
         <div
+          className={`login-header-layout${title ? ' login-header-layout--titled' : ''}`}
           style={{
             alignItems: 'center',
-            display: 'flex',
             justifyContent: 'space-between',
             margin: '0 auto',
             maxWidth: 1180,
@@ -94,11 +101,14 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange }) => 
         >
           {/* Identidad ASISTODO y Saludo */}
           <div style={{ alignItems: 'center', display: 'flex', gap: 12, minWidth: 0 }}>
-            <img
+            {onBack ? <button type="button" onClick={onBack} aria-label="Volver al menú principal"
+              className="login-header-home" title="Volver al menú principal">
+              <img alt="ASISTODO" src="/asistodo-logo.svg" style={{ height: 42, width: 42 }} />
+            </button> : <img
               alt="ASISTODO"
               src="/asistodo-logo.svg"
               style={{ height: 42, width: 42, flexShrink: 0 }}
-            />
+            />}
             <div style={{ minWidth: 0 }}>
               {usuario ? (
                 /* Con sesión: ¡Hola, [Nombre]! */
@@ -155,7 +165,17 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange }) => 
             </div>
           </div>
 
-          {/* Lado derecho: Sesión activa (Racha + Puntos + Salir) ó Botón Iniciar Sesión */}
+          {title && <h1 className="login-header-title" style={{ color: primaryColor }}>{title}</h1>}
+
+          <div className="login-header-actions">
+          <button type="button" onClick={economy.abrirMiniTienda}
+            className="login-header-lives" title="Vidas restantes. Hacé clic para abrir la Tienda de Vidas.">
+            <IconHeart filled={economy.vidas > 0} size={16} />
+            <span>{economy.vidas}</span>
+            <span className="hidden sm:inline">{economy.vidas === 1 ? 'vida' : 'vidas'}</span>
+            <span className="login-header-lives-plus" aria-hidden="true">+</span>
+          </button>
+          {/* Las mismas acciones y el mismo saldo de vidas en menú y calendarios. */}
           {usuario ? (
             <div
               style={{
@@ -258,6 +278,7 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange }) => 
               <span>Iniciar sesión</span>
             </button>
           )}
+          </div>
         </div>
       </IonToolbar>
 
