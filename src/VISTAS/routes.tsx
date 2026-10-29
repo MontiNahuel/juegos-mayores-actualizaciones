@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useSearchParams } from 'react-router-dom';
 import Menu from './MENU/Menu';
 import WordleCalendar from './JUEGOS/WORDLE/WordleCalendar';
@@ -11,7 +12,7 @@ import CrucigramaGame from './JUEGOS/CRUCIGRAMA/CrucigramaGame';
 import KingsCourtCalendar from './JUEGOS/NARRATIVO/KingsCourtCalendar';
 import KingsCourt from './JUEGOS/NARRATIVO/KingsCourt';
 import { AccesoToken } from './LOGIN/AccesoToken';
-import NarrativoAdminPage from './ADMIN/NarrativoAdminPage';
+const NarrativoAdminPage = lazy(() => import('./ADMIN/NarrativoAdminPage'));
 
 // Intercepta token en /menu para iniciar sesión de inmediato en vez de quedar como invitado
 const MenuWrapper = () => {
@@ -50,7 +51,14 @@ const AppRoutes = () => (
       <Route path="/juegos/kings-court/jugar" element={<KingsCourt />} />
       {/* Redirección automática silenciosa de /admin/narrativo hacia el menú */}
       <Route path="/admin/narrativo" element={<Navigate to="/menu" replace />} />
-      <Route path="/editor-narrativo" element={<NarrativoAdminPage />} />
+      <Route
+        path="/editor-narrativo"
+        element={
+          <Suspense fallback={<div className="min-h-screen bg-slate-950 flex items-center justify-center text-amber-400 font-bold">Cargando Editor Narrativo...</div>}>
+            <NarrativoAdminPage />
+          </Suspense>
+        }
+      />
       <Route path="/" element={<RootRedirection />} />
       <Route path="*" element={<RootRedirection />} />
     </Routes>

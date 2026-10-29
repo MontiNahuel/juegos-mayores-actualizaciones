@@ -45,9 +45,14 @@ export default defineConfig(({ mode }) => {
           target: backendUrl,
           changeOrigin: true,
         },
-        '/admin': {
+        '^/admin(/|$)': {
           target: backendUrl,
           changeOrigin: true,
+          bypass: (req) => {
+            if (req.url && (req.url.startsWith('/admin_src') || req.url.includes('admin_src'))) {
+              return req.url;
+            }
+          },
         },
         '/auth': {
           target: backendUrl,
