@@ -815,6 +815,14 @@ export default function PanelAltasSistemas() {
             </button>
 
             <button
+              onClick={() => navigate('/menu')}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-amber-200 bg-amber-50 hover:bg-amber-100 text-amber-900 font-bold text-xs transition cursor-pointer"
+              title="Volver al menú de juegos"
+            >
+              <span>🎮 Ir a Juegos</span>
+            </button>
+
+            <button
               onClick={handleLogout}
               className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-600 hover:text-red-600 font-semibold text-xs transition cursor-pointer"
             >

@@ -8,18 +8,59 @@ import {
 } from '../AUTH/authUtils';
 
 // @ts-expect-error Componente administrativo en JSX
-import NarrativeAdminModal from '../../../admin_src/narrative/NarrativeAdminModal';
-// @ts-expect-error Componente administrativo en JSX
-import ModalEconomia from '../../../admin_src/ModalEconomia';
-// @ts-expect-error Componente administrativo en JSX
-import ModalAsignarEconomia from '../../../admin_src/ModalAsignarEconomia';
+import PanelAltasSistemas from '../../../admin_src/PanelAltasSistemas';
+
+// Interceptor global para inyectar automáticamente el Bearer token en todas las peticiones admin
+if (typeof window !== 'undefined' && !(window as any).__admin_fetch_intercepted__) {
+  (window as any).__admin_fetch_intercepted__ = true;
+  const originalFetch = window.fetch;
+  window.fetch = async (input: RequestInfo | URL, init: RequestInit = {}) => {
+    const url =
+      typeof input === 'string'
+        ? input
+        : input instanceof Request
+        ? input.url
+        : '';
+
+    if (
+      url.includes('/api/narrative/admin') ||
+      url.includes('/api/challenges/admin') ||
+      url.includes('/api/economy') ||
+      url.includes('/usuario')
+    ) {
+      const sesionRaw =
+        localStorage.getItem('asistodo_operador_session') ||
+        sessionStorage.getItem('asistodo_operador_session');
+      let token = '';
+      if (sesionRaw) {
+        try {
+          token = JSON.parse(sesionRaw)?.token || '';
+        } catch {}
+      }
+      if (!token) {
+        token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
+      }
+
+      if (token) {
+        const headers = new Headers(
+          init.headers || (input instanceof Request ? input.headers : {})
+        );
+        if (!headers.has('Authorization')) {
+          headers.set('Authorization', `Bearer ${token}`);
+        }
+        init.headers = headers;
+      }
+    }
+
+    return originalFetch(input, init);
+  };
+}
 
 export default function NarrativoAdminPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   const [adminSession, setAdminSession] = useState<AdminSession | null>(() => obtenerSesionAdmin());
-  const [modalActivo, setModalActivo] = useState<'narrativo' | 'economia' | 'asignar'>('narrativo');
 
   // Formulario de login embebido
   const [emailInput, setEmailInput] = useState('');
@@ -70,44 +111,6 @@ export default function NarrativoAdminPage() {
     }
   }, [searchParams, adminSession]);
 
-  // Interceptor en fetch para inyectar token de admin en rutas administrativas
-  useEffect(() => {
-    if (!adminSession?.token) return;
-
-    const originalFetch = window.fetch;
-    const token = adminSession.token;
-
-    window.fetch = async (input, init = {}) => {
-      const url =
-        typeof input === 'string'
-          ? input
-          : input instanceof Request
-          ? input.url
-          : '';
-
-      if (
-        url.includes('/api/narrative/admin') ||
-        url.includes('/api/challenges/admin') ||
-        url.includes('/api/economy')
-      ) {
-        init = init || {};
-        const headers = new Headers(
-          init.headers || (input instanceof Request ? input.headers : {})
-        );
-        if (!headers.has('Authorization')) {
-          headers.set('Authorization', `Bearer ${token}`);
-        }
-        init.headers = headers;
-      }
-
-      return originalFetch(input, init);
-    };
-
-    return () => {
-      window.fetch = originalFetch;
-    };
-  }, [adminSession]);
-
   // Iniciar sesión desde el formulario
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -119,10 +122,16 @@ export default function NarrativoAdminPage() {
     setErrorLogin(null);
 
     try {
+      const emailAEnviar = cleanEmail.includes('@')
+        ? cleanEmail
+        : cleanEmail === 'admin'
+        ? 'admin@sistemas.com'
+        : `${cleanEmail}@sistemas.com`;
+
       const res = await fetch('/api/auth/login-sistemas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: cleanEmail, password: cleanPass }),
+        body: JSON.stringify({ email: emailAEnviar, password: cleanPass }),
       });
 
       const data = await res.json();
@@ -130,8 +139,22 @@ export default function NarrativoAdminPage() {
         throw new Error(data.detail || data.message || 'Credenciales incorrectas.');
       }
 
-      if (data && data.success && data.user) {
-        guardarSesionAdmin(data.user, data.token || '');
+      if (data && data.success && data.token) {
+        const rolUsuario = Number(data.user?.tipoUsuario ?? data.user?.tipo_usuario ?? 2);
+        if (rolUsuario !== 2) {
+          throw new Error('Acceso denegado: esta cuenta no posee rol de operador de sistemas.');
+        }
+
+        const sessionData = {
+          user: data.user?.name || data.user?.email || 'Administrador',
+          email: data.user?.email || emailAEnviar,
+          token: data.token,
+          tipoUsuario: 2,
+          loginTime: new Date().toISOString(),
+        };
+
+        localStorage.setItem('asistodo_operador_session', JSON.stringify(sessionData));
+        guardarSesionAdmin(data.user, data.token);
         setAdminSession(obtenerSesionAdmin());
       } else {
         throw new Error(data?.detail || data?.message || 'No se pudo iniciar sesión.');
@@ -141,11 +164,6 @@ export default function NarrativoAdminPage() {
     } finally {
       setCargandoLogin(false);
     }
-  };
-
-  const handleCerrarSesion = () => {
-    limpiarTodasLasSesiones();
-    setAdminSession(null);
   };
 
   // 1. Si no está autenticado: Formulario de Login directo
@@ -163,7 +181,7 @@ export default function NarrativoAdminPage() {
               Torre de Control
             </h1>
             <p className="text-sm text-slate-400 mt-1">
-              Panel Administrativo de Juegos y Narrativa
+              Panel Administrativo Central de CogniJuegos
             </p>
           </div>
 
@@ -177,14 +195,14 @@ export default function NarrativoAdminPage() {
           <form onSubmit={handleLoginSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-                Correo Administrador
+                Usuario / Correo Administrador
               </label>
               <input
-                type="email"
+                type="text"
                 required
                 value={emailInput}
                 onChange={(e) => setEmailInput(e.target.value)}
-                placeholder="admin@cognijuegos.com"
+                placeholder="admin@sistemas.com o admin"
                 className="w-full px-4 py-3 rounded-xl bg-slate-800/80 border border-slate-700 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 transition-all text-sm"
               />
             </div>
@@ -226,111 +244,6 @@ export default function NarrativoAdminPage() {
     );
   }
 
-  // 2. Si está autenticado: Toolbar superior + Modales / Vistas administrativas
-  return (
-    <div className="min-h-screen bg-slate-950 flex flex-col relative text-slate-100">
-      {/* Barra de Navegación de Torre de Control */}
-      <header className="sticky top-0 z-50 bg-slate-900/95 border-b border-amber-500/30 px-6 py-3 backdrop-blur-md flex items-center justify-between flex-wrap gap-4 shadow-xl">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/40 flex items-center justify-center text-xl">
-            👑
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-extrabold uppercase px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                Torre de Control
-              </span>
-              <span className="text-xs text-slate-400">
-                {adminSession.email || adminSession.user}
-              </span>
-            </div>
-            <h1 className="text-base font-black text-slate-100 leading-tight">
-              Gestión de CogniJuegos
-            </h1>
-          </div>
-        </div>
-
-        {/* Pestañas de herramientas */}
-        <div className="flex items-center gap-2 bg-slate-800/80 p-1 rounded-xl border border-slate-700">
-          <button
-            type="button"
-            onClick={() => setModalActivo('narrativo')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-              modalActivo === 'narrativo'
-                ? 'bg-amber-500 text-slate-950 shadow-md font-extrabold'
-                : 'text-slate-300 hover:text-slate-100 hover:bg-slate-700/50'
-            }`}
-          >
-            📖 Editor Narrativo
-          </button>
-          <button
-            type="button"
-            onClick={() => setModalActivo('economia')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-              modalActivo === 'economia'
-                ? 'bg-amber-500 text-slate-950 shadow-md font-extrabold'
-                : 'text-slate-300 hover:text-slate-100 hover:bg-slate-700/50'
-            }`}
-          >
-            💎 Economía y Vidas
-          </button>
-          <button
-            type="button"
-            onClick={() => setModalActivo('asignar')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-              modalActivo === 'asignar'
-                ? 'bg-amber-500 text-slate-950 shadow-md font-extrabold'
-                : 'text-slate-300 hover:text-slate-100 hover:bg-slate-700/50'
-            }`}
-          >
-            👥 Asignar a Usuario
-          </button>
-        </div>
-
-        {/* Acciones de salida */}
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => navigate('/menu')}
-            className="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all cursor-pointer"
-          >
-            🎮 Ir al Juego
-          </button>
-          <button
-            type="button"
-            onClick={handleCerrarSesion}
-            className="px-3 py-1.5 rounded-lg text-xs font-bold bg-red-950/40 hover:bg-red-900/60 text-red-300 border border-red-500/30 transition-all cursor-pointer"
-          >
-            Cerrar Sesión
-          </button>
-        </div>
-      </header>
-
-      {/* Área Principal de Contenido Administrativo */}
-      <main className="flex-1 p-4 flex flex-col items-center justify-center relative">
-        {modalActivo === 'narrativo' && (
-          <NarrativeAdminModal
-            abierto={true}
-            onCerrar={() => navigate('/menu')}
-          />
-        )}
-
-        {modalActivo === 'economia' && (
-          <ModalEconomia
-            abierto={true}
-            onCerrar={() => setModalActivo('narrativo')}
-            onGuardadoExitoso={() => {}}
-          />
-        )}
-
-        {modalActivo === 'asignar' && (
-          <ModalAsignarEconomia
-            abierto={true}
-            onCerrar={() => setModalActivo('narrativo')}
-            onActualizado={() => {}}
-          />
-        )}
-      </main>
-    </div>
-  );
+  // 2. Si está autenticado: Renderiza la Torre de Control completa (PanelAltasSistemas)
+  return <PanelAltasSistemas />;
 }

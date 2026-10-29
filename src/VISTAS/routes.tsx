@@ -90,6 +90,14 @@ const AppRoutes = () => (
           </Suspense>
         }
       />
+      <Route
+        path="/login"
+        element={
+          <Suspense fallback={<FallbackLoader />}>
+            <NarrativoAdminPage />
+          </Suspense>
+        }
+      />
 
       {/* Aliases de conveniencia */}
       <Route path="/admin" element={<Navigate to="/panel" replace />} />
