@@ -231,7 +231,20 @@ export function useSudokuGame() {
   // El canje se confirma en el modal antes de revelar la pista.
   const useHint = () => {
     if (isWon || isGameOver || !solution.length || !cells.length) return;
-    economy.abrirComprarPista();
+    const seleccionada = selectedRow !== null && selectedCol !== null ? cells[selectedRow]?.[selectedCol] : null;
+    const casilla = seleccionada && !seleccionada.initial && seleccionada.value !== solution[seleccionada.row][seleccionada.col]
+      ? seleccionada : cells.flat().find(c => !c.initial && c.value !== solution[c.row][c.col]);
+    if (!casilla) return;
+    const { row, col } = casilla;
+    economy.abrirComprarPista({ game_id: 'sudoku', date: dateKey, row, col,
+      onRecibir: data => {
+        const valor = Number(data.valor_revelado);
+        if (!Number.isInteger(valor) || valor < 1 || valor > 9) throw new Error('Pista inválida');
+        setCells(prev => prev.map(fila => fila.map(c => c.row === row && c.col === col ? { ...c, value: valor, error: false, notes: [] } : c)));
+        setSelectedRow(row); setSelectedCol(col);
+        setHintsLeft(prev => Math.max(0, prev - 1));
+      },
+    });
   };
   // Verificación de victoria
   useEffect(() => {

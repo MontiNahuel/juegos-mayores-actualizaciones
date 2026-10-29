@@ -50,7 +50,7 @@ export function ModalBase({ isOpen, onClose, labelledBy, children }: ModalBasePr
       onClick={event => { if (event.target === event.currentTarget) onClose(); }}>
       <div ref={panel} role="dialog" aria-modal="true" aria-labelledby={labelledBy} tabIndex={-1}
         onKeyDown={event => event.stopPropagation()}
-        className="max-h-[calc(100dvh-max(12px,env(safe-area-inset-top))-max(12px,env(safe-area-inset-bottom)))] w-full min-w-0 max-w-[480px] overflow-y-auto overscroll-contain rounded-3xl border border-slate-200 bg-white p-4 text-center text-slate-900 shadow-2xl outline-none sm:p-6">
+        className="motion-safe:animate-modal-down max-h-[calc(100dvh-max(12px,env(safe-area-inset-top))-max(12px,env(safe-area-inset-bottom)))] w-full min-w-0 max-w-[480px] overflow-y-auto overscroll-contain rounded-3xl border border-slate-200 bg-white p-4 text-center text-slate-900 shadow-2xl outline-none sm:p-6">
         {children}
       </div>
     </div>, document.body,

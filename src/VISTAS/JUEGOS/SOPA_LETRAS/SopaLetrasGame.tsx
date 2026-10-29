@@ -104,6 +104,7 @@ export const SopaLetrasGame: React.FC = () => {
   // Modales
   const [showVictoryModal, setShowVictoryModal] = useState<boolean>(false);
   const [showHintModal, setShowHintModal] = useState<boolean>(false);
+  const [pistasCompradas, setPistasCompradas] = useState<Record<number, string>>({});
   const [justFoundWord, setJustFoundWord] = useState<string | null>(null);
   const [justFoundCells, setJustFoundCells] = useState<Set<string>>(new Set());
 
@@ -497,7 +498,16 @@ export const SopaLetrasGame: React.FC = () => {
           badges={<LivesBadge lives={lives} maxLives={MAX_LIVES} />}
           rightAction={
             <button
-              onClick={economy.abrirComprarPista}
+              onClick={() => {
+                const indice = targetWords.findIndex((word, idx) => !foundWords.includes(word) && !pistasCompradas[idx]);
+                if (indice < 0) { setShowHintModal(true); return; }
+                economy.abrirComprarPista({ game_id: 'sopa_letras', date: dateStrKey, hint_index: indice,
+                  onRecibir: data => {
+                    setPistasCompradas(prev => ({ ...prev, [indice]: data.pista || 'Sin texto de pista.' }));
+                    setShowHintModal(true);
+                  },
+                });
+              }}
               style={{
                 alignItems: 'center',
                 background: '#F4F6F9',
@@ -847,6 +857,7 @@ export const SopaLetrasGame: React.FC = () => {
                 }}
               >
                 {targetWords.map((word, idx) => {
+                  if (!pistasCompradas[idx]) return null;
                   const isFound = foundWords.includes(word);
                   return (
                     <div
@@ -881,7 +892,7 @@ export const SopaLetrasGame: React.FC = () => {
                         </span>
                       </div>
                       <p style={{ color: '#64748B', fontSize: 12, margin: 0 }}>
-                        {hints[idx] || `Palabra de ${word.length} letras`}
+                        {pistasCompradas[idx]}
                       </p>
                     </div>
                   );

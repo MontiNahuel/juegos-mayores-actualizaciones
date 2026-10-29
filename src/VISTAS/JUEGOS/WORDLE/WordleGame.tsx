@@ -149,6 +149,7 @@ const WordleGame: React.FC = () => {
   const [message, setMessage] = useState<string | null>(null);
   const [showHint, setShowHint] = useState<boolean>(false);
   const [hintIndex, setHintIndex] = useState<number>(0);
+  const [pistaComprada, setPistaComprada] = useState('');
   const [showEndModal, setShowEndModal] = useState<boolean>(false);
   const [showColorGuideModal, setShowColorGuideModal] = useState<boolean>(false);
 
@@ -287,11 +288,6 @@ const WordleGame: React.FC = () => {
         attempts: newGuesses.length,
       });
 
-      if (newGuesses.length === 3 && !showHint) {
-        setShowHint(true);
-        setHintIndex(0);
-      }
-
       return;
     }
 
@@ -326,6 +322,7 @@ const WordleGame: React.FC = () => {
     setMessage(null);
     setShowHint(false);
     setHintIndex(0);
+    setPistaComprada('');
   };
 
   // Mapa de estados de letras para colorear teclas
@@ -437,7 +434,7 @@ const WordleGame: React.FC = () => {
                   Adiviná la palabra de 5 letras
                 </p>
                 <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                  {showHint ? hints[hintIndex] : 'Tocá la bombilla para ver una pista'}
+                  {showHint ? pistaComprada : 'Tocá la bombilla para ver una pista'}
                 </p>
               </div>
               <div className="flex items-center gap-1.5 sm:gap-2">
@@ -451,7 +448,16 @@ const WordleGame: React.FC = () => {
                   <span>Colores</span>
                 </button>
                 <button
-                  onClick={abrirComprarPista}
+                  onClick={() => {
+                    if (gameStatus !== 'playing') return;
+                    abrirComprarPista({ game_id: 'wordle', date: dateStrKey, hint_index: hintIndex,
+                      onRecibir: data => {
+                        setPistaComprada(data.pista || 'Sin texto de pista.');
+                        setShowHint(true);
+                        setHintIndex(indice => (indice + 1) % hints.length);
+                      },
+                    });
+                  }}
                   className="flex items-center gap-1 bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-bold px-2.5 py-1 rounded-lg border border-amber-300 transition-colors"
                   title="Pistas"
                 >

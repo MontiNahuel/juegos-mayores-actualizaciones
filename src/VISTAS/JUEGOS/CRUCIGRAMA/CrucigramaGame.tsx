@@ -305,7 +305,7 @@ export const CrucigramaGame: React.FC = () => {
 
   // 7. Ingreso de letras y borrado (Opción B: Validación al completar palabra)
   const handleInputChar = useCallback(
-    (char: string) => {
+    (char: string, esPista = false) => {
       if (isWon || isGameOver || !cells.length) return;
       const upper = char.toUpperCase();
 
@@ -344,7 +344,7 @@ export const CrucigramaGame: React.FC = () => {
                   return next;
                 });
               }
-            } else {
+            } else if (!esPista) {
               // Palabra incorrecta completada
               if (!failedWordIds.has(activeWord.id)) {
                 try {
@@ -562,14 +562,15 @@ export const CrucigramaGame: React.FC = () => {
       setTimeout(() => setHintMessage(null), 2000);
       return;
     }
-    const correct = targetCell.letter;
-    if (correct) {
-      handleInputChar(correct);
-      setRevealedCellCoord({ r: selectedRow, c: selectedCol });
-      setTimeout(() => {
-        setRevealedCellCoord(null);
-      }, 1100);
-    }
+    if (userGrid[selectedRow]?.[selectedCol] === targetCell.letter) return;
+    economy.abrirComprarPista({ game_id: 'crucigrama', date: targetDate, row: selectedRow, col: selectedCol,
+      onRecibir: data => {
+        if (typeof data.valor_revelado !== 'string' || data.valor_revelado.length !== 1) throw new Error('Pista inválida');
+        handleInputChar(data.valor_revelado, true);
+        setRevealedCellCoord({ r: selectedRow, c: selectedCol });
+        setTimeout(() => setRevealedCellCoord(null), 1100);
+      },
+    });
   };
 
   return (
@@ -975,7 +976,7 @@ export const CrucigramaGame: React.FC = () => {
 
             <button
               type="button"
-              onClick={economy.abrirComprarPista}
+              onClick={handleRevealCell}
               style={{
                 background: '#FEF3C7',
                 border: '1px solid #FCD34D',

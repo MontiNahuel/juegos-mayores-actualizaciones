@@ -1,5 +1,10 @@
 import { API_URL } from '../config/api';
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { ErrorPista, pedirPistaConVida, type SolicitudPista, type RespuestaPista } from '../services/pistasService';
+
+export interface CompraPista extends SolicitudPista {
+  onRecibir: (pista: RespuestaPista) => void;
+}
 
 export interface TiendaPaquete {
   id: string;
@@ -25,7 +30,8 @@ export interface PlayerEconomyContextType {
   isLoading: boolean;
   isMiniTiendaOpen: boolean;
   isComprarPistaOpen: boolean;
-  abrirComprarPista: () => void;
+  abrirComprarPista: (solicitud: CompraPista) => void;
+  comprarPista: () => Promise<void>;
   cerrarComprarPista: () => void;
   abrirMiniTienda: () => void;
   cerrarMiniTienda: () => void;
@@ -57,7 +63,7 @@ const PlayerEconomyContext = createContext<PlayerEconomyContextType | undefined>
 
 function getAuthToken(): string | null {
   try {
-    return localStorage.getItem('token');
+    return localStorage.getItem('token') || sessionStorage.getItem('token');
   } catch {
     return null;
   }
@@ -76,8 +82,40 @@ export const PlayerEconomyProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isMiniTiendaOpen, setIsMiniTiendaOpen] = useState<boolean>(false);
   const [isComprarPistaOpen, setIsComprarPistaOpen] = useState(false);
-  const abrirComprarPista = useCallback(() => { setIsMiniTiendaOpen(false); setIsComprarPistaOpen(true); }, []);
-  const cerrarComprarPista = useCallback(() => setIsComprarPistaOpen(false), []);
+  const [solicitudPista, setSolicitudPista] = useState<CompraPista | null>(null);
+  const comprandoPista = useRef(false);
+  const abrirComprarPista = useCallback((solicitud: CompraPista) => {
+    if (comprandoPista.current) return;
+    setSolicitudPista(solicitud); setIsMiniTiendaOpen(false); setIsComprarPistaOpen(true);
+  }, []);
+  const cerrarComprarPista = useCallback(() => {
+    if (comprandoPista.current) return;
+    setIsComprarPistaOpen(false); setSolicitudPista(null);
+  }, []);
+
+  const comprarPista = useCallback(async () => {
+    if (!solicitudPista || comprandoPista.current) return;
+    comprandoPista.current = true;
+    const { onRecibir, ...solicitud } = solicitudPista;
+    try {
+      const resultado = await pedirPistaConVida(solicitud);
+      setVidas(resultado.vidas_restantes);
+      for (const clave of ['usuario', 'user']) {
+        try {
+          const raw = localStorage.getItem(clave);
+          if (raw) localStorage.setItem(clave, JSON.stringify({ ...JSON.parse(raw), vidas: resultado.vidas_restantes }));
+        } catch { /* El saldo visible sigue confirmado por el servidor. */ }
+      }
+      window.dispatchEvent(new Event('user_progress_updated'));
+      onRecibir(resultado);
+      setIsComprarPistaOpen(false); setSolicitudPista(null);
+    } catch (error) {
+      if (error instanceof ErrorPista && error.status === 400) {
+        setIsComprarPistaOpen(false); setSolicitudPista(null); setIsMiniTiendaOpen(true);
+      }
+      throw error;
+    } finally { comprandoPista.current = false; }
+  }, [solicitudPista]);
 
   const abrirMiniTienda = useCallback(() => setIsMiniTiendaOpen(true), []);
   const cerrarMiniTienda = useCallback(() => setIsMiniTiendaOpen(false), []);
@@ -397,6 +435,7 @@ export const PlayerEconomyProvider: React.FC<{ children: React.ReactNode }> = ({
         isMiniTiendaOpen,
         isComprarPistaOpen,
         abrirComprarPista,
+        comprarPista,
         cerrarComprarPista,
         abrirMiniTienda,
         cerrarMiniTienda,
