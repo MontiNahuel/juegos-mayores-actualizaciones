@@ -9,10 +9,13 @@ import {
   mailOutline,
   refreshOutline,
   pencilOutline,
+  shieldCheckmarkOutline,
+  arrowBackOutline,
 } from 'ionicons/icons';
 import type { Usuario } from './LoginHeader';
 import { migrateGuestProgressToNewUser } from '../JUEGOS/attemptsService';
 import { API_URL } from '../../config/api';
+import { guardarSesionAdmin } from '../AUTH/authUtils';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -21,9 +24,10 @@ interface AuthModalProps {
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => {
-  const [tab, setTab] = useState<'register' | 'code'>('register');
+  const [tab, setTab] = useState<'register' | 'code' | 'admin'>('register');
 
-  // Estado pestaña Código
+  // Estado pestaña Código / Acceso Alumno
+  const [codeEmailInput, setCodeEmailInput] = useState('');
   const [codigoInput, setCodigoInput] = useState('');
   const [loadingCode, setLoadingCode] = useState(false);
   const [errorCode, setErrorCode] = useState<string | null>(null);
@@ -42,6 +46,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const [resendCooldown, setResendCooldown] = useState(0);
 
+  // Estado pestaña Administrador
+  const [adminEmailInput, setAdminEmailInput] = useState('');
+  const [adminPasswordInput, setAdminPasswordInput] = useState('');
+  const [loadingAdmin, setLoadingAdmin] = useState(false);
+  const [errorAdmin, setErrorAdmin] = useState<string | null>(null);
+
   // Pantalla de éxito post-registro con código asignado
   const [registeredUser, setRegisteredUser] = useState<Usuario | null>(null);
 
@@ -56,11 +66,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
 
   if (!isOpen) return null;
 
-  // 1. Ingreso con código
+  // 1. Ingreso con correo y clave de 6 dígitos
   const handleLoginCode = async (e: React.FormEvent) => {
     e.preventDefault();
+    const cleanEmail = codeEmailInput.trim().toLowerCase();
     const cleanCode = codigoInput.trim();
-    if (!cleanCode) return;
+
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      setErrorCode('Por favor, ingresá un correo electrónico válido.');
+      return;
+    }
+    if (!cleanCode) {
+      setErrorCode('Por favor, ingresá tu clave de 6 dígitos.');
+      return;
+    }
 
     setLoadingCode(true);
     setErrorCode(null);
@@ -69,7 +88,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
       const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ codigo: cleanCode }),
+        body: JSON.stringify({ email: cleanEmail, codigo: cleanCode }),
       });
       return await res.json();
     };
@@ -78,15 +97,25 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
       const data = await tryFetch(`${API_URL}/api/auth/ingresar-codigo`);
 
       if (data && data.success && data.user) {
-        localStorage.setItem('usuario', JSON.stringify(data.user));
-        if (data.token) {
-          localStorage.setItem('token', data.token);
+        const tipo = Number(data.user.tipoUsuario ?? data.user.tipo_usuario ?? data.user.rol ?? 1);
+        if (tipo === 2) {
+          guardarSesionAdmin(data.user, data.token || '');
+        } else {
+          localStorage.removeItem('asistodo_operador_session');
+          sessionStorage.removeItem('asistodo_operador_session');
+          localStorage.setItem('usuario', JSON.stringify(data.user));
+          localStorage.setItem('user', JSON.stringify(data.user));
+          if (data.token) {
+            localStorage.setItem('token', data.token);
+          }
+          window.dispatchEvent(new Event('user_progress_updated'));
         }
+        setCodeEmailInput('');
         setCodigoInput('');
         onSuccess(data.user);
         onClose();
       } else {
-        setErrorCode(data?.detail || data?.message || 'Código no válido. Revisá los dígitos ingresados.');
+        setErrorCode(data?.detail || data?.message || 'Correo o clave de 6 dígitos no válida. Revisá los datos ingresados.');
       }
     } catch {
       setErrorCode('No se pudo conectar con el servidor. Revisá tu conexión.');
@@ -95,7 +124,54 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
     }
   };
 
-  // 2. Registro: Paso 1 - Enviar Nombre y Email
+  // 2. Ingreso como Administrador con Correo y Contraseña
+  const handleLoginAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanEmail = adminEmailInput.trim().toLowerCase();
+    const cleanPassword = adminPasswordInput.trim();
+    if (!cleanEmail || !cleanPassword) return;
+
+    setLoadingAdmin(true);
+    setErrorAdmin(null);
+
+    try {
+      const res = await fetch(`${API_URL}/api/auth/login-sistemas`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: cleanEmail,
+          password: cleanPassword,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.detail || data.message || 'Credenciales de administrador incorrectas.');
+      }
+
+      if (data && data.success && data.user) {
+        const tipo = Number(data.user.tipoUsuario ?? data.user.tipo_usuario ?? data.user.rol ?? 2);
+        if (tipo !== 2) {
+          throw new Error('Acceso denegado: Se requieren permisos de administrador.');
+        }
+
+        guardarSesionAdmin(data.user, data.token || '');
+        setAdminEmailInput('');
+        setAdminPasswordInput('');
+        onSuccess(data.user);
+        onClose();
+      } else {
+        throw new Error(data?.detail || data?.message || 'No se pudo iniciar sesión.');
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Error al conectar con el servidor.';
+      setErrorAdmin(msg);
+    } finally {
+      setLoadingAdmin(false);
+    }
+  };
+
+  // 3. Registro: Paso 1 - Enviar Nombre y Email
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanName = nameInput.trim();
@@ -151,14 +227,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
       } else {
         setErrorRegister(data?.detail || data?.message || 'No se pudo registrar la cuenta.');
       }
-    } catch (err: any) {
-      setErrorRegister(err.message || 'Error al conectar con el servidor.');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Error al conectar con el servidor.';
+      setErrorRegister(msg);
     } finally {
       setLoadingRegister(false);
     }
   };
 
-  // 3. Registro: Paso 2 - Confirmar código de 6 dígitos recibido por correo
+  // 4. Registro: Paso 2 - Confirmar código de 6 dígitos recibido por correo
   const handleVerifyCode = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanCode = verifyCodeInput.trim();
@@ -187,30 +264,28 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
       const data = await tryVerify(`${API_URL}/api/auth/verificar-codigo-registro`);
 
       if (data && data.success && data.user) {
-        // Guardar sesión activa
         localStorage.setItem('usuario', JSON.stringify(data.user));
         if (data.token) {
           localStorage.setItem('token', data.token);
         }
 
-        // Migrar partidas previas de invitado
         if (data.user.id) {
           await migrateGuestProgressToNewUser(data.user.id);
         }
 
-        // Mostrar pantalla de bienvenida confirmando su código permanente
         setRegisteredUser(data.user);
       } else {
         setErrorVerify(data?.detail || data?.message || 'Código incorrecto. Revisá el correo que recibiste.');
       }
-    } catch (err: any) {
-      setErrorVerify(err.message || 'Error al verificar el código.');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Error al verificar el código.';
+      setErrorVerify(msg);
     } finally {
       setLoadingVerify(false);
     }
   };
 
-  // 4. Reenviar código al correo pendiente
+  // 5. Reenviar código al correo pendiente
   const handleResendCode = async () => {
     if (resendCooldown > 0 || loadingResend || !pendingEmail) return;
 
@@ -233,17 +308,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
 
     try {
       const data = await tryResend(`${API_URL}/api/auth/reenviar-codigo-registro`);
-
       setResendCooldown(60);
       setInfoMessage(data?.message || `Código reenviado con éxito a ${pendingEmail}`);
-    } catch (err: any) {
-      setErrorVerify(err.message || 'Error al reenviar el correo.');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Error al reenviar el correo.';
+      setErrorVerify(msg);
     } finally {
       setLoadingResend(false);
     }
   };
 
-  // 5. Corregir email (volver al paso 1 manteniendo el nombre)
+  // 6. Corregir email (volver al paso 1 manteniendo el nombre)
   const handleBackToEditEmail = () => {
     setRegisterStep('form');
     setErrorRegister(null);
@@ -303,9 +378,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
               margin: 0,
             }}
           >
-            {registeredUser ? '¡Cuenta creada!' : 'Acceso a la plataforma'}
+            {registeredUser
+              ? '¡Cuenta creada!'
+              : tab === 'admin'
+              ? 'Acceso Administrador'
+              : 'Acceso a la plataforma'}
           </h2>
           <button
+            type="button"
             onClick={onClose}
             style={{
               alignItems: 'center',
@@ -395,10 +475,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
             </div>
 
             <p style={{ color: '#64748B', fontSize: 12, margin: '0 0 20px' }}>
-              Anotá este código en un lugar seguro. Con él vas a poder ingresar fácilmente desde cualquier celular o computadora.
+              Anotá este código en un lugar seguro. Con tu correo y este código vas a poder ingresar fácilmente desde cualquier celular o computadora.
             </p>
 
             <button
+              type="button"
               onClick={handleFinishRegister}
               style={{
                 background: '#294C6B',
@@ -417,66 +498,68 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
             </button>
           </div>
         ) : (
-          /* Caso 2: Pestañas de Ingreso / Registro */
+          /* Caso 2: Pestañas de Ingreso / Registro / Admin */
           <>
-            {/* Selector de pestañas */}
-            <div
-              style={{
-                background: '#F1F5F9',
-                borderRadius: 14,
-                display: 'grid',
-                gap: 4,
-                gridTemplateColumns: '1fr 1fr',
-                padding: 4,
-                marginBottom: 18,
-              }}
-            >
-              <button
-                type="button"
-                onClick={() => setTab('register')}
+            {/* Selector de pestañas para Alumnos */}
+            {tab !== 'admin' && (
+              <div
                 style={{
-                  alignItems: 'center',
-                  background: tab === 'register' ? '#294C6B' : 'transparent',
-                  border: 'none',
-                  borderRadius: 10,
-                  color: tab === 'register' ? '#FFFFFF' : '#475569',
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  fontSize: 13,
-                  fontWeight: 800,
-                  gap: 6,
-                  justifyContent: 'center',
-                  padding: '9px 10px',
-                  transition: 'all 0.15s ease',
+                  background: '#F1F5F9',
+                  borderRadius: 14,
+                  display: 'grid',
+                  gap: 4,
+                  gridTemplateColumns: '1fr 1fr',
+                  padding: 4,
+                  marginBottom: 18,
                 }}
               >
-                <IonIcon icon={personAddOutline} style={{ fontSize: 16 }} />
-                <span>Crear mi cuenta</span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setTab('register')}
+                  style={{
+                    alignItems: 'center',
+                    background: tab === 'register' ? '#294C6B' : 'transparent',
+                    border: 'none',
+                    borderRadius: 10,
+                    color: tab === 'register' ? '#FFFFFF' : '#475569',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    fontSize: 13,
+                    fontWeight: 800,
+                    gap: 6,
+                    justifyContent: 'center',
+                    padding: '9px 10px',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <IonIcon icon={personAddOutline} style={{ fontSize: 16 }} />
+                  <span>Crear mi cuenta</span>
+                </button>
 
-              <button
-                type="button"
-                onClick={() => setTab('code')}
-                style={{
-                  alignItems: 'center',
-                  background: tab === 'code' ? '#294C6B' : 'transparent',
-                  border: 'none',
-                  borderRadius: 10,
-                  color: tab === 'code' ? '#FFFFFF' : '#475569',
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  fontSize: 13,
-                  fontWeight: 800,
-                  gap: 6,
-                  justifyContent: 'center',
-                  padding: '9px 10px',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                <IonIcon icon={keyOutline} style={{ fontSize: 16 }} />
-                <span>Tengo mi código</span>
-              </button>
-            </div>
+                <button
+                  type="button"
+                  onClick={() => setTab('code')}
+                  style={{
+                    alignItems: 'center',
+                    background: tab === 'code' ? '#294C6B' : 'transparent',
+                    border: 'none',
+                    borderRadius: 10,
+                    color: tab === 'code' ? '#FFFFFF' : '#475569',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    fontSize: 13,
+                    fontWeight: 800,
+                    gap: 6,
+                    justifyContent: 'center',
+                    padding: '9px 10px',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <IonIcon icon={keyOutline} style={{ fontSize: 16 }} />
+                  <span>Tengo mi cuenta</span>
+                </button>
+              </div>
+            )}
 
             {/* Pestaña: Crear mi cuenta */}
             {tab === 'register' && (
@@ -808,8 +891,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                             {loadingResend
                               ? 'Enviando...'
                               : resendCooldown > 0
-                              ? `Reenviar (${resendCooldown}s)`
-                              : 'Reenviar código'}
+                                ? `Reenviar (${resendCooldown}s)`
+                                : 'Reenviar código'}
                           </span>
                         </button>
 
@@ -839,7 +922,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
               </>
             )}
 
-            {/* Pestaña: Tengo mi código */}
+            {/* Pestaña: Tengo mi cuenta */}
             {tab === 'code' && (
               <form
                 onSubmit={handleLoginCode}
@@ -856,42 +939,97 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                       color: '#64748B',
                       fontSize: 13,
                       lineHeight: 1.4,
-                      margin: '0 0 20px',
+                      margin: '0 0 16px',
                       textAlign: 'center',
                     }}
                   >
-                    Ingresá el código numérico de 6 dígitos que te brindó tu profesor o institución:
+                    Ingresá tu correo electrónico y tu clave de 6 dígitos para acceder a tu cuenta:
                   </p>
 
-                  <div style={{ marginBottom: 16, textAlign: 'center' }}>
+                  {/* Campo Correo Electrónico */}
+                  <div style={{ marginBottom: 14 }}>
+                    <label
+                      style={{
+                        color: '#294C6B',
+                        display: 'block',
+                        fontSize: 13,
+                        fontWeight: 800,
+                        marginBottom: 5,
+                        textAlign: 'left',
+                      }}
+                    >
+                      Tu correo electrónico
+                    </label>
                     <input
-                      type="text"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      maxLength={10}
-                      placeholder="000000"
-                      value={codigoInput}
+                      type="email"
+                      placeholder="Ej: marta@correo.com"
+                      value={codeEmailInput}
                       onChange={(e) => {
-                        setCodigoInput(e.target.value);
+                        setCodeEmailInput(e.target.value);
                         if (errorCode) setErrorCode(null);
                       }}
                       disabled={loadingCode}
                       style={{
                         background: '#F8FAFC',
-                        border: errorCode ? '2px solid #EF4444' : '2px solid #CBD5E1',
-                        borderRadius: 14,
+                        border: errorCode && (!codeEmailInput.trim() || !codeEmailInput.includes('@'))
+                          ? '2px solid #EF4444'
+                          : '1.5px solid #CBD5E1',
+                        borderRadius: 12,
                         color: '#294C6B',
-                        fontSize: 26,
-                        fontWeight: 900,
-                        letterSpacing: '0.22em',
+                        fontSize: 15,
+                        fontWeight: 700,
                         outline: 'none',
-                        padding: '12px 14px',
-                        textAlign: 'center',
+                        padding: '10px 14px',
                         width: '100%',
-                        maxWidth: 240,
                         boxSizing: 'border-box',
                       }}
                     />
+                  </div>
+
+                  {/* Campo Clave PIN de 6 dígitos */}
+                  <div style={{ marginBottom: 16 }}>
+                    <label
+                      style={{
+                        color: '#294C6B',
+                        display: 'block',
+                        fontSize: 13,
+                        fontWeight: 800,
+                        marginBottom: 5,
+                        textAlign: 'left',
+                      }}
+                    >
+                      Tu clave de 6 dígitos
+                    </label>
+                    <div style={{ textAlign: 'center' }}>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        maxLength={10}
+                        placeholder="000000"
+                        value={codigoInput}
+                        onChange={(e) => {
+                          setCodigoInput(e.target.value);
+                          if (errorCode) setErrorCode(null);
+                        }}
+                        disabled={loadingCode}
+                        style={{
+                          background: '#F8FAFC',
+                          border: errorCode ? '2px solid #EF4444' : '2px solid #CBD5E1',
+                          borderRadius: 14,
+                          color: '#294C6B',
+                          fontSize: 24,
+                          fontWeight: 900,
+                          letterSpacing: '0.22em',
+                          outline: 'none',
+                          padding: '10px 14px',
+                          textAlign: 'center',
+                          width: '100%',
+                          maxWidth: 240,
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                    </div>
                   </div>
 
                   {errorCode && (
@@ -918,16 +1056,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
 
                 <button
                   type="submit"
-                  disabled={loadingCode || !codigoInput.trim()}
+                  disabled={loadingCode || !codigoInput.trim() || !codeEmailInput.trim()}
                   style={{
                     background: '#294C6B',
                     border: 'none',
                     borderRadius: 14,
                     color: '#FFFFFF',
-                    cursor: loadingCode ? 'default' : 'pointer',
+                    cursor: loadingCode || !codigoInput.trim() || !codeEmailInput.trim() ? 'default' : 'pointer',
                     fontSize: 15,
                     fontWeight: 800,
-                    opacity: loadingCode || !codigoInput.trim() ? 0.7 : 1,
+                    opacity: loadingCode || !codigoInput.trim() || !codeEmailInput.trim() ? 0.7 : 1,
                     padding: '13px 0',
                     width: '100%',
                   }}
@@ -936,6 +1074,222 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                   {loadingCode ? 'Ingresando...' : 'Ingresar'}
                 </button>
               </form>
+            )}
+
+            {/* Pestaña: Acceso Administrador (Correo y Contraseña) */}
+            {tab === 'admin' && (
+              <form
+                onSubmit={handleLoginAdmin}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  minHeight: 280,
+                }}
+              >
+                <div>
+                  <div style={{ textAlign: 'center', marginBottom: 14 }}>
+                    <div
+                      style={{
+                        alignItems: 'center',
+                        background: '#FEF3C7',
+                        borderRadius: 999,
+                        color: '#B45309',
+                        display: 'flex',
+                        height: 48,
+                        justifyContent: 'center',
+                        margin: '0 auto 8px',
+                        width: 48,
+                      }}
+                    >
+                      <IonIcon icon={shieldCheckmarkOutline} style={{ fontSize: 26 }} />
+                    </div>
+                    <h3 style={{ color: '#294C6B', fontSize: 16, fontWeight: 900, margin: '0 0 4px' }}>
+                      Ingreso de Administrador
+                    </h3>
+                    <p style={{ color: '#64748B', fontSize: 12, margin: 0 }}>
+                      Acceso para docentes y operadores del sistema
+                    </p>
+                  </div>
+
+                  {/* Campo Email */}
+                  <div style={{ marginBottom: 12 }}>
+                    <label
+                      style={{
+                        color: '#294C6B',
+                        display: 'block',
+                        fontSize: 12,
+                        fontWeight: 800,
+                        marginBottom: 4,
+                      }}
+                    >
+                      Correo Electrónico
+                    </label>
+                    <input
+                      type="email"
+                      placeholder="admin@asistodo.com.ar"
+                      value={adminEmailInput}
+                      onChange={(e) => {
+                        setAdminEmailInput(e.target.value);
+                        if (errorAdmin) setErrorAdmin(null);
+                      }}
+                      disabled={loadingAdmin}
+                      required
+                      style={{
+                        background: '#F8FAFC',
+                        border: '1.5px solid #CBD5E1',
+                        borderRadius: 12,
+                        color: '#294C6B',
+                        fontSize: 14,
+                        fontWeight: 600,
+                        outline: 'none',
+                        padding: '10px 14px',
+                        width: '100%',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+
+                  {/* Campo Contraseña */}
+                  <div style={{ marginBottom: 14 }}>
+                    <label
+                      style={{
+                        color: '#294C6B',
+                        display: 'block',
+                        fontSize: 12,
+                        fontWeight: 800,
+                        marginBottom: 4,
+                      }}
+                    >
+                      Contraseña
+                    </label>
+                    <input
+                      type="password"
+                      placeholder="••••••••"
+                      value={adminPasswordInput}
+                      onChange={(e) => {
+                        setAdminPasswordInput(e.target.value);
+                        if (errorAdmin) setErrorAdmin(null);
+                      }}
+                      disabled={loadingAdmin}
+                      required
+                      style={{
+                        background: '#F8FAFC',
+                        border: '1.5px solid #CBD5E1',
+                        borderRadius: 12,
+                        color: '#294C6B',
+                        fontSize: 14,
+                        fontWeight: 600,
+                        outline: 'none',
+                        padding: '10px 14px',
+                        width: '100%',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  </div>
+
+                  {errorAdmin && (
+                    <div
+                      style={{
+                        alignItems: 'center',
+                        background: '#FEF2F2',
+                        border: '1px solid #FECACA',
+                        borderRadius: 10,
+                        color: '#DC2626',
+                        display: 'flex',
+                        fontSize: 12,
+                        fontWeight: 700,
+                        gap: 6,
+                        marginBottom: 14,
+                        padding: '8px 12px',
+                      }}
+                    >
+                      <IonIcon icon={alertCircleOutline} style={{ fontSize: 16, flexShrink: 0 }} />
+                      <span>{errorAdmin}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <button
+                    type="submit"
+                    disabled={loadingAdmin || !adminEmailInput.trim() || !adminPasswordInput.trim()}
+                    style={{
+                      background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
+                      border: '1.5px solid #F59E0B',
+                      borderRadius: 14,
+                      color: '#FCD34D',
+                      cursor: loadingAdmin ? 'default' : 'pointer',
+                      fontSize: 15,
+                      fontWeight: 800,
+                      opacity: loadingAdmin || !adminEmailInput.trim() || !adminPasswordInput.trim() ? 0.7 : 1,
+                      padding: '12px 0',
+                      width: '100%',
+                      boxShadow: '0 2px 8px rgba(245, 158, 11, 0.25)',
+                      marginBottom: 10,
+                    }}
+                    className="hover:brightness-110 active:scale-95 transition-all"
+                  >
+                    {loadingAdmin ? 'Verificando...' : 'Ingresar como Administrador'}
+                  </button>
+
+                  <div style={{ textAlign: 'center' }}>
+                    <button
+                      type="button"
+                      onClick={() => setTab('code')}
+                      style={{
+                        alignItems: 'center',
+                        background: 'transparent',
+                        border: 'none',
+                        color: '#64748B',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        fontSize: 12,
+                        fontWeight: 700,
+                        gap: 4,
+                      }}
+                    >
+                      <IonIcon icon={arrowBackOutline} style={{ fontSize: 14 }} />
+                      <span>Volver al ingreso de alumnos</span>
+                    </button>
+                  </div>
+                </div>
+              </form>
+            )}
+
+            {/* Acceso para Administrador / Docente al pie cuando se está en pestañas de alumnos */}
+            {tab !== 'admin' && (
+              <div
+                style={{
+                  marginTop: 14,
+                  textAlign: 'center',
+                  borderTop: '1px solid #F1F5F9',
+                  paddingTop: 10,
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTab('admin');
+                    setErrorAdmin(null);
+                  }}
+                  style={{
+                    alignItems: 'center',
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#94A3B8',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    fontSize: 11,
+                    fontWeight: 700,
+                    gap: 4,
+                  }}
+                  className="hover:text-slate-600 transition-colors"
+                >
+                  <IonIcon icon={shieldCheckmarkOutline} style={{ fontSize: 13 }} />
+                  <span>Acceso para Administrador / Docente</span>
+                </button>
+              </div>
             )}
           </>
         )}

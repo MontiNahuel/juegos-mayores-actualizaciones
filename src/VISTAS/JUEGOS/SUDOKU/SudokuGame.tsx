@@ -3,8 +3,7 @@ import { useSudokuGame } from './useSudokuGame';
 import { SudokuBoard } from './SudokuBoard';
 import { SudokuKeypad } from './SudokuKeypad';
 import { SudokuCompletedModal } from './SudokuCompletedModal';
-import { GameHeader } from '../../COMPONENTS/GameHeader';
-import { IconHeart } from './SudokuIcons';
+import { GameHeader, LivesBadge } from '../../COMPONENTS/GameHeader';
 
 export const SudokuGame: React.FC = () => {
   const game = useSudokuGame();
@@ -36,14 +35,7 @@ export const SudokuGame: React.FC = () => {
             >
               {diffBadge.label}
             </span>
-            <div className="inline-flex items-center gap-1 bg-rose-50/70 px-2 py-0.5 rounded-full border border-rose-200 shadow-2xs">
-              <span className="text-xs font-bold text-rose-700 hidden sm:inline">Vidas:</span>
-              <div className="flex items-center gap-0.5">
-                {Array.from({ length: game.maxLives }).map((_, i) => (
-                  <IconHeart key={i} filled={i < game.lives} size={13} />
-                ))}
-              </div>
-            </div>
+            <LivesBadge lives={game.lives} maxLives={game.maxLives} />
           </div>
         }
       />
@@ -68,7 +60,7 @@ export const SudokuGame: React.FC = () => {
         />
       </main>
 
-      {/* Modales de Victoria y Fin de Partida */}
+      {/* Modal accesible de Victoria / Game Over por vidas */}
       {(game.isWon || game.isGameOver) && (
         <SudokuCompletedModal
           isGameOver={game.isGameOver}

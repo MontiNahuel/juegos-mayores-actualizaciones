@@ -333,4 +333,3 @@ export const MiniTiendaModal: React.FC<MiniTiendaModalProps> = ({
   );
 };
 export default MiniTiendaModal;
-

@@ -86,3 +86,18 @@ export const IconSpinner: React.FC<{ size?: number; color?: string }> = ({ size 
     <path d="M12 2.5a9.5 9.5 0 0 1 9.5 9.5" stroke={color} strokeWidth="3" strokeLinecap="round" />
   </svg>
 );
+
+export const IconCoins: React.FC<{ size?: number; color?: string; className?: string }> = ({ size = 20, color = '#F59E0B', className }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <circle cx="8" cy="8" r="6" />
+    <path d="M18 14a6 6 0 0 0-4-5.65" />
+    <path d="M14 6a6 6 0 0 1 4 5.65" />
+    <circle cx="16" cy="16" r="6" />
+  </svg>
+);
+
+export const IconCrown: React.FC<{ size?: number; color?: string; className?: string }> = ({ size = 20, color = '#F59E0B', className }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14" />
+  </svg>
+);

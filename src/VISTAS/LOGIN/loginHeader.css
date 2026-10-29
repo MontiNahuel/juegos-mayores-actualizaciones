@@ -3,40 +3,6 @@
   gap: 12px;
 }
 
-.login-header-actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.login-header-lives {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 10px;
-  border: 1px solid #fecdd3;
-  border-radius: 14px;
-  background: #ffe4e6;
-  color: #be123c;
-  font-size: 13px;
-  font-weight: 800;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.login-header-lives:hover { background: #fecdd3; }
-.login-header-lives:focus-visible { outline: 2px solid #be123c; outline-offset: 3px; }
-.login-header-lives-plus {
-  padding: 1px 4px;
-  border-radius: 6px;
-  background: #fda4af;
-  color: #881337;
-  font-size: 10px;
-  font-weight: 900;
-}
-
 .login-header-layout--titled {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

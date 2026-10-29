@@ -9,9 +9,11 @@ import './admin.css';
 const container = document.getElementById('root');
 const root = createRoot(container);
 
+const basename = window.location.pathname.startsWith('/admin_src') ? '/admin_src' : '/admin';
+
 root.render(
   <React.StrictMode>
-    <BrowserRouter basename="/admin">
+    <BrowserRouter basename={basename}>
       <Routes>
         <Route path="/login" element={<LoginSistemas />} />
         <Route

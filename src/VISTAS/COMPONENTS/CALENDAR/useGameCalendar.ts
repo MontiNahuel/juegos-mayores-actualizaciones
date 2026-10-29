@@ -11,6 +11,7 @@ import {
 
 interface UseGameCalendarOptions {
   gameId: string;
+  difficulty?: string;
   year?: number;
   month?: number;
   todayDay?: number;
@@ -18,6 +19,7 @@ interface UseGameCalendarOptions {
 
 export function useGameCalendar({
   gameId,
+  difficulty = 'standard',
   year: propYear,
   month: propMonth,
   todayDay: propTodayDay,
@@ -41,7 +43,7 @@ export function useGameCalendar({
     async function init() {
       try {
         const [todayInfo, rangeInfo] = await Promise.all([
-          fetchServerToday(gameId),
+          fetchServerToday(gameId, difficulty),
           fetchChallengeDateRange(gameId),
         ]);
 
@@ -64,7 +66,7 @@ export function useGameCalendar({
         // Cargar datos del mes inicial
         setLoading(true);
         const [monthResult, heroToday] = await Promise.all([
-          getCalendarMonthData(gameId, initialYear, initialMonth, todayInfo),
+          getCalendarMonthData(gameId, initialYear, initialMonth, todayInfo, difficulty),
           getTodayChallengeData(gameId, todayInfo),
         ]);
 
@@ -83,7 +85,7 @@ export function useGameCalendar({
     return () => {
       isMounted = false;
     };
-  }, [gameId, propYear, propMonth, propTodayDay]);
+  }, [gameId, difficulty, propYear, propMonth, propTodayDay]);
 
   // 2. Cargar datos cuando cambia el mes visualizado (navegación mensual)
   const loadMonth = useCallback(
@@ -97,7 +99,7 @@ export function useGameCalendar({
 
       setLoading(true);
       try {
-        const monthResult = await getCalendarMonthData(gameId, y, m, activeServerToday);
+        const monthResult = await getCalendarMonthData(gameId, y, m, activeServerToday, difficulty);
         setChallenges(monthResult.challenges);
         // Si el mes visualizado es el actual, refrescar también todayChallenge
         if (y === activeServerToday.year && m === activeServerToday.month) {
@@ -109,7 +111,7 @@ export function useGameCalendar({
         setLoading(false);
       }
     },
-    [gameId]
+    [gameId, difficulty]
   );
 
   // 3. Cálculo de límites y condiciones de navegación

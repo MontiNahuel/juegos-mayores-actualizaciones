@@ -113,4 +113,3 @@ export const LivesBadge: React.FC<LivesBadgeProps> = ({
     </button>
   );
 };
-

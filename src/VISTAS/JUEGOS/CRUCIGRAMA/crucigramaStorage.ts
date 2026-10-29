@@ -1,20 +1,34 @@
-import { getActiveProgressStorageKey, getCurrentUserId } from '../attemptsService';
+import { getActiveProgressStorageKey } from '../attemptsService';
+
+export type CrucigramaDifficulty = 'facil' | 'dificil';
 
 export interface ActiveCrucigramaState {
   date: string;
-  userGrid: string[][]; // 7x7 matrix of user-entered letters
+  difficulty: CrucigramaDifficulty;
+  userGrid: string[][]; // Matriz de letras ingresadas por el usuario (grid_size x grid_size)
   selectedRow: number;
   selectedCol: number;
   selectedDirection: 'H' | 'V';
   elapsedSeconds: number;
+  lives?: number;
+  errors?: number;
   updatedAt: string;
 }
 
-export function saveActiveCrucigrama(date: string, state: Omit<ActiveCrucigramaState, 'date' | 'updatedAt'>): void {
+function getStorageKey(date: string, difficulty: CrucigramaDifficulty): string {
+  return `${getActiveProgressStorageKey('crucigrama', date)}_${difficulty}`;
+}
+
+export function saveActiveCrucigrama(
+  date: string,
+  difficulty: CrucigramaDifficulty,
+  state: Omit<ActiveCrucigramaState, 'date' | 'difficulty' | 'updatedAt'>
+): void {
   try {
-    const key = getActiveProgressStorageKey('crucigrama', date);
+    const key = getStorageKey(date, difficulty);
     const payload: ActiveCrucigramaState = {
       date,
+      difficulty,
       ...state,
       updatedAt: new Date().toISOString()
     };
@@ -24,9 +38,12 @@ export function saveActiveCrucigrama(date: string, state: Omit<ActiveCrucigramaS
   }
 }
 
-export function loadActiveCrucigrama(date: string): ActiveCrucigramaState | null {
+export function loadActiveCrucigrama(
+  date: string,
+  difficulty: CrucigramaDifficulty
+): ActiveCrucigramaState | null {
   try {
-    const key = getActiveProgressStorageKey('crucigrama', date);
+    const key = getStorageKey(date, difficulty);
     const raw = localStorage.getItem(key);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
@@ -40,9 +57,9 @@ export function loadActiveCrucigrama(date: string): ActiveCrucigramaState | null
   }
 }
 
-export function clearActiveCrucigrama(date: string): void {
+export function clearActiveCrucigrama(date: string, difficulty: CrucigramaDifficulty): void {
   try {
-    const key = getActiveProgressStorageKey('crucigrama', date);
+    const key = getStorageKey(date, difficulty);
     localStorage.removeItem(key);
   } catch (err) {
     console.warn('[CrucigramaStorage] Error clearing active game state:', err);
