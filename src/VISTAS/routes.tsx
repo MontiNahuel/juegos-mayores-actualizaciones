@@ -12,17 +12,8 @@ import CrucigramaGame from './JUEGOS/CRUCIGRAMA/CrucigramaGame';
 import KingsCourtCalendar from './JUEGOS/NARRATIVO/KingsCourtCalendar';
 import KingsCourt from './JUEGOS/NARRATIVO/KingsCourt';
 import { AccesoToken } from './LOGIN/AccesoToken';
-import { esUsuarioAdmin } from './AUTH/authUtils';
 
 const NarrativoAdminPage = lazy(() => import('./ADMIN/NarrativoAdminPage'));
-
-// Control de acceso basado en roles para rutas administrativas
-const RequireAdmin = ({ children }: { children: React.ReactNode }) => {
-  if (!esUsuarioAdmin()) {
-    return <Navigate to="/menu" replace />;
-  }
-  return <>{children}</>;
-};
 
 // Intercepta token en /menu para iniciar sesión de inmediato en vez de quedar como invitado
 const MenuWrapper = () => {
@@ -44,6 +35,12 @@ const RootRedirection = () => {
   return <Navigate to="/menu" replace />;
 };
 
+const FallbackLoader = () => (
+  <div className="min-h-screen bg-slate-950 flex items-center justify-center text-amber-400 font-bold">
+    Cargando Torre de Control...
+  </div>
+);
+
 const AppRoutes = () => (
   <BrowserRouter>
     <Routes>
@@ -59,18 +56,45 @@ const AppRoutes = () => (
       <Route path="/juegos/crucigrama/jugar" element={<CrucigramaGame />} />
       <Route path="/juegos/kings-court" element={<KingsCourtCalendar />} />
       <Route path="/juegos/kings-court/jugar" element={<KingsCourt />} />
-      {/* Redirección automática silenciosa de /admin/narrativo hacia el menú */}
-      <Route path="/admin/narrativo" element={<Navigate to="/menu" replace />} />
+
+      {/* Torre de Control / Panel Administrativo de Juegos y Narrativa */}
+      <Route
+        path="/panel"
+        element={
+          <Suspense fallback={<FallbackLoader />}>
+            <NarrativoAdminPage />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/panel-juegos"
+        element={
+          <Suspense fallback={<FallbackLoader />}>
+            <NarrativoAdminPage />
+          </Suspense>
+        }
+      />
       <Route
         path="/editor-narrativo"
         element={
-          <RequireAdmin>
-            <Suspense fallback={<div className="min-h-screen bg-slate-950 flex items-center justify-center text-amber-400 font-bold">Cargando Editor Narrativo...</div>}>
-              <NarrativoAdminPage />
-            </Suspense>
-          </RequireAdmin>
+          <Suspense fallback={<FallbackLoader />}>
+            <NarrativoAdminPage />
+          </Suspense>
         }
       />
+      <Route
+        path="/torre"
+        element={
+          <Suspense fallback={<FallbackLoader />}>
+            <NarrativoAdminPage />
+          </Suspense>
+        }
+      />
+
+      {/* Aliases de conveniencia */}
+      <Route path="/admin" element={<Navigate to="/panel" replace />} />
+      <Route path="/admin/narrativo" element={<Navigate to="/panel" replace />} />
+
       <Route path="/" element={<RootRedirection />} />
       <Route path="*" element={<RootRedirection />} />
     </Routes>
