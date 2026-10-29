@@ -50,6 +50,10 @@
 }
 
 @media (max-width: 799px) {
+  .login-header-logout {
+    display: none !important;
+  }
+
   .login-header-layout--compact .login-header-greeting {
     display: none;
   }
@@ -95,16 +99,21 @@
     display: none !important;
   }
 
-  .login-header-stat-label,
-  .login-header-layout--authenticated .login-header-greeting {
+  .login-header-stat-label {
     display: none;
   }
 
-  .login-header-layout--authenticated:not(.login-header-layout--titled) > :first-child {
+  .login-header-layout--authenticated:not(.login-header-layout--titled) .login-header-greeting > span {
     display: none;
   }
 
   .login-header-layout--authenticated:not(.login-header-layout--titled) {
+    flex-direction: column-reverse;
+    gap: 6px;
     justify-content: center !important;
+  }
+
+  .login-header-layout--authenticated:not(.login-header-layout--titled) .login-header-greeting {
+    text-align: center;
   }
 }
