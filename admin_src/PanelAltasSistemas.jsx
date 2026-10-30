@@ -22,10 +22,12 @@ import {
   BookOpenIcon,
   CoinsIcon,
   HeartIcon,
+  LayersIcon,
 } from './Icons';
 import NarrativeAdminModal from './narrative/NarrativeAdminModal';
 import ModalEconomia from './ModalEconomia';
 import ModalAsignarEconomia from './ModalAsignarEconomia';
+import ModalDisenadorCrucigrama from './ModalDisenadorCrucigrama';
 import { OPERADOR_STORAGE_KEY } from './LoginSistemas';
 import { solicitarTicketRetorno } from './ssoService';
 
@@ -123,6 +125,7 @@ export default function PanelAltasSistemas() {
 
   // Estado para Modal de Desafíos Diarios
   const [modalDesafiosAbierto, setModalDesafiosAbierto] = useState(false);
+  const [modalDisenadorAbierto, setModalDisenadorAbierto] = useState(false);
   const [desafiosJuego, setDesafiosJuego] = useState('sudoku');
   const [desafiosAnio, setDesafiosAnio] = useState(2026);
   const [mesesDesafios, setMesesDesafios] = useState([]);
@@ -1713,6 +1716,18 @@ export default function PanelAltasSistemas() {
               </div>
 
               <div className="flex items-center gap-2">
+                {desafiosJuego === 'crucigrama' && (
+                  <button
+                    type="button"
+                    onClick={() => setModalDisenadorAbierto(true)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-300 text-amber-800 hover:bg-amber-100 text-xs font-bold transition cursor-pointer"
+                    title="Diseñar máscaras de tableros 7x7 y 11x11"
+                  >
+                    <LayersIcon size={14} />
+                    Diseñar máscaras
+                  </button>
+                )}
+
                 <select
                   value={desafiosAnio}
                   onChange={(e) => {
@@ -1872,6 +1887,11 @@ export default function PanelAltasSistemas() {
           showToast(res.message || 'Vidas y puntos actualizados');
           cargarAlumnos(skip, limit, busqueda, filtroEstado);
         }}
+      />
+      {/* MODAL DISEÑADOR DE MÁSCARAS DE CRUCIGRAMA */}
+      <ModalDisenadorCrucigrama
+        abierto={modalDisenadorAbierto}
+        onCerrar={() => setModalDisenadorAbierto(false)}
       />
     </div>
   );

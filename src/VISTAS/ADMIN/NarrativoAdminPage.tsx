@@ -3,12 +3,11 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   obtenerSesionAdmin,
   guardarSesionAdmin,
-  limpiarTodasLasSesiones,
   type AdminSession,
 } from '../AUTH/authUtils';
 
-// @ts-expect-error Componente administrativo en JSX
-import PanelAltasSistemas from '../../../admin_src/PanelAltasSistemas';
+// @ts-expect-error Componente administrativo de juegos en JSX
+import PanelJuegosAdmin from '../../../admin_src/PanelJuegosAdmin';
 
 // Interceptor global para inyectar automáticamente el Bearer token en todas las peticiones admin
 if (typeof window !== 'undefined' && !(window as any).__admin_fetch_intercepted__) {
@@ -26,6 +25,7 @@ if (typeof window !== 'undefined' && !(window as any).__admin_fetch_intercepted_
       url.includes('/api/narrative/admin') ||
       url.includes('/api/challenges/admin') ||
       url.includes('/api/economy') ||
+      url.includes('/api/admin') ||
       url.includes('/usuario')
     ) {
       const sesionRaw =
@@ -169,7 +169,7 @@ export default function NarrativoAdminPage() {
   // 1. Si no está autenticado: Formulario de Login directo
   if (!adminSession) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 selection:bg-amber-500/30">
+      <div className="fixed inset-0 overflow-y-auto bg-slate-950 flex flex-col items-center justify-center p-4 selection:bg-amber-500/30">
         <div className="w-full max-w-md bg-slate-900/90 border border-amber-500/30 rounded-2xl p-8 shadow-2xl backdrop-blur-xl relative overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600" />
 
@@ -181,7 +181,7 @@ export default function NarrativoAdminPage() {
               Torre de Control
             </h1>
             <p className="text-sm text-slate-400 mt-1">
-              Panel Administrativo Central de CogniJuegos
+              Panel Administrativo de Juegos Cognitivos
             </p>
           </div>
 
@@ -244,6 +244,6 @@ export default function NarrativoAdminPage() {
     );
   }
 
-  // 2. Si está autenticado: Renderiza la Torre de Control completa (PanelAltasSistemas)
-  return <PanelAltasSistemas />;
+  // 2. Si está autenticado: Renderiza la Torre de Control de Juegos (PanelJuegosAdmin)
+  return <PanelJuegosAdmin />;
 }
