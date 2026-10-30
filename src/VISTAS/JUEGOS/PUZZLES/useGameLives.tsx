@@ -1,8 +1,12 @@
-/* Lleva las vidas de cada partida y abre su recarga cuando se agotan. */
+/**
+ * Lógica de vidas conservada exclusivamente para Puzzles.
+ * Está desconectada de Wordle, Sudoku, Sopa de letras y Crucigrama.
+ * Sus modales de desafío completado siguen activos e independientes de las vidas.
+ */
 import { useEffect, useRef, useState } from 'react';
-import { usePlayerEconomy } from '../../context/PlayerEconomyContext';
-import { getActiveProgressStorageKey, saveActiveGameProgress } from './attemptsService';
-import MiniTiendaModal from '../COMPONENTS/MODALS/MiniTiendaModal';
+import { usePlayerEconomy } from '../../../context/PlayerEconomyContext';
+import { getActiveProgressStorageKey, saveActiveGameProgress } from '../attemptsService';
+import MiniTiendaModal from '../../COMPONENTS/MODALS/MiniTiendaModal';
 
 export const GAME_LIVES = 4;
 export const REFILL_COST = 50;

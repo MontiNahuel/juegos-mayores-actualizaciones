@@ -5,7 +5,6 @@ import type { CSSProperties } from 'react';
 import { IonHeader, IonToolbar, IonIcon } from '@ionic/react';
 import { logInOutline, logOutOutline } from 'ionicons/icons';
 import { FlameIcon, StarIcon } from '../COMPONENTS/Icons/Icons';
-import { IconHeart } from '../COMPONENTS/GameHeader/LivesBadge';
 import { AuthModal } from '../COMPONENTS/MODALS/AuthModal';
 import { usePlayerEconomy } from '../../context/PlayerEconomyContext';
 import { esUsuarioAdmin, limpiarTodasLasSesiones } from '../AUTH/authUtils';
@@ -124,38 +123,6 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title
     economy.recargarEconomia();
   };
 
-  const livesButton = (
-    <button
-                type="button"
-                onClick={economy.abrirMiniTienda}
-                style={{
-                  alignItems: 'center',
-                  background: '#FFE4E6',
-                  border: '1px solid #FECDD3',
-                  borderRadius: 14,
-                  color: '#BE123C',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  fontSize: 13,
-                  fontWeight: 800,
-                  gap: 4,
-                  padding: '6px 10px',
-                  transition: 'all 0.2s ease',
-                }}
-                className="hover:bg-rose-200 active:scale-95"
-                title="Vidas restantes. Hacé clic para abrir la Tienda de Vidas."
-              >
-                <IconHeart filled={economy.vidas > 0} size={16} />
-                <span>{economy.vidas}</span>
-                <span className="login-header-lives-label hidden sm:inline">
-                  {economy.vidas === 1 ? 'vida' : 'vidas'}
-                </span>
-                <span className="login-header-lives-plus" style={{ fontSize: 10, background: '#FDA4AF', color: '#881337', padding: '1px 4px', borderRadius: 6, fontWeight: 900 }}>
-                  +
-                </span>
-              </button>
-  );
-
   return (
     <IonHeader style={{ boxShadow: '0 2px 10px rgba(23, 59, 99, 0.12)' }}>
       <IonToolbar style={{ '--background': '#FFFFFF', '--border-width': 0 } as CSSProperties}>
@@ -183,7 +150,6 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title
               src="/asistodo-logo.svg"
               style={{ height: 42, width: 42, flexShrink: 0 }}
             />}
-            {gameDetails === undefined && <span className="login-header-lives-left">{livesButton}</span>}
             <div className="login-header-greeting" hidden={gameDetails !== undefined} style={{ minWidth: 0 }}>
               {usuario ? (
                 /* Con sesión: ¡Hola, [Nombre]! */
@@ -243,7 +209,13 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title
           {title && (gameDetails !== undefined ? (
             <div className="login-header-game-title">
               <h1 className="login-header-title" style={{ color: primaryColor }}>{title}</h1>
-              <div className="flex flex-wrap items-center justify-center gap-1.5">{gameDetails}</div>
+              <div className="flex flex-wrap items-center justify-center gap-1.5">
+                {gameDetails}
+                <span className="inline-flex items-center gap-1 rounded-full border border-[#8FD5CA] bg-[#E8F8F5] px-2.5 py-1 text-xs font-extrabold text-[#17695F]" aria-label={`${economy.puntos} puntos`}>
+                  <StarIcon size={14} />
+                  <span>{economy.puntos}</span>
+                </span>
+              </div>
             </div>
           ) : <h1 className="login-header-title" style={{ color: primaryColor }}>{title}</h1>)}
 
@@ -280,19 +252,16 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title
                 </span>
               </div>
 
-              <span className="login-header-lives-right">{livesButton}</span>
 
-              {/* Puntos (Click abre Mini-Tienda) */}
-              <button
-                type="button"
-                onClick={economy.abrirMiniTienda}
+              {/* Puntos acumulados */}
+              <span
                 style={{
                   alignItems: 'center',
                   background: '#E8F8F5',
                   border: '1px solid #8FD5CA',
                   borderRadius: 14,
                   color: '#17695F',
-                  cursor: 'pointer',
+                  cursor: 'default',
                   display: 'flex',
                   fontSize: 13,
                   fontWeight: 800,
@@ -300,13 +269,13 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title
                   padding: '6px 10px',
                   transition: 'all 0.2s ease',
                 }}
-                className="hover:bg-[#d1f2eb] active:scale-95"
-                title="Puntos acumulados. Hacé clic para canjear vidas."
+
+                title="Puntos acumulados"
               >
                 <StarIcon size={15} />
                 <span>{economy.puntos}</span>
                 <span className="login-header-stat-label hidden sm:inline">pts</span>
-              </button>
+              </span>
 
               {/* Botón Salir */}
               <button
@@ -335,7 +304,6 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title
             </div>
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span className="login-header-lives-right">{livesButton}</span>
 
               {/* Botón para abrir el Modal de Inicio de Sesión / Registro */}
               <button

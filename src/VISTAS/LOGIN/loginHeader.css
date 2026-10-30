@@ -18,14 +18,6 @@
   justify-self: end;
 }
 
-.login-header-lives-left {
-  display: none;
-}
-
-.login-header-lives-right {
-  display: inline-flex;
-}
-
 .login-header-title {
   grid-column: 2;
   grid-row: 1;
@@ -113,8 +105,6 @@
 @media (max-width: 639px) {
   .login-header-home,
   .login-header-logo,
-  .login-header-lives-label,
-  .login-header-lives-plus,
   .login-header-signin > span {
     display: none;
   }

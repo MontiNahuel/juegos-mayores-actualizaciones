@@ -1,5 +1,5 @@
+import { useClassicChallenge } from '../useClassicChallenge';
 /* Maneja la selección de palabras, las pistas y el avance en la sopa de letras. */
-import { GAME_LIVES, useGameLives } from '../useGameLives';
 /* Acá maneja la selección de palabras, las pistas y el avance en la sopa de letras. */
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -10,7 +10,7 @@ import {
   IonToolbar,
   IonIcon,
 } from '@ionic/react';
-import { GameHeader, LivesBadge } from '../../COMPONENTS/GameHeader';
+import { GameHeader } from '../../COMPONENTS/GameHeader';
 import { usePlayerEconomy } from '../../../context/PlayerEconomyContext';
 import { CompletedModal } from '../../COMPONENTS/MODALS/CompletedModal';
 import {
@@ -26,7 +26,6 @@ import { API_URL } from '../../../config/api';
 import {
   getActiveGameProgress,
   saveActiveGameProgress,
-  saveFinalGameAttempt,
 } from '../attemptsService';
 
 const GRID_SIZE = 8;
@@ -95,16 +94,11 @@ export const SopaLetrasGame: React.FC = () => {
   const [dragCurrent, setDragCurrent] = useState<CellCoord | null>(null);
   const [tapStart, setTapStart] = useState<CellCoord | null>(null);
 
-  // Vidas de esta partida y errores
+  // Errores usados para calificar la partida
   const economy = usePlayerEconomy();
-  const MAX_LIVES = GAME_LIVES;
-  const gameLives = useGameLives('sopa_letras', dateStrKey, /* Completa este paso con los datos recibidos por la operación. */ () => { setIsGameOver(true); setShowGameOverModal(true); });
-  const lives = gameLives.lives;
   const [loadedDate, setLoadedDate] = useState('');
   const progressReady = loadedDate === dateStrKey;
   const [errors, setErrors] = useState<number>(0);
-  const [isGameOver, setIsGameOver] = useState<boolean>(false);
-  const [showGameOverModal, setShowGameOverModal] = useState<boolean>(false);
   const [invalidCells, setInvalidCells] = useState<Set<string>>(new Set());
 
   // Modales
@@ -113,6 +107,8 @@ export const SopaLetrasGame: React.FC = () => {
   const [pistasCompradas, setPistasCompradas] = useState<Record<number, string>>({});
   const [justFoundWord, setJustFoundWord] = useState<string | null>(null);
   const [justFoundCells, setJustFoundCells] = useState<Set<string>>(new Set());
+
+  const classic = useClassicChallenge('sopa_letras', dateStrKey, progressReady && foundWords.length < targetWords.length && !showVictoryModal, economy);
 
   const gridRef = useRef<HTMLDivElement>(null);
 
@@ -164,8 +160,7 @@ export const SopaLetrasGame: React.FC = () => {
       if (!isMounted) return;
       setLoadedDate(dateStrKey);
       if (!saved) return;
-      gameLives.hydrate(saved.gameData?.lives ?? 4, saved.status === 'lost' || saved.status === 'failed');
-      if (saved.status === 'lost' || saved.status === 'failed') { setIsGameOver(true); setShowGameOverModal(true); }
+      classic.restore(saved);
       setPistasCompradas(saved.gameData?.pistasCompradas ?? {});
 
       if (saved.guesses && Array.isArray(saved.guesses) && saved.guesses.length > 0) {
@@ -194,10 +189,10 @@ export const SopaLetrasGame: React.FC = () => {
     if (!progressReady || foundWords.length === targetWords.length) return;
     void saveActiveGameProgress({ gameId: 'sopa_letras', date: dateStrKey, day: dayNum,
       word: theme, guesses: foundWords, attempts: foundWords.length,
-      status: isGameOver ? 'failed' : 'in_progress',
-      gameData: { lives, errors, pistasCompradas },
+      status: 'in_progress',
+      gameData: { errors, pistasCompradas, elapsedSeconds: classic.seconds },
     });
-  }, [progressReady, foundWords, targetWords.length, lives, errors, pistasCompradas, isGameOver, dateStrKey, dayNum, theme]);
+  }, [progressReady, foundWords, targetWords.length, errors, pistasCompradas, dateStrKey, dayNum, theme]);
 
   // Recalcular celdas coloreadas de palabras encontradas cuando cambia foundWords o grid
   useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
@@ -294,7 +289,7 @@ export const SopaLetrasGame: React.FC = () => {
   // Verificar palabra seleccionada
   const checkSelection = useCallback(
     (start: CellCoord, end: CellCoord) => {
-      if (!progressReady || lives <= 0 || isGameOver) return false;
+      if (!progressReady) return false;
       const { row: r1, col: c1 } = start;
       const { row: r2, col: c2 } = end;
 
@@ -323,22 +318,6 @@ export const SopaLetrasGame: React.FC = () => {
         triggerHaptic();
         const nextFound = [...foundWords, match];
         setFoundWords(nextFound);
-        const starsEarned = errors === 0 ? 3 : errors <= 2 ? 2 : 1;
-
-        // Guardar progreso en tiempo real
-        saveActiveGameProgress({
-          gameId: 'sopa_letras',
-          date: dateStrKey,
-          day: dayNum,
-          word: theme,
-          guesses: nextFound,
-          status: nextFound.length === targetWords.length ? 'completed' : 'in_progress',
-          attempts: nextFound.length,
-          stars: nextFound.length === targetWords.length ? starsEarned : 1,
-          score: nextFound.length * 100,
-          gameData: { lives, errors },
-        });
-
         // Micro-interacción de celebración en el chip y en las celdas encontradas
         setJustFoundWord(match);
         setJustFoundCells(new Set(cellsToMark));
@@ -349,17 +328,12 @@ export const SopaLetrasGame: React.FC = () => {
 
         // Si se encontraron las 4 palabras -> ¡Victoria!
         if (nextFound.length === targetWords.length) {
-          gameLives.finish();
-          saveFinalGameAttempt({
-            gameId: 'sopa_letras',
-            date: dateStrKey,
+          classic.complete({
             day: dayNum,
             status: 'completed',
             word: theme,
             attempts: targetWords.length,
-            stars: starsEarned,
-            gameData: { lives, errors, pistasCompradas },
-            score: 400,
+            gameData: { errors, pistasCompradas },
             guesses: nextFound,
           });
 
@@ -371,14 +345,13 @@ export const SopaLetrasGame: React.FC = () => {
         return true;
       }
 
-      // Si no coincide y la selección tiene al menos 3 letras -> Intento fallido / descuenta vida
+      // Si no coincide y la selección tiene al menos 3 letras -> Intento incorrecto: registra el error sin limitar la partida
       if (candidate.length >= 3 && !foundWords.includes(candidate)) {
         try {
           Haptics.impact({ style: ImpactStyle.Heavy });
         } catch {}
 
         setErrors(/* Actualiza errors a partir del valor anterior. */ (prev) => prev + 1);
-        gameLives.consumeLife();
 
         setInvalidCells(new Set(cellsToMark));
         setTimeout(/* Ejecuta este paso cuando se cumple la espera. */ () => {
@@ -388,12 +361,12 @@ export const SopaLetrasGame: React.FC = () => {
 
       return false;
     },
-    [grid, targetWords, foundWords, triggerHaptic, dateStrKey, dayNum, theme, isGameOver, errors, lives, progressReady]
+    [grid, targetWords, foundWords, triggerHaptic, dateStrKey, dayNum, theme, errors, progressReady, classic]
   );
 
   // Manejo de eventos Pointer (Unifica mouse y touch)
   const handlePointerDown = (row: number, col: number, e: React.PointerEvent) => {
-    if (!progressReady || lives <= 0 || isGameOver || showGameOverModal || showVictoryModal) return;
+    if (!progressReady || showVictoryModal) return;
 
     // Si ya había un tap inicial activo:
     if (tapStart) {
@@ -474,16 +447,14 @@ export const SopaLetrasGame: React.FC = () => {
 
   // Reinicia el desafío para volver a jugarlo.
   const handleRestart = async () => {
-    gameLives.reset();
     setPistasCompradas({});
+    classic.reset();
     setFoundWords([]);
     setFoundCellKeys(new Set());
     setTapStart(null);
     setDragStart(null);
     setDragCurrent(null);
     setErrors(0);
-    setIsGameOver(false);
-    setShowGameOverModal(false);
     setShowVictoryModal(false);
     await saveActiveGameProgress({
       gameId: 'sopa_letras',
@@ -495,7 +466,7 @@ export const SopaLetrasGame: React.FC = () => {
       attempts: 0,
       stars: 1,
       score: 0,
-      gameData: { lives: 4, errors: 0 },
+      gameData: { errors: 0 },
     });
   };
 
@@ -513,7 +484,6 @@ export const SopaLetrasGame: React.FC = () => {
           title="Sopa de letras"
           backRoute="/juegos/sopa-letras"
           backLabel="Calendario"
-          badges={<LivesBadge lives={lives} maxLives={MAX_LIVES} onClick={gameLives.openRefill} />}
           onHint={/* Responde a hint desde este control. */ () => {
             const indice = targetWords.findIndex(/* Busca la posición del elemento que cumple esta condición. */ (word, idx) => !foundWords.includes(word) && !pistasCompradas[idx]);
             if (indice < 0) { setShowHintModal(true); return; }
@@ -525,11 +495,10 @@ export const SopaLetrasGame: React.FC = () => {
               },
             });
           }}
-          hintDisabled={!progressReady || lives <= 0 || isGameOver || showVictoryModal}
+          hintDisabled={!progressReady || showVictoryModal}
         />
       </>
 
-      {gameLives.modal}
       <IonContent
         fullscreen
         style={
@@ -919,22 +888,20 @@ export const SopaLetrasGame: React.FC = () => {
         )}
 
         {/* Modal de Felicitación / Victoria o Game Over */}
-        {(showVictoryModal || showGameOverModal) && (
-          <CompletedModal gameId="sopa_letras"
+        {(showVictoryModal) && (
+          <CompletedModal gameId="sopa_letras" completion={classic.completion}
             challenge={{
               dateStr: dateDisplay,
               config: {
                 theme,
                 words: targetWords,
               },
-              stars: errors === 0 ? 3 : errors <= 2 ? 2 : 1,
               completedData: {
                 guesses: foundWords,
                 errors,
-                livesLeft: lives,
+
               },
             }}
-            isGameOver={showGameOverModal}
             onRestart={handleRestart}
             onClose={/* Responde a close desde este control. */ () => navigate('/juegos/sopa-letras')}
           />

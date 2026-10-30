@@ -1,8 +1,11 @@
 /* Muestra cómo terminó el desafío y permite seguir navegando. */
-import { useId } from 'react';
+import { useEffect, useId } from 'react';
 import type { DayChallenge } from '../CALENDAR/types';
 import { ModalBase } from './ModalBase';
 import { GamePerformance, type GamePerformanceProps } from './GamePerformance';
+import { ClassicResultSummary } from './ClassicResultSummary';
+import { getActiveGameProgress, getCurrentUserId } from '../../JUEGOS/attemptsService';
+import { useClassicChallenge, type ClassicCompletion } from '../../JUEGOS/useClassicChallenge';
 
 type Juego = 'wordle' | 'sudoku' | 'sopa_letras' | 'crucigrama';
 type Palabra = string | { word: string; clue?: string; direction?: string; number?: number };
@@ -17,6 +20,7 @@ interface CompletedModalProps {
   onRestart?: () => void;
   onClose: () => void;
   closeLabel?: string;
+  completion?: ClassicCompletion;
 }
 
 const textos: Record<Juego, { titulo: string; descripcion: string }> = {
@@ -27,16 +31,27 @@ const textos: Record<Juego, { titulo: string; descripcion: string }> = {
 };
 
 // Muestra cómo terminó el desafío y permite seguir navegando.
-export function CompletedModal({ gameId, challenge, dateStr, stars, performance, isGameOver: gameOver = false, onRestart, onClose, closeLabel = 'Volver al calendario' }: CompletedModalProps) {
+export function CompletedModal({ gameId, challenge, dateStr, stars, performance, isGameOver: gameOver = false, onRestart, onClose, closeLabel = 'Volver al calendario', completion }: CompletedModalProps) {
   const titleId = useId();
   const isGameOver = gameOver || (performance !== undefined && performance.remainingLives <= 0);
   const config = challenge?.config;
   const registro = challenge?.completedData;
-  const estrellas = Math.max(0, Math.min(3, stars ?? challenge?.stars ?? registro?.stars ?? 3));
+  const historical = useClassicChallenge(gameId, challenge?.dateKey ?? registro?.date ?? '', false);
+  useEffect(() => {
+    if (completion || registro?.synced !== false || getCurrentUserId() === null) return;
+    let active = true;
+    void getActiveGameProgress(gameId, challenge?.dateKey ?? registro.date).then(saved => {
+      if (active && saved) historical.restore(saved);
+    });
+    return () => { active = false; };
+  }, [gameId, challenge?.dateKey, registro, completion]);
+  const state = completion ?? (registro?.synced === false ? historical.completion : undefined);
+  const result = state?.result ?? (registro?.grade ? { grade: registro.grade, score: registro.score, stars: registro.stars, timeTakenSeconds: registro.timeTakenSeconds ?? registro.time_taken_seconds } : undefined);
+  const estrellas = Math.max(0, Math.min(3, result?.stars ?? stars ?? challenge?.stars ?? registro?.stars ?? 3));
   const palabra = registro?.word ?? config?.solution;
   const intentos = challenge?.attempts ?? registro?.attempts;
-  const segundos = registro?.gameData?.timeTaken ?? config?.timeTaken;
-  const puntaje = challenge?.score ?? registro?.score;
+  const segundos = result?.timeTakenSeconds ?? registro?.gameData?.timeTaken ?? config?.timeTaken;
+  const puntaje = result ? undefined : challenge?.score ?? registro?.score;
   const palabras: Palabra[] = config?.words ?? registro?.guesses ?? [];
   const detalles = [
     ...(gameId === 'wordle' && palabra ? [{ etiqueta: isGameOver ? 'La palabra era' : 'Palabra descubierta', valor: palabra }] : []),
@@ -58,7 +73,7 @@ export function CompletedModal({ gameId, challenge, dateStr, stars, performance,
           {(dateStr ?? challenge?.dateStr) && <p className="mt-1 text-sm text-slate-500">{dateStr ?? challenge?.dateStr}</p>}
         </div>
         <p className="text-sm leading-relaxed">{isGameOver ? (gameId === 'wordle' ? 'El ejercicio diario mantiene tu mente ágil. ¡Podés volver a intentarlo!' : 'Partida finalizada. Podés volver a jugar desde cero.') : textos[gameId].descripcion}</p>
-        {performance ? (
+        {result ? <ClassicResultSummary result={result} saving={state?.saving} error={state?.error} onRetry={state?.retry} /> : performance ? (
           <GamePerformance {...performance} remainingLives={isGameOver ? 0 : performance.remainingLives} />
         ) : !isGameOver && <div className="flex justify-center gap-1 text-3xl" aria-label={`${estrellas} de 3 estrellas`}>{[0, 1, 2].map(/* Prepara el resultado de cada elemento. */ i => <span key={i} aria-hidden="true" className={i < estrellas ? 'text-amber-400' : 'text-slate-200'}>★</span>)}</div>}
         {(!isGameOver || gameId === 'wordle') && detalles.length > 0 && (

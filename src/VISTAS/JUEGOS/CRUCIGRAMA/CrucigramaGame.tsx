@@ -1,18 +1,18 @@
+import { useClassicChallenge } from '../useClassicChallenge';
 /* Maneja el tablero del crucigrama, sus letras, las pistas y el final de la partida. */
-import { GAME_LIVES, useGameLives } from '../useGameLives';
 /* Acá maneja el tablero del crucigrama, sus letras, las pistas y el final de la partida. */
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { IonPage, IonContent } from '@ionic/react';
 import { API_URL } from '../../../config/api';
-import { getActiveGameProgress, saveActiveGameProgress, saveFinalGameAttempt } from '../attemptsService';
+import { getActiveGameProgress, saveActiveGameProgress } from '../attemptsService';
 import {
   saveActiveCrucigrama,
   loadActiveCrucigrama,
   clearActiveCrucigrama,
   type CrucigramaDifficulty,
 } from './crucigramaStorage';
-import { GameHeader, LivesBadge } from '../../COMPONENTS/GameHeader';
+import { GameHeader } from '../../COMPONENTS/GameHeader';
 import { usePlayerEconomy } from '../../../context/PlayerEconomyContext';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { CompletedModal } from '../../COMPONENTS/MODALS/CompletedModal';
@@ -89,25 +89,22 @@ export const CrucigramaGame: React.FC = () => {
   const [selectedDirection, setSelectedDirection] = useState<'H' | 'V'>('H');
 
   // Tiempo y control
-  const [seconds, setSeconds] = useState<number>(0);
   const [isWon, setIsWon] = useState<boolean>(false);
   const [showClueDrawer, setShowClueDrawer] = useState<boolean>(false);
   const [showVictoryModal, setShowVictoryModal] = useState<boolean>(false);
   const [hintMessage, setHintMessage] = useState<string | null>(null);
   const [revealedCellCoord, setRevealedCellCoord] = useState<{ r: number; c: number } | null>(null);
 
-  // Vidas Globales y Errores
+  // Errores usados para calificar la partida
   const economy = usePlayerEconomy();
-  const MAX_LIVES = GAME_LIVES;
-  const gameLives = useGameLives('crucigrama', targetDate, /* Completa este paso con los datos recibidos por la operación. */ () => { setIsGameOver(true); setShowGameOverModal(true); });
-  const lives = gameLives.lives;
   const [loadedDate, setLoadedDate] = useState('');
   const progressReady = loadedDate === targetDate + ':' + difficulty;
   const [errors, setErrors] = useState<number>(0);
-  const [isGameOver, setIsGameOver] = useState<boolean>(false);
-  const [showGameOverModal, setShowGameOverModal] = useState<boolean>(false);
   const [failedWordIds, setFailedWordIds] = useState<Set<string>>(new Set());
   const [flashingWordId, setFlashingWordId] = useState<string | null>(null);
+
+  const classic = useClassicChallenge('crucigrama', targetDate, progressReady && !loading && !isWon, economy);
+  const seconds = classic.seconds;
 
   // 1. Cargar el desafio (prioriza state del calendario; si no, consulta la API configurada)
   useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
@@ -145,19 +142,15 @@ export const CrucigramaGame: React.FC = () => {
         // Restaurar estado activo previo o inicializar primera casilla blanca
         const progress = await getActiveGameProgress('crucigrama', targetDate);
         if (!isMounted) return;
+        if (progress) classic.restore(progress);
         const saved = progress?.gameData?.userGrid ? progress.gameData : loadActiveCrucigrama(targetDate, difficulty);
-        const failed = progress?.status === 'failed' || progress?.status === 'lost';
-        gameLives.hydrate(saved?.lives ?? 4, failed);
-        if (failed) { setIsGameOver(true); setShowGameOverModal(true); }
-        if (progress?.status === 'completed' || progress?.status === 'won') { gameLives.finish(); setIsWon(true); setShowVictoryModal(true); }
+        if (progress?.status === 'completed' || progress?.status === 'won') { setIsWon(true); setShowVictoryModal(true); }
         setFailedWordIds(new Set(saved?.failedWordIds ?? []));
         if (saved && saved.userGrid && saved.userGrid.length === size) {
           setUserGrid(saved.userGrid);
           setSelectedRow(saved.selectedRow ?? 0);
           setSelectedCol(saved.selectedCol ?? 0);
           setSelectedDirection(saved.selectedDirection ?? 'H');
-          setSeconds(saved.elapsedSeconds ?? 0);
-          // Vidas administradas globalmente vía economy
           if (saved.errors !== undefined) setErrors(saved.errors);
         } else {
           setUserGrid(Array.from({ length: size }, /* Completa este paso con los datos recibidos por la operación. */ () => Array(size).fill('')));
@@ -193,20 +186,11 @@ export const CrucigramaGame: React.FC = () => {
   useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
     if (!progressReady || loading || isWon) return;
     void saveActiveGameProgress({ gameId: 'crucigrama', date: targetDate,
-      status: isGameOver ? 'failed' : 'in_progress', guesses: [], attempts: errors,
+      status: 'in_progress', guesses: [], attempts: errors,
       gameData: { userGrid, selectedRow, selectedCol, selectedDirection,
-        elapsedSeconds: seconds, difficulty, lives, errors, failedWordIds: [...failedWordIds] },
+        elapsedSeconds: seconds, difficulty, errors, failedWordIds: [...failedWordIds] },
     });
-  }, [progressReady, loading, userGrid, lives, errors, isGameOver, isWon, difficulty, targetDate, failedWordIds]);
-
-  // 2. Temporizador
-  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
-    if (loading || isWon || isGameOver || lives <= 0) return;
-    const interval = setInterval(/* Actualiza este dato en cada intervalo. */ () => {
-      setSeconds(/* Actualiza seconds a partir del valor anterior. */ (prev) => prev + 1);
-    }, 1000);
-    return /* Libera los recursos de este efecto cuando deja de usarse. */ () => clearInterval(interval);
-  }, [loading, isWon, isGameOver, lives]);
+  }, [progressReady, loading, userGrid, errors, isWon, difficulty, targetDate, failedWordIds]);
 
   // 3. Palabra activa según la celda seleccionada y la dirección
   const activeWord = useMemo<WordDef | null>(/* Recalcula este dato cuando cambian sus dependencias. */ () => {
@@ -265,7 +249,7 @@ export const CrucigramaGame: React.FC = () => {
   // Responde a la casilla elegida y actualiza la selección.
   const handleCellClick = useCallback(
     (r: number, c: number) => {
-      if (isGameOver || isWon || cells[r]?.[c]?.is_block) return;
+      if (isWon || cells[r]?.[c]?.is_block) return;
 
       if (r === selectedRow && c === selectedCol) {
         // Tocar la misma celda conmuta la dirección si la celda pertenece a ambas
@@ -338,7 +322,7 @@ export const CrucigramaGame: React.FC = () => {
   // 7. Ingreso de letras y borrado (Opción B: Validación al completar palabra)
   const handleInputChar = useCallback(
     (char: string, esPista = false) => {
-      if (!progressReady || lives <= 0 || isWon || isGameOver || !cells.length) return;
+      if (!progressReady || isWon || !cells.length) return;
       const upper = char.toUpperCase();
 
       {
@@ -353,7 +337,6 @@ export const CrucigramaGame: React.FC = () => {
           selectedCol,
           selectedDirection,
           elapsedSeconds: seconds,
-          lives,
           errors,
         });
 
@@ -390,7 +373,6 @@ export const CrucigramaGame: React.FC = () => {
                 setTimeout(/* Ejecuta este paso cuando se cumple la espera. */ () => setFlashingWordId(null), 600);
 
                 setErrors(/* Actualiza errors a partir del valor anterior. */ (prev) => prev + 1);
-                gameLives.consumeLife();
               }
             }
           }
@@ -398,20 +380,14 @@ export const CrucigramaGame: React.FC = () => {
 
         // Verificar si completó el tablero
         if (checkVictory(nextGrid)) {
-          gameLives.finish();
-          const starsEarned = errors === 0 ? 3 : errors <= 2 ? 2 : 1;
           setIsWon(true);
           clearActiveCrucigrama(targetDate, difficulty);
-          saveFinalGameAttempt({
-            gameId: 'crucigrama',
-            date: targetDate,
+          classic.complete({
             status: 'won',
             attempts: 1,
-            stars: starsEarned,
-            score: 100,
             guesses: words.map(/* Prepara el resultado de cada elemento. */ (w) => w.word),
-            gameData: { timeTaken: seconds, theme, difficulty, errors, lives, userGrid: nextGrid },
-          }).catch(/* Maneja el fallo de esta operación. */ (e) => console.warn('Error guardando intento final:', e));
+            gameData: { timeTaken: seconds, theme, difficulty, errors, userGrid: nextGrid },
+          });
           setTimeout(/* Ejecuta este paso cuando se cumple la espera. */ () => setShowVictoryModal(true), 400);
         }
 
@@ -430,7 +406,6 @@ export const CrucigramaGame: React.FC = () => {
     },
     [
       isWon,
-      isGameOver,
       userGrid,
       cells,
       progressReady,
@@ -445,14 +420,13 @@ export const CrucigramaGame: React.FC = () => {
       activeWord,
       theme,
       failedWordIds,
-      lives,
       errors,
     ]
   );
 
   // Borra la letra y acomoda la selección.
   const handleBackspace = useCallback(() => {
-    if (!progressReady || lives <= 0 || isWon || isGameOver) return;
+    if (!progressReady || isWon) return;
 
     if (activeWord && failedWordIds.has(activeWord.id)) {
       setFailedWordIds(/* Actualiza failed word ids a partir del valor anterior. */ (prev) => {
@@ -487,19 +461,18 @@ export const CrucigramaGame: React.FC = () => {
         selectedCol,
         selectedDirection,
         elapsedSeconds: seconds,
-        lives,
         errors,
       });
 
       return nextGrid;
     });
-  }, [isWon, isGameOver, selectedRow, selectedCol, selectedDirection, seconds, targetDate, difficulty, activeWord, failedWordIds, lives, errors, progressReady]);
+  }, [isWon, selectedRow, selectedCol, selectedDirection, seconds, targetDate, difficulty, activeWord, failedWordIds, errors, progressReady]);
 
   // 8. Soporte de Teclado Físico
   useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
     // Traduce la tecla a una acción del juego o de la ventana.
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (isWon || isGameOver || loading || lives <= 0 || !progressReady || e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (isWon || loading || !progressReady || e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return;
 
       const key = e.key;
       const target = e.target instanceof HTMLElement ? e.target : null;
@@ -552,7 +525,6 @@ export const CrucigramaGame: React.FC = () => {
   }, [
     isWon,
     loading,
-    lives,
     progressReady,
     selectedRow,
     selectedCol,
@@ -565,16 +537,13 @@ export const CrucigramaGame: React.FC = () => {
 
   // Reiniciar crucigrama (para Game Over o reintento)
   const handleRestart = () => {
-    gameLives.reset();
     setUserGrid(Array.from({ length: gridSize }, /* Completa este paso con los datos recibidos por la operación. */ () => Array(gridSize).fill('')));
     setErrors(0);
-    setIsGameOver(false);
-    setShowGameOverModal(false);
     setIsWon(false);
     setShowVictoryModal(false);
     setFailedWordIds(new Set());
     setFlashingWordId(null);
-    setSeconds(0);
+    classic.reset();
     clearActiveCrucigrama(targetDate, difficulty);
   };
 
@@ -587,7 +556,7 @@ export const CrucigramaGame: React.FC = () => {
 
   // Botón de ayuda/pista: micro-interacción directa en la casilla sin cartel
   const handleRevealCell = () => {
-    if (isWon || isGameOver || !cells.length) return;
+    if (isWon || !cells.length) return;
     const targetCell = cells[selectedRow]?.[selectedCol];
     if (!targetCell || targetCell.is_block) {
       setHintMessage('Seleccioná una casilla libre para revelar');
@@ -615,8 +584,6 @@ export const CrucigramaGame: React.FC = () => {
         backLabel="Calendario"
         badges={
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
-            <LivesBadge lives={lives} maxLives={MAX_LIVES} onClick={gameLives.openRefill} />
-            <span style={{ color: '#CBD5E1' }}>•</span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 3, color: '#294C6B', fontWeight: 800 }}>
               <IconClock size={13} color="#294C6B" />
               {formatTimer(seconds)}
@@ -624,7 +591,7 @@ export const CrucigramaGame: React.FC = () => {
           </div>
         }
         onHint={handleRevealCell}
-        hintDisabled={!progressReady || lives <= 0 || isWon || isGameOver}
+        hintDisabled={!progressReady || isWon}
         rightAction={
           <button
             type="button"
@@ -650,7 +617,6 @@ export const CrucigramaGame: React.FC = () => {
         }
       />
 
-      {gameLives.modal}
       <IonContent
         fullscreen
         style={
@@ -1177,23 +1143,19 @@ export const CrucigramaGame: React.FC = () => {
           )}
 
           {/* MODAL DE VICTORIA O GAME OVER */}
-          {(showVictoryModal || showGameOverModal) && (
-            <CompletedModal gameId="crucigrama"
+          {(showVictoryModal) && (
+            <CompletedModal gameId="crucigrama" completion={classic.completion}
               challenge={{
                 dateStr: targetDate,
-                stars: errors === 0 ? 3 : errors <= 2 ? 2 : 1,
-                score: 100,
                 config: {
                   theme,
                   words,
                   timeTaken: seconds,
                 },
               }}
-              isGameOver={showGameOverModal}
               onRestart={handleRestart}
               onClose={/* Responde a close desde este control. */ () => {
                 setShowVictoryModal(false);
-                setShowGameOverModal(false);
                 navigate('/juegos/crucigrama');
               }}
             />

@@ -97,7 +97,7 @@ export async function fetchUserMonthAttempts(
   month: number,
   userId: number
 ) {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('token') || sessionStorage.getItem('token');
   const headers: Record<string, string> = {};
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
@@ -224,6 +224,9 @@ export async function getCalendarMonthData(
               stars: att.stars,
               word: att.word,
               score: att.score,
+              grade: att.grade,
+              timeTakenSeconds: att.time_taken_seconds ?? att.game_data?.elapsedSeconds ?? att.game_data?.timeTaken,
+              gameData: att.game_data,
               dateStr: `${dayNum} de ${monthName}`,
               completedAt: att.updated_at || att.created_at,
             };

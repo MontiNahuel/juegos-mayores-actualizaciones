@@ -1,3 +1,4 @@
+import type { ScoringConfig } from '../VISTAS/JUEGOS/classicScoring';
 /* Conecta los juegos con la economía de Redux y maneja las compras y las ventanas de la tienda. */
 import { useDispatch, useSelector } from 'react-redux';
 import type { RootState, AppDispatch } from '../store/store';
@@ -12,7 +13,7 @@ export interface CompraPista extends SolicitudPista {
 
 export type { TiendaPaquete, SuscripcionTipo } from '../store/playerEconomySlice';
 import type { TiendaPaquete, SuscripcionTipo } from '../store/playerEconomySlice';
-export interface PlayerEconomyContextType {
+export interface PlayerEconomyContextType extends ScoringConfig {
   vidas: number;
   puntos: number;
   costoVidaPuntos: number;
@@ -56,7 +57,7 @@ function getAuthToken(): string | null {
 // Conecta el saldo de Redux con los juegos y mantiene locales las ventanas y las compras en curso.
 export const PlayerEconomyProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const dispatch = useDispatch<AppDispatch>();
-  const { vidas, puntos, costoVidaPuntos, costoPistaPuntos, costoDesbloqueoDiaPuntos, suscripcion,
+  const { puntosPorCalificacion, escalasTiempoPorJuego, vidas, puntos, costoVidaPuntos, costoPistaPuntos, costoDesbloqueoDiaPuntos, suscripcion,
     diasDesbloqueados, paquetesTienda, puntosPorJuego, vidasMaximas, isLoading,
   } = useSelector(/* Lee de Redux el dato compartido que necesita la pantalla. */ (state: RootState) => state.playerEconomy);
   const [isMiniTiendaOpen, setIsMiniTiendaOpen] = useState<boolean>(false);
@@ -112,6 +113,8 @@ export const PlayerEconomyProvider: React.FC<{ children: React.ReactNode }> = ({
       if (configRes.ok) {
         const configData = await configRes.json();
         configVidasIniciales = configData.vidas_iniciales ?? 5;
+        if (configData.puntos_por_calificacion) dispatch(actualizarEconomia({ puntosPorCalificacion: configData.puntos_por_calificacion }));
+        if (configData.escalas_tiempo_por_juego) dispatch(actualizarEconomia({ escalasTiempoPorJuego: configData.escalas_tiempo_por_juego }));
         dispatch(actualizarEconomia({ costoVidaPuntos: configData.costo_vida_puntos ?? 200, costoPistaPuntos: configData.costo_pista_puntos ?? 20, costoDesbloqueoDiaPuntos: configData.costo_desbloqueo_dia_puntos ?? 100 }));
         if (Array.isArray(configData.paquetes_tienda) && configData.paquetes_tienda.length > 0) {
           dispatch(actualizarEconomia({ paquetesTienda: configData.paquetes_tienda }));
@@ -183,7 +186,10 @@ export const PlayerEconomyProvider: React.FC<{ children: React.ReactNode }> = ({
 
     // Vuelve a leer el progreso cuando otra pantalla o pestaña avisa que cambió.
     const handleProgressUpdate = (event: Event) => {
-      if (event instanceof CustomEvent && event.detail?.economiaConfirmada) return;
+      if (event instanceof CustomEvent && event.detail?.economiaConfirmada) {
+        if (Number.isFinite(event.detail.puntos)) dispatch(actualizarEconomia({ puntos: event.detail.puntos }));
+        return;
+      }
       recargarEconomia();
     };
 
@@ -402,6 +408,8 @@ export const PlayerEconomyProvider: React.FC<{ children: React.ReactNode }> = ({
         puntos,
         costoVidaPuntos,
         costoPistaPuntos,
+        puntosPorCalificacion,
+        escalasTiempoPorJuego,
         costoDesbloqueoDiaPuntos,
         suscripcion,
         diasDesbloqueados,

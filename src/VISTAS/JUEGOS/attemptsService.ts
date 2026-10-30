@@ -34,6 +34,10 @@ export interface ActiveGameProgress {
   attempts: number;
   stars: number;
   score: number;
+  grade?: string;
+  timeTakenSeconds?: number;
+  awardedPoints?: number;
+  synced?: boolean;
   updatedAt: string;
 }
 
@@ -49,6 +53,8 @@ export interface SaveProgressPayload {
   attempts: number;
   stars?: number;
   score?: number;
+  grade?: string;
+  timeTakenSeconds?: number;
 }
 
 /**
@@ -153,6 +159,24 @@ export function cleanupLegacyGameStorage(): void {
  * - Si es invitado: lee exclusivamente de localStorage (cero llamadas de red).
  * - Si es usuario logueado: lee de localStorage y recurre al backend si no existe en local.
  */
+function cacheCompleted(progress: ActiveGameProgress): void {
+  try {
+    localStorage.setItem(getActiveProgressStorageKey(progress.gameId, progress.date), JSON.stringify(progress));
+    const [year, month, day] = progress.date.split('-').map(Number);
+    const key = getCompletedDaysStorageKey(progress.gameId, year, month);
+    const completed = JSON.parse(localStorage.getItem(key) || '{}');
+    completed[day] = { ...progress, dateKey: progress.date, day, dateStr: day + ' de ' + MONTH_NAMES[month - 1], completedAt: progress.updatedAt };
+    localStorage.setItem(key, JSON.stringify(completed));
+  } catch { /* El guardado remoto puede continuar aunque no haya espacio local. */ }
+}
+
+function alreadyCompleted(gameId: string, date: string): boolean {
+  try {
+    const [year, month, day] = date.split('-').map(Number);
+    return Boolean(JSON.parse(localStorage.getItem(getCompletedDaysStorageKey(gameId, year, month)) || '{}')[day]);
+  } catch { return false; }
+}
+
 export async function getActiveGameProgress(
   gameId: string,
   date: string
@@ -163,7 +187,9 @@ export async function getActiveGameProgress(
   try {
     const raw = localStorage.getItem(storageKey);
     if (raw) {
-      return JSON.parse(raw) as ActiveGameProgress;
+      const saved = JSON.parse(raw) as ActiveGameProgress;
+      if (saved.status === 'won' || saved.status === 'completed') cacheCompleted(saved);
+      return saved;
     }
   } catch (err) {
     console.warn('[attemptsService] Error al leer progreso local:', err);
@@ -194,6 +220,9 @@ export async function getActiveGameProgress(
     if (data && data.date) {
       const progress: ActiveGameProgress = {
         gameId: data.game_id || gameId,
+        grade: data.grade,
+        timeTakenSeconds: data.time_taken_seconds ?? data.game_data?.elapsedSeconds ?? data.game_data?.timeTaken,
+        synced: true,
         date: data.date,
         word: data.word,
         guesses: data.guesses || [],
@@ -206,6 +235,7 @@ export async function getActiveGameProgress(
         updatedAt: data.updated_at || new Date().toISOString(),
       };
 
+      if (progress.status === 'won' || progress.status === 'completed') cacheCompleted(progress);
       // Guardar en local bajo la clave del usuario para lecturas rápidas
       try {
         localStorage.setItem(storageKey, JSON.stringify(progress));
@@ -233,6 +263,8 @@ export async function saveActiveGameProgress(payload: SaveProgressPayload, confi
     word: payload.word,
     guesses: payload.guesses,
     gameData: payload.gameData,
+    grade: payload.grade,
+    timeTakenSeconds: payload.timeTakenSeconds,
     currentInput: payload.currentInput || '',
     status: payload.status,
     attempts: payload.attempts,
@@ -256,6 +288,9 @@ export async function saveActiveGameProgress(payload: SaveProgressPayload, confi
     return;
   }
 
+  // Los reintentos locales no deben convertir una victoria ya premiada en otra partida nueva.
+  if (alreadyCompleted(payload.gameId, payload.date)) return;
+
   // 3. Sincronización asíncrona con el backend (sólo usuario autenticado)
   try {
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
@@ -264,6 +299,7 @@ export async function saveActiveGameProgress(payload: SaveProgressPayload, confi
       game_id: payload.gameId,
       date: payload.date,
       mode: 'daily',
+      time_taken_seconds: payload.timeTakenSeconds,
       status: payload.status === 'won' || payload.status === 'completed' ? 'completed' : payload.status === 'lost' || payload.status === 'failed' ? 'failed' : 'in_progress',
       word: payload.word,
       attempts: payload.attempts,
@@ -300,119 +336,46 @@ export async function saveActiveGameProgress(payload: SaveProgressPayload, confi
  * - Si es invitado: guarda en localStorage (progreso y días completados). CERO llamadas al backend.
  * - Si tiene cuenta: guarda en localStorage, actualiza puntos en sesión y sincroniza con MongoDB.
  */
-export async function saveFinalGameAttempt(payload: SaveProgressPayload): Promise<void> {
-  const isWon = payload.status === 'won' || payload.status === 'completed';
-  const finalStatus = isWon ? 'completed' : 'failed';
-  const dayNum = payload.day || parseInt(payload.date.split('-')[2], 10) || 9;
-  const stars = payload.stars || (isWon ? (payload.attempts <= 3 ? 3 : payload.attempts <= 5 ? 2 : 1) : 0);
-  const score = payload.score ?? (stars * 50);
-
-  const progress: ActiveGameProgress = {
-    gameId: payload.gameId,
-    date: payload.date,
-    day: dayNum,
-    word: payload.word,
-    guesses: payload.guesses,
-    gameData: payload.gameData,
-    currentInput: '',
-    status: isWon ? 'won' : 'lost',
-    attempts: payload.attempts,
-    stars,
-    score,
-    updatedAt: new Date().toISOString(),
-  };
-
-  const storageKey = getActiveProgressStorageKey(payload.gameId, payload.date);
-
-  // 1. Guardar estado activo final en localStorage aislado
-  try {
-    localStorage.setItem(storageKey, JSON.stringify(progress));
-  } catch (err) {
-    console.error('[attemptsService] Error al guardar intento final local:', err);
-  }
-
-  // 2. Si ganó, actualizar también el registro para el calendario del juego
-  if (isWon) {
-    try {
-      const [yStr, mStr, dStr] = (payload.date || '').split('-');
-      const year = parseInt(yStr, 10) || 2026;
-      const month = parseInt(mStr, 10) || 10;
-      const parsedDay = payload.day || parseInt(dStr, 10) || 1;
-      const monthName = MONTH_NAMES[month - 1] || 'Octubre';
-
-      const compKey = getCompletedDaysStorageKey(payload.gameId, year, month);
-      const completedRaw = localStorage.getItem(compKey);
-      const completedMap = completedRaw ? JSON.parse(completedRaw) : {};
-      completedMap[parsedDay] = {
-        day: parsedDay,
-        year,
-        month,
-        dateKey: payload.date,
-        attempts: payload.attempts,
-        stars,
-        word: payload.word || '',
-        dateStr: `${parsedDay} de ${monthName}`,
-        completedAt: new Date().toISOString(),
-      };
-      localStorage.setItem(compKey, JSON.stringify(completedMap));
-    } catch (err) {
-      console.warn('[attemptsService] Error al guardar día completado local:', err);
-    }
-  }
-
-  // 3. Si NO tiene cuenta (invitado), NO tocar la base de datos ni sumar puntos a cuentas
+export async function saveFinalGameAttempt(payload: SaveProgressPayload): Promise<ActiveGameProgress> {
+  const won = payload.status === 'won' || payload.status === 'completed';
   const uid = getCurrentUserId();
-  if (uid == null) {
-    return;
+  const progress: ActiveGameProgress = { ...payload, status: won ? 'won' : 'lost',
+    stars: payload.stars ?? (won ? 3 : 0), score: payload.score ?? 0,
+    synced: uid === null, updatedAt: new Date().toISOString() };
+  const storageKey = getActiveProgressStorageKey(payload.gameId, payload.date);
+  if (won) cacheCompleted(progress);
+  else localStorage.setItem(storageKey, JSON.stringify(progress));
+  if (uid === null) return progress;
+
+  const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+  const response = await guardarEnOrden(storageKey, async () => {
+    const res = await fetch(API_URL + '/api/games/attempts', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) },
+      body: JSON.stringify({ user_id: uid, game_id: payload.gameId, date: payload.date,
+        mode: 'daily', status: won ? 'completed' : 'failed', word: payload.word,
+        attempts: payload.attempts, grade: payload.grade, stars: payload.stars,
+        time_taken_seconds: payload.timeTakenSeconds, guesses: payload.guesses, game_data: payload.gameData }),
+    });
+    if (!res.ok) throw new Error('No se pudo confirmar el resultado.');
+    return res.json();
+  }) as { grade?: string; stars: number; score: number; puntos_ganados?: number; puntos_totales_usuario?: number };
+  if (!Number.isFinite(response.score) || !Number.isFinite(response.stars)) throw new Error('Resultado inválido del servidor.');
+  const confirmed = { ...progress, grade: response.grade ?? progress.grade, stars: response.stars,
+    score: response.score, awardedPoints: response.puntos_ganados, synced: true };
+  if (getCurrentUserId() === uid) {
+    if (won) cacheCompleted(confirmed);
+    else localStorage.setItem(storageKey, JSON.stringify(confirmed));
+    if (Number.isFinite(response.puntos_totales_usuario)) {
+      for (const key of ['usuario', 'user']) {
+        try {
+          const raw = localStorage.getItem(key);
+          if (raw) localStorage.setItem(key, JSON.stringify({ ...JSON.parse(raw), puntos: response.puntos_totales_usuario }));
+        } catch { /* La cabecera se actualiza mediante el evento. */ }
+      }
+      window.dispatchEvent(new CustomEvent('user_progress_updated', { detail: { economiaConfirmada: true, puntos: response.puntos_totales_usuario } }));
+    } else window.dispatchEvent(new Event('user_progress_updated'));
   }
-
-  // 4. Si tiene cuenta, actualizar puntos del usuario en sesión local y notificar al header
-  try {
-    const userRaw = localStorage.getItem('usuario') || localStorage.getItem('user');
-    if (userRaw && isWon && score > 0) {
-      const user = JSON.parse(userRaw);
-      user.puntos = (user.puntos || 0) + score;
-      user.racha = (user.racha || 0) + 1;
-      localStorage.setItem('usuario', JSON.stringify(user));
-      window.dispatchEvent(new CustomEvent('user_progress_updated', { detail: { score, racha: user.racha } }));
-    }
-  } catch {}
-
-  // 5. Enviar a MongoDB / Backend sólo para el usuario autenticado
-  try {
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-    const body = {
-      user_id: uid,
-      game_id: payload.gameId,
-      date: payload.date,
-      mode: 'daily',
-      status: finalStatus,
-      word: payload.word,
-      attempts: payload.attempts,
-      stars,
-      score,
-      guesses: payload.guesses,
-      game_data: { ...payload.gameData, currentInput: payload.currentInput || '' },
-      remaining_attempts: 0,
-    };
-
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-
-    // Sincroniza el avance con el servidor sin bloquear la partida.
-    const sendBackend = async (url: string) => {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(body),
-      });
-      return await res.json();
-    };
-
-    await guardarEnOrden(storageKey, /* Completa este paso con los datos recibidos por la operación. */ () => sendBackend(`${API_URL}/api/games/attempts`));
-  } catch {
-    // Modo offline seguro
-  }
+  return confirmed;
 }
 
 /**

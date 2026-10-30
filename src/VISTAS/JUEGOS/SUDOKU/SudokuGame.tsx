@@ -4,7 +4,7 @@ import { useSudokuGame } from './useSudokuGame';
 import { SudokuBoard } from './SudokuBoard';
 import { SudokuKeypad } from './SudokuKeypad';
 import { CompletedModal } from '../../COMPONENTS/MODALS/CompletedModal';
-import { GameHeader, LivesBadge } from '../../COMPONENTS/GameHeader';
+import { GameHeader } from '../../COMPONENTS/GameHeader';
 
 // Arma la pantalla de Sudoku con tablero, teclado y controles.
 export const SudokuGame: React.FC = () => {
@@ -31,7 +31,7 @@ export const SudokuGame: React.FC = () => {
         onBack={game.goBack}
         backLabel="Calendario"
         onHint={game.useHint}
-        hintDisabled={!game.progressReady || game.lives <= 0 || game.isWon || game.isGameOver}
+        hintDisabled={!game.progressReady || game.isWon}
         badges={
           <div className="flex items-center gap-1.5 sm:gap-2">
             <span
@@ -39,12 +39,10 @@ export const SudokuGame: React.FC = () => {
             >
               {diffBadge.label}
             </span>
-            <LivesBadge lives={game.lives} maxLives={game.maxLives} onClick={game.openRefill} />
           </div>
         }
       />
 
-      {game.lifeModal}
       {/* Área central con Tablero 9x9 y Teclado táctil acotado en desktop */}
       <main className="flex-1 flex flex-col justify-center items-center px-2 sm:px-4 py-2 w-full max-w-xl mx-auto">
         <SudokuBoard
@@ -63,11 +61,9 @@ export const SudokuGame: React.FC = () => {
         />
       </main>
 
-      {/* Modal accesible de Victoria / Game Over por vidas */}
-      {(game.isWon || game.isGameOver) && (
-        <CompletedModal gameId="sudoku"
-          isGameOver={game.isGameOver}
-          stars={game.stars}
+      {/* Modal accesible de victoria */}
+      {game.isWon && (
+        <CompletedModal gameId="sudoku" completion={game.completion}
           dateStr={game.dateStr}
           onRestart={game.restart}
           onClose={game.goBack}

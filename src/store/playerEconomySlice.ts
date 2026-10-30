@@ -1,3 +1,4 @@
+import { DEFAULT_GRADE_POINTS, DEFAULT_TIME_GRADES, type ScoringConfig } from '../VISTAS/JUEGOS/classicScoring';
 /* Guarda el saldo y las reglas de la tienda para que todos los juegos vean lo mismo. */
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
@@ -26,7 +27,7 @@ const DEFAULT_PUNTOS_POR_JUEGO: Record<string, number> = {
   narrativo: 80,
 };
 
-export interface PlayerEconomyState {
+export interface PlayerEconomyState extends ScoringConfig {
   vidas: number;
   puntos: number;
   costoVidaPuntos: number;
@@ -41,6 +42,7 @@ export interface PlayerEconomyState {
 }
 
 const initialState: PlayerEconomyState = {
+  puntosPorCalificacion: DEFAULT_GRADE_POINTS, escalasTiempoPorJuego: DEFAULT_TIME_GRADES,
   vidas: 5, puntos: 0, costoVidaPuntos: 200, costoPistaPuntos: 20, costoDesbloqueoDiaPuntos: 100,
   suscripcion: 'basica', diasDesbloqueados: [], paquetesTienda: DEFAULT_PAQUETES,
   puntosPorJuego: DEFAULT_PUNTOS_POR_JUEGO, vidasMaximas: null, isLoading: true,
