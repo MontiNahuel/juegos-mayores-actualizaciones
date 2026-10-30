@@ -20,6 +20,14 @@ const JUEGOS_DEFAULT = [
   { id: 'narrativo', nombre: 'Juego Narrativo (Crónicas)', defaultPts: 80, emoji: '👑' },
 ];
 
+const CALIFICACIONES_CONFIG = [
+  { id: 'S', nombre: 'Excelente / Impecable', estrellas: '3 ⭐', badge: 'bg-amber-100 text-amber-900 border-amber-300', emoji: '🏆', desc: 'Mínimos intentos o sin errores', defaultPts: 100 },
+  { id: 'A', nombre: 'Muy Bueno', estrellas: '3 ⭐', badge: 'bg-emerald-100 text-emerald-900 border-emerald-300', emoji: '⭐', desc: 'Desempeño destacado', defaultPts: 90 },
+  { id: 'B', nombre: 'Bueno', estrellas: '2 ⭐', badge: 'bg-blue-100 text-blue-900 border-blue-300', emoji: '✨', desc: 'Desempeño estándar', defaultPts: 75 },
+  { id: 'C', nombre: 'Aprobado', estrellas: '1 ⭐', badge: 'bg-slate-100 text-slate-800 border-slate-300', emoji: '👍', desc: 'Al límite de vidas/intentos', defaultPts: 50 },
+  { id: 'F', nombre: 'Derrota / Fallido', estrellas: '0 ⭐', badge: 'bg-rose-100 text-rose-900 border-rose-300', emoji: '❌', desc: 'Sin vidas restantes', defaultPts: 0 },
+];
+
 // Permite editar precios, paquetes y puntos de los juegos.
 export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso }) {
   const [cargando, setCargando] = useState(true);
@@ -32,6 +40,14 @@ export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso }) 
   const [costoVidaPuntos, setCostoVidaPuntos] = useState(50);
   const [costoDesbloqueoDia, setCostoDesbloqueoDia] = useState(100);
   const [vidasMaximas, setVidasMaximas] = useState('');
+  const [costoPistaPuntos, setCostoPistaPuntos] = useState(20);
+  const [puntosPorCalificacion, setPuntosPorCalificacion] = useState({
+    S: 100,
+    A: 90,
+    B: 75,
+    C: 50,
+    F: 0,
+  });
   const [puntosPorJuego, setPuntosPorJuego] = useState({
     wordle: 50,
     sopa_letras: 50,
@@ -65,6 +81,16 @@ export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso }) 
         setVidasIniciales(data.vidas_iniciales ?? 5);
         setCostoVidaPuntos(data.costo_vida_puntos ?? 50);
         setCostoDesbloqueoDia(data.costo_desbloqueo_dia_puntos ?? 100);
+        setCostoPistaPuntos(data.costo_pista_puntos ?? 20);
+        if (data.puntos_por_calificacion) {
+          setPuntosPorCalificacion({
+            S: data.puntos_por_calificacion.S ?? 100,
+            A: data.puntos_por_calificacion.A ?? 90,
+            B: data.puntos_por_calificacion.B ?? 75,
+            C: data.puntos_por_calificacion.C ?? 50,
+            F: data.puntos_por_calificacion.F ?? 0,
+          });
+        }
         setVidasMaximas(data.vidas_maximas != null ? String(data.vidas_maximas) : '');
         setPuntosPorJuego(
           data.puntos_por_juego || {
@@ -97,6 +123,15 @@ export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso }) 
   }, [abierto]);
 
   if (!abierto) return null;
+
+  // Actualiza los puntos configurados para una calificación (S, A, B, C, F)
+  const handlePuntosCalificacionChange = (grade, valor) => {
+    const num = Math.max(0, parseInt(valor, 10) || 0);
+    setPuntosPorCalificacion((prev) => ({
+      ...prev,
+      [grade]: num,
+    }));
+  };
 
   // Actualiza los puntos que entrega el juego al completarlo.
   const handlePuntosJuegoChange = (juegoId, valor) => {
@@ -149,6 +184,14 @@ export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso }) 
         vidas_iniciales: Math.max(1, parseInt(vidasIniciales, 10) || 5),
         costo_vida_puntos: Math.max(1, parseInt(costoVidaPuntos, 10) || 50),
         costo_desbloqueo_dia_puntos: Math.max(0, parseInt(costoDesbloqueoDia, 10) || 100),
+        costo_pista_puntos: Math.max(0, parseInt(costoPistaPuntos, 10) || 20),
+        puntos_por_calificacion: {
+          S: Math.max(0, parseInt(puntosPorCalificacion.S, 10) || 0),
+          A: Math.max(0, parseInt(puntosPorCalificacion.A, 10) || 0),
+          B: Math.max(0, parseInt(puntosPorCalificacion.B, 10) || 0),
+          C: Math.max(0, parseInt(puntosPorCalificacion.C, 10) || 0),
+          F: Math.max(0, parseInt(puntosPorCalificacion.F, 10) || 0),
+        },
         puntos_por_juego: puntosPorJuego,
         paquetes_tienda: paquetesTienda.map(/* Prepara el resultado de cada elemento. */ (p, idx) => ({
           id: p.id || `pack_${idx + 1}`,
@@ -253,7 +296,7 @@ export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso }) 
                   </h3>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1">
                       Vidas Iniciales por Cuenta
@@ -322,15 +365,94 @@ export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso }) 
                       Puntos para desbloquear días anteriores (Suscripción Básica).
                     </p>
                   </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Costo por Pista (Pts)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={costoPistaPuntos}
+                      onChange={(e) => setCostoPistaPuntos(e.target.value)}
+                      required
+                      className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#002B5E] focus:outline-hidden font-semibold text-slate-900"
+                    />
+                    <p className="text-[10px] text-slate-500 mt-1">
+                      Puntos descontados al pedir una pista en cualquier juego.
+                    </p>
+                  </div>
                 </div>
               </div>
 
-              {/* SECCIÓN 2: Puntos Otorgados por Juego al Ganar */}
+
+
+              {/* SECCIÓN 2: Puntaje por Calificación de Desempeño */}
+              <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4.5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">🏆</span>
+                    <h3 className="text-sm font-bold text-slate-800">
+                      2. Puntaje por Calificación de Desempeño (S, A, B, C, F)
+                    </h3>
+                  </div>
+                  <span className="text-[11px] font-bold text-amber-800 bg-amber-100 border border-amber-300 px-2.5 py-0.5 rounded-full">
+                    Puntuación Dinámica
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500">
+                  Configurá cuántos puntos gana el usuario según la calificación obtenida (evaluada en base a vidas e intentos restantes al completar la partida).
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
+                  {CALIFICACIONES_CONFIG.map((c) => {
+                    const valor = puntosPorCalificacion[c.id] ?? c.defaultPts;
+                    return (
+                      <div
+                        key={c.id}
+                        className="bg-white border border-slate-200 rounded-xl p-3 flex flex-col justify-between shadow-xs hover:border-slate-300 transition"
+                      >
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-1.5">
+                              <span className={`w-7 h-7 rounded-lg font-black text-xs flex items-center justify-center border shadow-2xs ${c.badge}`}>
+                                {c.id}
+                              </span>
+                              <span className="text-xs font-bold text-slate-800">{c.estrellas}</span>
+                            </div>
+                            <span className="text-sm">{c.emoji}</span>
+                          </div>
+
+                          <div className="text-[11px] font-bold text-slate-800 leading-tight mb-1">
+                            {c.nombre}
+                          </div>
+                          <div className="text-[10px] text-slate-400 mb-3">
+                            {c.desc}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 pt-2 border-t border-slate-100">
+                          <input
+                            type="number"
+                            min="0"
+                            value={valor}
+                            onChange={(e) => handlePuntosCalificacionChange(c.id, e.target.value)}
+                            className="w-full text-right px-2 py-1 text-xs font-black bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#002B5E] focus:outline-hidden text-slate-900"
+                          />
+                          <span className="text-[11px] font-bold text-amber-700">pts</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* SECCIÓN 3: Puntos Base de Respaldo por Juego */}
               <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4.5 space-y-4">
                 <div className="flex items-center gap-2">
                   <CoinsIcon size={18} className="text-amber-600" />
                   <h3 className="text-sm font-bold text-slate-800">
-                    2. Recompensa en Puntos al Ganar cada Juego
+                    3. Puntos Base de Respaldo por Juego
                   </h3>
                 </div>
                 <p className="text-xs text-slate-500">
@@ -374,7 +496,7 @@ export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso }) 
                   <div className="flex items-center gap-2">
                     <span className="text-base">🛍️</span>
                     <h3 className="text-sm font-bold text-slate-800">
-                      3. Paquetes de la Mini-Tienda (Canje de Vidas)
+                      4. Paquetes de la Mini-Tienda (Canje de Vidas)
                     </h3>
                   </div>
                   <button
