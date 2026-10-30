@@ -410,7 +410,7 @@ export const CrucigramaGame: React.FC = () => {
             stars: starsEarned,
             score: 100,
             guesses: words.map(/* Prepara el resultado de cada elemento. */ (w) => w.word),
-            gameData: { timeTaken: seconds, theme, difficulty, errors, lives: esPista ? Math.max(0, lives - 1) : lives, userGrid: nextGrid },
+            gameData: { timeTaken: seconds, theme, difficulty, errors, lives, userGrid: nextGrid },
           }).catch(/* Maneja el fallo de esta operación. */ (e) => console.warn('Error guardando intento final:', e));
           setTimeout(/* Ejecuta este paso cuando se cumple la espera. */ () => setShowVictoryModal(true), 400);
         }
@@ -595,10 +595,9 @@ export const CrucigramaGame: React.FC = () => {
       return;
     }
     if (userGrid[selectedRow]?.[selectedCol] === targetCell.letter) return;
-    economy.abrirComprarPista({ vidasDisponibles: lives, onSinVidas: gameLives.openRefill, game_id: 'crucigrama', date: targetDate, row: selectedRow, col: selectedCol,
+    economy.abrirComprarPista({ game_id: 'crucigrama', date: targetDate, row: selectedRow, col: selectedCol,
       // Aplica al tablero la pista que confirmó el servidor.
       onRecibir: data => {
-        gameLives.consumeLife();
         if (typeof data.valor_revelado !== 'string' || data.valor_revelado.length !== 1) throw new Error('Pista inválida');
         handleInputChar(data.valor_revelado, true);
         setRevealedCellCoord({ r: selectedRow, c: selectedCol });

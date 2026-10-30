@@ -4,11 +4,9 @@ import type { RootState, AppDispatch } from '../store/store';
 import { actualizarEconomia, agregarDiaDesbloqueado } from '../store/playerEconomySlice';
 import { API_URL } from '../config/api';
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
-import { ErrorPista, pedirPistaConVida, type SolicitudPista, type RespuestaPista } from '../services/pistasService';
+import { pedirPistaConPuntos, type SolicitudPista, type RespuestaPista } from '../services/pistasService';
 
 export interface CompraPista extends SolicitudPista {
-  vidasDisponibles?: number;
-  onSinVidas?: () => void;
   onRecibir: (pista: RespuestaPista) => void;
 }
 
@@ -18,6 +16,7 @@ export interface PlayerEconomyContextType {
   vidas: number;
   puntos: number;
   costoVidaPuntos: number;
+  costoPistaPuntos: number;
   costoDesbloqueoDiaPuntos: number;
   suscripcion: SuscripcionTipo;
   diasDesbloqueados: string[];
@@ -27,8 +26,6 @@ export interface PlayerEconomyContextType {
   isLoading: boolean;
   isMiniTiendaOpen: boolean;
   isComprarPistaOpen: boolean;
-  vidasParaPista: number;
-  recargarVidasPista: () => void;
   abrirComprarPista: (solicitud: CompraPista) => void;
   comprarPista: () => Promise<void>;
   cerrarComprarPista: () => void;
@@ -59,48 +56,45 @@ function getAuthToken(): string | null {
 // Conecta el saldo de Redux con los juegos y mantiene locales las ventanas y las compras en curso.
 export const PlayerEconomyProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const dispatch = useDispatch<AppDispatch>();
-  const { vidas, puntos, costoVidaPuntos, costoDesbloqueoDiaPuntos, suscripcion,
+  const { vidas, puntos, costoVidaPuntos, costoPistaPuntos, costoDesbloqueoDiaPuntos, suscripcion,
     diasDesbloqueados, paquetesTienda, puntosPorJuego, vidasMaximas, isLoading,
   } = useSelector(/* Lee de Redux el dato compartido que necesita la pantalla. */ (state: RootState) => state.playerEconomy);
   const [isMiniTiendaOpen, setIsMiniTiendaOpen] = useState<boolean>(false);
-  const [isComprarPistaOpen, setIsComprarPistaOpen] = useState(false);
   const [solicitudPista, setSolicitudPista] = useState<CompraPista | null>(null);
   const comprandoPista = useRef(false);
   // Abre la confirmación y conserva la función que entregará la pista al juego.
   const abrirComprarPista = useCallback((solicitud: CompraPista) => {
     if (comprandoPista.current) return;
-    setSolicitudPista(solicitud); setIsMiniTiendaOpen(false); setIsComprarPistaOpen(true);
+    setSolicitudPista(solicitud); setIsMiniTiendaOpen(false);
   }, []);
   // Cierra la confirmación y descarta la solicitud de pista pendiente.
   const cerrarComprarPista = useCallback(() => {
-    setIsComprarPistaOpen(false); setSolicitudPista(null);
+    setSolicitudPista(null);
   }, []);
 
-  // Compra la pista, actualiza las vidas confirmadas y entrega la ayuda al juego.
+  const confirmarSaldo = useCallback((saldo: { puntos: number; vidas?: number }) => {
+    dispatch(actualizarEconomia(saldo));
+    for (const clave of ['usuario', 'user']) {
+      try {
+        const raw = localStorage.getItem(clave);
+        if (raw) localStorage.setItem(clave, JSON.stringify({ ...JSON.parse(raw), ...saldo }));
+      } catch { /* Redux conserva el saldo confirmado aunque no haya almacenamiento. */ }
+    }
+    window.dispatchEvent(new CustomEvent('user_progress_updated', { detail: { economiaConfirmada: true } }));
+  }, [dispatch]);
+
+  // Compra la pista, actualiza los puntos confirmados y entrega la ayuda al juego.
   const comprarPista = useCallback(async () => {
     if (!solicitudPista || comprandoPista.current) return;
     comprandoPista.current = true;
-    const { onRecibir, vidasDisponibles, onSinVidas, ...solicitud } = solicitudPista;
+    const { onRecibir, ...solicitud } = solicitudPista;
     try {
-      const resultado = await pedirPistaConVida(solicitud);
-      dispatch(actualizarEconomia({ vidas: resultado.vidas_restantes }));
-      for (const clave of ['usuario', 'user']) {
-        try {
-          const raw = localStorage.getItem(clave);
-          if (raw) localStorage.setItem(clave, JSON.stringify({ ...JSON.parse(raw), vidas: resultado.vidas_restantes }));
-        } catch { /* El saldo visible sigue confirmado por el servidor. */ }
-      }
-      window.dispatchEvent(new Event('user_progress_updated'));
+      const resultado = await pedirPistaConPuntos(solicitud);
+      confirmarSaldo({ puntos: resultado.puntos_restantes });
+      setSolicitudPista(null);
       onRecibir(resultado);
-      setIsComprarPistaOpen(false); setSolicitudPista(null);
-    } catch (error) {
-      if (error instanceof ErrorPista && error.status === 400) {
-        setIsComprarPistaOpen(false); setSolicitudPista(null);
-        if (onSinVidas) onSinVidas(); else setIsMiniTiendaOpen(true);
-      }
-      throw error;
     } finally { comprandoPista.current = false; }
-  }, [solicitudPista, dispatch]);
+  }, [solicitudPista, confirmarSaldo]);
 
   // Abre la tienda para que el jugador pueda reponer vidas.
   const abrirMiniTienda = useCallback(() => setIsMiniTiendaOpen(true), []);
@@ -118,7 +112,7 @@ export const PlayerEconomyProvider: React.FC<{ children: React.ReactNode }> = ({
       if (configRes.ok) {
         const configData = await configRes.json();
         configVidasIniciales = configData.vidas_iniciales ?? 5;
-        dispatch(actualizarEconomia({ costoVidaPuntos: configData.costo_vida_puntos ?? 200, costoDesbloqueoDiaPuntos: configData.costo_desbloqueo_dia_puntos ?? 100 }));
+        dispatch(actualizarEconomia({ costoVidaPuntos: configData.costo_vida_puntos ?? 200, costoPistaPuntos: configData.costo_pista_puntos ?? 20, costoDesbloqueoDiaPuntos: configData.costo_desbloqueo_dia_puntos ?? 100 }));
         if (Array.isArray(configData.paquetes_tienda) && configData.paquetes_tienda.length > 0) {
           dispatch(actualizarEconomia({ paquetesTienda: configData.paquetes_tienda }));
         }
@@ -188,7 +182,8 @@ export const PlayerEconomyProvider: React.FC<{ children: React.ReactNode }> = ({
     recargarEconomia();
 
     // Vuelve a leer el progreso cuando otra pantalla o pestaña avisa que cambió.
-    const handleProgressUpdate = () => {
+    const handleProgressUpdate = (event: Event) => {
+      if (event instanceof CustomEvent && event.detail?.economiaConfirmada) return;
       recargarEconomia();
     };
 
@@ -279,13 +274,8 @@ export const PlayerEconomyProvider: React.FC<{ children: React.ReactNode }> = ({
     });
     const data = await res.json();
     if (!res.ok || !data.success) throw new Error(res.status === 403 ? 'El servidor todavía no permite este canje para jugadores.' : data.detail || 'No se pudo confirmar el descuento.');
-    dispatch(actualizarEconomia({ puntos: data.puntos }));
-    for (const clave of ['usuario', 'user']) {
-      const snapshot = localStorage.getItem(clave);
-      if (snapshot) localStorage.setItem(clave, JSON.stringify({ ...JSON.parse(snapshot), puntos: data.puntos }));
-    }
-    window.dispatchEvent(new Event('user_progress_updated'));
-  }, [puntos, dispatch]);
+    confirmarSaldo({ puntos: data.puntos });
+  }, [puntos, confirmarSaldo]);
 
   // Canjear vidas en la mini-tienda
   const canjearVidas = useCallback(async (paqueteId: string): Promise<{ success: boolean; message: string }> => {
@@ -299,23 +289,12 @@ export const PlayerEconomyProvider: React.FC<{ children: React.ReactNode }> = ({
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ paquete_id: paqueteId }),
+          body: JSON.stringify({ package_id: paqueteId }),
         });
 
         const data = await res.json();
         if (res.ok && data.success) {
-          dispatch(actualizarEconomia({ vidas: data.vidas, puntos: data.puntos }));
-          try {
-            const rawUser = localStorage.getItem('usuario') || localStorage.getItem('user');
-            if (rawUser) {
-              const u = JSON.parse(rawUser);
-              u.vidas = data.vidas;
-              u.puntos = data.puntos;
-              localStorage.setItem('usuario', JSON.stringify(u));
-              localStorage.setItem('user', JSON.stringify(u));
-            }
-          } catch {}
-          window.dispatchEvent(new Event('user_progress_updated'));
+          confirmarSaldo({ vidas: data.vidas, puntos: data.puntos });
           return { success: true, message: data.message || `¡Canje exitoso! Tenés ${data.vidas} vidas.` };
         } else {
           return { success: false, message: data.detail || 'No tenés suficientes puntos para este paquete.' };
@@ -354,7 +333,7 @@ export const PlayerEconomyProvider: React.FC<{ children: React.ReactNode }> = ({
       success: true,
       message: `¡Excelente! Sumaste ${pack.vidas} vidas. Ahora tenés ${nextVidas} vidas.`,
     };
-  }, [paquetesTienda, puntos, vidas, vidasMaximas, dispatch]);
+  }, [paquetesTienda, puntos, vidas, vidasMaximas, dispatch, confirmarSaldo]);
 
   // Verificar si un día histórico está desbloqueado
   const isDiaDesbloqueado = useCallback((gameId: string, date: string): boolean => {
@@ -422,6 +401,7 @@ export const PlayerEconomyProvider: React.FC<{ children: React.ReactNode }> = ({
         vidas,
         puntos,
         costoVidaPuntos,
+        costoPistaPuntos,
         costoDesbloqueoDiaPuntos,
         suscripcion,
         diasDesbloqueados,
@@ -430,9 +410,7 @@ export const PlayerEconomyProvider: React.FC<{ children: React.ReactNode }> = ({
         vidasMaximas,
         isLoading,
         isMiniTiendaOpen,
-        isComprarPistaOpen,
-        vidasParaPista: solicitudPista?.vidasDisponibles ?? vidas,
-        recargarVidasPista: solicitudPista?.onSinVidas ?? abrirMiniTienda,
+        isComprarPistaOpen: solicitudPista !== null,
         abrirComprarPista,
         comprarPista,
         cerrarComprarPista,

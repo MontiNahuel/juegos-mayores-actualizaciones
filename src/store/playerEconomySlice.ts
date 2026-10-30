@@ -30,6 +30,7 @@ export interface PlayerEconomyState {
   vidas: number;
   puntos: number;
   costoVidaPuntos: number;
+  costoPistaPuntos: number;
   costoDesbloqueoDiaPuntos: number;
   suscripcion: SuscripcionTipo;
   diasDesbloqueados: string[];
@@ -40,7 +41,7 @@ export interface PlayerEconomyState {
 }
 
 const initialState: PlayerEconomyState = {
-  vidas: 5, puntos: 0, costoVidaPuntos: 200, costoDesbloqueoDiaPuntos: 100,
+  vidas: 5, puntos: 0, costoVidaPuntos: 200, costoPistaPuntos: 20, costoDesbloqueoDiaPuntos: 100,
   suscripcion: 'basica', diasDesbloqueados: [], paquetesTienda: DEFAULT_PAQUETES,
   puntosPorJuego: DEFAULT_PUNTOS_POR_JUEGO, vidasMaximas: null, isLoading: true,
 };

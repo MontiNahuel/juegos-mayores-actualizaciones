@@ -44,7 +44,6 @@ export function useSudokuGame() {
   const progressReady = loadedDate === dateKey;
   const [errors, setErrors] = useState<number>(0);
   const [isNotesMode, setIsNotesMode] = useState<boolean>(false);
-  const [hintsLeft, setHintsLeft] = useState<number>(999);
   const [isWon, setIsWon] = useState<boolean>(false);
   const [isGameOver, setIsGameOver] = useState<boolean>(false);
 
@@ -63,7 +62,6 @@ export function useSudokuGame() {
         const failed = progress?.status === 'failed' || progress?.status === 'lost';
         gameLives.hydrate(saved.lives ?? 4, failed);
         setErrors(saved.errors);
-        setHintsLeft(saved.hintsLeft);
         setIsWon(progress?.status === 'won' || progress?.status === 'completed');
         setIsGameOver(failed);
         setLoadedDate(dateKey);
@@ -110,7 +108,6 @@ export function useSudokuGame() {
     setSelectedCol(null);
     gameLives.reset();
     setErrors(0);
-    setHintsLeft(999);
     setIsWon(false);
     setIsGameOver(false);
 
@@ -128,9 +125,9 @@ export function useSudokuGame() {
     void saveActiveGameProgress({
       gameId: 'sudoku', date: dateKey, guesses: [], attempts: errors,
       status: isGameOver ? 'failed' : 'in_progress',
-      gameData: { difficultyLevel, cells, solution, lives, errors, hintsLeft },
+      gameData: { difficultyLevel, cells, solution, lives, errors },
     });
-  }, [cells, solution, lives, errors, hintsLeft, difficultyLevel, dateKey, isWon, isGameOver, progressReady]);
+  }, [cells, solution, lives, errors, difficultyLevel, dateKey, isWon, isGameOver, progressReady]);
 
   // Contar cuántas veces se colocó cada número válido (1 al 9)
   const numberCounts = useMemo(/* Recalcula este dato cuando cambian sus dependencias. */ () => {
@@ -219,15 +216,13 @@ export function useSudokuGame() {
       ? seleccionada : cells.flat().find(/* Busca el primer elemento que cumple esta condición. */ c => !c.initial && c.value !== solution[c.row][c.col]);
     if (!casilla) return;
     const { row, col } = casilla;
-    economy.abrirComprarPista({ vidasDisponibles: lives, onSinVidas: gameLives.openRefill, game_id: 'sudoku', date: dateKey, row, col,
+    economy.abrirComprarPista({ game_id: 'sudoku', date: dateKey, row, col,
       // Aplica al tablero la pista que confirmó el servidor.
       onRecibir: data => {
-        gameLives.consumeLife();
         const valor = Number(data.valor_revelado);
         if (!Number.isInteger(valor) || valor < 1 || valor > 9) throw new Error('Pista inválida');
         setCells(/* Actualiza cells a partir del valor anterior. */ prev => prev.map(/* Prepara el resultado de cada elemento. */ fila => fila.map(/* Prepara el resultado de cada elemento. */ c => c.row === row && c.col === col ? { ...c, value: valor, error: false, notes: [] } : c)));
         setSelectedRow(row); setSelectedCol(col);
-        setHintsLeft(/* Actualiza hints left a partir del valor anterior. */ prev => Math.max(0, prev - 1));
       },
     });
   };
@@ -255,7 +250,7 @@ export function useSudokuGame() {
         attempts: errors,
         stars: starsEarned,
         score: starsEarned * 50,
-        gameData: { difficultyLevel, cells, solution, lives, errors, hintsLeft },
+        gameData: { difficultyLevel, cells, solution, lives, errors },
       });
     }
   }, [cells, solution, isWon, isGameOver, errors, maxLives, dateKey, dayNumber, progressReady]);
@@ -337,7 +332,6 @@ export function useSudokuGame() {
     selectedCol,
     lives,
     errors,
-    hintsLeft,
     isNotesMode,
     numberCounts,
     isWon,

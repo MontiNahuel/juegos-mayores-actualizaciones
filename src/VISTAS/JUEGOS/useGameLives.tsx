@@ -58,24 +58,27 @@ export function useGameLives(gameId: string, date: string, onFailed: () => void)
     // Da por terminada la partida y evita volver a ofrecer la recarga.
     finish: () => { setDeclined(true); setRefillOpen(false); },
     // Abre la recarga si faltan vidas y el jugador todavía puede aceptarla.
-    openRefill: () => { if (current.current < GAME_LIVES && !declined) setRefillOpen(true); },
+    openRefill: () => { if (current.current === 0 && !declined) setRefillOpen(true); },
     modal: <MiniTiendaModal isOpen={refillOpen} onClose={closeRefill}
       recarga={{ vidas: lives, costo: REFILL_COST, /* Confirma la recarga de vidas y muestra si no pudo completarse. */ onRestaurar: async () => {
         if (buying.current) return;
         buying.current = true; closedDuringPurchase.current = false;
         try {
-          await gastarPuntos(REFILL_COST);
+          if (current.current === 0) {
+            await gastarPuntos(REFILL_COST);
+            setLives(GAME_LIVES);
+          }
           const raw = localStorage.getItem(getActiveProgressStorageKey(gameId, date));
           if (raw) {
             const saved = JSON.parse(raw);
             await saveActiveGameProgress({ ...saved, gameId, date,
-              status: 'in_progress', gameData: { ...saved.gameData, lives: GAME_LIVES } });
+              status: 'in_progress', gameData: { ...saved.gameData, lives: GAME_LIVES } }, true);
           }
           reset();
         }
         catch (error) {
           if (closedDuringPurchase.current && current.current === 0) { setDeclined(true); onFailed(); }
-          throw error;
+          throw new Error(current.current > 0 ? 'Tus vidas ya fueron restauradas. Reintentá guardar sin volver a pagar.' : error instanceof Error ? error.message : 'No se pudo restaurar las vidas.');
         } finally { buying.current = false; }
       } }} />,
   };
