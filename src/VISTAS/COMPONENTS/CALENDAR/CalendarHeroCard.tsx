@@ -1,3 +1,4 @@
+/* Destaca el desafío de hoy para poder empezarlo desde el calendario. */
 import type { CSSProperties } from 'react';
 import type { DayChallenge, CalendarTheme } from './types';
 import { IconArrowRight, IconCalendar } from './icons';
@@ -10,6 +11,7 @@ interface CalendarHeroCardProps {
   onPlayClick: (challenge: DayChallenge) => void;
 }
 
+// Destaca el desafío de hoy para poder empezarlo desde el calendario.
 export function CalendarHeroCard({ todayChallenge, heroBadge = 'Desafío de hoy', heroSubtitle, theme, onPlayClick }: CalendarHeroCardProps) {
   const isCompleted = todayChallenge.status === 'completed';
 
@@ -24,7 +26,7 @@ export function CalendarHeroCard({ todayChallenge, heroBadge = 'Desafío de hoy'
     </div>
     <div className="px-5 py-5 sm:px-6">
       <p className="m-0 max-w-[65ch] text-base leading-relaxed">{heroSubtitle}</p>
-      <button type="button" onClick={() => onPlayClick(todayChallenge)}
+      <button type="button" onClick={/* Responde a click desde este control. */ () => onPlayClick(todayChallenge)}
         className="mt-4 flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-md bg-[var(--calendar-primary)] px-5 py-3 text-base font-bold text-white transition-colors hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--calendar-accent)] active:brightness-95 sm:w-auto">
         {isCompleted ? 'Ver resultado de hoy' : 'Jugar desafío de hoy'}
         <IconArrowRight size={18} />

@@ -1,3 +1,4 @@
+/* Dibuja las conexiones de una historia para revisar sus recorridos. */
 import React, { useMemo } from 'react';
 import {
   GitBranchIcon,
@@ -9,15 +10,16 @@ import {
   EditIcon
 } from '../Icons';
 
+// Dibuja las conexiones de una historia para revisar sus recorridos.
 export default function DiagramaNodosV2({
   nodos = {},
   nodoRaiz = 'inicio',
   nodoSeleccionadoId = 'inicio',
-  onSeleccionarNodo = () => {},
+  onSeleccionarNodo = /* Completa este paso con los datos recibidos por la operación. */ () => {},
   personajes = []
 }) {
   // 1. CÁLCULO TOPOLÓGICO Y POSICIONAMIENTO DE NODOS
-  const { posiciones, lineas, canvasW, canvasH, estadisticas } = useMemo(() => {
+  const { posiciones, lineas, canvasW, canvasH, estadisticas } = useMemo(/* Recalcula este dato cuando cambian sus dependencias. */ () => {
     const nodosKeys = Object.keys(nodos);
     if (nodosKeys.length === 0) {
       return { posiciones: {}, lineas: [], canvasW: 600, canvasH: 400, estadisticas: {} };
@@ -39,7 +41,7 @@ export default function DiagramaNodosV2({
           // (misma semántica que el motor de grafos).
           const desenlaces = Array.isArray(opt.desenlaces) ? opt.desenlaces : [];
           const destinos = desenlaces.length > 0
-            ? desenlaces.map((d) => d.nodo)
+            ? desenlaces.map(/* Prepara el resultado de cada elemento. */ (d) => d.nodo)
             : [opt.siguiente_nodo];
           for (const dest of destinos) {
             // Cada nodo se visita una única vez (profundidad mínima), lo que
@@ -92,7 +94,7 @@ export default function DiagramaNodosV2({
       if (col > maxColIdx) maxColIdx = col;
       if (ids.length > maxRows) maxRows = ids.length;
 
-      ids.forEach((nid, rowIdx) => {
+      ids.forEach(/* Aplica este paso a cada elemento. */ (nid, rowIdx) => {
         posMap[nid] = {
           x: PAD_X + col * (CARD_W + COL_GAP),
           y: PAD_Y + rowIdx * (CARD_H + ROW_GAP),
@@ -119,11 +121,11 @@ export default function DiagramaNodosV2({
       // Aplanar los destinos efectivos de cada opción. Si hay desenlaces
       // ponderados, reemplazan al destino fijo (misma semántica que el motor).
       const destinos = [];
-      nodo.opciones.forEach((opt) => {
+      nodo.opciones.forEach(/* Aplica este paso a cada elemento. */ (opt) => {
         totalOpciones++;
         const desenlaces = Array.isArray(opt.desenlaces) ? opt.desenlaces : [];
         if (desenlaces.length > 0) {
-          const sumaPesos = desenlaces.reduce((acc, d) => acc + (parseFloat(d.peso) || 0), 0) || 1;
+          const sumaPesos = desenlaces.reduce(/* Acumula los valores en un solo resultado. */ (acc, d) => acc + (parseFloat(d.peso) || 0), 0) || 1;
           for (const d of desenlaces) {
             const peso = parseFloat(d.peso) || 0;
             destinos.push({
@@ -140,7 +142,7 @@ export default function DiagramaNodosV2({
 
       const totalEdges = destinos.length;
 
-      destinos.forEach(({ opt, dest, esDesenlace, porcentaje }, edgeIdx) => {
+      destinos.forEach(/* Aplica este paso a cada elemento. */ ({ opt, dest, esDesenlace, porcentaje }, edgeIdx) => {
         const posHijo = posMap[dest];
         const esRoto = !posHijo;
         if (esRoto) ramasRotas++;
@@ -302,7 +304,7 @@ export default function DiagramaNodosV2({
             </defs>
 
             {/* Renderizar todas las líneas */}
-            {lineas.map((linea) => {
+            {lineas.map(/* Prepara el resultado de cada elemento. */ (linea) => {
               const strokeColor = linea.esRoto
                 ? '#ef4444'
                 : linea.esActivo
@@ -365,7 +367,7 @@ export default function DiagramaNodosV2({
 
           {/* CAPA HTML: TARJETAS DE LOS NODOS */}
           <div className="absolute inset-0" style={{ zIndex: 2 }}>
-            {Object.entries(nodos).map(([nid, n]) => {
+            {Object.entries(nodos).map(/* Prepara el resultado de cada elemento. */ ([nid, n]) => {
               const pos = posiciones[nid];
               if (!pos) return null;
 
@@ -375,13 +377,13 @@ export default function DiagramaNodosV2({
               const esHuerfano = !!pos.esHuerfano;
 
               // Identificar orador
-              const pjInfo = personajes.find((p) => (p._id || p.id) === n.hablante_id);
+              const pjInfo = personajes.find(/* Busca el primer elemento que cumple esta condición. */ (p) => (p._id || p.id) === n.hablante_id);
               const nombreOrador = pjInfo?.nombre || (n.hablante_id === 'narrador' ? 'Crónicas del Reino' : n.hablante_id);
 
               return (
                 <div
                   key={nid}
-                  onClick={() => onSeleccionarNodo(nid)}
+                  onClick={/* Responde a click desde este control. */ () => onSeleccionarNodo(nid)}
                   style={{
                     position: 'absolute',
                     left: `${pos.x}px`,
@@ -452,7 +454,7 @@ export default function DiagramaNodosV2({
                     ) : (
                       <div className="flex items-center gap-1 text-slate-500 font-mono text-[9px] truncate">
                         <span>Ramas:</span>
-                        {(n.opciones || []).slice(0, 2).map((opt, i) => (
+                        {(n.opciones || []).slice(0, 2).map(/* Prepara el resultado de cada elemento. */ (opt, i) => (
                           <span key={i} className="bg-slate-100 px-1 py-0.2 rounded border border-slate-200">
                             → {opt.siguiente_nodo}
                           </span>

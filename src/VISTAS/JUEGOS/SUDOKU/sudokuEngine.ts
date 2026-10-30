@@ -1,3 +1,4 @@
+/* Genera el Sudoku del día y comprueba los conflictos del tablero. */
 ﻿// @ts-ignore
 import sudoku from 'sudoku';
 import { SudokuGrid, DifficultyLevel } from './types';
@@ -50,7 +51,7 @@ export function generateDailyPuzzle(
 
   if (extraCluesToReveal > 0) {
     const emptyIndices: number[] = [];
-    rawPuzzle.forEach((val, idx) => {
+    rawPuzzle.forEach(/* Aplica este paso a cada elemento. */ (val, idx) => {
       if (val === null) emptyIndices.push(idx);
     });
 
@@ -61,7 +62,7 @@ export function generateDailyPuzzle(
     }
 
     const indicesToFill = emptyIndices.slice(0, extraCluesToReveal);
-    indicesToFill.forEach(idx => {
+    indicesToFill.forEach(/* Aplica este paso a cada elemento. */ idx => {
       rawPuzzle[idx] = rawSolution[idx];
     });
   }

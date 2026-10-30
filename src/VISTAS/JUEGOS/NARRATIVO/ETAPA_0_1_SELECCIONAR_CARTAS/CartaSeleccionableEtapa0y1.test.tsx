@@ -1,9 +1,10 @@
+/* Comprueba con pruebas que carta seleccionable etapa0y1 siga funcionando como se espera. */
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import CartaSeleccionableEtapa0y1 from './CartaSeleccionableEtapa0y1';
 
-describe('selección de personajes', () => {
-  it('marca sólo a los personajes para el detalle animado y conserva la selección accesible', () => {
+describe('selección de personajes', /* Agrupa las pruebas de este comportamiento. */ () => {
+  it('marca sólo a los personajes para el detalle animado y conserva la selección accesible', /* Comprueba el comportamiento indicado en este caso. */ () => {
     const onSelect = vi.fn();
     const personaje = { id: 'marcus', nombre: 'Marcus', titulo: 'Capitán', descripcion: 'Defiende el reino.' };
     const vista = render(<CartaSeleccionableEtapa0y1 carta={personaje} onSelect={onSelect} />);

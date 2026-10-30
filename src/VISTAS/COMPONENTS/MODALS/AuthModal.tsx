@@ -1,3 +1,4 @@
+/* Guía al jugador para entrar a su cuenta o registrarse con un código. */
 import React, { useState, useEffect } from 'react';
 import { IonIcon } from '@ionic/react';
 import {
@@ -12,10 +13,10 @@ import {
   shieldCheckmarkOutline,
   arrowBackOutline,
 } from 'ionicons/icons';
-import type { Usuario } from './LoginHeader';
-import { migrateGuestProgressToNewUser } from '../JUEGOS/attemptsService';
-import { API_URL } from '../../config/api';
-import { guardarSesionAdmin } from '../AUTH/authUtils';
+import type { Usuario } from '../../LOGIN/LoginHeader';
+import { migrateGuestProgressToNewUser } from '../../JUEGOS/attemptsService';
+import { API_URL } from '../../../config/api';
+import { guardarSesionAdmin } from '../../AUTH/authUtils';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -23,6 +24,7 @@ interface AuthModalProps {
   onSuccess: (user: Usuario) => void;
 }
 
+// Guía al jugador para entrar a su cuenta o registrarse con un código.
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess }) => {
   const [tab, setTab] = useState<'register' | 'code' | 'admin'>('register');
 
@@ -56,12 +58,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
   const [registeredUser, setRegisteredUser] = useState<Usuario | null>(null);
 
   // Temporizador para reenvío de código anti-spam (60s)
-  useEffect(() => {
+  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
     if (resendCooldown <= 0) return;
-    const timer = setInterval(() => {
-      setResendCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+    const timer = setInterval(/* Actualiza este dato en cada intervalo. */ () => {
+      setResendCooldown(/* Actualiza resend cooldown a partir del valor anterior. */ (prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
-    return () => clearInterval(timer);
+    return /* Libera los recursos de este efecto cuando deja de usarse. */ () => clearInterval(timer);
   }, [resendCooldown]);
 
   if (!isOpen) return null;
@@ -84,6 +86,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
     setLoadingCode(true);
     setErrorCode(null);
 
+    // Intenta la consulta usando la dirección de servidor indicada.
     const tryFetch = async (url: string) => {
       const res = await fetch(url, {
         method: 'POST',
@@ -190,6 +193,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
     setErrorRegister(null);
     setInfoMessage(null);
 
+    // Intenta registrar la cuenta en la dirección de servidor indicada.
     const tryRegister = async (url: string) => {
       const res = await fetch(url, {
         method: 'POST',
@@ -199,7 +203,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
           email: cleanEmail,
         }),
       });
-      const json = await res.json().catch(() => null);
+      const json = await res.json().catch(/* Maneja el fallo de esta operación. */ () => null);
       if (!res.ok) {
         throw new Error(json?.detail || json?.message || 'No se pudo completar el registro.');
       }
@@ -244,6 +248,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
     setLoadingVerify(true);
     setErrorVerify(null);
 
+    // Intenta validar el código de acceso ingresado.
     const tryVerify = async (url: string) => {
       const res = await fetch(url, {
         method: 'POST',
@@ -253,7 +258,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
           codigo: cleanCode,
         }),
       });
-      const json = await res.json().catch(() => null);
+      const json = await res.json().catch(/* Maneja el fallo de esta operación. */ () => null);
       if (!res.ok) {
         throw new Error(json?.detail || json?.message || 'Código incorrecto.');
       }
@@ -293,13 +298,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
     setErrorVerify(null);
     setInfoMessage(null);
 
+    // Solicita reenviar el código de acceso al correo.
     const tryResend = async (url: string) => {
       const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: pendingEmail }),
       });
-      const json = await res.json().catch(() => null);
+      const json = await res.json().catch(/* Maneja el fallo de esta operación. */ () => null);
       if (!res.ok) {
         throw new Error(json?.detail || json?.message || 'No se pudo reenviar el código.');
       }
@@ -336,6 +342,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
 
   return (
     <div
+      onClick={/* Responde a click desde este control. */ event => { if (event.target === event.currentTarget) onClose(); }}
       style={{
         alignItems: 'center',
         background: 'rgba(15, 23, 42, 0.55)',
@@ -515,7 +522,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
               >
                 <button
                   type="button"
-                  onClick={() => setTab('register')}
+                  onClick={/* Responde a click desde este control. */ () => setTab('register')}
                   style={{
                     alignItems: 'center',
                     background: tab === 'register' ? '#294C6B' : 'transparent',
@@ -538,7 +545,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
 
                 <button
                   type="button"
-                  onClick={() => setTab('code')}
+                  onClick={/* Responde a click desde este control. */ () => setTab('code')}
                   style={{
                     alignItems: 'center',
                     background: tab === 'code' ? '#294C6B' : 'transparent',
@@ -605,7 +612,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                           type="text"
                           placeholder="Ej: Marta"
                           value={nameInput}
-                          onChange={(e) => {
+                          onChange={/* Responde a change desde este control. */ (e) => {
                             setNameInput(e.target.value);
                             if (errorRegister) setErrorRegister(null);
                           }}
@@ -642,7 +649,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                           type="email"
                           placeholder="Ej: marta@correo.com"
                           value={emailInput}
-                          onChange={(e) => {
+                          onChange={/* Responde a change desde este control. */ (e) => {
                             setEmailInput(e.target.value);
                             if (errorRegister) setErrorRegister(null);
                           }}
@@ -756,7 +763,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                           maxLength={10}
                           placeholder="000000"
                           value={verifyCodeInput}
-                          onChange={(e) => {
+                          onChange={/* Responde a change desde este control. */ (e) => {
                             setVerifyCodeInput(e.target.value);
                             if (errorVerify) setErrorVerify(null);
                           }}
@@ -964,7 +971,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                       type="email"
                       placeholder="Ej: marta@correo.com"
                       value={codeEmailInput}
-                      onChange={(e) => {
+                      onChange={/* Responde a change desde este control. */ (e) => {
                         setCodeEmailInput(e.target.value);
                         if (errorCode) setErrorCode(null);
                       }}
@@ -1008,7 +1015,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                         maxLength={10}
                         placeholder="000000"
                         value={codigoInput}
-                        onChange={(e) => {
+                        onChange={/* Responde a change desde este control. */ (e) => {
                           setCodigoInput(e.target.value);
                           if (errorCode) setErrorCode(null);
                         }}
@@ -1129,7 +1136,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                       type="email"
                       placeholder="admin@asistodo.com.ar"
                       value={adminEmailInput}
-                      onChange={(e) => {
+                      onChange={/* Responde a change desde este control. */ (e) => {
                         setAdminEmailInput(e.target.value);
                         if (errorAdmin) setErrorAdmin(null);
                       }}
@@ -1167,7 +1174,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                       type="password"
                       placeholder="••••••••"
                       value={adminPasswordInput}
-                      onChange={(e) => {
+                      onChange={/* Responde a change desde este control. */ (e) => {
                         setAdminPasswordInput(e.target.value);
                         if (errorAdmin) setErrorAdmin(null);
                       }}
@@ -1236,7 +1243,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
                   <div style={{ textAlign: 'center' }}>
                     <button
                       type="button"
-                      onClick={() => setTab('code')}
+                      onClick={/* Responde a click desde este control. */ () => setTab('code')}
                       style={{
                         alignItems: 'center',
                         background: 'transparent',
@@ -1269,7 +1276,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
               >
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={/* Responde a click desde este control. */ () => {
                     setTab('admin');
                     setErrorAdmin(null);
                   }}

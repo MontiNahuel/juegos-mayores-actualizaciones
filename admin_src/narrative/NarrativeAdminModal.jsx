@@ -1,3 +1,4 @@
+/* Organiza las pestañas para administrar el contenido narrativo. */
 import { useState, useEffect } from 'react';
 import {
   BookOpenIcon,
@@ -22,6 +23,7 @@ import FinalizacionesTab from './FinalizacionesTab';
 import CalendarioTab from './CalendarioTab';
 import GrafosV2Tab from './GrafosV2Tab';
 
+// Organiza las pestañas para administrar el contenido narrativo.
 export default function NarrativeAdminModal({ abierto, onCerrar }) {
   const [tabActiva, setTabActiva] = useState('universos');
   const [universos, setUniversos] = useState([]);
@@ -53,7 +55,7 @@ export default function NarrativeAdminModal({ abierto, onCerrar }) {
     }
   };
 
-  useEffect(() => {
+  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
     if (abierto) {
       cargarUniversos();
       cargarPersonajes();
@@ -111,14 +113,14 @@ export default function NarrativeAdminModal({ abierto, onCerrar }) {
         {/* Barra de Pestañas de Navegación (7 Pestañas ABM) */}
         <div className="bg-white px-6 border-b border-slate-200/80 flex items-center justify-between gap-4 overflow-x-auto flex-shrink-0">
           <div className="flex items-center gap-1.5 py-2.5">
-            {tabsConfig.map((tab) => {
+            {tabsConfig.map(/* Prepara el resultado de cada elemento. */ (tab) => {
               const { id, label, Icon, count } = tab;
               const estaActiva = tabActiva === id;
               return (
                 <button
                   key={id}
                   type="button"
-                  onClick={() => setTabActiva(id)}
+                  onClick={/* Responde a click desde este control. */ () => setTabActiva(id)}
                   className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap cursor-pointer ${
                     estaActiva
                       ? 'bg-[#002B5E] text-white shadow-xs'

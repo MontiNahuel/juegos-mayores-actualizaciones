@@ -1,3 +1,4 @@
+/* Intercambia tickets para pasar entre sistemas con la misma sesión. */
 import { OPERADOR_STORAGE_KEY } from './LoginSistemas';
 
 /**
@@ -15,7 +16,7 @@ export async function canjearTicketSSO(ticket) {
     body: JSON.stringify({ ticket: ticket.trim() }),
   });
 
-  const data = await response.json().catch(() => ({}));
+  const data = await response.json().catch(/* Maneja el fallo de esta operación. */ () => ({}));
 
   if (!response.ok || !data.success || !data.token) {
     const errorMsg = data.detail || data.message || 'Error al canjear el ticket de acceso SSO.';
@@ -54,7 +55,7 @@ export async function solicitarTicketRetorno(servicioDestino = 'autenticador') {
     body: JSON.stringify({ servicioDestino }),
   });
 
-  const data = await response.json().catch(() => ({}));
+  const data = await response.json().catch(/* Maneja el fallo de esta operación. */ () => ({}));
 
   if (!response.ok || !data.success || !data.ticket) {
     const errorMsg = data.detail || data.message || 'Error al generar ticket de retorno.';

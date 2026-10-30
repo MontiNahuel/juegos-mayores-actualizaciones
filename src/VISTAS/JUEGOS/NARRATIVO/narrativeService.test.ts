@@ -1,8 +1,10 @@
+/* Comprueba con pruebas que narrative service siga funcionando como se espera. */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as acciones from '../../../store/narrativoSelectionSlice';
 
 const date = '2026-10-19';
 
+// Carga servicio con los datos de este paso.
 async function cargarServicio(habilitado = true) {
   vi.stubEnv('VITE_NARRATIVE_FALLBACK', String(habilitado));
   const servicio = await import('./narrativeService');
@@ -10,26 +12,27 @@ async function cargarServicio(habilitado = true) {
   return { servicio, store };
 }
 
-beforeEach(() => {
+beforeEach(/* Prepara un entorno limpio antes de cada prueba. */ () => {
   vi.resetModules();
   vi.stubGlobal('localStorage', { getItem: vi.fn().mockReturnValue(null) });
   vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Servidor desconectado')));
 });
-afterEach(() => {
+afterEach(/* Limpia el entorno al terminar cada prueba. */ () => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.unstubAllEnvs();
 });
 
-describe('respaldo del juego narrativo', () => {
-  it('permite completar seis meses, aplicar consecuencias, ver estadisticas y reiniciar sin servidor', async () => {
+describe('respaldo del juego narrativo', /* Agrupa las pruebas de este comportamiento. */ () => {
+  it('permite completar seis meses, aplicar consecuencias, ver estadisticas y reiniciar sin servidor', /* Comprueba el comportamiento indicado en este caso. */ async () => {
     const { servicio: api, store } = await cargarServicio();
     const setup = await api.obtenerSetup(date);
+    // Deja el texto en un formato parejo para compararlo.
     const normalizar = <T extends { _id: string }>(item: T) => ({ ...item, id: item._id });
     store.dispatch(acciones.iniciarJugador({ date, recursos: setup.atributos_iniciales }));
     store.dispatch(acciones.guardarCorte(setup.personajes_ofrecidos.slice(0, 3).map(normalizar)));
     const iniciales = setup.cartas_ofrecidas.slice(0, 3).map(normalizar);
-    const inicio = await api.iniciarPartida(date, store.getState().narrativoSelection.jugador.corte_activa, iniciales.map(c => c.id));
+    const inicio = await api.iniciarPartida(date, store.getState().narrativoSelection.jugador.corte_activa, iniciales.map(/* Prepara el resultado de cada elemento. */ c => c.id));
     store.dispatch(acciones.guardarCartasIniciales(iniciales));
     store.dispatch(acciones.guardarCartasDraft(inicio.cartas_draft_actual?.map(normalizar)));
 
@@ -73,15 +76,15 @@ describe('respaldo del juego narrativo', () => {
     expect(fetch).toHaveBeenCalledTimes(2);
   });
 
-  it('prioriza la respuesta real cuando el servidor funciona', async () => {
+  it('prioriza la respuesta real cuando el servidor funciona', /* Comprueba el comportamiento indicado en este caso. */ async () => {
     vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify({ universo_nombre: 'Servidor real' })));
     const { servicio } = await cargarServicio();
     expect((await servicio.obtenerSetup(date)).universo_nombre).toBe('Servidor real');
     expect(servicio.esPartidaNarrativaLocal(date)).toBe(false);
   });
 
-  it('reconstruye los nombres desde el mismo universo sin perder la crónica si falla un catálogo', async () => {
-    vi.mocked(fetch).mockImplementation(async input => {
+  it('reconstruye los nombres desde el mismo universo sin perder la crónica si falla un catálogo', /* Comprueba el comportamiento indicado en este caso. */ async () => {
+    vi.mocked(fetch).mockImplementation(/* Completa este paso con los datos recibidos por la operación. */ async input => {
       const url = String(input);
       if (url.includes('/admin/resultados?')) return new Response('{}', { status: 503 });
       return new Response(JSON.stringify([{ _id: 'c1', nombre: 'Sello real' }]));
@@ -94,30 +97,30 @@ describe('respaldo del juego narrativo', () => {
     expect(String(vi.mocked(fetch).mock.calls[0][0])).toContain('universo_id=corte_medieval');
   });
 
-  it.each([404, 503])('habilita el respaldo ante HTTP %s', async status => {
+  it.each([404, 503])('habilita el respaldo ante HTTP %s', /* Completa este paso con los datos recibidos por la operación. */ async status => {
     vi.mocked(fetch).mockResolvedValue(new Response('{}', { status }));
     const { servicio } = await cargarServicio();
     expect((await servicio.obtenerSetup(date)).cartas_ofrecidas.length).toBeGreaterThanOrEqual(3);
     expect(servicio.esPartidaNarrativaLocal(date)).toBe(true);
   });
 
-  it('mantiene los errores de autenticacion sin convertirlos en una partida local', async () => {
+  it('mantiene los errores de autenticacion sin convertirlos en una partida local', /* Comprueba el comportamiento indicado en este caso. */ async () => {
     vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify({ detail: 'Sesión vencida' }), { status: 401 }));
     const { servicio } = await cargarServicio();
     await expect(servicio.obtenerSetup(date)).rejects.toThrow('Sesión vencida');
     expect(servicio.esPartidaNarrativaLocal(date)).toBe(false);
   });
 
-  it('permite desactivar todos los respaldos con la variable de entorno', async () => {
+  it('permite desactivar todos los respaldos con la variable de entorno', /* Comprueba el comportamiento indicado en este caso. */ async () => {
     const { servicio } = await cargarServicio(false);
     await expect(servicio.obtenerSetup(date)).rejects.toThrow('Servidor desconectado');
     expect(servicio.esPartidaNarrativaLocal(date)).toBe(false);
   });
 
-  it('activa el respaldo si el servidor queda sin responder', async () => {
+  it('activa el respaldo si el servidor queda sin responder', /* Comprueba el comportamiento indicado en este caso. */ async () => {
     vi.useFakeTimers();
-    vi.mocked(fetch).mockImplementation((_url, options) => new Promise((_resolve, reject) => {
-      options?.signal?.addEventListener('abort', () => reject(new DOMException('Timeout', 'AbortError')));
+    vi.mocked(fetch).mockImplementation(/* Completa este paso con los datos recibidos por la operación. */ (_url, options) => new Promise(/* Resuelve este trabajo pendiente y comunica cuándo terminó. */ (_resolve, reject) => {
+      options?.signal?.addEventListener('abort', /* Completa este paso con los datos recibidos por la operación. */ () => reject(new DOMException('Timeout', 'AbortError')));
     }));
     const { servicio } = await cargarServicio();
     const setup = servicio.obtenerSetup(date);

@@ -1,6 +1,12 @@
+/* Define los colores, tamaños y estilos compartidos. */
 @import "tailwindcss";
 
 @theme {
+  --animate-modal-down: modal-down 240ms cubic-bezier(.2,.8,.2,1) both;
+  @keyframes modal-down {
+    from { opacity: 0; transform: translateY(-16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
   --animate-calendar-modal: calendar-modal 280ms ease-out both;
   @keyframes calendar-modal {
     from { opacity: 0; transform: scale(.96); }

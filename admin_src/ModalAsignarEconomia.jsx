@@ -1,3 +1,4 @@
+/* Permite buscar un jugador y ajustar vidas, puntos o suscripción. */
 import { useState, useEffect } from 'react';
 import {
   CoinsIcon,
@@ -11,6 +12,7 @@ import {
 } from './Icons';
 import { OPERADOR_STORAGE_KEY } from './LoginSistemas';
 
+// Permite buscar un jugador y ajustar vidas, puntos o suscripción.
 export default function ModalAsignarEconomia({
   abierto,
   onCerrar,
@@ -30,6 +32,7 @@ export default function ModalAsignarEconomia({
   const [vidasValor, setVidasValor] = useState(5);
   const [puntosValor, setPuntosValor] = useState(100);
 
+  // Arma las cabeceras con la sesión para consultar el panel.
   const getAuthHeaders = () => {
     const sesion = localStorage.getItem(OPERADOR_STORAGE_KEY);
     const token = sesion ? JSON.parse(sesion)?.token : null;
@@ -40,7 +43,7 @@ export default function ModalAsignarEconomia({
     return headers;
   };
 
-  useEffect(() => {
+  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
     if (abierto) {
       setErrorMsg('');
       setExitoMsg('');
@@ -65,6 +68,7 @@ export default function ModalAsignarEconomia({
 
   if (!abierto) return null;
 
+  // Busca al jugador por los datos ingresados en el formulario.
   const handleBuscar = async (e) => {
     if (e) e.preventDefault();
     if (!identificador.trim()) {
@@ -85,7 +89,7 @@ export default function ModalAsignarEconomia({
         const data = await res.json();
         setUsuarioEncontrado(data);
       } else {
-        const err = await res.json().catch(() => ({}));
+        const err = await res.json().catch(/* Maneja el fallo de esta operación. */ () => ({}));
         setErrorMsg(err.detail || 'Usuario no encontrado.');
         setUsuarioEncontrado(null);
       }
@@ -97,6 +101,7 @@ export default function ModalAsignarEconomia({
     }
   };
 
+  // Cambia la suscripción del jugador y muestra la respuesta del servidor.
   const handleAlternarSuscripcion = async () => {
     if (!usuarioEncontrado) return;
     const nuevaSub = usuarioEncontrado.suscripcion === 'premium' ? 'basica' : 'premium';
@@ -114,7 +119,7 @@ export default function ModalAsignarEconomia({
       const data = await res.json();
       if (res.ok && data.success) {
         setExitoMsg(data.message || `Suscripción actualizada a ${nuevaSub}.`);
-        setUsuarioEncontrado((prev) => ({
+        setUsuarioEncontrado(/* Actualiza usuario encontrado a partir del valor anterior. */ (prev) => ({
           ...prev,
           suscripcion: nuevaSub,
         }));
@@ -135,6 +140,7 @@ export default function ModalAsignarEconomia({
     }
   };
 
+  // Confirma el ajuste de saldo del jugador seleccionado.
   const handleAplicar = async (e) => {
     e.preventDefault();
     if (!usuarioEncontrado && !identificador.trim()) {
@@ -170,7 +176,7 @@ export default function ModalAsignarEconomia({
       const data = await res.json();
       if (res.ok && data.success) {
         setExitoMsg(data.message || '¡Vidas y puntos actualizados correctamente!');
-        setUsuarioEncontrado((prev) => ({
+        setUsuarioEncontrado(/* Actualiza usuario encontrado a partir del valor anterior. */ (prev) => ({
           ...prev,
           id: data.user_id,
           name: data.name,
@@ -255,7 +261,7 @@ export default function ModalAsignarEconomia({
                   type="text"
                   placeholder="Ej: 123456 o alumno@asistodo.com.ar"
                   value={identificador}
-                  onChange={(e) => setIdentificador(e.target.value)}
+                  onChange={/* Responde a change desde este control. */ (e) => setIdentificador(e.target.value)}
                   className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#002B5E] focus:outline-hidden font-medium text-slate-900"
                 />
               </div>
@@ -358,7 +364,7 @@ export default function ModalAsignarEconomia({
             <div className="flex items-center gap-2 p-1 bg-slate-100 rounded-xl">
               <button
                 type="button"
-                onClick={() => setModo('sumar')}
+                onClick={/* Responde a click desde este control. */ () => setModo('sumar')}
                 className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer ${
                   modo === 'sumar'
                     ? 'bg-white text-slate-900 shadow-xs'
@@ -369,7 +375,7 @@ export default function ModalAsignarEconomia({
               </button>
               <button
                 type="button"
-                onClick={() => setModo('fijar')}
+                onClick={/* Responde a click desde este control. */ () => setModo('fijar')}
                 className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition cursor-pointer ${
                   modo === 'fijar'
                     ? 'bg-white text-slate-900 shadow-xs'
@@ -398,17 +404,17 @@ export default function ModalAsignarEconomia({
                 <input
                   type="number"
                   value={vidasValor}
-                  onChange={(e) => setVidasValor(parseInt(e.target.value, 10) || 0)}
+                  onChange={/* Responde a change desde este control. */ (e) => setVidasValor(parseInt(e.target.value, 10) || 0)}
                   className="w-full px-3 py-1.5 text-sm bg-white border border-rose-300 rounded-xl font-bold text-slate-900 focus:ring-2 focus:ring-rose-500 focus:outline-hidden"
                 />
 
                 {/* Presets rápidos */}
                 <div className="flex items-center gap-1.5 pt-1">
-                  {[1, 5, 10].map((v) => (
+                  {[1, 5, 10].map(/* Prepara el resultado de cada elemento. */ (v) => (
                     <button
                       key={v}
                       type="button"
-                      onClick={() => setVidasValor(v)}
+                      onClick={/* Responde a click desde este control. */ () => setVidasValor(v)}
                       className="flex-1 py-1 text-[11px] font-bold bg-white hover:bg-rose-100 text-rose-800 rounded-lg border border-rose-200 transition cursor-pointer"
                     >
                       {modo === 'sumar' ? `+${v}` : v}
@@ -417,7 +423,7 @@ export default function ModalAsignarEconomia({
                   {modo === 'fijar' && (
                     <button
                       type="button"
-                      onClick={() => setVidasValor(0)}
+                      onClick={/* Responde a click desde este control. */ () => setVidasValor(0)}
                       className="px-2 py-1 text-[11px] font-bold bg-white hover:bg-rose-100 text-rose-800 rounded-lg border border-rose-200 transition cursor-pointer"
                     >
                       0
@@ -441,17 +447,17 @@ export default function ModalAsignarEconomia({
                 <input
                   type="number"
                   value={puntosValor}
-                  onChange={(e) => setPuntosValor(parseInt(e.target.value, 10) || 0)}
+                  onChange={/* Responde a change desde este control. */ (e) => setPuntosValor(parseInt(e.target.value, 10) || 0)}
                   className="w-full px-3 py-1.5 text-sm bg-white border border-amber-300 rounded-xl font-bold text-slate-900 focus:ring-2 focus:ring-amber-500 focus:outline-hidden"
                 />
 
                 {/* Presets rápidos */}
                 <div className="flex items-center gap-1.5 pt-1">
-                  {[50, 100, 500].map((pts) => (
+                  {[50, 100, 500].map(/* Prepara el resultado de cada elemento. */ (pts) => (
                     <button
                       key={pts}
                       type="button"
-                      onClick={() => setPuntosValor(pts)}
+                      onClick={/* Responde a click desde este control. */ () => setPuntosValor(pts)}
                       className="flex-1 py-1 text-[11px] font-bold bg-white hover:bg-amber-100 text-amber-800 rounded-lg border border-amber-200 transition cursor-pointer"
                     >
                       {modo === 'sumar' ? `+${pts}` : pts}

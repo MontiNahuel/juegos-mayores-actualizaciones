@@ -1,3 +1,4 @@
+/* Presenta el título de la conversación con el estilo de la historia. */
 import TituloNarrativo from './TituloNarrativo';
 
 // Marco propio de conversaciones; evita mezclarlo con el título de eventos.

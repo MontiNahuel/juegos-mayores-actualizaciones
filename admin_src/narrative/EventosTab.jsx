@@ -1,3 +1,4 @@
+/* Permite editar eventos, opciones y resultados posibles. */
 import { useState, useEffect } from 'react';
 import {
   FileTextIcon,
@@ -17,6 +18,7 @@ import {
 } from '../Icons';
 import ImageUploadField from './ImageUploadField';
 
+// Permite editar eventos, opciones y resultados posibles.
 export default function EventosTab({ universos = [], personajes = [] }) {
   const [eventos, setEventos] = useState([]);
   const [resultados, setResultados] = useState([]);
@@ -77,14 +79,15 @@ export default function EventosTab({ universos = [], personajes = [] }) {
     }
   };
 
-  useEffect(() => {
+  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
     cargarEventos(universoFiltro);
   }, [universoFiltro]);
 
-  useEffect(() => {
+  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
     cargarResultados();
   }, []);
 
+  // Abre el formulario vacío para crear un registro.
   const abrirModalNuevo = () => {
     setEsEdicion(false);
     const newId = 'evt_' + Date.now().toString(36);
@@ -163,6 +166,7 @@ export default function EventosTab({ universos = [], personajes = [] }) {
     setModalAbierto(true);
   };
 
+  // Carga el registro en el formulario de edición.
   const abrirModalEditar = (evt) => {
     setEsEdicion(true);
     setId(evt._id || evt.id);
@@ -174,15 +178,15 @@ export default function EventosTab({ universos = [], personajes = [] }) {
     setTagsStr((evt.tags_tematicos || []).join(', '));
 
     // Clonar opciones profundamente
-    const opsClonadas = (evt.opciones || []).map((op) => ({
+    const opsClonadas = (evt.opciones || []).map(/* Prepara el resultado de cada elemento. */ (op) => ({
       id: op.id,
       texto: op.texto || '',
       es_secreta: !!op.es_secreta,
-      condiciones: (op.condiciones || []).map((c) => ({ ...c })),
-      resultados_posibles: (op.resultados_posibles || []).map((rp) => ({
+      condiciones: (op.condiciones || []).map(/* Prepara el resultado de cada elemento. */ (c) => ({ ...c })),
+      resultados_posibles: (op.resultados_posibles || []).map(/* Prepara el resultado de cada elemento. */ (rp) => ({
         resultado_id: rp.resultado_id || '',
         peso_base: rp.peso_base ?? 50,
-        modificadores_probabilidad: (rp.modificadores_probabilidad || []).map((m) => ({
+        modificadores_probabilidad: (rp.modificadores_probabilidad || []).map(/* Prepara el resultado de cada elemento. */ (m) => ({
           delta_peso: m.delta_peso ?? 0,
           explicacion: m.explicacion || '',
           condicion: { ...(m.condicion || {}) },
@@ -218,21 +222,23 @@ export default function EventosTab({ universos = [], personajes = [] }) {
     ]);
   };
 
+  // Quita opcion con los datos de este paso.
   const eliminarOpcion = (idx) => {
-    setOpciones(opciones.filter((_, i) => i !== idx));
+    setOpciones(opciones.filter(/* Conserva los elementos que cumplen esta condición. */ (_, i) => i !== idx));
   };
 
+  // Actualiza opcion con los datos de este paso.
   const actualizarOpcion = (idx, campo, valor) => {
-    setOpciones((prev) =>
-      prev.map((op, i) => (i === idx ? { ...op, [campo]: valor } : op))
+    setOpciones(/* Actualiza opciones a partir del valor anterior. */ (prev) =>
+      prev.map(/* Prepara el resultado de cada elemento. */ (op, i) => (i === idx ? { ...op, [campo]: valor } : op))
     );
   };
 
   // Manejo de Resultados dentro de una Opción
   const agregarResultadoPosible = (opIdx) => {
     const primerResId = resultados[0]?._id || resultados[0]?.id || 'res_resultado_1';
-    setOpciones((prev) =>
-      prev.map((op, i) => {
+    setOpciones(/* Actualiza opciones a partir del valor anterior. */ (prev) =>
+      prev.map(/* Prepara el resultado de cada elemento. */ (op, i) => {
         if (i !== opIdx) return op;
         return {
           ...op,
@@ -249,23 +255,25 @@ export default function EventosTab({ universos = [], personajes = [] }) {
     );
   };
 
+  // Quita resultado posible con los datos de este paso.
   const eliminarResultadoPosible = (opIdx, resIdx) => {
-    setOpciones((prev) =>
-      prev.map((op, i) => {
+    setOpciones(/* Actualiza opciones a partir del valor anterior. */ (prev) =>
+      prev.map(/* Prepara el resultado de cada elemento. */ (op, i) => {
         if (i !== opIdx) return op;
         return {
           ...op,
-          resultados_posibles: op.resultados_posibles.filter((_, ri) => ri !== resIdx),
+          resultados_posibles: op.resultados_posibles.filter(/* Conserva los elementos que cumplen esta condición. */ (_, ri) => ri !== resIdx),
         };
       })
     );
   };
 
+  // Actualiza resultado posible con los datos de este paso.
   const actualizarResultadoPosible = (opIdx, resIdx, campo, valor) => {
-    setOpciones((prev) =>
-      prev.map((op, i) => {
+    setOpciones(/* Actualiza opciones a partir del valor anterior. */ (prev) =>
+      prev.map(/* Prepara el resultado de cada elemento. */ (op, i) => {
         if (i !== opIdx) return op;
-        const nuevosResultados = op.resultados_posibles.map((rp, ri) =>
+        const nuevosResultados = op.resultados_posibles.map(/* Prepara el resultado de cada elemento. */ (rp, ri) =>
           ri === resIdx ? { ...rp, [campo]: valor } : rp
         );
         return { ...op, resultados_posibles: nuevosResultados };
@@ -275,10 +283,10 @@ export default function EventosTab({ universos = [], personajes = [] }) {
 
   // Manejo de Modificadores de Probabilidad dentro de un Resultado Posible
   const agregarModificador = (opIdx, resIdx) => {
-    setOpciones((prev) =>
-      prev.map((op, i) => {
+    setOpciones(/* Actualiza opciones a partir del valor anterior. */ (prev) =>
+      prev.map(/* Prepara el resultado de cada elemento. */ (op, i) => {
         if (i !== opIdx) return op;
-        const nuevosResultados = op.resultados_posibles.map((rp, ri) => {
+        const nuevosResultados = op.resultados_posibles.map(/* Prepara el resultado de cada elemento. */ (rp, ri) => {
           if (ri !== resIdx) return rp;
           return {
             ...rp,
@@ -305,15 +313,17 @@ export default function EventosTab({ universos = [], personajes = [] }) {
     );
   };
 
+  // Quita modificador con los datos de este paso.
   const eliminarModificador = (opIdx, resIdx, modIdx) => {
-    setOpciones((prev) =>
-      prev.map((op, i) => {
+    setOpciones(/* Actualiza opciones a partir del valor anterior. */ (prev) =>
+      prev.map(/* Prepara el resultado de cada elemento. */ (op, i) => {
         if (i !== opIdx) return op;
-        const nuevosResultados = op.resultados_posibles.map((rp, ri) => {
+        const nuevosResultados = op.resultados_posibles.map(/* Prepara el resultado de cada elemento. */ (rp, ri) => {
           if (ri !== resIdx) return rp;
           return {
             ...rp,
             modificadores_probabilidad: rp.modificadores_probabilidad.filter(
+              // Conserva los elementos que cumplen esta condición.
               (_, mi) => mi !== modIdx
             ),
           };
@@ -323,13 +333,14 @@ export default function EventosTab({ universos = [], personajes = [] }) {
     );
   };
 
+  // Actualiza modificador con los datos de este paso.
   const actualizarModificador = (opIdx, resIdx, modIdx, campo, valor) => {
-    setOpciones((prev) =>
-      prev.map((op, i) => {
+    setOpciones(/* Actualiza opciones a partir del valor anterior. */ (prev) =>
+      prev.map(/* Prepara el resultado de cada elemento. */ (op, i) => {
         if (i !== opIdx) return op;
-        const nuevosResultados = op.resultados_posibles.map((rp, ri) => {
+        const nuevosResultados = op.resultados_posibles.map(/* Prepara el resultado de cada elemento. */ (rp, ri) => {
           if (ri !== resIdx) return rp;
-          const nuevosMods = rp.modificadores_probabilidad.map((mod, mi) => {
+          const nuevosMods = rp.modificadores_probabilidad.map(/* Prepara el resultado de cada elemento. */ (mod, mi) => {
             if (mi !== modIdx) return mod;
             if (campo === 'condicion') {
               return { ...mod, condicion: { ...mod.condicion, ...valor } };
@@ -373,7 +384,7 @@ export default function EventosTab({ universos = [], personajes = [] }) {
 
     const tagsArray = tagsStr
       .split(',')
-      .map((t) => t.trim())
+      .map(/* Prepara el resultado de cada elemento. */ (t) => t.trim())
       .filter(Boolean);
 
     const payload = {
@@ -399,7 +410,7 @@ export default function EventosTab({ universos = [], personajes = [] }) {
         setModalAbierto(false);
         cargarEventos(universoFiltro);
       } else {
-        const errData = await res.json().catch(() => ({}));
+        const errData = await res.json().catch(/* Maneja el fallo de esta operación. */ () => ({}));
         setError(errData.detail || 'Error al guardar el evento.');
       }
     } catch (err) {
@@ -424,7 +435,7 @@ export default function EventosTab({ universos = [], personajes = [] }) {
         setExito(`Evento "${evtTitulo}" eliminado.`);
         cargarEventos(universoFiltro);
       } else {
-        const errData = await res.json().catch(() => ({}));
+        const errData = await res.json().catch(/* Maneja el fallo de esta operación. */ () => ({}));
         setError(errData.detail || 'Error al eliminar el evento.');
       }
     } catch (err) {
@@ -434,18 +445,18 @@ export default function EventosTab({ universos = [], personajes = [] }) {
   };
 
   // Filtrado en memoria por búsqueda
-  const eventosFiltrados = eventos.filter((evt) => {
+  const eventosFiltrados = eventos.filter(/* Conserva los elementos que cumplen esta condición. */ (evt) => {
     const q = busqueda.toLowerCase().trim();
     if (!q) return true;
     const enTitulo = (evt.titulo || '').toLowerCase().includes(q);
     const enDesc = (evt.descripcion || '').toLowerCase().includes(q);
     const enId = (evt._id || evt.id || '').toLowerCase().includes(q);
-    const enTags = (evt.tags_tematicos || []).some((t) => t.toLowerCase().includes(q));
+    const enTags = (evt.tags_tematicos || []).some(/* Comprueba si algún elemento cumple esta condición. */ (t) => t.toLowerCase().includes(q));
     return enTitulo || enDesc || enId || enTags;
   });
 
   // Mapa de resultados para mostrar nombres en tarjetas
-  const mapaResultados = resultados.reduce((acc, r) => {
+  const mapaResultados = resultados.reduce(/* Acumula los valores en un solo resultado. */ (acc, r) => {
     acc[r._id || r.id] = r;
     return acc;
   }, {});
@@ -462,11 +473,11 @@ export default function EventosTab({ universos = [], personajes = [] }) {
 
           <select
             value={universoFiltro}
-            onChange={(e) => setUniversoFiltro(e.target.value)}
+            onChange={/* Responde a change desde este control. */ (e) => setUniversoFiltro(e.target.value)}
             className="text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-medium text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-[#002B5E]/20"
           >
             <option value="">Todos los Universos</option>
-            {universos.map((u) => (
+            {universos.map(/* Prepara el resultado de cada elemento. */ (u) => (
               <option key={u._id || u.id} value={u._id || u.id}>
                 {u.nombre}
               </option>
@@ -479,14 +490,14 @@ export default function EventosTab({ universos = [], personajes = [] }) {
               type="text"
               placeholder="Buscar por título, tag o ID..."
               value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
+              onChange={/* Responde a change desde este control. */ (e) => setBusqueda(e.target.value)}
               className="text-xs w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-2 font-medium text-slate-700 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-[#002B5E]/20"
             />
           </div>
 
           <button
             type="button"
-            onClick={() => {
+            onClick={/* Responde a click desde este control. */ () => {
               cargarEventos(universoFiltro);
               cargarResultados();
             }}
@@ -514,7 +525,7 @@ export default function EventosTab({ universos = [], personajes = [] }) {
             <CheckIcon size={16} className="text-emerald-600" />
             <span>{exito}</span>
           </div>
-          <button onClick={() => setExito('')} className="text-emerald-600 hover:text-emerald-800 cursor-pointer">
+          <button onClick={/* Responde a click desde este control. */ () => setExito('')} className="text-emerald-600 hover:text-emerald-800 cursor-pointer">
             <XIcon size={14} />
           </button>
         </div>
@@ -526,7 +537,7 @@ export default function EventosTab({ universos = [], personajes = [] }) {
             <AlertTriangleIcon size={16} className="text-rose-600" />
             <span>{error}</span>
           </div>
-          <button onClick={() => setError('')} className="text-rose-600 hover:text-rose-800 cursor-pointer">
+          <button onClick={/* Responde a click desde este control. */ () => setError('')} className="text-rose-600 hover:text-rose-800 cursor-pointer">
             <XIcon size={14} />
           </button>
         </div>
@@ -550,9 +561,9 @@ export default function EventosTab({ universos = [], personajes = [] }) {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {eventosFiltrados.map((evt) => {
+          {eventosFiltrados.map(/* Prepara el resultado de cada elemento. */ (evt) => {
             const numOpciones = (evt.opciones || []).length;
-            const tieneSecreta = (evt.opciones || []).some((o) => o.es_secreta);
+            const tieneSecreta = (evt.opciones || []).some(/* Comprueba si algún elemento cumple esta condición. */ (o) => o.es_secreta);
 
             return (
               <div
@@ -566,7 +577,7 @@ export default function EventosTab({ universos = [], personajes = [] }) {
                       src={evt.imagen || '/assets/narrative/eventos/default.webp'}
                       alt={evt.titulo}
                       className="w-full h-full object-cover group-hover:scale-105 transition duration-300 opacity-90"
-                      onError={(e) => {
+                      onError={/* Responde a error desde este control. */ (e) => {
                         e.target.onerror = null;
                         e.target.src = '/assets/narrative/eventos/default.webp';
                       }}
@@ -606,7 +617,7 @@ export default function EventosTab({ universos = [], personajes = [] }) {
                     {/* Tags Temáticos */}
                     {(evt.tags_tematicos || []).length > 0 && (
                       <div className="flex flex-wrap gap-1">
-                        {evt.tags_tematicos.map((tag, tidx) => (
+                        {evt.tags_tematicos.map(/* Prepara el resultado de cada elemento. */ (tag, tidx) => (
                           <span
                             key={tidx}
                             className="inline-flex items-center gap-1 text-[10px] font-semibold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md border border-slate-200"
@@ -625,7 +636,7 @@ export default function EventosTab({ universos = [], personajes = [] }) {
                       </div>
 
                       <div className="space-y-1.5">
-                        {(evt.opciones || []).map((op, oidx) => {
+                        {(evt.opciones || []).map(/* Prepara el resultado de cada elemento. */ (op, oidx) => {
                           const resPosiblesCount = (op.resultados_posibles || []).length;
                           return (
                             <div
@@ -671,7 +682,7 @@ export default function EventosTab({ universos = [], personajes = [] }) {
                   <div className="flex items-center gap-1.5">
                     <button
                       type="button"
-                      onClick={() => abrirModalEditar(evt)}
+                      onClick={/* Responde a click desde este control. */ () => abrirModalEditar(evt)}
                       className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-700 bg-white border border-slate-200 hover:bg-slate-100 transition cursor-pointer"
                     >
                       <EditIcon size={13} />
@@ -680,7 +691,7 @@ export default function EventosTab({ universos = [], personajes = [] }) {
 
                     <button
                       type="button"
-                      onClick={() => handleEliminar(evt._id || evt.id, evt.titulo)}
+                      onClick={/* Responde a click desde este control. */ () => handleEliminar(evt._id || evt.id, evt.titulo)}
                       className="p-1.5 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition cursor-pointer"
                       title="Eliminar evento"
                     >
@@ -718,7 +729,7 @@ export default function EventosTab({ universos = [], personajes = [] }) {
 
               <button
                 type="button"
-                onClick={() => setModalAbierto(false)}
+                onClick={/* Responde a click desde este control. */ () => setModalAbierto(false)}
                 className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition cursor-pointer"
               >
                 <XIcon size={18} />
@@ -742,7 +753,7 @@ export default function EventosTab({ universos = [], personajes = [] }) {
                       type="text"
                       disabled={esEdicion}
                       value={id}
-                      onChange={(e) => setId(e.target.value)}
+                      onChange={/* Responde a change desde este control. */ (e) => setId(e.target.value)}
                       placeholder="evt_crisis_sequia"
                       className="text-xs w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono text-slate-800 disabled:opacity-60 focus:ring-2 focus:ring-[#002B5E]/20"
                     />
@@ -754,10 +765,10 @@ export default function EventosTab({ universos = [], personajes = [] }) {
                     </label>
                     <select
                       value={universoId}
-                      onChange={(e) => setUniversoId(e.target.value)}
+                      onChange={/* Responde a change desde este control. */ (e) => setUniversoId(e.target.value)}
                       className="text-xs w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-medium text-slate-800 focus:ring-2 focus:ring-[#002B5E]/20"
                     >
-                      {universos.map((u) => (
+                      {universos.map(/* Prepara el resultado de cada elemento. */ (u) => (
                         <option key={u._id || u.id} value={u._id || u.id}>
                           {u.nombre} ({u._id || u.id})
                         </option>
@@ -774,7 +785,7 @@ export default function EventosTab({ universos = [], personajes = [] }) {
                       min="1"
                       max="1000"
                       value={pesoBase}
-                      onChange={(e) => setPesoBase(Number(e.target.value))}
+                      onChange={/* Responde a change desde este control. */ (e) => setPesoBase(Number(e.target.value))}
                       className="text-xs w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold text-slate-800 focus:ring-2 focus:ring-[#002B5E]/20"
                     />
                   </div>
@@ -787,7 +798,7 @@ export default function EventosTab({ universos = [], personajes = [] }) {
                   <input
                     type="text"
                     value={titulo}
-                    onChange={(e) => setTitulo(e.target.value)}
+                    onChange={/* Responde a change desde este control. */ (e) => setTitulo(e.target.value)}
                     placeholder="Ej: La Gran Helada en el Valle"
                     className="text-xs w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-bold text-slate-800 focus:ring-2 focus:ring-[#002B5E]/20"
                   />
@@ -808,7 +819,7 @@ export default function EventosTab({ universos = [], personajes = [] }) {
                   <textarea
                     rows={2}
                     value={descripcion}
-                    onChange={(e) => setDescripcion(e.target.value)}
+                    onChange={/* Responde a change desde este control. */ (e) => setDescripcion(e.target.value)}
                     placeholder="Describe el dilema o problema que enfrenta el reino..."
                     className="text-xs w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-medium text-slate-800 focus:ring-2 focus:ring-[#002B5E]/20 leading-relaxed"
                   />
@@ -821,7 +832,7 @@ export default function EventosTab({ universos = [], personajes = [] }) {
                   <input
                     type="text"
                     value={tagsStr}
-                    onChange={(e) => setTagsStr(e.target.value)}
+                    onChange={/* Responde a change desde este control. */ (e) => setTagsStr(e.target.value)}
                     placeholder="clima, comida, crisis, pueblo"
                     className="text-xs w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-medium text-slate-800 focus:ring-2 focus:ring-[#002B5E]/20"
                   />
@@ -851,7 +862,7 @@ export default function EventosTab({ universos = [], personajes = [] }) {
                 </div>
 
                 <div className="space-y-4">
-                  {opciones.map((op, opIdx) => (
+                  {opciones.map(/* Prepara el resultado de cada elemento. */ (op, opIdx) => (
                     <div
                       key={opIdx}
                       className={`p-4 rounded-2xl border ${
@@ -866,7 +877,7 @@ export default function EventosTab({ universos = [], personajes = [] }) {
                           <input
                             type="text"
                             value={op.id}
-                            onChange={(e) => actualizarOpcion(opIdx, 'id', e.target.value)}
+                            onChange={/* Responde a change desde este control. */ (e) => actualizarOpcion(opIdx, 'id', e.target.value)}
                             placeholder="op_a"
                             className="text-xs w-20 font-black uppercase tracking-wider bg-white border border-slate-200 rounded-lg px-2 py-1 text-slate-700"
                           />
@@ -874,7 +885,7 @@ export default function EventosTab({ universos = [], personajes = [] }) {
                             <input
                               type="checkbox"
                               checked={op.es_secreta}
-                              onChange={(e) => actualizarOpcion(opIdx, 'es_secreta', e.target.checked)}
+                              onChange={/* Responde a change desde este control. */ (e) => actualizarOpcion(opIdx, 'es_secreta', e.target.checked)}
                               className="rounded text-amber-600 focus:ring-0 cursor-pointer"
                             />
                             <span>Opción Secreta</span>
@@ -883,7 +894,7 @@ export default function EventosTab({ universos = [], personajes = [] }) {
 
                         <button
                           type="button"
-                          onClick={() => eliminarOpcion(opIdx)}
+                          onClick={/* Responde a click desde este control. */ () => eliminarOpcion(opIdx)}
                           className="p-1 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-100/60 transition cursor-pointer"
                           title="Eliminar esta opción"
                         >
@@ -899,7 +910,7 @@ export default function EventosTab({ universos = [], personajes = [] }) {
                         <input
                           type="text"
                           value={op.texto}
-                          onChange={(e) => actualizarOpcion(opIdx, 'texto', e.target.value)}
+                          onChange={/* Responde a change desde este control. */ (e) => actualizarOpcion(opIdx, 'texto', e.target.value)}
                           placeholder="Ej: Racionar graneros y custodiar los caminos con la guardia"
                           className="text-xs w-full bg-white border border-slate-200 rounded-xl px-3 py-2 font-bold text-slate-800 focus:ring-2 focus:ring-[#002B5E]/20"
                         />
@@ -914,7 +925,7 @@ export default function EventosTab({ universos = [], personajes = [] }) {
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                             <select
                               value={op.condiciones?.[0]?.tipo || 'tiene_tag'}
-                              onChange={(e) => {
+                              onChange={/* Responde a change desde este control. */ (e) => {
                                 const nuevoTipo = e.target.value;
                                 const cond = {
                                   tipo: nuevoTipo,
@@ -936,7 +947,7 @@ export default function EventosTab({ universos = [], personajes = [] }) {
                             {op.condiciones?.[0]?.tipo === 'tiene_personaje' ? (
                               <select
                                 value={op.condiciones?.[0]?.personaje_id || ''}
-                                onChange={(e) => {
+                                onChange={/* Responde a change desde este control. */ (e) => {
                                   const c = { ...(op.condiciones?.[0] || {}) };
                                   c.personaje_id = e.target.value;
                                   actualizarOpcion(opIdx, 'condiciones', [c]);
@@ -944,7 +955,7 @@ export default function EventosTab({ universos = [], personajes = [] }) {
                                 className="text-xs bg-white border border-amber-300 rounded-lg px-2 py-1.5 font-medium text-slate-700 sm:col-span-2"
                               >
                                 <option value="">Seleccionar Personaje Requerido...</option>
-                                {personajes.map((pj) => (
+                                {personajes.map(/* Prepara el resultado de cada elemento. */ (pj) => (
                                   <option key={pj._id || pj.id} value={pj._id || pj.id}>
                                     {pj.nombre} ({pj.titulo})
                                   </option>
@@ -955,7 +966,7 @@ export default function EventosTab({ universos = [], personajes = [] }) {
                                 type="text"
                                 placeholder="Tag requerido (ej: sello_real, medicina_hierbas)"
                                 value={op.condiciones?.[0]?.tag || ''}
-                                onChange={(e) => {
+                                onChange={/* Responde a change desde este control. */ (e) => {
                                   const c = { ...(op.condiciones?.[0] || {}) };
                                   c.tag = e.target.value;
                                   actualizarOpcion(opIdx, 'condiciones', [c]);
@@ -975,7 +986,7 @@ export default function EventosTab({ universos = [], personajes = [] }) {
                           </span>
                           <button
                             type="button"
-                            onClick={() => agregarResultadoPosible(opIdx)}
+                            onClick={/* Responde a click desde este control. */ () => agregarResultadoPosible(opIdx)}
                             className="text-[11px] font-bold text-[#002B5E] hover:underline flex items-center gap-1 cursor-pointer"
                           >
                             <PlusIcon size={12} />
@@ -984,7 +995,7 @@ export default function EventosTab({ universos = [], personajes = [] }) {
                         </div>
 
                         <div className="space-y-2">
-                          {op.resultados_posibles.map((rp, resIdx) => {
+                          {op.resultados_posibles.map(/* Prepara el resultado de cada elemento. */ (rp, resIdx) => {
                             const resObj = mapaResultados[rp.resultado_id];
                             return (
                               <div
@@ -999,7 +1010,7 @@ export default function EventosTab({ universos = [], personajes = [] }) {
                                     </label>
                                     <select
                                       value={rp.resultado_id}
-                                      onChange={(e) =>
+                                      onChange={/* Responde a change desde este control. */ (e) =>
                                         actualizarResultadoPosible(
                                           opIdx,
                                           resIdx,
@@ -1009,7 +1020,7 @@ export default function EventosTab({ universos = [], personajes = [] }) {
                                       }
                                       className="text-xs w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 font-bold text-slate-800"
                                     >
-                                      {resultados.map((r) => (
+                                      {resultados.map(/* Prepara el resultado de cada elemento. */ (r) => (
                                         <option key={r._id || r.id} value={r._id || r.id}>
                                           {r.titulo} [{r.tipo_resultado?.toUpperCase()}] (
                                           {r._id || r.id})
@@ -1028,7 +1039,7 @@ export default function EventosTab({ universos = [], personajes = [] }) {
                                       min="1"
                                       max="500"
                                       value={rp.peso_base}
-                                      onChange={(e) =>
+                                      onChange={/* Responde a change desde este control. */ (e) =>
                                         actualizarResultadoPosible(
                                           opIdx,
                                           resIdx,
@@ -1044,7 +1055,7 @@ export default function EventosTab({ universos = [], personajes = [] }) {
                                   <div className="sm:col-span-1 flex justify-end">
                                     <button
                                       type="button"
-                                      onClick={() => eliminarResultadoPosible(opIdx, resIdx)}
+                                      onClick={/* Responde a click desde este control. */ () => eliminarResultadoPosible(opIdx, resIdx)}
                                       className="p-1.5 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition cursor-pointer"
                                       title="Desvincular resultado"
                                     >
@@ -1061,7 +1072,7 @@ export default function EventosTab({ universos = [], personajes = [] }) {
                                     </span>
                                     <button
                                       type="button"
-                                      onClick={() => agregarModificador(opIdx, resIdx)}
+                                      onClick={/* Responde a click desde este control. */ () => agregarModificador(opIdx, resIdx)}
                                       className="text-[10px] font-bold text-indigo-600 hover:underline cursor-pointer"
                                     >
                                       + Modificador
@@ -1074,7 +1085,7 @@ export default function EventosTab({ universos = [], personajes = [] }) {
                                     </p>
                                   ) : (
                                     <div className="space-y-1.5">
-                                      {rp.modificadores_probabilidad.map((mod, modIdx) => (
+                                      {rp.modificadores_probabilidad.map(/* Prepara el resultado de cada elemento. */ (mod, modIdx) => (
                                         <div
                                           key={modIdx}
                                           className="p-2 rounded-lg bg-indigo-50/60 border border-indigo-100 flex flex-wrap items-center gap-2 text-xs"
@@ -1082,7 +1093,7 @@ export default function EventosTab({ universos = [], personajes = [] }) {
                                           {/* Tipo de Condición */}
                                           <select
                                             value={mod.condicion?.tipo || 'tiene_personaje'}
-                                            onChange={(e) => {
+                                            onChange={/* Responde a change desde este control. */ (e) => {
                                               const nuevoTipo = e.target.value;
                                               actualizarModificador(
                                                 opIdx,
@@ -1109,7 +1120,7 @@ export default function EventosTab({ universos = [], personajes = [] }) {
                                           {mod.condicion?.tipo === 'tiene_personaje' ? (
                                             <select
                                               value={mod.condicion?.personaje_id || ''}
-                                              onChange={(e) =>
+                                              onChange={/* Responde a change desde este control. */ (e) =>
                                                 actualizarModificador(
                                                   opIdx,
                                                   resIdx,
@@ -1120,7 +1131,7 @@ export default function EventosTab({ universos = [], personajes = [] }) {
                                               }
                                               className="text-[11px] bg-white border border-indigo-200 rounded px-1.5 py-1 font-medium flex-1 min-w-[140px]"
                                             >
-                                              {personajes.map((pj) => (
+                                              {personajes.map(/* Prepara el resultado de cada elemento. */ (pj) => (
                                                 <option key={pj._id || pj.id} value={pj._id || pj.id}>
                                                   {pj.nombre}
                                                 </option>
@@ -1131,7 +1142,7 @@ export default function EventosTab({ universos = [], personajes = [] }) {
                                               type="text"
                                               placeholder="Tag pasivo (ej: logistica)"
                                               value={mod.condicion?.tag || ''}
-                                              onChange={(e) =>
+                                              onChange={/* Responde a change desde este control. */ (e) =>
                                                 actualizarModificador(
                                                   opIdx,
                                                   resIdx,
@@ -1152,7 +1163,7 @@ export default function EventosTab({ universos = [], personajes = [] }) {
                                             <input
                                               type="number"
                                               value={mod.delta_peso}
-                                              onChange={(e) =>
+                                              onChange={/* Responde a change desde este control. */ (e) =>
                                                 actualizarModificador(
                                                   opIdx,
                                                   resIdx,
@@ -1170,7 +1181,7 @@ export default function EventosTab({ universos = [], personajes = [] }) {
                                             type="text"
                                             placeholder="Explicación (ej: +35% por liderazgo)"
                                             value={mod.explicacion}
-                                            onChange={(e) =>
+                                            onChange={/* Responde a change desde este control. */ (e) =>
                                               actualizarModificador(
                                                 opIdx,
                                                 resIdx,
@@ -1184,7 +1195,7 @@ export default function EventosTab({ universos = [], personajes = [] }) {
 
                                           <button
                                             type="button"
-                                            onClick={() =>
+                                            onClick={/* Responde a click desde este control. */ () =>
                                               eliminarModificador(opIdx, resIdx, modIdx)
                                             }
                                             className="text-rose-500 hover:text-rose-700 p-1"
@@ -1210,7 +1221,7 @@ export default function EventosTab({ universos = [], personajes = [] }) {
               <div className="pt-4 border-t border-slate-200 flex items-center justify-end gap-3">
                 <button
                   type="button"
-                  onClick={() => setModalAbierto(false)}
+                  onClick={/* Responde a click desde este control. */ () => setModalAbierto(false)}
                   className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition cursor-pointer"
                 >
                   Cancelar

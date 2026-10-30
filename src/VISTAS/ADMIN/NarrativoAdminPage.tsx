@@ -1,3 +1,4 @@
+/* Abre la administración narrativa y comprueba la sesión de quien entra. */
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
@@ -13,7 +14,7 @@ import PanelJuegosAdmin from '../../../admin_src/PanelJuegosAdmin';
 if (typeof window !== 'undefined' && !(window as any).__admin_fetch_intercepted__) {
   (window as any).__admin_fetch_intercepted__ = true;
   const originalFetch = window.fetch;
-  window.fetch = async (input: RequestInfo | URL, init: RequestInit = {}) => {
+  window.fetch = /* Completa este paso con los datos recibidos por la operación. */ async (input: RequestInfo | URL, init: RequestInit = {}) => {
     const url =
       typeof input === 'string'
         ? input
@@ -56,11 +57,12 @@ if (typeof window !== 'undefined' && !(window as any).__admin_fetch_intercepted_
   };
 }
 
+// Abre la administración narrativa y comprueba la sesión de quien entra.
 export default function NarrativoAdminPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  const [adminSession, setAdminSession] = useState<AdminSession | null>(() => obtenerSesionAdmin());
+  const [adminSession, setAdminSession] = useState<AdminSession | null>(/* Prepara el valor inicial al montar la pantalla. */ () => obtenerSesionAdmin());
 
   // Formulario de login embebido
   const [emailInput, setEmailInput] = useState('');
@@ -69,21 +71,22 @@ export default function NarrativoAdminPage() {
   const [cargandoLogin, setCargandoLogin] = useState(false);
 
   // Escuchar cambios de sesión reactivos
-  useEffect(() => {
+  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
+    // Vuelve a comprobar la sesión cuando cambia el almacenamiento del navegador.
     const handleStorageUpdate = () => {
       const ses = obtenerSesionAdmin();
       setAdminSession(ses);
     };
     window.addEventListener('user_progress_updated', handleStorageUpdate);
     window.addEventListener('storage', handleStorageUpdate);
-    return () => {
+    return /* Libera los recursos de este efecto cuando deja de usarse. */ () => {
       window.removeEventListener('user_progress_updated', handleStorageUpdate);
       window.removeEventListener('storage', handleStorageUpdate);
     };
   }, []);
 
   // Canjear ticket SSO si viene por URL ?ticket=...
-  useEffect(() => {
+  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
     const ticketParam = searchParams.get('ticket');
     if (ticketParam && !adminSession) {
       setCargandoLogin(true);
@@ -93,8 +96,8 @@ export default function NarrativoAdminPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ticket: ticketParam }),
       })
-        .then((res) => res.json())
-        .then((data) => {
+        .then(/* Continúa cuando está listo el resultado anterior. */ (res) => res.json())
+        .then(/* Continúa cuando está listo el resultado anterior. */ (data) => {
           if (data && data.success && data.token) {
             guardarSesionAdmin(data.user || { name: 'Admin SSO', email: '' }, data.token);
             setAdminSession(obtenerSesionAdmin());
@@ -102,10 +105,10 @@ export default function NarrativoAdminPage() {
             setErrorLogin(data?.detail || data?.message || 'Ticket SSO inválido o expirado.');
           }
         })
-        .catch(() => {
+        .catch(/* Maneja el fallo de esta operación. */ () => {
           setErrorLogin('Error de conexión al canjear ticket.');
         })
-        .finally(() => {
+        .finally(/* Libera el trabajo pendiente tanto si terminó bien como si falló. */ () => {
           setCargandoLogin(false);
         });
     }
@@ -201,7 +204,7 @@ export default function NarrativoAdminPage() {
                 type="text"
                 required
                 value={emailInput}
-                onChange={(e) => setEmailInput(e.target.value)}
+                onChange={/* Responde a change desde este control. */ (e) => setEmailInput(e.target.value)}
                 placeholder="admin@sistemas.com o admin"
                 className="w-full px-4 py-3 rounded-xl bg-slate-800/80 border border-slate-700 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 transition-all text-sm"
               />
@@ -215,7 +218,7 @@ export default function NarrativoAdminPage() {
                 type="password"
                 required
                 value={passwordInput}
-                onChange={(e) => setPasswordInput(e.target.value)}
+                onChange={/* Responde a change desde este control. */ (e) => setPasswordInput(e.target.value)}
                 placeholder="••••••••"
                 className="w-full px-4 py-3 rounded-xl bg-slate-800/80 border border-slate-700 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 transition-all text-sm"
               />
@@ -233,7 +236,7 @@ export default function NarrativoAdminPage() {
           <div className="mt-6 pt-5 border-t border-slate-800/80 text-center">
             <button
               type="button"
-              onClick={() => navigate('/menu')}
+              onClick={/* Responde a click desde este control. */ () => navigate('/menu')}
               className="text-xs font-bold text-slate-400 hover:text-amber-400 transition-colors cursor-pointer"
             >
               ← Volver al menú de juegos

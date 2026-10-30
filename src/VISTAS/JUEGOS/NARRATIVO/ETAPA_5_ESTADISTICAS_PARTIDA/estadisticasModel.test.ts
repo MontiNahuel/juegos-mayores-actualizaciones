@@ -1,3 +1,4 @@
+/* Comprueba con pruebas que estadisticas model siga funcionando como se espera. */
 import { describe, expect, it } from 'vitest';
 import type { CatalogosCronica, HistorialPartidaApi } from '../narrativeService';
 import { construirCronica } from './estadisticasModel';
@@ -5,19 +6,19 @@ import { construirCronica } from './estadisticasModel';
 const catalogosVacios: CatalogosCronica = { cartas: [], eventos: [], resultados: [], conversaciones: [] };
 const inicial = { oro: 50, pueblo: 50, ejercito: 50, fe: 50 };
 
-describe('crónica de la partida', () => {
-  it('calcula ganancias y pérdidas entre las fotos mensuales de la API', () => {
+describe('crónica de la partida', /* Agrupa las pruebas de este comportamiento. */ () => {
+  it('calcula ganancias y pérdidas entre las fotos mensuales de la API', /* Comprueba el comportamiento indicado en este caso. */ () => {
     const historial: HistorialPartidaApi = { historial_mensual: [
       { mes: 2, recursos_fin_mes: { ...inicial, oro: 55, pueblo: 41 } },
       { mes: 1, recursos_fin_mes: { ...inicial, oro: 40, pueblo: 53 } },
     ] };
     const cronica = construirCronica(historial, { recursos: { ...inicial, oro: 55, pueblo: 41 } }, inicial, catalogosVacios);
-    expect(cronica.meses.map(mes => mes.numero)).toEqual([1, 2]);
+    expect(cronica.meses.map(/* Prepara el resultado de cada elemento. */ mes => mes.numero)).toEqual([1, 2]);
     expect(cronica.meses[0].cambios).toMatchObject({ oro: -10, pueblo: 3 });
     expect(cronica.meses[1].cambios).toMatchObject({ oro: 15, pueblo: -12 });
   });
 
-  it('no atribuye al mes anterior un balance desconocido', () => {
+  it('no atribuye al mes anterior un balance desconocido', /* Comprueba el comportamiento indicado en este caso. */ () => {
     const historial: HistorialPartidaApi = { historial_mensual: [
       { mes: 1, recursos_fin_mes: { ...inicial, oro: 45 } },
       { mes: 2 },
@@ -29,7 +30,7 @@ describe('crónica de la partida', () => {
     expect(cronica.final.oro).toBe(70);
   });
 
-  it('interrumpe el cambio si falta un mes completo en el historial', () => {
+  it('interrumpe el cambio si falta un mes completo en el historial', /* Comprueba el comportamiento indicado en este caso. */ () => {
     const historial: HistorialPartidaApi = { historial_mensual: [
       { mes: 1, recursos_fin_mes: { ...inicial, oro: 45 } },
       { mes: 3, recursos_fin_mes: { ...inicial, oro: 70 } },
@@ -38,7 +39,7 @@ describe('crónica de la partida', () => {
     expect(cronica.meses[1].cambios.oro).toBeNull();
   });
 
-  it('resuelve la elección y sus consecuencias para la corte desde los catálogos', () => {
+  it('resuelve la elección y sus consecuencias para la corte desde los catálogos', /* Comprueba el comportamiento indicado en este caso. */ () => {
     const historial: HistorialPartidaApi = { historial_mensual: [{
       mes: 1, carta_elegida_id: 'c1', evento_id: 'e1', opcion_elegida_id: 'o1',
       resultado_id: 'r1', conversacion_id: 'd1', decision_conversacion_opcion: 2,

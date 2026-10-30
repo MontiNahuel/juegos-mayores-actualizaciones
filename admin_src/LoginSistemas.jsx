@@ -1,9 +1,11 @@
+/* Permite que el personal entre al panel de administración. */
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { LockIcon, ShieldIcon, AlertTriangleIcon } from './Icons';
 
 export const OPERADOR_STORAGE_KEY = 'asistodo_operador_session';
 
+// Permite que el personal entre al panel de administración.
 export default function LoginSistemas() {
   const [usuario, setUsuario] = useState('');
   const [password, setPassword] = useState('');
@@ -13,7 +15,7 @@ export default function LoginSistemas() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  useEffect(() => {
+  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
     const params = new URLSearchParams(window.location.search);
     const ticketParam = params.get('ticket');
 
@@ -26,8 +28,8 @@ export default function LoginSistemas() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ticket: ticketParam }),
       })
-        .then((res) => res.json())
-        .then((data) => {
+        .then(/* Continúa cuando está listo el resultado anterior. */ (res) => res.json())
+        .then(/* Continúa cuando está listo el resultado anterior. */ (data) => {
           if (data.success && data.token) {
             const sessionData = {
               user: data.user?.name || data.user?.email || 'Administrador SSO',
@@ -42,11 +44,11 @@ export default function LoginSistemas() {
             setErrorMsg(data.detail || data.message || 'Ticket SSO inválido o expirado.');
           }
         })
-        .catch((err) => {
+        .catch(/* Maneja el fallo de esta operación. */ (err) => {
           console.error('Error al canjear ticket SSO:', err);
           setErrorMsg('Error de conexión al canjear ticket SSO.');
         })
-        .finally(() => {
+        .finally(/* Libera el trabajo pendiente tanto si terminó bien como si falló. */ () => {
           setCargando(false);
         });
       return;
@@ -60,6 +62,7 @@ export default function LoginSistemas() {
     }
   }, [navigate]);
 
+  // Envía las credenciales y prepara la sesión de administración.
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg('');
@@ -163,7 +166,7 @@ export default function LoginSistemas() {
               <input
                 type="text"
                 value={usuario}
-                onChange={(e) => setUsuario(e.target.value)}
+                onChange={/* Responde a change desde este control. */ (e) => setUsuario(e.target.value)}
                 placeholder="admin@sistemas.com"
                 disabled={cargando}
                 className="w-full px-3.5 py-2.5 bg-slate-900/80 border border-slate-700 rounded-xl text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
@@ -177,7 +180,7 @@ export default function LoginSistemas() {
               <input
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={/* Responde a change desde este control. */ (e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 disabled={cargando}
                 className="w-full px-3.5 py-2.5 bg-slate-900/80 border border-slate-700 rounded-xl text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"

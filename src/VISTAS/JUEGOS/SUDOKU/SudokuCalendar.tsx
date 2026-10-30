@@ -1,14 +1,17 @@
+/* Permite elegir fecha y dificultad para jugar al Sudoku. */
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DailyChallengeCalendar, DayChallenge } from '../../COMPONENTS/CALENDAR';
-import { DifficultyModal, DifficultyLevel } from '../../COMPONENTS/DIFICULTAD';
-import { SudokuCompletedModal } from './SudokuCompletedModal';
+import { DailyChallengeCalendar, type DayChallenge } from '../../COMPONENTS/CALENDAR';
+import { DifficultyModal, type DifficultyLevel } from '../../COMPONENTS/DIFICULTAD';
+import { CompletedModal } from '../../COMPONENTS/MODALS/CompletedModal';
 import { getSudokuLocalProgress } from './sudokuStorage';
 
+// Permite elegir fecha y dificultad para jugar al Sudoku.
 export const SudokuCalendar: React.FC = () => {
   const navigate = useNavigate();
   const [selectedChallengeForPlay, setSelectedChallengeForPlay] = useState<DayChallenge | null>(null);
 
+  // Prepara el desafío elegido antes de abrir el juego.
   const handlePlayChallenge = (challenge: DayChallenge) => {
     // Si ya existe una partida en curso guardada, reanudar de inmediato sin volver a preguntar la dificultad
     const saved = getSudokuLocalProgress(challenge.dateKey);
@@ -25,6 +28,7 @@ export const SudokuCalendar: React.FC = () => {
     setSelectedChallengeForPlay(challenge);
   };
 
+  // Abre el juego con la dificultad que eligió el jugador.
   const handleSelectDifficulty = (level: DifficultyLevel) => {
     if (!selectedChallengeForPlay) return;
 
@@ -42,22 +46,18 @@ export const SudokuCalendar: React.FC = () => {
     <>
       <DailyChallengeCalendar
         gameId="sudoku"
-        title="Desafíos Diarios de Sudoku"
-        heroBadge="DESAFÍO DEL DÍA"
+        title="Sudoku diario"
+        heroBadge="¡Desafío de hoy!"
         heroSubtitle="Poné a prueba tu concentración y lógica completando el tablero de hoy."
         onPlayChallenge={handlePlayChallenge}
-        renderCompletedModal={(challenge, onClose) => (
-          <SudokuCompletedModal
+        renderCompletedModal={/* Responde a render completed modal desde este control. */ (challenge, onClose) => (
+          <CompletedModal gameId="sudoku"
             dateStr={challenge.dateStr}
-            stars={challenge.stars || 3}
+            stars={challenge.stars ?? 3}
             onRestart={onClose}
-            onExit={onClose}
+            onClose={onClose}
           />
         )}
-        theme={{
-          primaryBlue: '#1E3A5F',
-          accentTeal: '#3B9EAA',
-        }}
       />
 
       {/* Modal Reutilizable de Dificultad (Opción C - Editorial) */}
@@ -67,7 +67,7 @@ export const SudokuCalendar: React.FC = () => {
           subtitle={selectedChallengeForPlay.dateStr}
           categoryBadge="Cuaderno de Mente Activa"
           onSelectDifficulty={handleSelectDifficulty}
-          onClose={() => setSelectedChallengeForPlay(null)}
+          onClose={/* Responde a close desde este control. */ () => setSelectedChallengeForPlay(null)}
         />
       )}
     </>

@@ -1,3 +1,4 @@
+/* Reúne dibujos reutilizables para acciones e ilustraciones. */
 import React from 'react';
 
 interface IconProps {
@@ -5,6 +6,7 @@ interface IconProps {
   size?: number;
 }
 
+// Dibuja el icono de flame para reutilizarlo en pantalla.
 export const FlameIcon: React.FC<IconProps> = ({ className = 'w-5 h-5', size }) => (
   <svg
     width={size}
@@ -18,6 +20,7 @@ export const FlameIcon: React.FC<IconProps> = ({ className = 'w-5 h-5', size }) 
   </svg>
 );
 
+// Dibuja el icono de star para reutilizarlo en pantalla.
 export const StarIcon: React.FC<IconProps> = ({ className = 'w-5 h-5', size }) => (
   <svg
     width={size}
@@ -31,6 +34,7 @@ export const StarIcon: React.FC<IconProps> = ({ className = 'w-5 h-5', size }) =
   </svg>
 );
 
+// Dibuja el icono de play para reutilizarlo en pantalla.
 export const PlayIcon: React.FC<IconProps> = ({ className = 'w-5 h-5', size }) => (
   <svg
     width={size}
@@ -44,6 +48,7 @@ export const PlayIcon: React.FC<IconProps> = ({ className = 'w-5 h-5', size }) =
   </svg>
 );
 
+// Dibuja el icono de brain para reutilizarlo en pantalla.
 export const BrainIcon: React.FC<IconProps> = ({ className = 'w-6 h-6', size }) => (
   <svg
     width={size}
@@ -62,6 +67,7 @@ export const BrainIcon: React.FC<IconProps> = ({ className = 'w-6 h-6', size }) 
   </svg>
 );
 
+// Dibuja el icono de calendar check para reutilizarlo en pantalla.
 export const CalendarCheckIcon: React.FC<IconProps> = ({ className = 'w-5 h-5', size }) => (
   <svg
     width={size}
@@ -83,6 +89,7 @@ export const CalendarCheckIcon: React.FC<IconProps> = ({ className = 'w-5 h-5', 
   </svg>
 );
 
+// Dibuja el icono de sparkles para reutilizarlo en pantalla.
 export const SparklesIcon: React.FC<IconProps> = ({ className = 'w-5 h-5', size }) => (
   <svg
     width={size}
@@ -96,6 +103,7 @@ export const SparklesIcon: React.FC<IconProps> = ({ className = 'w-5 h-5', size 
   </svg>
 );
 
+// Dibuja el icono de wordle para reutilizarlo en pantalla.
 export const WordleIllustration: React.FC<{ className?: string }> = ({ className = 'w-full h-full' }) => (
   <svg viewBox="0 0 260 140" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
     <rect width="260" height="140" rx="16" fill="#EEF2F6" />
@@ -128,6 +136,7 @@ export const WordleIllustration: React.FC<{ className?: string }> = ({ className
   </svg>
 );
 
+// Dibuja el icono de sudoku para reutilizarlo en pantalla.
 export const SudokuIllustration: React.FC<{ className?: string }> = ({ className = 'w-full h-full' }) => (
   <svg viewBox="0 0 260 140" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
     <rect width="260" height="140" rx="16" fill="#F0FDF4" />
@@ -165,6 +174,7 @@ export const SudokuIllustration: React.FC<{ className?: string }> = ({ className
   </svg>
 );
 
+// Dibuja el icono de crossword para reutilizarlo en pantalla.
 export const CrosswordIllustration: React.FC<{ className?: string }> = ({ className = 'w-full h-full' }) => (
   <svg viewBox="0 0 260 140" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
     <rect width="260" height="140" rx="16" fill="#F8FAFC" />
@@ -191,6 +201,7 @@ export const CrosswordIllustration: React.FC<{ className?: string }> = ({ classN
   </svg>
 );
 
+// Dibuja el icono de route para reutilizarlo en pantalla.
 export const RouteIllustration: React.FC<{ className?: string }> = ({ className = 'w-full h-full' }) => (
   <svg viewBox="0 0 260 140" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
     <rect width="260" height="140" rx="16" fill="#EFF6FF" />

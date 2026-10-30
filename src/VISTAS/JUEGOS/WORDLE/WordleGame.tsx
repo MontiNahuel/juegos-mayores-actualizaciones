@@ -1,20 +1,21 @@
+/* Maneja las palabras, colorea los aciertos y guarda el resultado de Wordle. */
+import { useGameLives } from '../useGameLives';
+/* Acá maneja las palabras, colorea los aciertos y guarda el resultado de Wordle. */
+import { CompletedModal } from '../../COMPONENTS/MODALS/CompletedModal';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   IonContent,
-  IonHeader,
   IonPage,
   IonTitle,
   IonToolbar,
   IonIcon,
 } from '@ionic/react';
-import { GameHeader } from '../../COMPONENTS/GameHeader';
+import { GameHeader, LivesBadge } from '../../COMPONENTS/GameHeader';
+import { usePlayerEconomy } from '../../../context/PlayerEconomyContext';
 import {
   arrowBackOutline,
   refreshOutline,
-  closeCircleOutline,
-  checkmarkCircleOutline,
-  bulbOutline,
   chevronDownOutline,
   chevronUpOutline,
   helpCircleOutline,
@@ -30,7 +31,7 @@ import {
 
 // Solución por defecto
 const DEFAULT_SOLUTION = 'HOGAR';
-const MAX_ATTEMPTS = 6;
+const MAX_ATTEMPTS = 4;
 const WORD_LENGTH = 5;
 
 type LetterStatus = 'correct' | 'present' | 'absent';
@@ -73,6 +74,7 @@ function evaluateGuess(guess: string, solution: string): LetterStatus[] {
   return result;
 }
 
+// Muestra color legend content y conecta sus controles con la pantalla.
 const ColorLegendContent: React.FC = () => (
   <div className="flex flex-col gap-2.5">
     {/* Verde */}
@@ -122,7 +124,9 @@ const ColorLegendContent: React.FC = () => (
   </div>
 );
 
+// Maneja las palabras, colorea los aciertos y guarda el resultado de Wordle.
 const WordleGame: React.FC = () => {
+  const { abrirComprarPista } = usePlayerEconomy();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -144,18 +148,30 @@ const WordleGame: React.FC = () => {
   const [guesses, setGuesses] = useState<GuessEvaluation[]>([]);
   const [currentInput, setCurrentInput] = useState<string>('');
   const [gameStatus, setGameStatus] = useState<'playing' | 'won' | 'lost'>('playing');
+  const gameLives = useGameLives('wordle', dateStrKey, /* Completa este paso con los datos recibidos por la operación. */ () => setGameStatus('lost'));
+  const lives = gameLives.lives;
+  const [loadedDate, setLoadedDate] = useState('');
+  const progressReady = loadedDate === dateStrKey;
   const [message, setMessage] = useState<string | null>(null);
   const [showHint, setShowHint] = useState<boolean>(false);
   const [hintIndex, setHintIndex] = useState<number>(0);
+  const [pistaComprada, setPistaComprada] = useState('');
   const [showEndModal, setShowEndModal] = useState<boolean>(false);
   const [showColorGuideModal, setShowColorGuideModal] = useState<boolean>(false);
 
   // Restaurar progreso activo o resultado previo si existe
-  useEffect(() => {
+  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
     let isMounted = true;
+    // Restaura las jugadas guardadas para continuar.
     const restoreProgress = async () => {
       const saved = await getActiveGameProgress('wordle', dateStrKey);
-      if (!isMounted || !saved) return;
+      if (!isMounted) return;
+      setLoadedDate(dateStrKey);
+      if (!saved) return;
+      gameLives.hydrate(saved.gameData?.lives ?? 4, saved.status === 'lost' || saved.status === 'failed');
+      setPistaComprada(saved.gameData?.pistaComprada ?? '');
+      setShowHint(Boolean(saved.gameData?.pistaComprada));
+      setHintIndex(saved.gameData?.hintIndex ?? 0);
 
       if (saved.word) {
         setActiveSolution(saved.word);
@@ -166,6 +182,7 @@ const WordleGame: React.FC = () => {
       }
 
       if (saved.status === 'won' || saved.status === 'completed') {
+        gameLives.finish();
         setGameStatus('won');
       } else if (saved.status === 'lost' || saved.status === 'failed') {
         setGameStatus('lost');
@@ -178,18 +195,27 @@ const WordleGame: React.FC = () => {
     };
 
     restoreProgress();
-    return () => {
+    return /* Libera los recursos de este efecto cuando deja de usarse. */ () => {
       isMounted = false;
     };
   }, [dateStrKey]);
 
+  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
+    if (!progressReady || gameStatus === 'won') return;
+    void saveActiveGameProgress({ gameId: 'wordle', date: dateStrKey, day: dayNum,
+      word: activeSolution, guesses, currentInput, attempts: guesses.length,
+      status: gameStatus === 'lost' ? 'failed' : 'in_progress',
+      gameData: { lives, pistaComprada, hintIndex },
+    });
+  }, [progressReady, gameStatus, guesses, currentInput, lives, pistaComprada, hintIndex, dateStrKey, dayNum, activeSolution]);
+
   // Esperar 1 segundo antes de mostrar el cartel de felicitación o fin de partida
-  useEffect(() => {
+  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
     if (gameStatus === 'won' || gameStatus === 'lost') {
-      const timer = setTimeout(() => {
+      const timer = setTimeout(/* Ejecuta este paso cuando se cumple la espera. */ () => {
         setShowEndModal(true);
       }, 1000);
-      return () => clearTimeout(timer);
+      return /* Libera los recursos de este efecto cuando deja de usarse. */ () => clearTimeout(timer);
     } else {
       setShowEndModal(false);
     }
@@ -213,19 +239,20 @@ const WordleGame: React.FC = () => {
     }
   }, []);
 
+  // Muestra un aviso breve sobre la jugada.
   const showFeedback = (text: string) => {
     setMessage(text);
-    setTimeout(() => setMessage(null), 2200);
+    setTimeout(/* Ejecuta este paso cuando se cumple la espera. */ () => setMessage(null), 2200);
   };
 
   // Manejador central de teclas
   const handleKeyPress = useCallback((char: string) => {
-    if (gameStatus !== 'playing') return;
+    if (!progressReady || lives <= 0 || gameStatus !== 'playing') return;
 
     triggerHaptic();
 
     if (char === 'BORRAR' || char === 'BACKSPACE') {
-      setCurrentInput((prev) => prev.slice(0, -1));
+      setCurrentInput(/* Actualiza current input a partir del valor anterior. */ (prev) => prev.slice(0, -1));
       return;
     }
 
@@ -241,6 +268,7 @@ const WordleGame: React.FC = () => {
       setCurrentInput('');
 
       if (currentInput === activeSolution) {
+        gameLives.finish();
         setGameStatus('won');
         const stars = newGuesses.length <= 3 ? 3 : newGuesses.length <= 5 ? 2 : 1;
         saveFinalGameAttempt({
@@ -252,54 +280,25 @@ const WordleGame: React.FC = () => {
           status: 'won',
           attempts: newGuesses.length,
           stars,
+          gameData: { lives, pistaComprada, hintIndex },
           score: stars * 50,
         });
         return;
       }
 
-      if (newGuesses.length >= MAX_ATTEMPTS) {
-        setGameStatus('lost');
-        saveFinalGameAttempt({
-          gameId: 'wordle',
-          date: dateStrKey,
-          day: dayNum,
-          word: activeSolution,
-          guesses: newGuesses,
-          status: 'lost',
-          attempts: newGuesses.length,
-          stars: 0,
-          score: 0,
-        });
-        return;
-      }
-
-      // Guardar progreso en tiempo real de la partida en curso
-      saveActiveGameProgress({
-        gameId: 'wordle',
-        date: dateStrKey,
-        day: dayNum,
-        word: activeSolution,
-        guesses: newGuesses,
-        currentInput: '',
-        status: 'in_progress',
-        attempts: newGuesses.length,
-      });
-
-      if (newGuesses.length === 3 && !showHint) {
-        setShowHint(true);
-        setHintIndex(0);
-      }
+      gameLives.consumeLife();
 
       return;
     }
 
     if (/^[A-ZÑ]$/.test(char) && currentInput.length < WORD_LENGTH) {
-      setCurrentInput((prev) => prev + char);
+      setCurrentInput(/* Actualiza current input a partir del valor anterior. */ (prev) => prev + char);
     }
-  }, [currentInput, gameStatus, guesses, showHint, triggerHaptic]);
+  }, [currentInput, gameStatus, guesses, showHint, triggerHaptic, progressReady, lives, activeSolution, dateStrKey, dayNum]);
 
   // Teclado físico de PC
-  useEffect(() => {
+  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
+    // Traduce la tecla a una acción del juego o de la ventana.
     const handleKeyDown = (e: KeyboardEvent) => {
       const key = e.key.toUpperCase();
       if (key === 'ENTER') {
@@ -312,11 +311,13 @@ const WordleGame: React.FC = () => {
     };
 
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return /* Libera los recursos de este efecto cuando deja de usarse. */ () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyPress]);
 
+  // Reinicia el desafío para volver a jugarlo.
   const handleRestart = () => {
     clearActiveGameProgress('wordle', dateStrKey);
+    gameLives.reset();
     setGuesses([]);
     setCurrentInput('');
     setGameStatus('playing');
@@ -324,13 +325,14 @@ const WordleGame: React.FC = () => {
     setMessage(null);
     setShowHint(false);
     setHintIndex(0);
+    setPistaComprada('');
   };
 
   // Mapa de estados de letras para colorear teclas
-  const keyboardLetterStatus = useMemo(() => {
+  const keyboardLetterStatus = useMemo(/* Recalcula este dato cuando cambian sus dependencias. */ () => {
     const map: Record<string, LetterStatus> = {};
-    guesses.forEach(({ word, statuses }) => {
-      word.split('').forEach((letter, i) => {
+    guesses.forEach(/* Aplica este paso a cada elemento. */ ({ word, statuses }) => {
+      word.split('').forEach(/* Aplica este paso a cada elemento. */ (letter, i) => {
         const current = map[letter];
         const status = statuses[i];
         if (status === 'correct') {
@@ -354,7 +356,7 @@ const WordleGame: React.FC = () => {
   return (
     <IonPage style={{ background: '#F4F6F9' }}>
       {/* Navbar con el mismo tamaño y estilo de Home / Menu */}
-      <IonHeader style={{ boxShadow: '0 1px 8px rgba(23, 59, 99, 0.14)' }} className="shrink-0">
+      <>
         <style>{`
           @keyframes wordleBackdropFade {
             from {
@@ -385,10 +387,24 @@ const WordleGame: React.FC = () => {
           title="Palabra del día"
           backRoute="/menu"
           backLabel="Menú"
+          badges={<LivesBadge lives={lives} maxLives={4} onClick={gameLives.openRefill} />}
+          onHint={/* Responde a hint desde este control. */ () => {
+            if (gameStatus !== 'playing') return;
+            abrirComprarPista({ vidasDisponibles: lives, onSinVidas: gameLives.openRefill, game_id: 'wordle', date: dateStrKey, hint_index: hintIndex,
+              // Aplica al tablero la pista que confirmó el servidor.
+              onRecibir: data => {
+                gameLives.consumeLife();
+                setPistaComprada(data.pista || 'Sin texto de pista.');
+                setShowHint(true);
+                setHintIndex(/* Actualiza hint index a partir del valor anterior. */ indice => (indice + 1) % hints.length);
+              },
+            });
+          }}
+          hintDisabled={!progressReady || lives <= 0 || gameStatus !== 'playing'}
           rightAction={
             <button
               type="button"
-              onClick={() => setShowColorGuideModal(true)}
+              onClick={/* Responde a click desde este control. */ () => setShowColorGuideModal(true)}
               className="lg:hidden flex items-center gap-1.5 bg-[#F4F6F9] hover:bg-slate-200 text-[#294C6B] text-xs font-bold px-2.5 py-1.5 rounded-xl border border-[#DEE3EA] transition-colors"
               title="Guía de colores"
               aria-label="Ver qué significa cada color"
@@ -398,12 +414,13 @@ const WordleGame: React.FC = () => {
             </button>
           }
         />
-      </IonHeader>
+      </>
 
       {/* 2. Contenedor a pantalla completa sin scroll vertical */}
+      {gameLives.modal}
       <IonContent
         fullscreen
-        scrollY={false}
+        scrollY={true}
         style={{
           '--background': '#F4F6F9',
           '--padding-top': '0px',
@@ -435,33 +452,23 @@ const WordleGame: React.FC = () => {
                   Adiviná la palabra de 5 letras
                 </p>
                 <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                  {showHint ? hints[hintIndex] : 'Tocá la bombilla para ver una pista'}
+                  {showHint ? pistaComprada : 'Tocá la bombilla para ver una pista'}
                 </p>
               </div>
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <button
                   type="button"
-                  onClick={() => setShowColorGuideModal(true)}
+                  onClick={/* Responde a click desde este control. */ () => setShowColorGuideModal(true)}
                   className="lg:hidden flex items-center gap-1 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold px-2 py-1 rounded-lg border border-slate-300 transition-colors"
                   title="¿Qué significan los colores?"
                 >
                   <span className="text-xs">🎨</span>
                   <span>Colores</span>
                 </button>
-                <button
-                  onClick={() => {
-                    setShowHint(true);
-                    setHintIndex((prev) => (prev + 1) % hints.length);
-                  }}
-                  className="flex items-center gap-1 bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-bold px-2.5 py-1 rounded-lg border border-amber-300 transition-colors"
-                  title="Pistas"
-                >
-                  <IonIcon icon={bulbOutline} className="text-sm" />
-                  <span>Pista</span>
-                </button>
+
                 <div className="flex items-center gap-1 bg-slate-100 px-2 py-1 rounded-lg border border-slate-200">
                   <span className="text-xs sm:text-sm font-black text-[#294C6B]">
-                    {guesses.length}/{MAX_ATTEMPTS}
+                    Intentos: {guesses.length}
                   </span>
                 </div>
               </div>
@@ -470,14 +477,14 @@ const WordleGame: React.FC = () => {
 
           {/* 4. Tablero de Wordle (6 filas proporcionales ajustadas a la pantalla) */}
           <div className="flex flex-col gap-1.5 sm:gap-2 justify-center my-auto py-1">
-            {Array.from({ length: MAX_ATTEMPTS }).map((_, rowIndex) => {
+            {Array.from({ length: Math.max(MAX_ATTEMPTS, guesses.length + 1) }).map(/* Prepara el resultado de cada elemento. */ (_, rowIndex) => {
               const isPastRow = rowIndex < guesses.length;
               const isCurrentRow = rowIndex === guesses.length;
               const pastGuess = guesses[rowIndex];
 
               return (
                 <div key={rowIndex} className="flex gap-2 sm:gap-2.5 justify-center">
-                  {Array.from({ length: WORD_LENGTH }).map((_, colIndex) => {
+                  {Array.from({ length: WORD_LENGTH }).map(/* Prepara el resultado de cada elemento. */ (_, colIndex) => {
                     let letter = '';
                     let statusClass = 'bg-white border-2 border-slate-300 text-slate-700';
 
@@ -503,7 +510,7 @@ const WordleGame: React.FC = () => {
                     return (
                       <div
                         key={colIndex}
-                        className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center text-xl sm:text-2xl font-black transition-all duration-150 ${statusClass}`}
+                        className={`w-12 h-12 sm:w-14 sm:h-14 [@media(hover:hover)_and_(pointer:fine)]:size-[clamp(56px,8dvh,72px)] [@media(hover:hover)_and_(pointer:fine)]:text-3xl rounded-xl flex items-center justify-center text-xl sm:text-2xl font-black transition-all duration-150 ${statusClass}`}
                       >
                         {letter}
                       </div>
@@ -516,14 +523,14 @@ const WordleGame: React.FC = () => {
 
           {/* 5. Teclado táctil en pantalla con botones de ENVIAR y BORRAR adaptados */}
           <div
-            className="w-full flex flex-col gap-1 sm:gap-1.5 shrink-0"
+            className="w-full flex flex-col gap-1 sm:gap-1.5 shrink-0 [@media(hover:hover)_and_(pointer:fine)]:hidden"
             style={{
               paddingBottom: 'max(calc(env(safe-area-inset-bottom, 0px) + 6px), 16px)',
             }}
           >
-            {keyboardRows.map((row, rIdx) => (
+            {keyboardRows.map(/* Prepara el resultado de cada elemento. */ (row, rIdx) => (
               <div key={rIdx} className="flex justify-center gap-1 sm:gap-1.5">
-                {row.map((key) => {
+                {row.map(/* Prepara el resultado de cada elemento. */ (key) => {
                   const isSpecial = key === 'ENVIAR' || key === 'BORRAR';
                   const status = keyboardLetterStatus[key];
 
@@ -552,7 +559,7 @@ const WordleGame: React.FC = () => {
                   return (
                     <button
                       key={key}
-                      onClick={() => handleKeyPress(key)}
+                      onClick={/* Responde a click desde este control. */ () => handleKeyPress(key)}
                       style={{
                         borderRadius: 5,
                         border: `1px none ${keyBorder}`,
@@ -611,11 +618,11 @@ const WordleGame: React.FC = () => {
             style={{
               paddingBottom: 'max(calc(env(safe-area-inset-bottom, 0px) + 24px), 32px)',
             }}
-            onClick={() => setShowColorGuideModal(false)}
+            onClick={/* Responde a click desde este control. */ () => setShowColorGuideModal(false)}
           >
             <div
               className="w-full max-w-sm bg-white rounded-2xl p-5 shadow-2xl border border-slate-200 wordle-modal-card"
-              onClick={(e) => e.stopPropagation()}
+              onClick={/* Responde a click desde este control. */ (e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-3.5 pb-2 border-b border-slate-100">
                 <div className="flex items-center gap-2">
@@ -631,7 +638,7 @@ const WordleGame: React.FC = () => {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setShowColorGuideModal(false)}
+                  onClick={/* Responde a click desde este control. */ () => setShowColorGuideModal(false)}
                   className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
                   aria-label="Cerrar guía de colores"
                 >
@@ -650,7 +657,7 @@ const WordleGame: React.FC = () => {
 
               <button
                 type="button"
-                onClick={() => setShowColorGuideModal(false)}
+                onClick={/* Responde a click desde este control. */ () => setShowColorGuideModal(false)}
                 className="w-full py-2.5 rounded-xl font-black text-sm bg-[#294C6B] hover:bg-[#1E364D] text-white transition-colors shadow-xs"
               >
                 ¡Entendido!
@@ -659,71 +666,19 @@ const WordleGame: React.FC = () => {
           </div>
         )}
 
-        {/* 6. Modal de Victoria o Fin de Partida (Overlay que no desplaza el layout, con 1s de espera y animación suave) */}
         {showEndModal && (
-          <div
-            className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4 wordle-modal-backdrop"
-            style={{
-              paddingBottom: 'max(calc(env(safe-area-inset-bottom, 0px) + 24px), 48px)',
+          <CompletedModal
+            gameId="wordle"
+            isGameOver={gameStatus === 'lost'}
+            challenge={{
+              attempts: guesses.length,
+              stars: Math.max(1, 4 - Math.floor(guesses.length / 2)),
+              config: { solution: activeSolution },
             }}
-          >
-            <div className="w-full max-w-sm bg-white rounded-2xl p-5 shadow-2xl border border-slate-200 text-center wordle-modal-card">
-              {gameStatus === 'won' ? (
-                <div>
-                  <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-2 text-2xl">
-                    <IonIcon icon={checkmarkCircleOutline} />
-                  </div>
-                  <h3 className="text-lg font-black text-[#294C6B]">¡Felicitaciones!</h3>
-                  <p className="text-xs text-slate-600 mt-1">
-                    Adivinaste la palabra en <strong>{guesses.length}</strong> de {MAX_ATTEMPTS} intentos.
-                  </p>
-                  <div className="flex justify-center gap-1 my-2.5 text-xl text-amber-400">
-                    {Array.from({ length: Math.max(1, 4 - Math.floor(guesses.length / 2)) }).map((_, i) => (
-                      <span key={i}>⭐</span>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div>
-                  <div className="w-12 h-12 bg-slate-100 text-slate-500 rounded-full flex items-center justify-center mx-auto mb-2 text-2xl">
-                    <IonIcon icon={closeCircleOutline} />
-                  </div>
-                  <h3 className="text-lg font-black text-[#294C6B]">¡Buen intento!</h3>
-                  <p className="text-xs text-slate-600 mt-1">
-                    La palabra de hoy era: <span className="font-black text-emerald-700 tracking-wider">{activeSolution}</span>.
-                  </p>
-                  <p className="text-[11px] text-slate-500 mt-0.5">
-                    El ejercicio diario mantiene tu mente ágil.
-                  </p>
-                </div>
-              )}
-
-              <div className="flex gap-2.5 justify-center mt-4">
-                <button
-                  onClick={handleRestart}
-                  className="flex-1 py-2 rounded-xl font-bold text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
-                  style={{
-                    padding: "12px",
-                    borderRadius: "5px",
-                    border: "1px none"
-                  }}
-                >
-                  Jugar de nuevo
-                </button>
-                <button
-                  onClick={() => navigate('/menu')}
-                  className="flex-1 py-2 rounded-xl font-bold text-xs bg-[#294C6B] hover:bg-[#1E364D] text-white transition-colors shadow-xs"
-                  style={{
-                    padding: "12px",
-                    borderRadius: "5px",
-                    border: "1px none"
-                  }}
-                >
-                  Volver al Menú
-                </button>
-              </div>
-            </div>
-          </div>
+            onRestart={handleRestart}
+            onClose={/* Responde a close desde este control. */ () => navigate('/menu')}
+            closeLabel="Volver al menú"
+          />
         )}
       </IonContent>
     </IonPage>

@@ -1,3 +1,4 @@
+/* Define el aspecto y las animaciones de las cartas. */
 .seleccion-cartas {
   width: 100%;
   /* Los margenes automaticos centran el bloque si sobra alto y ceden si no entra. */

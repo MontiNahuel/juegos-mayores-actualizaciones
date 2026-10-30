@@ -1,3 +1,4 @@
+/* Guarda los avances por jugador y los sincroniza con el servidor cuando hay cuenta. */
 /**
  * attemptsService.ts
  * Servicio centralizado para la persistencia de partidas (en tiempo real y resultado final).
@@ -11,6 +12,15 @@
  */
 
 import { API_URL } from '../../config/api';
+const escrituras = new Map<string, Promise<unknown>>();
+// Guarda en orden con los datos de este paso.
+function guardarEnOrden(clave: string, enviar: () => Promise<unknown>): Promise<unknown> {
+  const anterior = escrituras.get(clave) ?? Promise.resolve();
+  const siguiente = anterior.catch(/* Maneja el fallo de esta operación. */ () => {}).then(enviar);
+  escrituras.set(clave, siguiente);
+  void siguiente.finally(/* Libera el trabajo pendiente tanto si terminó bien como si falló. */ () => { if (escrituras.get(clave) === siguiente) escrituras.delete(clave); }).catch(/* Maneja el fallo de esta operación. */ () => {});
+  return siguiente;
+}
 
 export interface ActiveGameProgress {
   gameId: string;
@@ -134,7 +144,7 @@ export function cleanupLegacyGameStorage(): void {
         toRemove.push(key);
       }
     }
-    toRemove.forEach((k) => localStorage.removeItem(k));
+    toRemove.forEach(/* Aplica este paso a cada elemento. */ (k) => localStorage.removeItem(k));
   } catch {}
 }
 
@@ -167,10 +177,11 @@ export async function getActiveGameProgress(
 
   // 3. Usuario autenticado: consultar al backend si no estaba en local
   try {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
     const headers: Record<string, string> = {};
     if (token) headers['Authorization'] = `Bearer ${token}`;
 
+    // Intenta la consulta usando la dirección de servidor indicada.
     const tryFetch = async (url: string) => {
       const res = await fetch(url, { headers });
       if (!res.ok) return null;
@@ -186,7 +197,8 @@ export async function getActiveGameProgress(
         date: data.date,
         word: data.word,
         guesses: data.guesses || [],
-        currentInput: '',
+        gameData: data.game_data,
+        currentInput: data.game_data?.currentInput || '',
         status: data.status,
         attempts: data.attempts || (data.guesses?.length || 0),
         stars: data.stars || 0,
@@ -246,25 +258,26 @@ export async function saveActiveGameProgress(payload: SaveProgressPayload): Prom
 
   // 3. Sincronización asíncrona con el backend (sólo usuario autenticado)
   try {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
     const body = {
       user_id: uid,
       game_id: payload.gameId,
       date: payload.date,
       mode: 'daily',
-      status: 'in_progress',
+      status: payload.status === 'won' || payload.status === 'completed' ? 'completed' : payload.status === 'lost' || payload.status === 'failed' ? 'failed' : 'in_progress',
       word: payload.word,
       attempts: payload.attempts,
       stars: payload.stars || 0,
       score: payload.score || 0,
       guesses: payload.guesses,
-      game_data: payload.gameData,
-      remaining_attempts: Math.max(0, 6 - payload.attempts),
+      game_data: { ...payload.gameData, currentInput: payload.currentInput || '' },
+      remaining_attempts: payload.gameData?.lives ?? Math.max(0, 6 - payload.attempts),
     };
 
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = `Bearer ${token}`;
 
+    // Sincroniza el avance con el servidor sin bloquear la partida.
     const sendBackend = async (url: string) => {
       await fetch(url, {
         method: 'POST',
@@ -273,7 +286,7 @@ export async function saveActiveGameProgress(payload: SaveProgressPayload): Prom
       });
     };
 
-    sendBackend(`${API_URL}/api/games/attempts`).catch(() => {});
+    await guardarEnOrden(storageKey, /* Completa este paso con los datos recibidos por la operación. */ () => sendBackend(`${API_URL}/api/games/attempts`));
   } catch {
     // Modo offline seguro
   }
@@ -364,7 +377,7 @@ export async function saveFinalGameAttempt(payload: SaveProgressPayload): Promis
 
   // 5. Enviar a MongoDB / Backend sólo para el usuario autenticado
   try {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
     const body = {
       user_id: uid,
       game_id: payload.gameId,
@@ -376,13 +389,14 @@ export async function saveFinalGameAttempt(payload: SaveProgressPayload): Promis
       stars,
       score,
       guesses: payload.guesses,
-      game_data: payload.gameData,
+      game_data: { ...payload.gameData, currentInput: payload.currentInput || '' },
       remaining_attempts: 0,
     };
 
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = `Bearer ${token}`;
 
+    // Sincroniza el avance con el servidor sin bloquear la partida.
     const sendBackend = async (url: string) => {
       const res = await fetch(url, {
         method: 'POST',
@@ -392,7 +406,7 @@ export async function saveFinalGameAttempt(payload: SaveProgressPayload): Promis
       return await res.json();
     };
 
-    sendBackend(`${API_URL}/api/games/attempts`).catch(() => {});
+    await guardarEnOrden(storageKey, /* Completa este paso con los datos recibidos por la operación. */ () => sendBackend(`${API_URL}/api/games/attempts`));
   } catch {
     // Modo offline seguro
   }
@@ -440,7 +454,7 @@ export async function migrateGuestProgressToNewUser(newUserId: number): Promise<
         monthlyKeysToMigrate.push(k);
       }
     }
-    monthlyKeysToMigrate.forEach((k) => {
+    monthlyKeysToMigrate.forEach(/* Aplica este paso a cada elemento. */ (k) => {
       const raw = localStorage.getItem(k);
       if (raw) {
         const userK = k.replace('_guest', `_user_${newUserId}`);

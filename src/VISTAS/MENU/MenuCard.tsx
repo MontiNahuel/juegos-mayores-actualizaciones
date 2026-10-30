@@ -1,9 +1,10 @@
+/* Presenta un juego con su ilustración y su botón para empezar. */
 import type { CSSProperties } from 'react';
 import { IonBadge, IonButton, IonIcon } from '@ionic/react';
 import { play } from 'ionicons/icons';
 import { BrainIcon } from '../COMPONENTS/Icons/Icons';
 
-export type GameGroup = 'Clásicos' | 'Narrativos';
+export type GameGroup = 'Clásicos' | 'Narrativos' | 'Puzzles';
 
 export interface MenuCardGame {
   id: string;
@@ -32,6 +33,7 @@ const styles: Record<string, CSSProperties> = {
   description: { color: color.ink, fontSize: 16, lineHeight: 1.45, margin: '8px 0 0' },
 };
 
+// Presenta un juego con su ilustración y su botón para empezar.
 const MenuCard: React.FC<MenuCardProps> = ({ game, onStart }) => (
   <article style={styles.card} className={game.group === 'Narrativos' ? 'md:col-span-2' : undefined}>
     <div aria-hidden="true" style={styles.visual}>
@@ -47,7 +49,7 @@ const MenuCard: React.FC<MenuCardProps> = ({ game, onStart }) => (
         aria-label={`${game.available ? 'Jugar' : 'Próximamente'} ${game.title}`}
         disabled={!game.available}
         fill={game.available ? 'solid' : 'outline'}
-        onClick={() => onStart(game.id)}
+        onClick={/* Responde a click desde este control. */ () => onStart(game.id)}
         style={{ margin: '16px 0 0', '--border-radius': '6px' } as CSSProperties}
       >
         {game.available && <IonIcon icon={play} slot="start" />}

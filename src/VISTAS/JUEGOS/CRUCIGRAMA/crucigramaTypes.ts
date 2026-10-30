@@ -1,3 +1,4 @@
+/* Define los datos del crucigrama y limpia el texto de sus pistas. */
 export interface WordDef {
   id: string;
   number: number;
@@ -20,4 +21,5 @@ export interface CellDef {
   down_num?: number | null;
 }
 
+// Quita marcas del texto de la pista antes de mostrarla.
 export const cleanClueText = (clue = '') => clue.replace(/^Definici[oó]n\s*[:\-]?\s*/i, '').trim();

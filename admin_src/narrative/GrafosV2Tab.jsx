@@ -1,3 +1,4 @@
+/* Permite armar y probar historias con nodos, condiciones y desenlaces. */
 import { useState, useEffect } from 'react';
 import {
   GitBranchIcon,
@@ -24,6 +25,7 @@ const RECURSOS_DISPONIBLES = [
   { id: 'fe', label: 'Fe / Iglesia' }
 ];
 
+// Permite armar y probar historias con nodos, condiciones y desenlaces.
 export default function GrafosV2Tab({ universos = [], personajes = [] }) {
   const [subTab, setSubTab] = useState('eventos'); // 'eventos' | 'conversaciones'
   const [listaEventos, setListaEventos] = useState([]);
@@ -48,10 +50,11 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
   const [nodoSimulacionId, setNodoSimulacionId] = useState('inicio');
   const [historialSimulacion, setHistorialSimulacion] = useState([]);
 
-  useEffect(() => {
+  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
     cargarGrafos();
   }, []);
 
+  // Carga grafos con los datos de este paso.
   const cargarGrafos = async () => {
     setCargando(true);
     setErrorMsg('');
@@ -82,6 +85,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
     }
   };
 
+  // Abre el formulario vacío para crear un nodo de la historia.
   const handleNuevoItem = (tipo) => {
     setTipoEdicion(tipo);
     const esEvento = tipo === 'evento';
@@ -138,7 +142,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
       base.personaje_id = personajes[0]?._id || personajes[0]?.id || 'pj_canciller_elena';
       base.direccion = 'lealtad';
     } else {
-      base.requisitos = personajes.slice(0, 2).map((p) => p._id || p.id);
+      base.requisitos = personajes.slice(0, 2).map(/* Prepara el resultado de cada elemento. */ (p) => p._id || p.id);
     }
 
     setItemEnEdicion(base);
@@ -147,6 +151,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
     setModoSimulador(false);
   };
 
+  // Carga el nodo elegido en el formulario de edición.
   const handleEditarItem = (item, tipo) => {
     setTipoEdicion(tipo);
     const clon = JSON.parse(JSON.stringify(item));
@@ -158,6 +163,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
     setModoSimulador(false);
   };
 
+  // Quita item con los datos de este paso.
   const handleEliminarItem = async (id, tipo) => {
     if (!window.confirm(`¿Estás seguro de eliminar el grafo "${id}"?`)) return;
 
@@ -171,10 +177,10 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
       const res = await fetch(url, { method: 'DELETE' });
       if (res.ok) {
         setExitoMsg('Grafo eliminado correctamente.');
-        setTimeout(() => setExitoMsg(''), 3000);
+        setTimeout(/* Ejecuta este paso cuando se cumple la espera. */ () => setExitoMsg(''), 3000);
         cargarGrafos();
       } else {
-        const data = await res.json().catch(() => ({}));
+        const data = await res.json().catch(/* Maneja el fallo de esta operación. */ () => ({}));
         setErrorMsg(data.detail || 'Error al eliminar grafo.');
       }
     } catch (e) {
@@ -183,6 +189,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
     }
   };
 
+  // Guarda el nodo editado y actualiza el listado.
   const handleGuardarItem = async () => {
     if (!itemEnEdicion) return;
 
@@ -251,12 +258,12 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
 
       if (res.ok) {
         setExitoMsg(`¡${tipoEdicion === 'evento' ? 'Evento' : tipoEdicion === 'evento_especial' ? 'Evento de Afinidad' : 'Conversación'} V2 guardado con éxito!`);
-        setTimeout(() => setExitoMsg(''), 3000);
+        setTimeout(/* Ejecuta este paso cuando se cumple la espera. */ () => setExitoMsg(''), 3000);
         setModoEdicion(false);
         setItemEnEdicion(null);
         await cargarGrafos();
       } else {
-        const data = await res.json().catch(() => ({}));
+        const data = await res.json().catch(/* Maneja el fallo de esta operación. */ () => ({}));
         setErrorMsg(data.detail || data.message || 'Error al guardar el grafo.');
       }
     } catch (e) {
@@ -270,9 +277,10 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
   // Manejo de Nodos
   const nodoActual = itemEnEdicion?.nodos?.[nodoSeleccionadoId];
 
+  // Actualiza nodo actual con los datos de este paso.
   const handleUpdateNodoActual = (campo, valor) => {
     if (!itemEnEdicion || !nodoActual) return;
-    setItemEnEdicion((prev) => ({
+    setItemEnEdicion(/* Actualiza item en edicion a partir del valor anterior. */ (prev) => ({
       ...prev,
       nodos: {
         ...prev.nodos,
@@ -284,6 +292,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
     }));
   };
 
+  // Agrega nodo con los datos de este paso.
   const handleAgregarNodo = () => {
     if (!itemEnEdicion) return;
     const count = Object.keys(itemEnEdicion.nodos).length + 1;
@@ -302,13 +311,14 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
       impactos_tags: []
     };
 
-    setItemEnEdicion((prev) => ({
+    setItemEnEdicion(/* Actualiza item en edicion a partir del valor anterior. */ (prev) => ({
       ...prev,
       nodos: { ...prev.nodos, [nuevoNodoId]: nuevoNodo }
     }));
     setNodoSeleccionadoId(nuevoNodoId);
   };
 
+  // Crea un nodo conectado a la opción elegida del grafo.
   const handleCrearNodoHijo = () => {
     if (!itemEnEdicion || !nodoActual) return;
     const count = Object.keys(itemEnEdicion.nodos).length + 1;
@@ -332,7 +342,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
       ? [...opcionesActuales, { id: `opt_${count}_salto`, texto: `Ir a ${nuevoNodoId}`, siguiente_nodo: nuevoNodoId }]
       : opcionesActuales;
 
-    setItemEnEdicion((prev) => ({
+    setItemEnEdicion(/* Actualiza item en edicion a partir del valor anterior. */ (prev) => ({
       ...prev,
       nodos: {
         ...prev.nodos,
@@ -346,6 +356,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
     setNodoSeleccionadoId(nuevoNodoId);
   };
 
+  // Quita nodo con los datos de este paso.
   const handleEliminarNodo = (nid) => {
     if (Object.keys(itemEnEdicion.nodos).length <= 1) {
       alert('No puedes eliminar el único nodo del grafo.');
@@ -357,7 +368,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
     }
     if (!window.confirm(`¿Eliminar nodo "${nid}"?`)) return;
 
-    setItemEnEdicion((prev) => {
+    setItemEnEdicion(/* Actualiza item en edicion a partir del valor anterior. */ (prev) => {
       const copia = { ...prev.nodos };
       delete copia[nid];
       return { ...prev, nodos: copia };
@@ -377,6 +388,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
     handleUpdateNodoActual('opciones', [...(nodoActual.opciones || []), nuevaOpt]);
   };
 
+  // Actualiza opcion con los datos de este paso.
   const handleUpdateOpcion = (idx, campo, valor) => {
     if (!nodoActual || !nodoActual.opciones) return;
     const nuevas = [...nodoActual.opciones];
@@ -384,12 +396,14 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
     handleUpdateNodoActual('opciones', nuevas);
   };
 
+  // Quita opcion con los datos de este paso.
   const handleEliminarOpcion = (idx) => {
     if (!nodoActual || !nodoActual.opciones) return;
-    const nuevas = nodoActual.opciones.filter((_, i) => i !== idx);
+    const nuevas = nodoActual.opciones.filter(/* Conserva los elementos que cumplen esta condición. */ (_, i) => i !== idx);
     handleUpdateNodoActual('opciones', nuevas);
   };
 
+  // Agrega condicion aopcion con los datos de este paso.
   const handleAgregarCondicionAOpcion = (optIdx) => {
     if (!nodoActual || !nodoActual.opciones) return;
     const opt = nodoActual.opciones[optIdx];
@@ -403,6 +417,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
     handleUpdateOpcion(optIdx, 'condiciones', [...conds, nuevaCond]);
   };
 
+  // Actualiza condicion opcion con los datos de este paso.
   const handleUpdateCondicionOpcion = (optIdx, condIdx, campo, valor) => {
     if (!nodoActual || !nodoActual.opciones) return;
     const opt = nodoActual.opciones[optIdx];
@@ -416,10 +431,11 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
     handleUpdateOpcion(optIdx, 'condiciones', conds);
   };
 
+  // Quita condicion opcion con los datos de este paso.
   const handleEliminarCondicionOpcion = (optIdx, condIdx) => {
     if (!nodoActual || !nodoActual.opciones) return;
     const opt = nodoActual.opciones[optIdx];
-    const conds = (opt.condiciones || []).filter((_, i) => i !== condIdx);
+    const conds = (opt.condiciones || []).filter(/* Conserva los elementos que cumplen esta condición. */ (_, i) => i !== condIdx);
     handleUpdateOpcion(optIdx, 'condiciones', conds);
   };
 
@@ -434,6 +450,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
     ]);
   };
 
+  // Actualiza desenlace con los datos de este paso.
   const handleUpdateDesenlace = (optIdx, dIdx, campo, valor) => {
     if (!nodoActual || !nodoActual.opciones) return;
     const opt = nodoActual.opciones[optIdx];
@@ -442,10 +459,11 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
     handleUpdateOpcion(optIdx, 'desenlaces', desenlaces);
   };
 
+  // Quita desenlace con los datos de este paso.
   const handleEliminarDesenlace = (optIdx, dIdx) => {
     if (!nodoActual || !nodoActual.opciones) return;
     const opt = nodoActual.opciones[optIdx];
-    const desenlaces = (opt.desenlaces || []).filter((_, i) => i !== dIdx);
+    const desenlaces = (opt.desenlaces || []).filter(/* Conserva los elementos que cumplen esta condición. */ (_, i) => i !== dIdx);
     handleUpdateOpcion(optIdx, 'desenlaces', desenlaces);
   };
 
@@ -455,6 +473,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
     handleUpdateNodoActual('impactos_recursos', [...(nodoActual.impactos_recursos || []), { recurso: 'oro', delta: 5 }]);
   };
 
+  // Actualiza impacto recurso con los datos de este paso.
   const handleUpdateImpactoRecurso = (idx, campo, valor) => {
     if (!nodoActual) return;
     const nuevos = [...(nodoActual.impactos_recursos || [])];
@@ -462,9 +481,10 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
     handleUpdateNodoActual('impactos_recursos', nuevos);
   };
 
+  // Quita impacto recurso con los datos de este paso.
   const handleEliminarImpactoRecurso = (idx) => {
     if (!nodoActual) return;
-    const nuevos = (nodoActual.impactos_recursos || []).filter((_, i) => i !== idx);
+    const nuevos = (nodoActual.impactos_recursos || []).filter(/* Conserva los elementos que cumplen esta condición. */ (_, i) => i !== idx);
     handleUpdateNodoActual('impactos_recursos', nuevos);
   };
 
@@ -477,6 +497,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
     ]);
   };
 
+  // Actualiza impacto afinidad con los datos de este paso.
   const handleUpdateImpactoAfinidad = (idx, campo, valor) => {
     if (!nodoActual) return;
     const nuevos = [...(nodoActual.impactos_afinidad || [])];
@@ -484,9 +505,10 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
     handleUpdateNodoActual('impactos_afinidad', nuevos);
   };
 
+  // Quita impacto afinidad con los datos de este paso.
   const handleEliminarImpactoAfinidad = (idx) => {
     if (!nodoActual) return;
-    const nuevos = (nodoActual.impactos_afinidad || []).filter((_, i) => i !== idx);
+    const nuevos = (nodoActual.impactos_afinidad || []).filter(/* Conserva los elementos que cumplen esta condición. */ (_, i) => i !== idx);
     handleUpdateNodoActual('impactos_afinidad', nuevos);
   };
 
@@ -496,6 +518,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
     handleUpdateNodoActual('impactos_tags', [...(nodoActual.impactos_tags || []), 'nuevo_tag']);
   };
 
+  // Actualiza impacto tag con los datos de este paso.
   const handleUpdateImpactoTag = (idx, valor) => {
     if (!nodoActual) return;
     const nuevos = [...(nodoActual.impactos_tags || [])];
@@ -503,9 +526,10 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
     handleUpdateNodoActual('impactos_tags', nuevos);
   };
 
+  // Quita impacto tag con los datos de este paso.
   const handleEliminarImpactoTag = (idx) => {
     if (!nodoActual) return;
-    const nuevos = (nodoActual.impactos_tags || []).filter((_, i) => i !== idx);
+    const nuevos = (nodoActual.impactos_tags || []).filter(/* Conserva los elementos que cumplen esta condición. */ (_, i) => i !== idx);
     handleUpdateNodoActual('impactos_tags', nuevos);
   };
 
@@ -517,8 +541,9 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
     setModoSimulador(true);
   };
 
+  // Aplica la opción elegida y sigue el recorrido de prueba.
   const elegirOpcionSimulada = (opt) => {
-    setHistorialSimulacion((prev) => [
+    setHistorialSimulacion(/* Actualiza historial simulacion a partir del valor anterior. */ (prev) => [
       ...prev,
       {
         nodoId: nodoSimulacionId,
@@ -528,7 +553,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
     ]);
     let destino = opt.siguiente_nodo;
     if (Array.isArray(opt.desenlaces) && opt.desenlaces.length > 0) {
-      const total = opt.desenlaces.reduce((acc, d) => acc + (Number(d.peso) || 0), 0);
+      const total = opt.desenlaces.reduce(/* Acumula los valores en un solo resultado. */ (acc, d) => acc + (Number(d.peso) || 0), 0);
       let r = Math.random() * (total || 1);
       for (const d of opt.desenlaces) {
         r -= Number(d.peso) || 0;
@@ -544,17 +569,17 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
     }
   };
 
-  const eventosFiltrados = listaEventos.filter((e) =>
+  const eventosFiltrados = listaEventos.filter(/* Conserva los elementos que cumplen esta condición. */ (e) =>
     (e.titulo || '').toLowerCase().includes(busqueda.toLowerCase()) ||
     (e._id || e.id || '').toLowerCase().includes(busqueda.toLowerCase())
   );
 
-  const conversacionesFiltradas = listaConversaciones.filter((c) =>
+  const conversacionesFiltradas = listaConversaciones.filter(/* Conserva los elementos que cumplen esta condición. */ (c) =>
     (c.titulo || '').toLowerCase().includes(busqueda.toLowerCase()) ||
     (c._id || c.id || '').toLowerCase().includes(busqueda.toLowerCase())
   );
 
-  const especialesFiltrados = listaEspeciales.filter((e) =>
+  const especialesFiltrados = listaEspeciales.filter(/* Conserva los elementos que cumplen esta condición. */ (e) =>
     (e.titulo || '').toLowerCase().includes(busqueda.toLowerCase()) ||
     (e._id || e.id || '').toLowerCase().includes(busqueda.toLowerCase()) ||
     (e.personaje_id || '').toLowerCase().includes(busqueda.toLowerCase())
@@ -583,7 +608,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => setSubTab('eventos')}
+                onClick={/* Responde a click desde este control. */ () => setSubTab('eventos')}
                 className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
                   subTab === 'eventos'
                     ? 'bg-[#002B5E] text-white shadow-xs'
@@ -595,7 +620,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
               </button>
               <button
                 type="button"
-                onClick={() => setSubTab('conversaciones')}
+                onClick={/* Responde a click desde este control. */ () => setSubTab('conversaciones')}
                 className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
                   subTab === 'conversaciones'
                     ? 'bg-[#002B5E] text-white shadow-xs'
@@ -607,7 +632,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
               </button>
               <button
                 type="button"
-                onClick={() => setSubTab('especiales')}
+                onClick={/* Responde a click desde este control. */ () => setSubTab('especiales')}
                 className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
                   subTab === 'especiales'
                     ? 'bg-[#002B5E] text-white shadow-xs'
@@ -626,7 +651,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                   type="text"
                   placeholder="Buscar grafo por ID o título..."
                   value={busqueda}
-                  onChange={(e) => setBusqueda(e.target.value)}
+                  onChange={/* Responde a change desde este control. */ (e) => setBusqueda(e.target.value)}
                   className="pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#002B5E] w-56"
                 />
               </div>
@@ -642,7 +667,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
 
               <button
                 type="button"
-                onClick={() => handleNuevoItem(subTab === 'eventos' ? 'evento' : subTab === 'especiales' ? 'evento_especial' : 'conversacion')}
+                onClick={/* Responde a click desde este control. */ () => handleNuevoItem(subTab === 'eventos' ? 'evento' : subTab === 'especiales' ? 'evento_especial' : 'conversacion')}
                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#002B5E] hover:bg-slate-900 text-white font-bold text-xs transition shadow-xs cursor-pointer"
               >
                 <PlusIcon size={15} />
@@ -663,7 +688,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {eventosFiltrados.map((evt) => {
+                {eventosFiltrados.map(/* Prepara el resultado de cada elemento. */ (evt) => {
                   const id = evt._id || evt.id;
                   const numNodos = Object.keys(evt.nodos || {}).length;
                   const reqs = evt.requisitos_eventos_previos || [];
@@ -693,7 +718,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                               Requiere haber completado:
                             </span>
                             <div className="flex flex-wrap gap-1">
-                              {reqs.map((r) => (
+                              {reqs.map(/* Prepara el resultado de cada elemento. */ (r) => (
                                 <span
                                   key={r}
                                   className="text-[9px] px-1.5 py-0.5 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded font-mono font-bold"
@@ -709,7 +734,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                       <div className="mt-4 pt-3 border-t border-slate-200/60 flex items-center justify-end gap-2">
                         <button
                           type="button"
-                          onClick={() => handleEditarItem(evt, 'evento')}
+                          onClick={/* Responde a click desde este control. */ () => handleEditarItem(evt, 'evento')}
                           className="px-3 py-1 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-xs font-bold text-slate-700 transition flex items-center gap-1 cursor-pointer"
                         >
                           <EditIcon size={13} />
@@ -717,7 +742,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                         </button>
                         <button
                           type="button"
-                          onClick={() => handleEliminarItem(id, 'evento')}
+                          onClick={/* Responde a click desde este control. */ () => handleEliminarItem(id, 'evento')}
                           className="p-1.5 rounded-xl border border-slate-200 hover:bg-rose-50 hover:text-rose-600 text-slate-400 transition cursor-pointer"
                           title="Eliminar"
                         >
@@ -736,10 +761,10 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {especialesFiltrados.map((esp) => {
+                {especialesFiltrados.map(/* Prepara el resultado de cada elemento. */ (esp) => {
                   const id = esp._id || esp.id;
                   const numNodos = Object.keys(esp.nodos || {}).length;
-                  const pjInfo = personajes.find((p) => (p._id || p.id) === esp.personaje_id);
+                  const pjInfo = personajes.find(/* Busca el primer elemento que cumple esta condición. */ (p) => (p._id || p.id) === esp.personaje_id);
                   const esLealtad = esp.direccion === 'lealtad';
                   return (
                     <div
@@ -773,7 +798,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                       <div className="mt-4 pt-3 border-t border-slate-200/60 flex items-center justify-end gap-2">
                         <button
                           type="button"
-                          onClick={() => handleEditarItem(esp, 'evento_especial')}
+                          onClick={/* Responde a click desde este control. */ () => handleEditarItem(esp, 'evento_especial')}
                           className="px-3 py-1 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-xs font-bold text-slate-700 transition flex items-center gap-1 cursor-pointer"
                         >
                           <EditIcon size={13} />
@@ -781,7 +806,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                         </button>
                         <button
                           type="button"
-                          onClick={() => handleEliminarItem(id, 'evento_especial')}
+                          onClick={/* Responde a click desde este control. */ () => handleEliminarItem(id, 'evento_especial')}
                           className="p-1.5 rounded-xl border border-slate-200 hover:bg-rose-50 hover:text-rose-600 text-slate-400 transition cursor-pointer"
                           title="Eliminar"
                         >
@@ -800,7 +825,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {conversacionesFiltradas.map((conv) => {
+                {conversacionesFiltradas.map(/* Prepara el resultado de cada elemento. */ (conv) => {
                   const id = conv._id || conv.id;
                   const numNodos = Object.keys(conv.nodos || {}).length;
                   const reqsPjs = conv.requisitos || [];
@@ -830,8 +855,8 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                               Consejeros requeridos en corte:
                             </span>
                             <div className="flex flex-wrap gap-1">
-                              {reqsPjs.map((pjId) => {
-                                const pjInfo = personajes.find((p) => (p._id || p.id) === pjId);
+                              {reqsPjs.map(/* Prepara el resultado de cada elemento. */ (pjId) => {
+                                const pjInfo = personajes.find(/* Busca el primer elemento que cumple esta condición. */ (p) => (p._id || p.id) === pjId);
                                 return (
                                   <span
                                     key={pjId}
@@ -849,7 +874,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                       <div className="mt-4 pt-3 border-t border-slate-200/60 flex items-center justify-end gap-2">
                         <button
                           type="button"
-                          onClick={() => handleEditarItem(conv, 'conversacion')}
+                          onClick={/* Responde a click desde este control. */ () => handleEditarItem(conv, 'conversacion')}
                           className="px-3 py-1 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-xs font-bold text-slate-700 transition flex items-center gap-1 cursor-pointer"
                         >
                           <EditIcon size={13} />
@@ -857,7 +882,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                         </button>
                         <button
                           type="button"
-                          onClick={() => handleEliminarItem(id, 'conversacion')}
+                          onClick={/* Responde a click desde este control. */ () => handleEliminarItem(id, 'conversacion')}
                           className="p-1.5 rounded-xl border border-slate-200 hover:bg-rose-50 hover:text-rose-600 text-slate-400 transition cursor-pointer"
                           title="Eliminar"
                         >
@@ -879,7 +904,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
             <div className="flex items-center gap-3">
               <button
                 type="button"
-                onClick={() => setModoEdicion(false)}
+                onClick={/* Responde a click desde este control. */ () => setModoEdicion(false)}
                 className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 text-xs font-bold text-slate-700 transition cursor-pointer"
               >
                 ← Volver al listado
@@ -898,7 +923,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
               <div className="flex items-center bg-slate-200/80 p-0.5 rounded-xl border border-slate-300">
                 <button
                   type="button"
-                  onClick={() => setVistaEditor('diagrama')}
+                  onClick={/* Responde a click desde este control. */ () => setVistaEditor('diagrama')}
                   className={`px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
                     vistaEditor === 'diagrama'
                       ? 'bg-white text-[#002B5E] shadow-xs'
@@ -910,7 +935,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setVistaEditor('formulario')}
+                  onClick={/* Responde a click desde este control. */ () => setVistaEditor('formulario')}
                   className={`px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
                     vistaEditor === 'formulario'
                       ? 'bg-white text-[#002B5E] shadow-xs'
@@ -954,7 +979,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                   nodos={itemEnEdicion?.nodos || {}}
                   nodoRaiz={itemEnEdicion?.nodo_raiz || 'inicio'}
                   nodoSeleccionadoId={nodoSeleccionadoId}
-                  onSeleccionarNodo={(id) => setNodoSeleccionadoId(id)}
+                  onSeleccionarNodo={/* Responde a seleccionar nodo desde este control. */ (id) => setNodoSeleccionadoId(id)}
                   personajes={personajes}
                 />
               </div>
@@ -966,7 +991,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                   <div className="flex items-center gap-1.5">
                     <button
                       type="button"
-                      onClick={() => setTabInspector('nodo')}
+                      onClick={/* Responde a click desde este control. */ () => setTabInspector('nodo')}
                       className={`px-3 py-1 rounded-xl text-xs font-bold transition cursor-pointer ${
                         tabInspector === 'nodo'
                           ? 'bg-[#002B5E] text-white shadow-xs'
@@ -977,7 +1002,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setTabInspector('grafo')}
+                      onClick={/* Responde a click desde este control. */ () => setTabInspector('grafo')}
                       className={`px-3 py-1 rounded-xl text-xs font-bold transition cursor-pointer ${
                         tabInspector === 'grafo'
                           ? 'bg-[#002B5E] text-white shadow-xs'
@@ -1005,9 +1030,9 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                         <input
                           type="text"
                           value={itemEnEdicion?._id || itemEnEdicion?.id || ''}
-                          onChange={(e) => {
+                          onChange={/* Responde a change desde este control. */ (e) => {
                             const val = e.target.value.trim();
-                            setItemEnEdicion((prev) => ({ ...prev, _id: val, id: val }));
+                            setItemEnEdicion(/* Actualiza item en edicion a partir del valor anterior. */ (prev) => ({ ...prev, _id: val, id: val }));
                           }}
                           className="w-full text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:border-[#002B5E]"
                         />
@@ -1020,7 +1045,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                         <input
                           type="text"
                           value={itemEnEdicion?.titulo || ''}
-                          onChange={(e) => setItemEnEdicion((prev) => ({ ...prev, titulo: e.target.value }))}
+                          onChange={/* Responde a change desde este control. */ (e) => setItemEnEdicion(/* Actualiza item en edicion a partir del valor anterior. */ (prev) => ({ ...prev, titulo: e.target.value }))}
                           className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:border-[#002B5E]"
                         />
                       </div>
@@ -1031,10 +1056,10 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                         </label>
                         <select
                           value={itemEnEdicion?.nodo_raiz || ''}
-                          onChange={(e) => setItemEnEdicion((prev) => ({ ...prev, nodo_raiz: e.target.value }))}
+                          onChange={/* Responde a change desde este control. */ (e) => setItemEnEdicion(/* Actualiza item en edicion a partir del valor anterior. */ (prev) => ({ ...prev, nodo_raiz: e.target.value }))}
                           className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 font-bold focus:outline-none focus:border-[#002B5E]"
                         >
-                          {Object.keys(itemEnEdicion?.nodos || {}).map((nid) => (
+                          {Object.keys(itemEnEdicion?.nodos || {}).map(/* Prepara el resultado de cada elemento. */ (nid) => (
                             <option key={nid} value={nid}>{nid}</option>
                           ))}
                         </select>
@@ -1048,11 +1073,11 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                             </label>
                             <select
                               value={itemEnEdicion?.personaje_id || ''}
-                              onChange={(e) => setItemEnEdicion((prev) => ({ ...prev, personaje_id: e.target.value }))}
+                              onChange={/* Responde a change desde este control. */ (e) => setItemEnEdicion(/* Actualiza item en edicion a partir del valor anterior. */ (prev) => ({ ...prev, personaje_id: e.target.value }))}
                               className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 font-bold focus:outline-none focus:border-[#002B5E]"
                             >
                               <option value="" disabled>Seleccionar personaje…</option>
-                              {personajes.map((p) => {
+                              {personajes.map(/* Prepara el resultado de cada elemento. */ (p) => {
                                 const pid = p._id || p.id;
                                 return (
                                   <option key={pid} value={pid}>{p.nombre}</option>
@@ -1067,7 +1092,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                             </label>
                             <select
                               value={itemEnEdicion?.direccion || 'lealtad'}
-                              onChange={(e) => setItemEnEdicion((prev) => ({ ...prev, direccion: e.target.value }))}
+                              onChange={/* Responde a change desde este control. */ (e) => setItemEnEdicion(/* Actualiza item en edicion a partir del valor anterior. */ (prev) => ({ ...prev, direccion: e.target.value }))}
                               className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 font-bold focus:outline-none focus:border-[#002B5E]"
                             >
                               <option value="lealtad">Lealtad (afinidad ≥ 95)</option>
@@ -1086,9 +1111,9 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                             type="text"
                             placeholder="militar, diplomacia, iglesia, peste..."
                             value={(itemEnEdicion?.tags_tematicos || []).join(', ')}
-                            onChange={(e) => {
-                              const arr = e.target.value.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
-                              setItemEnEdicion((prev) => ({ ...prev, tags_tematicos: arr }));
+                            onChange={/* Responde a change desde este control. */ (e) => {
+                              const arr = e.target.value.split(',').map(/* Prepara el resultado de cada elemento. */ (s) => s.trim().toLowerCase()).filter(Boolean);
+                              setItemEnEdicion(/* Actualiza item en edicion a partir del valor anterior. */ (prev) => ({ ...prev, tags_tematicos: arr }));
                             }}
                             className="w-full text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:border-[#002B5E]"
                           />
@@ -1103,9 +1128,9 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                           <input
                             type="number"
                             value={itemEnEdicion?.peso_base ?? 100}
-                            onChange={(e) => {
+                            onChange={/* Responde a change desde este control. */ (e) => {
                               const val = parseFloat(e.target.value) || 100;
-                              setItemEnEdicion((prev) => ({ ...prev, peso_base: val }));
+                              setItemEnEdicion(/* Actualiza item en edicion a partir del valor anterior. */ (prev) => ({ ...prev, peso_base: val }));
                             }}
                             className="w-full text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:border-[#002B5E]"
                           />
@@ -1121,9 +1146,9 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                             type="text"
                             placeholder="evt_1, evt_2"
                             value={(itemEnEdicion?.requisitos_eventos_previos || []).join(', ')}
-                            onChange={(e) => {
-                              const arr = e.target.value.split(',').map((s) => s.trim()).filter(Boolean);
-                              setItemEnEdicion((prev) => ({ ...prev, requisitos_eventos_previos: arr }));
+                            onChange={/* Responde a change desde este control. */ (e) => {
+                              const arr = e.target.value.split(',').map(/* Prepara el resultado de cada elemento. */ (s) => s.trim()).filter(Boolean);
+                              setItemEnEdicion(/* Actualiza item en edicion a partir del valor anterior. */ (prev) => ({ ...prev, requisitos_eventos_previos: arr }));
                             }}
                             className="w-full text-xs font-mono bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:border-[#002B5E]"
                           />
@@ -1136,7 +1161,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                             Consejeros Requeridos en Corte
                           </label>
                           <div className="space-y-1.5 max-h-36 overflow-y-auto bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-                            {personajes.map((p) => {
+                            {personajes.map(/* Prepara el resultado de cada elemento. */ (p) => {
                               const pid = p._id || p.id;
                               const campoReq = tipoEdicion === 'evento' ? 'requisitos_personajes' : 'requisitos';
                               const marcado = (itemEnEdicion?.[campoReq] || []).includes(pid);
@@ -1145,12 +1170,12 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                                   <input
                                     type="checkbox"
                                     checked={marcado}
-                                    onChange={(e) => {
+                                    onChange={/* Responde a change desde este control. */ (e) => {
                                       const actuales = itemEnEdicion?.[campoReq] || [];
                                       const nuevos = e.target.checked
                                         ? [...actuales, pid]
-                                        : actuales.filter((x) => x !== pid);
-                                      setItemEnEdicion((prev) => ({ ...prev, [campoReq]: nuevos }));
+                                        : actuales.filter(/* Conserva los elementos que cumplen esta condición. */ (x) => x !== pid);
+                                      setItemEnEdicion(/* Actualiza item en edicion a partir del valor anterior. */ (prev) => ({ ...prev, [campoReq]: nuevos }));
                                     }}
                                     className="rounded text-[#002B5E] focus:ring-0"
                                   />
@@ -1187,7 +1212,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                           {nodoActual.id !== itemEnEdicion?.nodo_raiz && (
                             <button
                               type="button"
-                              onClick={() => setItemEnEdicion((prev) => ({ ...prev, nodo_raiz: nodoActual.id }))}
+                              onClick={/* Responde a click desde este control. */ () => setItemEnEdicion(/* Actualiza item en edicion a partir del valor anterior. */ (prev) => ({ ...prev, nodo_raiz: nodoActual.id }))}
                               className="px-2 py-0.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-bold transition cursor-pointer"
                               title="Hacer raíz este nodo"
                             >
@@ -1197,7 +1222,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                           {nodoActual.id !== itemEnEdicion?.nodo_raiz && (
                             <button
                               type="button"
-                              onClick={() => handleEliminarNodo(nodoActual.id)}
+                              onClick={/* Responde a click desde este control. */ () => handleEliminarNodo(nodoActual.id)}
                               className="p-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 transition cursor-pointer"
                               title="Eliminar nodo"
                             >
@@ -1214,11 +1239,11 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                         </label>
                         <select
                           value={nodoActual.hablante_id || 'narrador'}
-                          onChange={(e) => handleUpdateNodoActual('hablante_id', e.target.value)}
+                          onChange={/* Responde a change desde este control. */ (e) => handleUpdateNodoActual('hablante_id', e.target.value)}
                           className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:border-[#002B5E] font-medium"
                         >
                           <option value="narrador">Crónicas del Reino (Narrador)</option>
-                          {personajes.map((p) => {
+                          {personajes.map(/* Prepara el resultado de cada elemento. */ (p) => {
                             const pid = p._id || p.id;
                             return (
                               <option key={pid} value={pid}>
@@ -1237,7 +1262,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                         <textarea
                           rows={3}
                           value={nodoActual.texto || ''}
-                          onChange={(e) => handleUpdateNodoActual('texto', e.target.value)}
+                          onChange={/* Responde a change desde este control. */ (e) => handleUpdateNodoActual('texto', e.target.value)}
                           placeholder="¿Qué ocurre en este nodo?..."
                           className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:border-[#002B5E]"
                         />
@@ -1248,7 +1273,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                         label="Imagen del nodo (opcional)"
                         categoria={tipoEdicion === 'evento' ? 'eventos' : 'conversaciones'}
                         value={nodoActual.imagen || ''}
-                        onChange={(url) => handleUpdateNodoActual('imagen', url || null)}
+                        onChange={/* Responde a change desde este control. */ (url) => handleUpdateNodoActual('imagen', url || null)}
                         helperText="Sin imagen por defecto; solo se devuelve si cargás una."
                         nullable
                       />
@@ -1264,7 +1289,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                               type="radio"
                               name="diagrama_es_final"
                               checked={!nodoActual.es_final}
-                              onChange={() => handleUpdateNodoActual('es_final', false)}
+                              onChange={/* Responde a change desde este control. */ () => handleUpdateNodoActual('es_final', false)}
                               className="text-[#002B5E]"
                             />
                             <span>Dilema con Opciones</span>
@@ -1274,7 +1299,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                               type="radio"
                               name="diagrama_es_final"
                               checked={!!nodoActual.es_final}
-                              onChange={() => handleUpdateNodoActual('es_final', true)}
+                              onChange={/* Responde a change desde este control. */ () => handleUpdateNodoActual('es_final', true)}
                               className="text-emerald-600"
                             />
                             <span className="font-bold text-emerald-700">Desenlace Final</span>
@@ -1300,7 +1325,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                           </div>
 
                           <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
-                            {(nodoActual.opciones || []).map((opt, idx) => (
+                            {(nodoActual.opciones || []).map(/* Prepara el resultado de cada elemento. */ (opt, idx) => (
                               <div
                                 key={opt.id || idx}
                                 className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5 text-xs"
@@ -1309,7 +1334,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                                   <span className="font-mono text-[9px] text-slate-400 font-bold">Opción #{idx + 1}</span>
                                   <button
                                     type="button"
-                                    onClick={() => handleEliminarOpcion(idx)}
+                                    onClick={/* Responde a click desde este control. */ () => handleEliminarOpcion(idx)}
                                     className="text-slate-400 hover:text-rose-600 transition cursor-pointer"
                                   >
                                     <TrashIcon size={12} />
@@ -1318,7 +1343,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                                 <input
                                   type="text"
                                   value={opt.texto || ''}
-                                  onChange={(e) => handleUpdateOpcion(idx, 'texto', e.target.value)}
+                                  onChange={/* Responde a change desde este control. */ (e) => handleUpdateOpcion(idx, 'texto', e.target.value)}
                                   placeholder="Texto de la decisión..."
                                   className="w-full text-xs bg-white border border-slate-200 rounded px-2 py-1 text-slate-800"
                                 />
@@ -1329,10 +1354,10 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                                   </span>
                                   <select
                                     value={opt.siguiente_nodo || ''}
-                                    onChange={(e) => handleUpdateOpcion(idx, 'siguiente_nodo', e.target.value)}
+                                    onChange={/* Responde a change desde este control. */ (e) => handleUpdateOpcion(idx, 'siguiente_nodo', e.target.value)}
                                     className="flex-1 text-xs bg-white border border-slate-200 rounded px-1.5 py-0.5 font-mono font-bold text-slate-800"
                                   >
-                                    {Object.keys(itemEnEdicion?.nodos || {}).map((targetId) => (
+                                    {Object.keys(itemEnEdicion?.nodos || {}).map(/* Prepara el resultado de cada elemento. */ (targetId) => (
                                       <option key={targetId} value={targetId}>
                                         {targetId} {itemEnEdicion.nodos[targetId]?.es_final ? '(🏁)' : ''}
                                       </option>
@@ -1349,7 +1374,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                                     </span>
                                     <button
                                       type="button"
-                                      onClick={() => handleAgregarDesenlace(idx)}
+                                      onClick={/* Responde a click desde este control. */ () => handleAgregarDesenlace(idx)}
                                       className="text-[10px] text-[#002B5E] hover:underline font-bold"
                                     >
                                       + Desenlace
@@ -1360,14 +1385,14 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                                       Si hay desenlaces, reemplazan al destino fijo "Salta a".
                                     </span>
                                   )}
-                                  {(opt.desenlaces || []).map((d, dIdx) => (
+                                  {(opt.desenlaces || []).map(/* Prepara el resultado de cada elemento. */ (d, dIdx) => (
                                     <div key={dIdx} className="flex items-center gap-1.5">
                                       <select
                                         value={d.nodo || ''}
-                                        onChange={(e) => handleUpdateDesenlace(idx, dIdx, 'nodo', e.target.value)}
+                                        onChange={/* Responde a change desde este control. */ (e) => handleUpdateDesenlace(idx, dIdx, 'nodo', e.target.value)}
                                         className="flex-1 text-xs bg-white border border-slate-200 rounded px-1.5 py-0.5 font-mono font-bold text-slate-800"
                                       >
-                                        {Object.keys(itemEnEdicion?.nodos || {}).map((targetId) => (
+                                        {Object.keys(itemEnEdicion?.nodos || {}).map(/* Prepara el resultado de cada elemento. */ (targetId) => (
                                           <option key={targetId} value={targetId}>
                                             {targetId} {itemEnEdicion.nodos[targetId]?.es_final ? '(🏁)' : ''}
                                           </option>
@@ -1376,14 +1401,14 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                                       <input
                                         type="number"
                                         value={d.peso ?? 50}
-                                        onChange={(e) => handleUpdateDesenlace(idx, dIdx, 'peso', e.target.value)}
+                                        onChange={/* Responde a change desde este control. */ (e) => handleUpdateDesenlace(idx, dIdx, 'peso', e.target.value)}
                                         placeholder="peso"
                                         className="w-14 text-xs bg-white border border-slate-200 rounded px-1 py-0.5 font-mono text-center font-bold"
                                         title="Peso relativo (ej. 40 y 60)"
                                       />
                                       <button
                                         type="button"
-                                        onClick={() => handleEliminarDesenlace(idx, dIdx)}
+                                        onClick={/* Responde a click desde este control. */ () => handleEliminarDesenlace(idx, dIdx)}
                                         className="text-slate-400 hover:text-rose-600 transition cursor-pointer"
                                       >
                                         <TrashIcon size={12} />
@@ -1402,7 +1427,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                                     <div className="flex items-center gap-1.5">
                                       <select
                                         value={opt.bloqueo_modo || 'deshabilitada'}
-                                        onChange={(e) => handleUpdateOpcion(idx, 'bloqueo_modo', e.target.value)}
+                                        onChange={/* Responde a change desde este control. */ (e) => handleUpdateOpcion(idx, 'bloqueo_modo', e.target.value)}
                                         className="text-[9px] bg-white border border-slate-200 rounded px-1 py-0.5 text-slate-700 font-bold"
                                         title="Modo si el jugador no cumple"
                                       >
@@ -1411,7 +1436,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                                       </select>
                                       <button
                                         type="button"
-                                        onClick={() => handleAgregarCondicionAOpcion(idx)}
+                                        onClick={/* Responde a click desde este control. */ () => handleAgregarCondicionAOpcion(idx)}
                                         className="text-[10px] text-[#002B5E] hover:underline font-bold"
                                       >
                                         + Condición
@@ -1419,11 +1444,11 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                                     </div>
                                   </div>
 
-                                  {(opt.condiciones || []).map((cond, cIdx) => (
+                                  {(opt.condiciones || []).map(/* Prepara el resultado de cada elemento. */ (cond, cIdx) => (
                                     <div key={cIdx} className="p-1.5 bg-white rounded-lg border border-slate-200 flex flex-wrap items-center gap-1.5 text-[10px]">
                                       <select
                                         value={cond.tipo || 'comparar_recurso'}
-                                        onChange={(e) => handleUpdateCondicionOpcion(idx, cIdx, 'tipo', e.target.value)}
+                                        onChange={/* Responde a change desde este control. */ (e) => handleUpdateCondicionOpcion(idx, cIdx, 'tipo', e.target.value)}
                                         className="bg-slate-50 border border-slate-200 rounded px-1 py-0.5 font-bold text-slate-700"
                                       >
                                         <option value="comparar_recurso">Recurso Reino</option>
@@ -1437,16 +1462,16 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                                         <>
                                           <select
                                             value={cond.clave || 'oro'}
-                                            onChange={(e) => handleUpdateCondicionOpcion(idx, cIdx, 'clave', e.target.value)}
+                                            onChange={/* Responde a change desde este control. */ (e) => handleUpdateCondicionOpcion(idx, cIdx, 'clave', e.target.value)}
                                             className="bg-slate-50 border border-slate-200 rounded px-1 py-0.5 text-slate-700 font-bold"
                                           >
-                                            {RECURSOS_DISPONIBLES.map((r) => (
+                                            {RECURSOS_DISPONIBLES.map(/* Prepara el resultado de cada elemento. */ (r) => (
                                               <option key={r.id} value={r.id}>{r.label.split(' ')[0]}</option>
                                             ))}
                                           </select>
                                           <select
                                             value={cond.operador || '>='}
-                                            onChange={(e) => handleUpdateCondicionOpcion(idx, cIdx, 'operador', e.target.value)}
+                                            onChange={/* Responde a change desde este control. */ (e) => handleUpdateCondicionOpcion(idx, cIdx, 'operador', e.target.value)}
                                             className="bg-slate-50 border border-slate-200 rounded px-1 py-0.5 font-mono font-bold"
                                           >
                                             <option value=">=">&gt;=</option>
@@ -1458,7 +1483,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                                           <input
                                             type="number"
                                             value={cond.valor ?? 30}
-                                            onChange={(e) => handleUpdateCondicionOpcion(idx, cIdx, 'valor', e.target.value)}
+                                            onChange={/* Responde a change desde este control. */ (e) => handleUpdateCondicionOpcion(idx, cIdx, 'valor', e.target.value)}
                                             className="w-12 bg-slate-50 border border-slate-200 rounded px-1 py-0.5 font-mono text-center font-bold"
                                           />
                                         </>
@@ -1468,16 +1493,16 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                                         <>
                                           <select
                                             value={cond.personaje_id || (personajes[0]?._id || personajes[0]?.id || '')}
-                                            onChange={(e) => handleUpdateCondicionOpcion(idx, cIdx, 'personaje_id', e.target.value)}
+                                            onChange={/* Responde a change desde este control. */ (e) => handleUpdateCondicionOpcion(idx, cIdx, 'personaje_id', e.target.value)}
                                             className="bg-slate-50 border border-slate-200 rounded px-1 py-0.5 text-slate-700 font-bold truncate max-w-[80px]"
                                           >
-                                            {personajes.map((p) => (
+                                            {personajes.map(/* Prepara el resultado de cada elemento. */ (p) => (
                                               <option key={p._id || p.id} value={p._id || p.id}>{p.nombre}</option>
                                             ))}
                                           </select>
                                           <select
                                             value={cond.operador || '>='}
-                                            onChange={(e) => handleUpdateCondicionOpcion(idx, cIdx, 'operador', e.target.value)}
+                                            onChange={/* Responde a change desde este control. */ (e) => handleUpdateCondicionOpcion(idx, cIdx, 'operador', e.target.value)}
                                             className="bg-slate-50 border border-slate-200 rounded px-1 py-0.5 font-mono font-bold"
                                           >
                                             <option value=">=">&gt;=</option>
@@ -1486,7 +1511,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                                           <input
                                             type="number"
                                             value={cond.valor ?? 50}
-                                            onChange={(e) => handleUpdateCondicionOpcion(idx, cIdx, 'valor', e.target.value)}
+                                            onChange={/* Responde a change desde este control. */ (e) => handleUpdateCondicionOpcion(idx, cIdx, 'valor', e.target.value)}
                                             className="w-12 bg-slate-50 border border-slate-200 rounded px-1 py-0.5 font-mono text-center font-bold"
                                           />
                                         </>
@@ -1495,10 +1520,10 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                                       {cond.tipo === 'tiene_personaje' && (
                                         <select
                                           value={cond.personaje_id || (personajes[0]?._id || personajes[0]?.id || '')}
-                                          onChange={(e) => handleUpdateCondicionOpcion(idx, cIdx, 'personaje_id', e.target.value)}
+                                          onChange={/* Responde a change desde este control. */ (e) => handleUpdateCondicionOpcion(idx, cIdx, 'personaje_id', e.target.value)}
                                           className="bg-slate-50 border border-slate-200 rounded px-1 py-0.5 text-slate-700 font-bold truncate flex-1"
                                         >
-                                          {personajes.map((p) => (
+                                          {personajes.map(/* Prepara el resultado de cada elemento. */ (p) => (
                                             <option key={p._id || p.id} value={p._id || p.id}>{p.nombre}</option>
                                           ))}
                                         </select>
@@ -1509,7 +1534,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                                           type="text"
                                           placeholder="Tag activo..."
                                           value={cond.tag || ''}
-                                          onChange={(e) => handleUpdateCondicionOpcion(idx, cIdx, 'tag', e.target.value)}
+                                          onChange={/* Responde a change desde este control. */ (e) => handleUpdateCondicionOpcion(idx, cIdx, 'tag', e.target.value)}
                                           className="flex-1 bg-slate-50 border border-slate-200 rounded px-1.5 py-0.5 font-mono"
                                         />
                                       )}
@@ -1519,14 +1544,14 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                                           type="text"
                                           placeholder="ID carta..."
                                           value={cond.carta_id || ''}
-                                          onChange={(e) => handleUpdateCondicionOpcion(idx, cIdx, 'carta_id', e.target.value)}
+                                          onChange={/* Responde a change desde este control. */ (e) => handleUpdateCondicionOpcion(idx, cIdx, 'carta_id', e.target.value)}
                                           className="flex-1 bg-slate-50 border border-slate-200 rounded px-1.5 py-0.5 font-mono"
                                         />
                                       )}
 
                                       <button
                                         type="button"
-                                        onClick={() => handleEliminarCondicionOpcion(idx, cIdx)}
+                                        onClick={/* Responde a click desde este control. */ () => handleEliminarCondicionOpcion(idx, cIdx)}
                                         className="text-slate-400 hover:text-rose-600 transition"
                                       >
                                         <TrashIcon size={11} />
@@ -1548,7 +1573,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                             <textarea
                               rows={2}
                               value={nodoActual.resultado_texto || ''}
-                              onChange={(e) => handleUpdateNodoActual('resultado_texto', e.target.value)}
+                              onChange={/* Responde a change desde este control. */ (e) => handleUpdateNodoActual('resultado_texto', e.target.value)}
                               placeholder="Consecuencia al llegar a este desenlace..."
                               className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-2 text-slate-800 focus:outline-none focus:border-emerald-600"
                             />
@@ -1595,7 +1620,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
 
                   <button
                     type="button"
-                    onClick={() => setVistaEditor('formulario')}
+                    onClick={/* Responde a click desde este control. */ () => setVistaEditor('formulario')}
                     className="w-full py-1.5 rounded-xl border border-slate-200 hover:bg-slate-100 text-[#002B5E] font-bold text-xs transition flex items-center justify-center gap-1 cursor-pointer"
                   >
                     <EditIcon size={12} />
@@ -1617,9 +1642,9 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                   <input
                     type="text"
                     value={itemEnEdicion?._id || itemEnEdicion?.id || ''}
-                    onChange={(e) => {
+                    onChange={/* Responde a change desde este control. */ (e) => {
                       const val = e.target.value.trim();
-                      setItemEnEdicion((prev) => ({ ...prev, _id: val, id: val }));
+                      setItemEnEdicion(/* Actualiza item en edicion a partir del valor anterior. */ (prev) => ({ ...prev, _id: val, id: val }));
                     }}
                     className="w-full text-xs font-mono bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-slate-800 focus:outline-none focus:border-[#002B5E]"
                   />
@@ -1632,7 +1657,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                   <input
                     type="text"
                     value={itemEnEdicion?.titulo || ''}
-                    onChange={(e) => setItemEnEdicion((prev) => ({ ...prev, titulo: e.target.value }))}
+                    onChange={/* Responde a change desde este control. */ (e) => setItemEnEdicion(/* Actualiza item en edicion a partir del valor anterior. */ (prev) => ({ ...prev, titulo: e.target.value }))}
                     className="w-full text-xs bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-slate-800 focus:outline-none focus:border-[#002B5E]"
                   />
                 </div>
@@ -1643,10 +1668,10 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                   </label>
                   <select
                     value={itemEnEdicion?.nodo_raiz || ''}
-                    onChange={(e) => setItemEnEdicion((prev) => ({ ...prev, nodo_raiz: e.target.value }))}
+                    onChange={/* Responde a change desde este control. */ (e) => setItemEnEdicion(/* Actualiza item en edicion a partir del valor anterior. */ (prev) => ({ ...prev, nodo_raiz: e.target.value }))}
                     className="w-full text-xs bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-slate-800 focus:outline-none focus:border-[#002B5E] font-bold"
                   >
-                    {Object.keys(itemEnEdicion?.nodos || {}).map((nid) => (
+                    {Object.keys(itemEnEdicion?.nodos || {}).map(/* Prepara el resultado de cada elemento. */ (nid) => (
                       <option key={nid} value={nid}>{nid}</option>
                     ))}
                   </select>
@@ -1660,9 +1685,9 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                     type="text"
                     placeholder="militar, diplomacia, iglesia, peste..."
                     value={(itemEnEdicion?.tags_tematicos || []).join(', ')}
-                    onChange={(e) => {
-                      const arr = e.target.value.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
-                      setItemEnEdicion((prev) => ({ ...prev, tags_tematicos: arr }));
+                    onChange={/* Responde a change desde este control. */ (e) => {
+                      const arr = e.target.value.split(',').map(/* Prepara el resultado de cada elemento. */ (s) => s.trim().toLowerCase()).filter(Boolean);
+                      setItemEnEdicion(/* Actualiza item en edicion a partir del valor anterior. */ (prev) => ({ ...prev, tags_tematicos: arr }));
                     }}
                     className="w-full text-xs font-mono bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-slate-800 focus:outline-none focus:border-[#002B5E]"
                   />
@@ -1675,9 +1700,9 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                   <input
                     type="number"
                     value={itemEnEdicion?.peso_base ?? 100}
-                    onChange={(e) => {
+                    onChange={/* Responde a change desde este control. */ (e) => {
                       const val = parseFloat(e.target.value) || 100;
-                      setItemEnEdicion((prev) => ({ ...prev, peso_base: val }));
+                      setItemEnEdicion(/* Actualiza item en edicion a partir del valor anterior. */ (prev) => ({ ...prev, peso_base: val }));
                     }}
                     className="w-full text-xs font-mono bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-slate-800 focus:outline-none focus:border-[#002B5E]"
                   />
@@ -1692,9 +1717,9 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                       type="text"
                       placeholder="evt_1, evt_2"
                       value={(itemEnEdicion?.requisitos_eventos_previos || []).join(', ')}
-                      onChange={(e) => {
-                        const arr = e.target.value.split(',').map((s) => s.trim()).filter(Boolean);
-                        setItemEnEdicion((prev) => ({ ...prev, requisitos_eventos_previos: arr }));
+                      onChange={/* Responde a change desde este control. */ (e) => {
+                        const arr = e.target.value.split(',').map(/* Prepara el resultado de cada elemento. */ (s) => s.trim()).filter(Boolean);
+                        setItemEnEdicion(/* Actualiza item en edicion a partir del valor anterior. */ (prev) => ({ ...prev, requisitos_eventos_previos: arr }));
                       }}
                       className="w-full text-xs font-mono bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-slate-800 focus:outline-none focus:border-[#002B5E]"
                     />
@@ -1706,7 +1731,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                     Consejeros Requeridos en Corte
                   </label>
                   <div className="space-y-1 max-h-28 overflow-y-auto bg-white p-2 rounded-xl border border-slate-200">
-                    {personajes.map((p) => {
+                    {personajes.map(/* Prepara el resultado de cada elemento. */ (p) => {
                       const pid = p._id || p.id;
                       const campoReq = tipoEdicion === 'evento' ? 'requisitos_personajes' : 'requisitos';
                       const marcado = (itemEnEdicion?.[campoReq] || []).includes(pid);
@@ -1715,12 +1740,12 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                           <input
                             type="checkbox"
                             checked={marcado}
-                            onChange={(e) => {
+                            onChange={/* Responde a change desde este control. */ (e) => {
                               const actuales = itemEnEdicion?.[campoReq] || [];
                               const nuevos = e.target.checked
                                 ? [...actuales, pid]
-                                : actuales.filter((x) => x !== pid);
-                              setItemEnEdicion((prev) => ({ ...prev, [campoReq]: nuevos }));
+                                : actuales.filter(/* Conserva los elementos que cumplen esta condición. */ (x) => x !== pid);
+                              setItemEnEdicion(/* Actualiza item en edicion a partir del valor anterior. */ (prev) => ({ ...prev, [campoReq]: nuevos }));
                             }}
                             className="rounded text-[#002B5E] focus:ring-0"
                           />
@@ -1749,13 +1774,13 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                 </div>
 
                 <div className="space-y-1 max-h-60 overflow-y-auto pr-1">
-                  {Object.entries(itemEnEdicion?.nodos || {}).map(([nid, n]) => {
+                  {Object.entries(itemEnEdicion?.nodos || {}).map(/* Prepara el resultado de cada elemento. */ ([nid, n]) => {
                     const esRaiz = nid === itemEnEdicion.nodo_raiz;
                     const seleccionado = nid === nodoSeleccionadoId;
                     return (
                       <div
                         key={nid}
-                        onClick={() => setNodoSeleccionadoId(nid)}
+                        onClick={/* Responde a click desde este control. */ () => setNodoSeleccionadoId(nid)}
                         className={`p-2.5 rounded-xl border text-xs cursor-pointer transition flex items-center justify-between ${
                           seleccionado
                             ? 'bg-[#002B5E] text-white border-[#002B5E] shadow-xs'
@@ -1812,7 +1837,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                       {nodoActual.id !== itemEnEdicion.nodo_raiz && (
                         <button
                           type="button"
-                          onClick={() => setItemEnEdicion((prev) => ({ ...prev, nodo_raiz: nodoActual.id }))}
+                          onClick={/* Responde a click desde este control. */ () => setItemEnEdicion(/* Actualiza item en edicion a partir del valor anterior. */ (prev) => ({ ...prev, nodo_raiz: nodoActual.id }))}
                           className="px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer"
                         >
                           Fijar como Raíz
@@ -1820,7 +1845,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                       )}
                       <button
                         type="button"
-                        onClick={() => handleEliminarNodo(nodoActual.id)}
+                        onClick={/* Responde a click desde este control. */ () => handleEliminarNodo(nodoActual.id)}
                         className="px-2.5 py-1 rounded-xl bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-xs font-bold transition flex items-center gap-1 cursor-pointer"
                       >
                         <TrashIcon size={12} />
@@ -1836,11 +1861,11 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                       </label>
                       <select
                         value={nodoActual.hablante_id || 'narrador'}
-                        onChange={(e) => handleUpdateNodoActual('hablante_id', e.target.value)}
+                        onChange={/* Responde a change desde este control. */ (e) => handleUpdateNodoActual('hablante_id', e.target.value)}
                         className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:border-[#002B5E]"
                       >
                         <option value="narrador">Narrador del Reino</option>
-                        {personajes.map((p) => (
+                        {personajes.map(/* Prepara el resultado de cada elemento. */ (p) => (
                           <option key={p._id || p.id} value={p._id || p.id}>
                             {p.nombre} ({p.rol || p.titulo || (p._id || p.id)})
                           </option>
@@ -1858,7 +1883,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                             type="radio"
                             name="es_final_radio"
                             checked={!nodoActual.es_final}
-                            onChange={() => handleUpdateNodoActual('es_final', false)}
+                            onChange={/* Responde a change desde este control. */ () => handleUpdateNodoActual('es_final', false)}
                             className="text-[#002B5E]"
                           />
                           <span>Dilema con Decisiones</span>
@@ -1868,7 +1893,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                             type="radio"
                             name="es_final_radio"
                             checked={!!nodoActual.es_final}
-                            onChange={() => handleUpdateNodoActual('es_final', true)}
+                            onChange={/* Responde a change desde este control. */ () => handleUpdateNodoActual('es_final', true)}
                             className="text-emerald-600"
                           />
                           <span className="font-bold text-emerald-700">Desenlace Final</span>
@@ -1884,7 +1909,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                     <textarea
                       rows={3}
                       value={nodoActual.texto || ''}
-                      onChange={(e) => handleUpdateNodoActual('texto', e.target.value)}
+                      onChange={/* Responde a change desde este control. */ (e) => handleUpdateNodoActual('texto', e.target.value)}
                       placeholder="Planteamiento de la situación..."
                       className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-800 focus:outline-none focus:border-[#002B5E]"
                     />
@@ -1894,7 +1919,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                     label="Imagen del nodo (opcional)"
                     categoria={tipoEdicion === 'evento' ? 'eventos' : 'conversaciones'}
                     value={nodoActual.imagen || ''}
-                    onChange={(url) => handleUpdateNodoActual('imagen', url || null)}
+                    onChange={/* Responde a change desde este control. */ (url) => handleUpdateNodoActual('imagen', url || null)}
                     helperText="Sin imagen por defecto; solo se devuelve si cargás una."
                     nullable
                   />
@@ -1917,7 +1942,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                       </div>
 
                       <div className="space-y-3">
-                        {(nodoActual.opciones || []).map((opt, idx) => (
+                        {(nodoActual.opciones || []).map(/* Prepara el resultado de cada elemento. */ (opt, idx) => (
                           <div
                             key={opt.id || idx}
                             className="p-3 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col gap-2.5"
@@ -1928,7 +1953,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                                 <input
                                   type="text"
                                   value={opt.id || ''}
-                                  onChange={(e) => handleUpdateOpcion(idx, 'id', e.target.value)}
+                                  onChange={/* Responde a change desde este control. */ (e) => handleUpdateOpcion(idx, 'id', e.target.value)}
                                   className="w-full text-xs font-mono bg-white border border-slate-200 rounded px-2 py-1 text-slate-800"
                                 />
                               </div>
@@ -1937,7 +1962,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                                 <input
                                   type="text"
                                   value={opt.texto || ''}
-                                  onChange={(e) => handleUpdateOpcion(idx, 'texto', e.target.value)}
+                                  onChange={/* Responde a change desde este control. */ (e) => handleUpdateOpcion(idx, 'texto', e.target.value)}
                                   placeholder="Botón visible para el jugador..."
                                   className="w-full text-xs bg-white border border-slate-200 rounded px-2 py-1 text-slate-800"
                                 />
@@ -1949,10 +1974,10 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                                 </label>
                                 <select
                                   value={opt.siguiente_nodo || ''}
-                                  onChange={(e) => handleUpdateOpcion(idx, 'siguiente_nodo', e.target.value)}
+                                  onChange={/* Responde a change desde este control. */ (e) => handleUpdateOpcion(idx, 'siguiente_nodo', e.target.value)}
                                   className="w-full text-xs bg-white border border-slate-200 rounded px-2 py-1 text-slate-800 font-mono font-bold"
                                 >
-                                  {Object.keys(itemEnEdicion?.nodos || {}).map((targetId) => (
+                                  {Object.keys(itemEnEdicion?.nodos || {}).map(/* Prepara el resultado de cada elemento. */ (targetId) => (
                                     <option key={targetId} value={targetId}>
                                       {targetId} {itemEnEdicion.nodos[targetId]?.es_final ? '(🏁 Final)' : ''}
                                     </option>
@@ -1961,7 +1986,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                               </div>
                               <button
                                 type="button"
-                                onClick={() => handleEliminarOpcion(idx)}
+                                onClick={/* Responde a click desde este control. */ () => handleEliminarOpcion(idx)}
                                 className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition mt-3 cursor-pointer"
                                 title="Eliminar opción"
                               >
@@ -1978,7 +2003,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                                 </span>
                                 <button
                                   type="button"
-                                  onClick={() => handleAgregarDesenlace(idx)}
+                                  onClick={/* Responde a click desde este control. */ () => handleAgregarDesenlace(idx)}
                                   className="text-xs text-[#002B5E] hover:underline font-bold flex items-center gap-1 cursor-pointer"
                                 >
                                   <PlusIcon size={12} />
@@ -1990,14 +2015,14 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                                   Si hay desenlaces, reemplazan al destino fijo "Salta al Nodo".
                                 </span>
                               )}
-                              {(opt.desenlaces || []).map((d, dIdx) => (
+                              {(opt.desenlaces || []).map(/* Prepara el resultado de cada elemento. */ (d, dIdx) => (
                                 <div key={dIdx} className="flex items-center gap-2">
                                   <select
                                     value={d.nodo || ''}
-                                    onChange={(e) => handleUpdateDesenlace(idx, dIdx, 'nodo', e.target.value)}
+                                    onChange={/* Responde a change desde este control. */ (e) => handleUpdateDesenlace(idx, dIdx, 'nodo', e.target.value)}
                                     className="flex-1 text-xs bg-white border border-slate-200 rounded-lg px-2 py-1 text-slate-800 font-mono font-bold"
                                   >
-                                    {Object.keys(itemEnEdicion?.nodos || {}).map((targetId) => (
+                                    {Object.keys(itemEnEdicion?.nodos || {}).map(/* Prepara el resultado de cada elemento. */ (targetId) => (
                                       <option key={targetId} value={targetId}>
                                         {targetId} {itemEnEdicion.nodos[targetId]?.es_final ? '(🏁 Final)' : ''}
                                       </option>
@@ -2007,7 +2032,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                                     <input
                                       type="number"
                                       value={d.peso ?? 50}
-                                      onChange={(e) => handleUpdateDesenlace(idx, dIdx, 'peso', e.target.value)}
+                                      onChange={/* Responde a change desde este control. */ (e) => handleUpdateDesenlace(idx, dIdx, 'peso', e.target.value)}
                                       placeholder="peso"
                                       className="w-full text-xs bg-white border border-slate-200 rounded-lg px-2 py-1 text-slate-800 font-mono text-center font-bold"
                                       title="Peso relativo (ej. 40 y 60)"
@@ -2015,7 +2040,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                                   </div>
                                   <button
                                     type="button"
-                                    onClick={() => handleEliminarDesenlace(idx, dIdx)}
+                                    onClick={/* Responde a click desde este control. */ () => handleEliminarDesenlace(idx, dIdx)}
                                     className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
                                     title="Eliminar desenlace"
                                   >
@@ -2036,7 +2061,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                                   <span className="text-[10px] text-slate-400 font-semibold">Si no cumple:</span>
                                   <select
                                     value={opt.bloqueo_modo || 'deshabilitada'}
-                                    onChange={(e) => handleUpdateOpcion(idx, 'bloqueo_modo', e.target.value)}
+                                    onChange={/* Responde a change desde este control. */ (e) => handleUpdateOpcion(idx, 'bloqueo_modo', e.target.value)}
                                     className="text-xs bg-white border border-slate-200 rounded px-2 py-0.5 text-slate-700 font-bold"
                                   >
                                     <option value="deshabilitada">Candado visible</option>
@@ -2044,7 +2069,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                                   </select>
                                   <button
                                     type="button"
-                                    onClick={() => handleAgregarCondicionAOpcion(idx)}
+                                    onClick={/* Responde a click desde este control. */ () => handleAgregarCondicionAOpcion(idx)}
                                     className="text-xs text-[#002B5E] hover:underline font-bold flex items-center gap-1 cursor-pointer"
                                   >
                                     <PlusIcon size={12} />
@@ -2053,11 +2078,11 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                                 </div>
                               </div>
 
-                              {(opt.condiciones || []).map((cond, cIdx) => (
+                              {(opt.condiciones || []).map(/* Prepara el resultado de cada elemento. */ (cond, cIdx) => (
                                 <div key={cIdx} className="p-2 bg-white rounded-xl border border-slate-200 flex flex-wrap items-center gap-2 text-xs">
                                   <select
                                     value={cond.tipo || 'comparar_recurso'}
-                                    onChange={(e) => handleUpdateCondicionOpcion(idx, cIdx, 'tipo', e.target.value)}
+                                    onChange={/* Responde a change desde este control. */ (e) => handleUpdateCondicionOpcion(idx, cIdx, 'tipo', e.target.value)}
                                     className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 font-bold text-slate-700 text-xs"
                                   >
                                     <option value="comparar_recurso">Recurso Reino</option>
@@ -2071,16 +2096,16 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                                     <>
                                       <select
                                         value={cond.clave || 'oro'}
-                                        onChange={(e) => handleUpdateCondicionOpcion(idx, cIdx, 'clave', e.target.value)}
+                                        onChange={/* Responde a change desde este control. */ (e) => handleUpdateCondicionOpcion(idx, cIdx, 'clave', e.target.value)}
                                         className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-slate-700 font-bold text-xs"
                                       >
-                                        {RECURSOS_DISPONIBLES.map((r) => (
+                                        {RECURSOS_DISPONIBLES.map(/* Prepara el resultado de cada elemento. */ (r) => (
                                           <option key={r.id} value={r.id}>{r.label.split(' ')[0]}</option>
                                         ))}
                                       </select>
                                       <select
                                         value={cond.operador || '>='}
-                                        onChange={(e) => handleUpdateCondicionOpcion(idx, cIdx, 'operador', e.target.value)}
+                                        onChange={/* Responde a change desde este control. */ (e) => handleUpdateCondicionOpcion(idx, cIdx, 'operador', e.target.value)}
                                         className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 font-mono font-bold text-xs"
                                       >
                                         <option value=">=">&gt;=</option>
@@ -2092,7 +2117,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                                       <input
                                         type="number"
                                         value={cond.valor ?? 30}
-                                        onChange={(e) => handleUpdateCondicionOpcion(idx, cIdx, 'valor', e.target.value)}
+                                        onChange={/* Responde a change desde este control. */ (e) => handleUpdateCondicionOpcion(idx, cIdx, 'valor', e.target.value)}
                                         className="w-16 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 font-mono text-center font-bold text-xs"
                                       />
                                     </>
@@ -2102,16 +2127,16 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                                     <>
                                       <select
                                         value={cond.personaje_id || (personajes[0]?._id || personajes[0]?.id || '')}
-                                        onChange={(e) => handleUpdateCondicionOpcion(idx, cIdx, 'personaje_id', e.target.value)}
+                                        onChange={/* Responde a change desde este control. */ (e) => handleUpdateCondicionOpcion(idx, cIdx, 'personaje_id', e.target.value)}
                                         className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-slate-700 font-bold text-xs truncate max-w-[120px]"
                                       >
-                                        {personajes.map((p) => (
+                                        {personajes.map(/* Prepara el resultado de cada elemento. */ (p) => (
                                           <option key={p._id || p.id} value={p._id || p.id}>{p.nombre}</option>
                                         ))}
                                       </select>
                                       <select
                                         value={cond.operador || '>='}
-                                        onChange={(e) => handleUpdateCondicionOpcion(idx, cIdx, 'operador', e.target.value)}
+                                        onChange={/* Responde a change desde este control. */ (e) => handleUpdateCondicionOpcion(idx, cIdx, 'operador', e.target.value)}
                                         className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 font-mono font-bold text-xs"
                                       >
                                         <option value=">=">&gt;=</option>
@@ -2120,7 +2145,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                                       <input
                                         type="number"
                                         value={cond.valor ?? 50}
-                                        onChange={(e) => handleUpdateCondicionOpcion(idx, cIdx, 'valor', e.target.value)}
+                                        onChange={/* Responde a change desde este control. */ (e) => handleUpdateCondicionOpcion(idx, cIdx, 'valor', e.target.value)}
                                         className="w-16 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 font-mono text-center font-bold text-xs"
                                       />
                                     </>
@@ -2129,10 +2154,10 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                                   {cond.tipo === 'tiene_personaje' && (
                                     <select
                                       value={cond.personaje_id || (personajes[0]?._id || personajes[0]?.id || '')}
-                                      onChange={(e) => handleUpdateCondicionOpcion(idx, cIdx, 'personaje_id', e.target.value)}
+                                      onChange={/* Responde a change desde este control. */ (e) => handleUpdateCondicionOpcion(idx, cIdx, 'personaje_id', e.target.value)}
                                       className="bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-slate-700 font-bold text-xs truncate flex-1"
                                     >
-                                      {personajes.map((p) => (
+                                      {personajes.map(/* Prepara el resultado de cada elemento. */ (p) => (
                                         <option key={p._id || p.id} value={p._id || p.id}>{p.nombre}</option>
                                       ))}
                                     </select>
@@ -2143,7 +2168,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                                       type="text"
                                       placeholder="Tag temático..."
                                       value={cond.tag || ''}
-                                      onChange={(e) => handleUpdateCondicionOpcion(idx, cIdx, 'tag', e.target.value)}
+                                      onChange={/* Responde a change desde este control. */ (e) => handleUpdateCondicionOpcion(idx, cIdx, 'tag', e.target.value)}
                                       className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 font-mono text-xs"
                                     />
                                   )}
@@ -2153,14 +2178,14 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                                       type="text"
                                       placeholder="ID de la carta..."
                                       value={cond.carta_id || ''}
-                                      onChange={(e) => handleUpdateCondicionOpcion(idx, cIdx, 'carta_id', e.target.value)}
+                                      onChange={/* Responde a change desde este control. */ (e) => handleUpdateCondicionOpcion(idx, cIdx, 'carta_id', e.target.value)}
                                       className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 font-mono text-xs"
                                     />
                                   )}
 
                                   <button
                                     type="button"
-                                    onClick={() => handleEliminarCondicionOpcion(idx, cIdx)}
+                                    onClick={/* Responde a click desde este control. */ () => handleEliminarCondicionOpcion(idx, cIdx)}
                                     className="p-1 rounded-lg text-slate-400 hover:text-rose-600 transition cursor-pointer"
                                     title="Eliminar condición"
                                   >
@@ -2183,7 +2208,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                         <textarea
                           rows={2}
                           value={nodoActual.resultado_texto || ''}
-                          onChange={(e) => handleUpdateNodoActual('resultado_texto', e.target.value)}
+                          onChange={/* Responde a change desde este control. */ (e) => handleUpdateNodoActual('resultado_texto', e.target.value)}
                           placeholder="Consecuencia al llegar a este desenlace..."
                           className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-800 focus:outline-none focus:border-emerald-600"
                         />
@@ -2206,30 +2231,30 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {(nodoActual.impactos_recursos || []).map((imp, idx) => (
+                          {(nodoActual.impactos_recursos || []).map(/* Prepara el resultado de cada elemento. */ (imp, idx) => (
                             <div
                               key={idx}
                               className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center gap-2"
                             >
                               <select
                                 value={imp.recurso}
-                                onChange={(e) => handleUpdateImpactoRecurso(idx, 'recurso', e.target.value)}
+                                onChange={/* Responde a change desde este control. */ (e) => handleUpdateImpactoRecurso(idx, 'recurso', e.target.value)}
                                 className="flex-1 text-xs bg-white border border-slate-200 rounded px-2 py-1 text-slate-800"
                               >
-                                {RECURSOS_DISPONIBLES.map((r) => (
+                                {RECURSOS_DISPONIBLES.map(/* Prepara el resultado de cada elemento. */ (r) => (
                                   <option key={r.id} value={r.id}>{r.label}</option>
                                 ))}
                               </select>
                               <input
                                 type="number"
                                 value={imp.delta}
-                                onChange={(e) => handleUpdateImpactoRecurso(idx, 'delta', e.target.value)}
+                                onChange={/* Responde a change desde este control. */ (e) => handleUpdateImpactoRecurso(idx, 'delta', e.target.value)}
                                 placeholder="Delta"
                                 className="w-16 text-xs font-mono font-bold bg-white border border-slate-200 rounded px-2 py-1 text-center"
                               />
                               <button
                                 type="button"
-                                onClick={() => handleEliminarImpactoRecurso(idx)}
+                                onClick={/* Responde a click desde este control. */ () => handleEliminarImpactoRecurso(idx)}
                                 className="p-1 text-slate-400 hover:text-rose-600 transition cursor-pointer"
                               >
                                 <TrashIcon size={13} />
@@ -2256,30 +2281,30 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {(nodoActual.impactos_afinidad || []).map((imp, idx) => (
+                          {(nodoActual.impactos_afinidad || []).map(/* Prepara el resultado de cada elemento. */ (imp, idx) => (
                             <div
                               key={idx}
                               className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center gap-2"
                             >
                               <select
                                 value={imp.personaje_id}
-                                onChange={(e) => handleUpdateImpactoAfinidad(idx, 'personaje_id', e.target.value)}
+                                onChange={/* Responde a change desde este control. */ (e) => handleUpdateImpactoAfinidad(idx, 'personaje_id', e.target.value)}
                                 className="flex-1 text-xs bg-white border border-slate-200 rounded px-2 py-1 text-slate-800 font-bold"
                               >
-                                {personajes.map((p) => (
+                                {personajes.map(/* Prepara el resultado de cada elemento. */ (p) => (
                                   <option key={p._id || p.id} value={p._id || p.id}>{p.nombre}</option>
                                 ))}
                               </select>
                               <input
                                 type="number"
                                 value={imp.delta}
-                                onChange={(e) => handleUpdateImpactoAfinidad(idx, 'delta', e.target.value)}
+                                onChange={/* Responde a change desde este control. */ (e) => handleUpdateImpactoAfinidad(idx, 'delta', e.target.value)}
                                 placeholder="Delta"
                                 className="w-16 text-xs font-mono font-bold bg-white border border-slate-200 rounded px-2 py-1 text-purple-700 text-center"
                               />
                               <button
                                 type="button"
-                                onClick={() => handleEliminarImpactoAfinidad(idx)}
+                                onClick={/* Responde a click desde este control. */ () => handleEliminarImpactoAfinidad(idx)}
                                 className="p-1 text-slate-400 hover:text-rose-600 transition cursor-pointer"
                               >
                                 <TrashIcon size={13} />
@@ -2306,7 +2331,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {(nodoActual.impactos_tags || []).map((tag, idx) => (
+                          {(nodoActual.impactos_tags || []).map(/* Prepara el resultado de cada elemento. */ (tag, idx) => (
                             <div
                               key={idx}
                               className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center gap-2"
@@ -2314,13 +2339,13 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                               <input
                                 type="text"
                                 value={tag}
-                                onChange={(e) => handleUpdateImpactoTag(idx, e.target.value)}
+                                onChange={/* Responde a change desde este control. */ (e) => handleUpdateImpactoTag(idx, e.target.value)}
                                 placeholder="ej: favor_baron"
                                 className="flex-1 text-xs font-mono bg-white border border-slate-200 rounded px-2 py-1 text-slate-800"
                               />
                               <button
                                 type="button"
-                                onClick={() => handleEliminarImpactoTag(idx)}
+                                onClick={/* Responde a click desde este control. */ () => handleEliminarImpactoTag(idx)}
                                 className="p-1 text-slate-400 hover:text-rose-600 transition cursor-pointer"
                               >
                                 <TrashIcon size={13} />
@@ -2356,17 +2381,17 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
               </div>
               <button
                 type="button"
-                onClick={() => setModoSimulador(false)}
+                onClick={/* Responde a click desde este control. */ () => setModoSimulador(false)}
                 className="p-1 rounded-lg text-slate-400 hover:text-slate-700"
               >
                 <XIcon size={16} />
               </button>
             </div>
 
-            {(() => {
+            {(/* Completa este paso con los datos recibidos por la operación. */ () => {
               const n = itemEnEdicion.nodos[nodoSimulacionId];
               if (!n) return <div className="text-xs text-rose-600">Nodo destino no encontrado.</div>;
-              const pjHablante = personajes.find((p) => (p._id || p.id) === n.hablante_id);
+              const pjHablante = personajes.find(/* Busca el primer elemento que cumple esta condición. */ (p) => (p._id || p.id) === n.hablante_id);
               return (
                 <div className="space-y-4">
                   <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200">
@@ -2388,12 +2413,12 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                       </span>
                       <p className="text-xs text-slate-700 font-medium">{n.resultado_texto}</p>
                       <div className="pt-2 border-t border-emerald-200 flex flex-wrap gap-1.5">
-                        {(n.impactos_recursos || []).map((imp, i) => (
+                        {(n.impactos_recursos || []).map(/* Prepara el resultado de cada elemento. */ (imp, i) => (
                           <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">
                             {imp.recurso}: {imp.delta > 0 ? `+${imp.delta}` : imp.delta}
                           </span>
                         ))}
-                        {(n.impactos_afinidad || []).map((imp, i) => (
+                        {(n.impactos_afinidad || []).map(/* Prepara el resultado de cada elemento. */ (imp, i) => (
                           <span key={i} className="text-[10px] px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 font-bold">
                             {imp.personaje_id}: {imp.delta > 0 ? `+${imp.delta}` : imp.delta}
                           </span>
@@ -2405,17 +2430,17 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                         Decisiones Disponibles:
                       </span>
-                      {(n.opciones || []).map((opt) => (
+                      {(n.opciones || []).map(/* Prepara el resultado de cada elemento. */ (opt) => (
                         <button
                           key={opt.id}
                           type="button"
-                          onClick={() => elegirOpcionSimulada(opt)}
+                          onClick={/* Responde a click desde este control. */ () => elegirOpcionSimulada(opt)}
                           className="w-full text-left p-3 rounded-2xl bg-slate-50 hover:bg-[#002B5E] hover:text-white border border-slate-200 text-xs font-bold text-slate-800 transition flex items-center justify-between cursor-pointer group"
                         >
                           <span>{opt.texto}</span>
                           <span className="text-[10px] font-mono opacity-60 flex items-center gap-1">
                             {Array.isArray(opt.desenlaces) && opt.desenlaces.length > 0
-                              ? `🎲 ${opt.desenlaces.map((d) => d.nodo).join(' / ')}`
+                              ? `🎲 ${opt.desenlaces.map(/* Prepara el resultado de cada elemento. */ (d) => d.nodo).join(' / ')}`
                               : `→ ${opt.siguiente_nodo}`}
                           </span>
                         </button>
@@ -2433,7 +2458,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setModoSimulador(false)}
+                      onClick={/* Responde a click desde este control. */ () => setModoSimulador(false)}
                       className="px-4 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 transition cursor-pointer"
                     >
                       Cerrar Simulador

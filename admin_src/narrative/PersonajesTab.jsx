@@ -1,3 +1,4 @@
+/* Permite editar personajes de la corte y sus efectos. */
 import { useState, useEffect } from 'react';
 import {
   UserIcon,
@@ -15,6 +16,7 @@ import {
 } from '../Icons';
 import ImageUploadField from './ImageUploadField';
 
+// Permite editar personajes de la corte y sus efectos.
 export default function PersonajesTab({ universos = [] }) {
   const [personajes, setPersonajes] = useState([]);
   const [universoFiltro, setUniversoFiltro] = useState('');
@@ -41,6 +43,7 @@ export default function PersonajesTab({ universos = [] }) {
   const [consInput, setConsInput] = useState('');
   const [efectos, setEfectos] = useState([]);
 
+  // Carga personajes con los datos de este paso.
   const cargarPersonajes = async (uId = universoFiltro) => {
     setCargando(true);
     setError('');
@@ -63,10 +66,11 @@ export default function PersonajesTab({ universos = [] }) {
     }
   };
 
-  useEffect(() => {
+  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
     cargarPersonajes(universoFiltro);
   }, [universoFiltro]);
 
+  // Abre el formulario vacío para crear un registro.
   const abrirModalNuevo = () => {
     setEsEdicion(false);
     setId('pj_' + Date.now().toString(36));
@@ -85,6 +89,7 @@ export default function PersonajesTab({ universos = [] }) {
     setModalAbierto(true);
   };
 
+  // Carga el registro en el formulario de edición.
   const abrirModalEditar = (p) => {
     setEsEdicion(true);
     setId(p._id || p.id);
@@ -103,6 +108,7 @@ export default function PersonajesTab({ universos = [] }) {
     setModalAbierto(true);
   };
 
+  // Agrega efecto con los datos de este paso.
   const handleAgregarEfecto = () => {
     setEfectos([
       ...efectos,
@@ -114,6 +120,7 @@ export default function PersonajesTab({ universos = [] }) {
     ]);
   };
 
+  // Actualiza efecto con los datos de este paso.
   const handleCambiarEfecto = (index, campo, valor) => {
     const nuevos = [...efectos];
     if (campo === 'disparador') {
@@ -124,10 +131,12 @@ export default function PersonajesTab({ universos = [] }) {
     setEfectos(nuevos);
   };
 
+  // Quita efecto con los datos de este paso.
   const handleEliminarEfecto = (index) => {
-    setEfectos(efectos.filter((_, idx) => idx !== index));
+    setEfectos(efectos.filter(/* Conserva los elementos que cumplen esta condición. */ (_, idx) => idx !== index));
   };
 
+  // Valida el formulario y guarda los cambios.
   const handleGuardar = async (e) => {
     e.preventDefault();
     if (!id.trim() || !nombre.trim() || !universoId.trim()) {
@@ -141,17 +150,17 @@ export default function PersonajesTab({ universos = [] }) {
 
     const tags = tagsInput
       .split(',')
-      .map((t) => t.trim().toLowerCase())
+      .map(/* Prepara el resultado de cada elemento. */ (t) => t.trim().toLowerCase())
       .filter(Boolean);
 
     const pros = prosInput
       .split('\n')
-      .map((p) => p.trim())
+      .map(/* Prepara el resultado de cada elemento. */ (p) => p.trim())
       .filter(Boolean);
 
     const cons = consInput
       .split('\n')
-      .map((c) => c.trim())
+      .map(/* Prepara el resultado de cada elemento. */ (c) => c.trim())
       .filter(Boolean);
 
     const payload = {
@@ -165,7 +174,7 @@ export default function PersonajesTab({ universos = [] }) {
       cons: cons,
       tags: tags,
       afinidad_inicial: parseInt(afinidadInicial, 10) || 50,
-      efectos: efectos.map((ef) => ({
+      efectos: efectos.map(/* Prepara el resultado de cada elemento. */ (ef) => ({
         disparador: ef.disparador,
         condiciones: [],
         accion: {
@@ -192,7 +201,7 @@ export default function PersonajesTab({ universos = [] }) {
       }
 
       setExito('Personaje guardado correctamente.');
-      setTimeout(() => {
+      setTimeout(/* Ejecuta este paso cuando se cumple la espera. */ () => {
         setModalAbierto(false);
         cargarPersonajes(universoFiltro);
       }, 600);
@@ -204,6 +213,7 @@ export default function PersonajesTab({ universos = [] }) {
     }
   };
 
+  // Pide borrar el registro y actualiza la lista.
   const handleEliminar = async (pId) => {
     if (!confirm(`¿Estás seguro de eliminar el personaje "${pId}"?`)) return;
     try {
@@ -222,7 +232,7 @@ export default function PersonajesTab({ universos = [] }) {
     }
   };
 
-  const personajesFiltrados = personajes.filter((p) => {
+  const personajesFiltrados = personajes.filter(/* Conserva los elementos que cumplen esta condición. */ (p) => {
     if (!busqueda.trim()) return true;
     const q = busqueda.toLowerCase();
     return (
@@ -242,11 +252,11 @@ export default function PersonajesTab({ universos = [] }) {
             <FilterIcon size={14} className="text-slate-500" />
             <select
               value={universoFiltro}
-              onChange={(e) => setUniversoFiltro(e.target.value)}
+              onChange={/* Responde a change desde este control. */ (e) => setUniversoFiltro(e.target.value)}
               className="bg-transparent font-bold text-slate-800 focus:outline-none cursor-pointer"
             >
               <option value="">Todos los Universos</option>
-              {universos.map((u) => (
+              {universos.map(/* Prepara el resultado de cada elemento. */ (u) => (
                 <option key={u._id || u.id} value={u._id || u.id}>
                   {u.nombre}
                 </option>
@@ -260,7 +270,7 @@ export default function PersonajesTab({ universos = [] }) {
             <input
               type="text"
               value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
+              onChange={/* Responde a change desde este control. */ (e) => setBusqueda(e.target.value)}
               placeholder="Buscar por nombre o rol..."
               className="pl-8 pr-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:border-[#002B5E] w-48 sm:w-60"
             />
@@ -270,7 +280,7 @@ export default function PersonajesTab({ universos = [] }) {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => cargarPersonajes(universoFiltro)}
+            onClick={/* Responde a click desde este control. */ () => cargarPersonajes(universoFiltro)}
             disabled={cargando}
             className="p-2 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-600 transition cursor-pointer"
             title="Refrescar lista"
@@ -300,7 +310,7 @@ export default function PersonajesTab({ universos = [] }) {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {personajesFiltrados.map((p) => {
+          {personajesFiltrados.map(/* Prepara el resultado de cada elemento. */ (p) => {
             const pid = p._id || p.id;
             return (
               <div
@@ -315,7 +325,7 @@ export default function PersonajesTab({ universos = [] }) {
                         <img
                           src={p.imagen || '/assets/narrative/personajes/default.webp'}
                           alt={p.nombre}
-                          onError={(e) => {
+                          onError={/* Responde a error desde este control. */ (e) => {
                             e.target.onerror = null;
                             e.target.src = '/assets/narrative/personajes/default.webp';
                           }}
@@ -334,7 +344,7 @@ export default function PersonajesTab({ universos = [] }) {
                     <div className="flex items-center gap-1">
                       <button
                         type="button"
-                        onClick={() => abrirModalEditar(p)}
+                        onClick={/* Responde a click desde este control. */ () => abrirModalEditar(p)}
                         className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 transition cursor-pointer"
                         title="Editar personaje"
                       >
@@ -342,7 +352,7 @@ export default function PersonajesTab({ universos = [] }) {
                       </button>
                       <button
                         type="button"
-                        onClick={() => handleEliminar(pid)}
+                        onClick={/* Responde a click desde este control. */ () => handleEliminar(pid)}
                         className="p-1.5 rounded-lg border border-rose-200 bg-rose-50/50 hover:bg-rose-100 text-rose-600 transition cursor-pointer"
                         title="Eliminar personaje"
                       >
@@ -369,13 +379,13 @@ export default function PersonajesTab({ universos = [] }) {
 
                   {/* Pros y Contras */}
                   <div className="mt-3 space-y-1.5 pt-2.5 border-t border-slate-100 text-[11px]">
-                    {(p.pros || []).slice(0, 2).map((pro, idx) => (
+                    {(p.pros || []).slice(0, 2).map(/* Prepara el resultado de cada elemento. */ (pro, idx) => (
                       <div key={idx} className="flex items-start gap-1.5 text-emerald-700">
                         <CheckIcon size={13} className="flex-shrink-0 mt-0.5" />
                         <span className="line-clamp-1">{pro}</span>
                       </div>
                     ))}
-                    {(p.cons || []).slice(0, 2).map((con, idx) => (
+                    {(p.cons || []).slice(0, 2).map(/* Prepara el resultado de cada elemento. */ (con, idx) => (
                       <div key={idx} className="flex items-start gap-1.5 text-rose-600">
                         <AlertTriangleIcon size={13} className="flex-shrink-0 mt-0.5" />
                         <span className="line-clamp-1">{con}</span>
@@ -386,7 +396,7 @@ export default function PersonajesTab({ universos = [] }) {
                   {/* Efectos pasivos */}
                   {p.efectos && p.efectos.length > 0 && (
                     <div className="mt-2.5 pt-2 border-t border-slate-100 flex flex-wrap gap-1">
-                      {p.efectos.map((ef, idx) => {
+                      {p.efectos.map(/* Prepara el resultado de cada elemento. */ (ef, idx) => {
                         const a = ef.accion || {};
                         return (
                           <span
@@ -406,7 +416,7 @@ export default function PersonajesTab({ universos = [] }) {
 
                 {/* Tags */}
                 <div className="mt-4 pt-3 border-t border-slate-100 flex flex-wrap gap-1">
-                  {(p.tags || []).map((t, idx) => (
+                  {(p.tags || []).map(/* Prepara el resultado de cada elemento. */ (t, idx) => (
                     <span
                       key={idx}
                       className="px-2 py-0.5 rounded-md bg-slate-100 font-mono text-[10px] text-slate-600 font-semibold"
@@ -441,7 +451,7 @@ export default function PersonajesTab({ universos = [] }) {
 
               <button
                 type="button"
-                onClick={() => setModalAbierto(false)}
+                onClick={/* Responde a click desde este control. */ () => setModalAbierto(false)}
                 className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer"
               >
                 <XIcon size={18} />
@@ -471,7 +481,7 @@ export default function PersonajesTab({ universos = [] }) {
                   <input
                     type="text"
                     value={id}
-                    onChange={(e) => setId(e.target.value)}
+                    onChange={/* Responde a change desde este control. */ (e) => setId(e.target.value)}
                     disabled={esEdicion}
                     placeholder="ej. pj_canciller_elena"
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-mono font-semibold text-slate-800 disabled:bg-slate-100 disabled:text-slate-500 focus:outline-none focus:border-[#002B5E]"
@@ -484,10 +494,10 @@ export default function PersonajesTab({ universos = [] }) {
                   </label>
                   <select
                     value={universoId}
-                    onChange={(e) => setUniversoId(e.target.value)}
+                    onChange={/* Responde a change desde este control. */ (e) => setUniversoId(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-800 focus:outline-none focus:border-[#002B5E]"
                   >
-                    {universos.map((u) => (
+                    {universos.map(/* Prepara el resultado de cada elemento. */ (u) => (
                       <option key={u._id || u.id} value={u._id || u.id}>
                         {u.nombre}
                       </option>
@@ -505,7 +515,7 @@ export default function PersonajesTab({ universos = [] }) {
                       min="0"
                       max="100"
                       value={afinidadInicial}
-                      onChange={(e) => setAfinidadInicial(parseInt(e.target.value, 10))}
+                      onChange={/* Responde a change desde este control. */ (e) => setAfinidadInicial(parseInt(e.target.value, 10))}
                       className="flex-1"
                     />
                     <span className="w-10 text-center font-bold text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg py-1">
@@ -523,7 +533,7 @@ export default function PersonajesTab({ universos = [] }) {
                   <input
                     type="text"
                     value={nombre}
-                    onChange={(e) => setNombre(e.target.value)}
+                    onChange={/* Responde a change desde este control. */ (e) => setNombre(e.target.value)}
                     placeholder="ej. Elena de Valoria"
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-800 focus:outline-none focus:border-[#002B5E]"
                   />
@@ -536,7 +546,7 @@ export default function PersonajesTab({ universos = [] }) {
                   <input
                     type="text"
                     value={titulo}
-                    onChange={(e) => setTitulo(e.target.value)}
+                    onChange={/* Responde a change desde este control. */ (e) => setTitulo(e.target.value)}
                     placeholder="ej. Canciller del Reino"
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-800 focus:outline-none focus:border-[#002B5E]"
                   />
@@ -550,7 +560,7 @@ export default function PersonajesTab({ universos = [] }) {
                 <textarea
                   rows={2}
                   value={descripcion}
-                  onChange={(e) => setDescripcion(e.target.value)}
+                  onChange={/* Responde a change desde este control. */ (e) => setDescripcion(e.target.value)}
                   placeholder="Personalidad, antecedentes e inclinación política..."
                   className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:border-[#002B5E]"
                 />
@@ -572,7 +582,7 @@ export default function PersonajesTab({ universos = [] }) {
                   <textarea
                     rows={2}
                     value={prosInput}
-                    onChange={(e) => setProsInput(e.target.value)}
+                    onChange={/* Responde a change desde este control. */ (e) => setProsInput(e.target.value)}
                     placeholder="+15% de oro en eventos comerciales&#10;Desbloquea opciones diplomáticas"
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 font-mono text-[11px] focus:outline-none focus:border-[#002B5E]"
                   />
@@ -585,7 +595,7 @@ export default function PersonajesTab({ universos = [] }) {
                   <textarea
                     rows={2}
                     value={consInput}
-                    onChange={(e) => setConsInput(e.target.value)}
+                    onChange={/* Responde a change desde este control. */ (e) => setConsInput(e.target.value)}
                     placeholder="-5 de apoyo popular cuando se priorizan tropas"
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 font-mono text-[11px] focus:outline-none focus:border-[#002B5E]"
                   />
@@ -599,7 +609,7 @@ export default function PersonajesTab({ universos = [] }) {
                 <input
                   type="text"
                   value={tagsInput}
-                  onChange={(e) => setTagsInput(e.target.value)}
+                  onChange={/* Responde a change desde este control. */ (e) => setTagsInput(e.target.value)}
                   placeholder="ej. diplomacia, comercio, noble"
                   className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-mono text-slate-800 focus:outline-none focus:border-[#002B5E]"
                 />
@@ -622,14 +632,14 @@ export default function PersonajesTab({ universos = [] }) {
                 </div>
 
                 <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                  {efectos.map((ef, idx) => (
+                  {efectos.map(/* Prepara el resultado de cada elemento. */ (ef, idx) => (
                     <div
                       key={idx}
                       className="p-3 rounded-xl border border-slate-200 bg-slate-50/60 flex flex-col sm:flex-row items-center gap-2 text-xs"
                     >
                       <select
                         value={ef.disparador}
-                        onChange={(e) => handleCambiarEfecto(idx, 'disparador', e.target.value)}
+                        onChange={/* Responde a change desde este control. */ (e) => handleCambiarEfecto(idx, 'disparador', e.target.value)}
                         className="w-full sm:w-36 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white font-bold text-[11px] text-slate-800"
                       >
                         <option value="cada_mes">Cada Mes</option>
@@ -639,7 +649,7 @@ export default function PersonajesTab({ universos = [] }) {
 
                       <select
                         value={ef.accion?.clave || 'oro'}
-                        onChange={(e) => handleCambiarEfecto(idx, 'clave', e.target.value)}
+                        onChange={/* Responde a change desde este control. */ (e) => handleCambiarEfecto(idx, 'clave', e.target.value)}
                         className="w-full sm:w-28 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white font-bold text-[11px] text-slate-800"
                       >
                         <option value="oro">Oro</option>
@@ -653,12 +663,12 @@ export default function PersonajesTab({ universos = [] }) {
                         <input
                           type="number"
                           value={ef.accion?.valor ?? 10}
-                          onChange={(e) => handleCambiarEfecto(idx, 'valor', parseFloat(e.target.value))}
+                          onChange={/* Responde a change desde este control. */ (e) => handleCambiarEfecto(idx, 'valor', parseFloat(e.target.value))}
                           className="w-20 px-2 py-1.5 rounded-lg border border-slate-200 bg-white text-[11px] font-bold text-center"
                         />
                         <button
                           type="button"
-                          onClick={() => handleEliminarEfecto(idx)}
+                          onClick={/* Responde a click desde este control. */ () => handleEliminarEfecto(idx)}
                           className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer ml-auto"
                           title="Quitar efecto"
                         >
@@ -674,7 +684,7 @@ export default function PersonajesTab({ universos = [] }) {
               <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-2">
                 <button
                   type="button"
-                  onClick={() => setModalAbierto(false)}
+                  onClick={/* Responde a click desde este control. */ () => setModalAbierto(false)}
                   className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition cursor-pointer"
                 >
                   Cancelar

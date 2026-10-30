@@ -1,3 +1,4 @@
+/* Muestra los juegos y permite abrir sus calendarios. */
 import React, { useState, useEffect } from 'react';
 import type { CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -49,6 +50,7 @@ const games: MenuCardGame[] = [
 const groups: { title: GameGroup; description: string }[] = [
   { title: 'Clásicos', description: 'Juegos conocidos para ejercitar lenguaje, memoria y lógica.' },
   { title: 'Narrativos', description: 'Pequeñas historias que invitan a observar, recordar y decidir.' },
+  { title: 'Puzzles', description: 'Próximamente.' },
 ];
 
 const styles: Record<string, CSSProperties> = {
@@ -63,22 +65,25 @@ const styles: Record<string, CSSProperties> = {
   description: { color: color.ink, fontSize: 16, lineHeight: 1.45, margin: '8px 0 0' },
 };
 
+// Muestra los juegos y permite abrir sus calendarios.
 const Menu: React.FC = () => {
   const navigate = useNavigate();
-  const [esAdmin, setEsAdmin] = useState<boolean>(() => esUsuarioAdmin());
+  const [esAdmin, setEsAdmin] = useState<boolean>(/* Prepara el valor inicial al montar la pantalla. */ () => esUsuarioAdmin());
 
-  useEffect(() => {
+  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
+    // Comprueba si la sesión permite mostrar la administración.
     const checkAdmin = () => {
       setEsAdmin(esUsuarioAdmin());
     };
     window.addEventListener('user_progress_updated', checkAdmin);
     window.addEventListener('storage', checkAdmin);
-    return () => {
+    return /* Libera los recursos de este efecto cuando deja de usarse. */ () => {
       window.removeEventListener('user_progress_updated', checkAdmin);
       window.removeEventListener('storage', checkAdmin);
     };
   }, []);
 
+  // Abre el calendario del juego elegido.
   const startGame = (id: string) => {
     if (id === 'wordle') navigate('/juegos/wordle');
     if (id === 'sopa-letras') navigate('/juegos/sopa-letras');
@@ -89,7 +94,7 @@ const Menu: React.FC = () => {
 
   return (
     <IonPage>
-      <LoginHeader onUsuarioChange={() => setEsAdmin(esUsuarioAdmin())} />
+      <LoginHeader menuPrincipal onUsuarioChange={/* Responde a usuario change desde este control. */ () => setEsAdmin(esUsuarioAdmin())} />
       <IonContent style={{ '--background': color.blue } as CSSProperties}>
         <div style={{ background: color.blue, minHeight: '100%' }}>
           <main style={styles.shell}>
@@ -161,7 +166,7 @@ const Menu: React.FC = () => {
 
                 <button
                   type="button"
-                  onClick={() => navigate('/editor-narrativo')}
+                  onClick={/* Responde a click desde este control. */ () => navigate('/editor-narrativo')}
                   style={{
                     background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
                     border: 'none',
@@ -180,12 +185,12 @@ const Menu: React.FC = () => {
               </div>
             )}
 
-            {groups.map((group, index) => (
+            {groups.map(/* Prepara el resultado de cada elemento. */ (group, index) => (
               <section key={group.title} style={{ marginTop: index ? 38 : 0 }}>
                 <h2 style={{ ...styles.heading, color: '#FFFFFF' }}>{group.title}</h2>
                 <p style={{ ...styles.description, color: '#DCE9F2' }}>{group.description}</p>
                 <div className="mt-4 grid grid-cols-1 gap-[18px] md:grid-cols-2">
-                  {games.filter((game) => game.group === group.title).map((game) => (
+                  {games.filter(/* Conserva los elementos que cumplen esta condición. */ (game) => game.group === group.title).map(/* Prepara el resultado de cada elemento. */ (game) => (
                     <MenuCard game={game} key={game.id} onStart={startGame} />
                   ))}
                 </div>

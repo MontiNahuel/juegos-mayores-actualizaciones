@@ -1,3 +1,4 @@
+/* Coordina las etapas narrativas y sincroniza las decisiones de la partida. */
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { IonContent, IonPage } from '@ionic/react';
 import { useDispatch, useSelector, useStore } from 'react-redux';
@@ -8,10 +9,10 @@ import {
   actualizarFondoBase, avanzarMes as avanzarMesLocal, configurarEdadNarrativa, elegirCarta, finalizarPartida,
   guardarCartasDraft, guardarCartasIniciales, guardarCorte, guardarPersonajesCorte,
   guardarResultado, iniciarJugador, limpiarResultado, mostrarConversacion, mostrarEvento,
-  registrarDecisionEvento, reiniciarSeleccionNarrativa, resolverConversacion,
+  registrarDecisionEvento, reiniciarSeleccionNarrativa, resolverConversacion, sincronizarPartida,
 } from '../../../store/narrativoSelectionSlice';
 import {
-  agregarCondicionesSecretas, avanzarMes as avisarAvanceMes, decidirEvento, elegirCartaMensual, esPartidaNarrativaLocal,
+  agregarCondicionesSecretas, avanzarNodo, avanzarMes as avisarAvanceMes, decidirEvento, elegirCartaMensual, esPartidaNarrativaLocal,
   iniciarPartida, obtenerCatalogosCronica, obtenerCortePartida, obtenerEstadoPartida, obtenerHistorialPartida,
   reiniciarPartida, responderConversacion,
 } from './narrativeService';
@@ -47,7 +48,7 @@ const prepararCarta = (carta: any) => ({
 
 // Genera una derrota si alguno de los recursos llega a cero.
 const finalPorRecurso = (recursos: any) => {
-  const recurso = Object.keys(recursos).find(clave => Number(recursos[clave]) <= 0);
+  const recurso = Object.keys(recursos).find(/* Busca el primer elemento que cumple esta condición. */ clave => Number(recursos[clave]) <= 0);
   return recurso ? {
     _id: `fin_${recurso}_cero`, recurso_clave: recurso, tipo: 'derrota_recurso',
     titulo: `El reino perdio ${recurso}`,
@@ -65,7 +66,7 @@ const describirEfectos = (resultado: any) => {
     fe: ['La gente recuperó confianza.', 'La gente perdió confianza.'],
   };
 
-  return resultado?.efectos?.map(({ accion }: any) => {
+  return resultado?.efectos?.map(/* Prepara el resultado de cada elemento. */ ({ accion }: any) => {
     const valor = Number(accion?.valor || 0);
     return frases[accion?.clave]?.[valor > 0 ? 0 : 1];
   }).filter(Boolean).join(' ') || 'La decisión no produjo cambios importantes.';
@@ -77,10 +78,11 @@ export default function KingsCourt() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const store = useStore();
-  const juego = useSelector((state: any) => state.narrativoSelection);
-  const carga = useSelector((state: RootState) => state.narrativoCarga);
+  const juego = useSelector(/* Lee de Redux el dato compartido que necesita la pantalla. */ (state: any) => state.narrativoSelection);
+  const carga = useSelector(/* Lee de Redux el dato compartido que necesita la pantalla. */ (state: RootState) => state.narrativoCarga);
   const [mostrarBuffer, setMostrarBuffer] = useState(true);
   const [intentoCarga, setIntentoCarga] = useState(0);
+  // Prepara la entrada a la partida cuando la carga está lista.
   const entrarAlJuego = useCallback(() => setMostrarBuffer(false), []);
   const [setup, setSetup] = useState<any>(null);
   const [personajesDisponibles, setPersonajesDisponibles] = useState<any[]>([]);
@@ -97,7 +99,7 @@ export default function KingsCourt() {
   const temporizadorCambio = useRef<number | null>(null);
   const secuenciaCambio = useRef(0);
 
-  useEffect(() => () => {
+  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => /* Completa este paso con los datos recibidos por la operación. */ () => {
     secuenciaCambio.current += 1;
     if (temporizadorCambio.current !== null) window.clearTimeout(temporizadorCambio.current);
   }, []);
@@ -122,12 +124,12 @@ export default function KingsCourt() {
   } as CSSProperties;
 
   // Sincroniza la edad y el modo de juego con Redux.
-  useEffect(() => {
+  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
     dispatch(configurarEdadNarrativa({ edad, modo_mayor: modoMayor }));
   }, [dispatch, edad, modoMayor]);
 
   // El resultado conserva la corte anterior; la nueva composición entra al mostrarla entre escenas.
-  useEffect(() => {
+  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
     if (juego.resultadoActual) return;
     dispatch(actualizarFondoBase({ ejercito: juego.jugador.recursos.ejercito, oro: juego.jugador.recursos.oro, pueblo: juego.jugador.recursos.pueblo }));
   }, [dispatch, juego.jugador.recursos.ejercito, juego.jugador.recursos.oro, juego.jugador.recursos.pueblo, juego.resultadoActual]);
@@ -152,8 +154,8 @@ export default function KingsCourt() {
   // En modo adaptado pide el evento sin agregar la carta al mazo.
   const abrirEventoSinCarta = async (cartas: any[]) => {
     if (!cartas[0]) return;
-    const data = await pedir(() => elegirCartaMensual(date, cartas[0].id || cartas[0]._id), 'No se pudo preparar la siguiente decision.');
-    if (data?.evento_actual) await guardarEventoLocal(data.evento_actual);
+    const data = await pedir(/* Completa este paso con los datos recibidos por la operación. */ () => elegirCartaMensual(date, cartas[0].id || cartas[0]._id), 'No se pudo preparar la siguiente decision.');
+    if (data) await mostrarEstado(data);
   };
 
   // Abre la selección mensual o salta al evento según la edad.
@@ -166,15 +168,18 @@ export default function KingsCourt() {
   };
 
   // Recupera la etapa pendiente del servidor sin reemplazar al jugador local.
-  const mostrarEstado = async (estado: any, priorizarDraft = false) => {
+  const mostrarEstado = async (estado: any) => {
     if (!estado) return;
-    if (priorizarDraft && estado.resultado_actual) dispatch(guardarResultado(estado.resultado_actual));
-    else if (priorizarDraft && estado.cartas_draft_actual) await cargarDraft(estado.cartas_draft_actual, true);
-    else if (estado.finalizacion) dispatch(finalizarPartida(estado.finalizacion));
-    else if (estado.resultado_actual) dispatch(guardarResultado(estado.resultado_actual));
-    else if (estado.conversacion_actual) dispatch(mostrarConversacion(estado.conversacion_actual));
+    // Sincroniza antes del draft: el modo adaptado puede pedir otro evento enseguida.
+    dispatch(sincronizarPartida(estado));
+    if (estado.finalizacion) dispatch(finalizarPartida(estado.finalizacion));
+    else if (estado.resultado_actual) {
+      dispatch(guardarResultado(estado.resultado_actual));
+      if (estado.conversacion_actual) setConversacionPendiente(estado.conversacion_actual);
+      dispatch(sincronizarPartida(estado));
+    } else if (estado.conversacion_actual) dispatch(mostrarConversacion(estado.conversacion_actual));
     else if (estado.evento_actual) await guardarEventoLocal(estado.evento_actual);
-    else if (estado.cartas_draft_actual) await cargarDraft(estado.cartas_draft_actual, true);
+    else if (estado.cartas_draft_actual?.length) await cargarDraft(estado.cartas_draft_actual, true);
   };
 
   // Intenta restaurar la pantalla cuando falla la selección de carta.
@@ -184,11 +189,11 @@ export default function KingsCourt() {
   };
 
   // Carga el desafío y, si existe, restaura la partida activa.
-  useEffect(() => {
+  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
     let activo = true;
     setMostrarBuffer(true);
     dispatch(iniciarCargaNarrativa(date));
-    const trabajo = prepararCargaNarrativa(date, progreso => {
+    const trabajo = prepararCargaNarrativa(date, /* Completa este paso con los datos recibidos por la operación. */ progreso => {
       if (activo) dispatch(actualizarCargaNarrativa(progreso));
     });
     // Inicializa el jugador y recupera su corte y su etapa pendiente.
@@ -213,15 +218,15 @@ export default function KingsCourt() {
         }
         if (data.tiene_partida_activa && !esPartidaNarrativaLocal(date)) {
           const [estado, corte] = await Promise.all([
-            pedir(() => obtenerEstadoPartida(date), 'No se pudo recuperar el contenido de la partida activa.'),
-            pedir(() => obtenerCortePartida(date), 'No se pudo recuperar la corte de la partida activa.'),
+            pedir(/* Completa este paso con los datos recibidos por la operación. */ () => obtenerEstadoPartida(date), 'No se pudo recuperar el contenido de la partida activa.'),
+            pedir(/* Completa este paso con los datos recibidos por la operación. */ () => obtenerCortePartida(date), 'No se pudo recuperar la corte de la partida activa.'),
           ]);
           if (!activo) return;
           if (!estado) throw new Error('No se pudo recuperar la partida activa. Volvé a intentar.');
-          if (corte?.corte) dispatch(guardarPersonajesCorte(corte.corte.map(({ personaje }: any) => prepararCarta(personaje))));
-          await mostrarEstado(estado, true);
+          if (corte?.corte) dispatch(guardarPersonajesCorte(corte.corte.map(/* Prepara el resultado de cada elemento. */ ({ personaje }: any) => prepararCarta(personaje))));
+          await mostrarEstado(estado);
           const fondo = (store.getState() as RootState).narrativoSelection.fondoBase as EstadoFondoCorte;
-          await precargarImagenes([fondo.src, ...[...fondo.personajes, ...fondo.oro, ...fondo.manos].map(x => x.src)]);
+          await precargarImagenes([fondo.src, ...[...fondo.personajes, ...fondo.oro, ...fondo.manos].map(/* Prepara el resultado de cada elemento. */ x => x.src)]);
         }
         if (activo) {
           const progreso = (store.getState() as RootState).narrativoCarga;
@@ -232,14 +237,14 @@ export default function KingsCourt() {
       }
     };
     void cargar();
-    return () => { activo = false; trabajo.desconectar(); };
+    return /* Libera los recursos de este efecto cuando deja de usarse. */ () => { activo = false; trabajo.desconectar(); };
   }, [date, dispatch, intentoCarga]);
 
   // Reinicia la prueba en el servidor y vuelve al calendario.
   const salirDePrueba = async () => {
     if (reiniciando) return;
     setReiniciando(true);
-    const data = await pedir(() => reiniciarPartida(date), 'No se pudo reiniciar la partida de prueba.');
+    const data = await pedir(/* Completa este paso con los datos recibidos por la operación. */ () => reiniciarPartida(date), 'No se pudo reiniciar la partida de prueba.');
     if (data) {
       dispatch(reiniciarSeleccionNarrativa());
       navigate('/juegos/kings-court', { replace: true });
@@ -250,43 +255,49 @@ export default function KingsCourt() {
   // Envía la corte y las cartas iniciales; luego carga el primer mes.
   const comenzarPartida = async (cartas: any[]) => {
     const data = await pedir(
-      () => iniciarPartida(date, jugadorActual().corte_activa, cartas.map(carta => carta.id)),
+      // Completa este paso con los datos recibidos por la operación.
+      () => iniciarPartida(date, jugadorActual().corte_activa, cartas.map(/* Prepara el resultado de cada elemento. */ carta => carta.id)),
       'Las cartas quedaron elegidas, pero no se pudo pedir el siguiente draft.'
     );
     if (!data) return;
     dispatch(guardarCartasIniciales(cartas));
-    if (data.cartas_draft_actual) await cargarDraft(data.cartas_draft_actual);
+    await mostrarEstado(data);
   };
 
   // Selecciona una carta mensual y abre el evento siguiente.
   const elegirCartaDelMes = async ([carta]: any[]) => {
-    const data = await pedir(() => elegirCartaMensual(date, carta.id), 'No se pudo seleccionar la carta.');
+    const data = await pedir(/* Completa este paso con los datos recibidos por la operación. */ () => elegirCartaMensual(date, carta.id), 'No se pudo seleccionar la carta.');
     if (!data) {
       await recuperarFase();
       return;
     }
     dispatch(elegirCarta(carta));
-    if (data.evento_actual) await guardarEventoLocal(data.evento_actual);
+    await mostrarEstado(data);
   };
 
   // Guarda la decisión y procesa resultado, conversación y posible final.
   const decidirEventoActual = async (opcionId: string) => {
     const evento = juego.eventoActual;
+    if (evento.nodo_id) {
+      const data = await pedir(/* Completa este paso con los datos recibidos por la operación. */ () => avanzarNodo(date, opcionId, evento.id), 'No se pudo guardar la decisión.');
+      if (data) await mostrarEstado(data);
+      return;
+    }
     dispatch(registrarDecisionEvento({
       evento_id: evento?.id || evento?._id, opcion_id: opcionId,
       evento_titulo: evento?.titulo,
-      opcion_texto: evento?.opciones?.find((opcion: { id: string; texto: string }) => opcion.id === opcionId)?.texto,
+      opcion_texto: evento?.opciones?.find(/* Busca el primer elemento que cumple esta condición. */ (opcion: { id: string; texto: string }) => opcion.id === opcionId)?.texto,
     }));
     const preferencia = modoMayor ? {
       probabilidad_no_repetida: config.probabilidadConversacionNoRepetida,
       excluir_ids: jugadorActual().conversaciones_jugadas,
     } : undefined;
     const data = await pedir(
+      // Completa este paso con los datos recibidos por la operación.
       () => decidirEvento(date, opcionId, preferencia),
       'La decision fue guardada, pero no se pudo cargar su resultado.'
     );
-    if (data?.resultado_actual) dispatch(guardarResultado(data.resultado_actual));
-    if (data?.conversacion_actual) setConversacionPendiente(data.conversacion_actual);
+    if (data) await mostrarEstado(data);
     const final = data?.finalizacion || finalPorRecurso(jugadorActual().recursos);
     if (final) dispatch(finalizarPartida(final));
   };
@@ -294,9 +305,8 @@ export default function KingsCourt() {
   // Avanza el mes localmente y busca las próximas cartas o el final.
   const avanzarMes = async () => {
     dispatch(avanzarMesLocal());
-    const data = await pedir(() => avisarAvanceMes(date), 'El mes avanzo localmente, pero no se pudieron cargar las nuevas cartas.');
-    if (data?.finalizacion) dispatch(finalizarPartida(data.finalizacion));
-    else if (data?.cartas_draft_actual) await cargarDraft(data.cartas_draft_actual);
+    const data = await pedir(/* Completa este paso con los datos recibidos por la operación. */ () => avisarAvanceMes(date), 'El mes avanzo localmente, pero no se pudieron cargar las nuevas cartas.');
+    if (data) await mostrarEstado(data);
   };
 
   // Continúa la secuencia existente una vez que se vio el cambio del fondo.
@@ -335,11 +345,11 @@ export default function KingsCourt() {
       ...ORO_CORTE.slice(antesOro, despuesOro),
       ...MANOS_CORTE.slice(antesManos, despuesManos),
     ];
-    void precargarImagenes(nuevos.map(({ src }) => src))
-      .then(() => {
+    void precargarImagenes(nuevos.map(/* Prepara el resultado de cada elemento. */ ({ src }) => src))
+      .then(/* Continúa cuando está listo el resultado anterior. */ () => {
         if (secuencia !== secuenciaCambio.current) return;
         const duracion = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : DURACION_CAMBIO_FONDO_MS;
-        temporizadorCambio.current = window.setTimeout(() => {
+        temporizadorCambio.current = window.setTimeout(/* Ejecuta este paso cuando se cumple la espera. */ () => {
           continuarTrasResultado();
           setCambioFondo(false);
           temporizadorCambio.current = null;
@@ -349,9 +359,14 @@ export default function KingsCourt() {
 
   // Aplica la respuesta a la conversación y la registra en el servidor.
   const responderActual = async (decision: any) => {
+    if (juego.conversacionActual.nodo_id) {
+      const data = await pedir(/* Completa este paso con los datos recibidos por la operación. */ () => avanzarNodo(date, String(decision.opcion), juego.conversacionActual._id), 'No se pudo guardar la respuesta.');
+      if (data) await mostrarEstado(data);
+      return;
+    }
     dispatch(resolverConversacion({ conversacionId: juego.conversacionActual._id, decision }));
     setDecisionConversacion(decision);
-    await pedir(() => responderConversacion(date, decision.opcion), 'La respuesta quedo aplicada localmente, pero no se pudo guardar en el historial.');
+    await pedir(/* Completa este paso con los datos recibidos por la operación. */ () => responderConversacion(date, decision.opcion), 'La respuesta quedo aplicada localmente, pero no se pudo guardar en el historial.');
   };
 
   // Guarda la nueva edad y adapta el draft que esté abierto.
@@ -370,7 +385,7 @@ export default function KingsCourt() {
       setError('');
       const [estado, historial, corte, catalogos] = await Promise.all([
         obtenerEstadoPartida(date), obtenerHistorialPartida(date),
-        obtenerCortePartida(date).catch(() => null),
+        obtenerCortePartida(date).catch(/* Maneja el fallo de esta operación. */ () => null),
         obtenerCatalogosCronica(date, setup?.universo_id),
       ]);
       setEstadisticas({ estado, historial, corte, catalogos });
@@ -385,7 +400,7 @@ export default function KingsCourt() {
       <FondoCorte fondo={{ ...juego.fondoBase, personajes: [], oro: [], manos: [] }} atenuado fijo />
       <CargaNarrativa porcentaje={carga.porcentaje} listo={carga.fase === 'lista'} caballo={imagenPrecargada(CABALLO_CARGA)}
         mensaje={carga.fase === 'preparando' ? 'Reuniendo las historias del reino…' : 'Preparando personajes y escenarios…'}
-        error={carga.error} onReintentar={() => setIntentoCarga(intento => intento + 1)} onEntrar={entrarAlJuego} />
+        error={carga.error} onReintentar={/* Responde a reintentar desde este control. */ () => setIntentoCarga(/* Actualiza intento carga a partir del valor anterior. */ intento => intento + 1)} onEntrar={entrarAlJuego} />
     </IonContent></IonPage>
   );
 
@@ -396,8 +411,8 @@ export default function KingsCourt() {
   const etapaVisible = ({
     estadisticas: 'estadisticas', final: `final:${finalizacion?._id}`,
     consecuencia: `consecuencia:${jugador.mes_actual}`, resultado: `resultado:${jugador.mes_actual}`,
-    conversacion: `conversacion:${juego.conversacionActual?._id}`,
-    evento: `evento:${juego.eventoActual?.id || juego.eventoActual?._id}`,
+    conversacion: `conversacion:${juego.conversacionActual?._id}:${juego.conversacionActual?.nodo_id || ''}`,
+    evento: `evento:${juego.eventoActual?.id || juego.eventoActual?._id}:${juego.eventoActual?.nodo_id || ''}`,
   } as Record<string, string>)[etapa] || `${etapa}:${jugador.mes_actual}`;
 
   // Reutiliza la misma pantalla para las tres selecciones de cartas.
@@ -414,7 +429,7 @@ export default function KingsCourt() {
     case 'muestra_evento':
       pantalla = <MuestraEventoEtapa0
         eventos={setup.eventos_del_dia || setup.eventos_ofrecidos || setup.cartas_evento || []}
-        onContinuar={() => setMostrarMuestraEvento(false)}
+        onContinuar={/* Responde a continuar desde este control. */ () => setMostrarMuestraEvento(false)}
       />;
       break;
     case 'estadisticas':
@@ -422,7 +437,7 @@ export default function KingsCourt() {
         estado={estadisticas.estado} historial={estadisticas.historial} corte={estadisticas.corte}
         catalogos={estadisticas.catalogos} recursosIniciales={setup.atributos_iniciales}
         personajes={personajes} finalizacion={finalizacion} modoSimple={!config.mostrarNumeros}
-        onVolver={() => setEstadisticas(null)}
+        onVolver={/* Responde a volver desde este control. */ () => setEstadisticas(null)}
       />;
       break;
     case 'final':
@@ -430,8 +445,8 @@ export default function KingsCourt() {
       break;
     case 'consecuencia': {
       // Traduce los cambios de afinidad a texto simple o numérico.
-      const efectoTexto = decisionConversacion.impacto_afinidad?.map((impacto: any) => {
-        const personaje = personajes.find((p: any) => p.id === impacto.personaje_id || p._id === impacto.personaje_id);
+      const efectoTexto = decisionConversacion.impacto_afinidad?.map(/* Prepara el resultado de cada elemento. */ (impacto: any) => {
+        const personaje = personajes.find(/* Busca el primer elemento que cumple esta condición. */ (p: any) => p.id === impacto.personaje_id || p._id === impacto.personaje_id);
         const nombre = impacto.personaje_nombre || impacto.nombre || personaje?.nombre || 'Personaje';
         return config.mostrarNumeros
           ? `${nombre}: ${impacto.delta > 0 ? '+' : ''}${impacto.delta} afinidad`
@@ -440,7 +455,7 @@ export default function KingsCourt() {
       pantalla = <MostrarResultadoEtapa4
         resultado={{ titulo: 'Consecuencia', texto: decisionConversacion.resultado_texto || 'La corte escucho tu decision.', imagen: '', tipo_resultado: 'neutro' as const, efectos: [] }}
         efectoTexto={efectoTexto}
-        onContinuar={() => { setDecisionConversacion(null); void avanzarMes(); }}
+        onContinuar={/* Responde a continuar desde este control. */ () => { setDecisionConversacion(null); void avanzarMes(); }}
       />;
       break;
     }
@@ -448,13 +463,13 @@ export default function KingsCourt() {
       pantalla = <MostrarResultadoEtapa4 resultado={juego.resultadoActual} efectoTexto={!config.mostrarNumeros ? describirEfectos(juego.resultadoActual) : undefined} animarSalida={cambioFondoPendiente} onContinuar={continuarResultado} />;
       break;
     case 'conversacion':
-      pantalla = <ResponderConversacionEtapa3 conversacion={juego.conversacionActual} personajes={personajes} modoSimple={!config.mostrarNumeros} onElegir={responderActual} />;
+      pantalla = <ResponderConversacionEtapa3 key={etapaVisible} conversacion={juego.conversacionActual} personajes={personajes} modoSimple={!config.mostrarNumeros} onElegir={responderActual} />;
       break;
     case 'evento':
-      pantalla = <DecidirEventoEtapa2 key={juego.eventoActual.id || juego.eventoActual._id} evento={juego.eventoActual} atributos={jugador.recursos} fondoBase={juego.fondoBase} personajes={personajes} afinidad={jugador.afinidad} tags={jugador.tags_activos} cartas={jugador.cartas_en_mano} modoSimple={!config.mostrarNumeros} demorarDialogoPorFondo={demorarDialogoPorFondo} onElegir={decidirEventoActual} />;
+      pantalla = <DecidirEventoEtapa2 key={etapaVisible} evento={juego.eventoActual} atributos={jugador.recursos} fondoBase={juego.fondoBase} personajes={personajes} afinidad={jugador.afinidad} tags={jugador.tags_activos} cartas={jugador.cartas_en_mano} modoSimple={!config.mostrarNumeros} demorarDialogoPorFondo={demorarDialogoPorFondo} onElegir={decidirEventoActual} />;
       break;
     case 'seleccionar_corte':
-      pantalla = seleccionar('Forma tu corte', 'Elegí tres personajes para comenzar el desafio.', personajesDisponibles, 3, (cartas: any[]) => dispatch(guardarCorte(cartas)));
+      pantalla = seleccionar('Forma tu corte', 'Elegí tres personajes para comenzar el desafio.', personajesDisponibles, 3, /* Completa este paso con los datos recibidos por la operación. */ (cartas: any[]) => dispatch(guardarCorte(cartas)));
       break;
     case 'seleccionar_cartas':
       pantalla = seleccionar('Prepara el reino', 'Elegí tres cartas para comenzar la partida.', setup.cartas_ofrecidas.map(prepararCarta), 3, comenzarPartida);

@@ -1,3 +1,4 @@
+/* Busca fechas, desafíos y avances para armar el calendario. */
 /**
  * calendarService.ts
  * Servicio centralizado para la comunicación con la API de Desafíos Diarios
@@ -46,7 +47,7 @@ async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T |
 export async function fetchServerToday(gameId: string = 'wordle', difficulty: string = 'standard'): Promise<ServerTodayInfo> {
   const data = await apiFetch<any>(`/api/challenges/today?game_id=${gameId}&difficulty=${difficulty}`);
   if (data && data.date) {
-    const [y, m, d] = data.date.split('-').map((v: string) => parseInt(v, 10));
+    const [y, m, d] = data.date.split('-').map(/* Prepara el resultado de cada elemento. */ (v: string) => parseInt(v, 10));
     return {
       year: y,
       month: m,
@@ -214,7 +215,7 @@ export async function getCalendarMonthData(
   if (uid != null) {
     const attemptsData = await fetchUserMonthAttempts(gameId, year, month, uid);
     if (attemptsData && Array.isArray(attemptsData.attempts)) {
-      attemptsData.attempts.forEach((att: any) => {
+      attemptsData.attempts.forEach(/* Aplica este paso a cada elemento. */ (att: any) => {
         const dayNum = parseInt(att.date.split('-')[2], 10);
         if (dayNum) {
           if (att.status === 'completed' || att.status === 'won') {
@@ -248,7 +249,7 @@ export async function getCalendarMonthData(
 
   for (let d = 1; d <= daysInMonth; d++) {
     const dateKey = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-    const foundApi = apiChallenges.find((c: any) => c.date === dateKey);
+    const foundApi = apiChallenges.find(/* Busca el primer elemento que cumple esta condición. */ (c: any) => c.date === dateKey);
 
     const dateObj = new Date(year, month - 1, d);
     const dayOfWeekIndex = dateObj.getDay();
@@ -290,7 +291,7 @@ export async function getCalendarMonthData(
   // Desafío de hoy (para la tarjeta Hero)
   let todayChallenge: DayChallenge;
   if (isCurrentMonth) {
-    todayChallenge = list.find((c) => c.isToday) || (await getTodayChallengeData(gameId, serverToday));
+    todayChallenge = list.find(/* Busca el primer elemento que cumple esta condición. */ (c) => c.isToday) || (await getTodayChallengeData(gameId, serverToday));
   } else {
     todayChallenge = await getTodayChallengeData(gameId, serverToday);
   }

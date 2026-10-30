@@ -1,12 +1,13 @@
+/* Anima el reparto y la mezcla de las cartas disponibles. */
 // Reparte desde una pila central, escalonando cada carta como en el shuffle original.
 export default function shuffleCartas(contenedor: HTMLDivElement | null) {
   if (!contenedor || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
   const cartas = [...contenedor.querySelectorAll('button')];
   const pila = contenedor.getBoundingClientRect();
-  const posiciones = cartas.map((carta) => carta.getBoundingClientRect());
+  const posiciones = cartas.map(/* Prepara el resultado de cada elemento. */ (carta) => carta.getBoundingClientRect());
 
-  const animaciones = cartas.map((carta, indice) => {
+  const animaciones = cartas.map(/* Prepara el resultado de cada elemento. */ (carta, indice) => {
     const posicion = posiciones[indice];
     const x = pila.left + (pila.width - posicion.width) / 2 - posicion.left;
     const y = pila.top - posicion.top;
@@ -24,5 +25,5 @@ export default function shuffleCartas(contenedor: HTMLDivElement | null) {
   });
 
   // Cancela el reparto anterior si llega otra tanda o se abandona la seleccion.
-  return () => animaciones.forEach((animacion) => animacion.cancel());
+  return /* Libera los recursos de este efecto cuando deja de usarse. */ () => animaciones.forEach(/* Aplica este paso a cada elemento. */ (animacion) => animacion.cancel());
 }

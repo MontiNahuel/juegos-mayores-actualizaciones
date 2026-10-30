@@ -1,3 +1,4 @@
+/* Decide qué pantalla abrir según la dirección y la sesión. */
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useSearchParams } from 'react-router-dom';
 import Menu from './MENU/Menu';
@@ -13,7 +14,7 @@ import KingsCourtCalendar from './JUEGOS/NARRATIVO/KingsCourtCalendar';
 import KingsCourt from './JUEGOS/NARRATIVO/KingsCourt';
 import { AccesoToken } from './LOGIN/AccesoToken';
 
-const NarrativoAdminPage = lazy(() => import('./ADMIN/NarrativoAdminPage'));
+const NarrativoAdminPage = lazy(/* Completa este paso con los datos recibidos por la operación. */ () => import('./ADMIN/NarrativoAdminPage'));
 
 // Intercepta token en /menu para iniciar sesión de inmediato en vez de quedar como invitado
 const MenuWrapper = () => {
@@ -35,12 +36,14 @@ const RootRedirection = () => {
   return <Navigate to="/menu" replace />;
 };
 
+// Muestra fallback loader y conecta sus controles con la pantalla.
 const FallbackLoader = () => (
   <div className="min-h-screen bg-slate-950 flex items-center justify-center text-amber-400 font-bold">
     Cargando Torre de Control...
   </div>
 );
 
+// Muestra app routes y conecta sus controles con la pantalla.
 const AppRoutes = () => (
   <BrowserRouter>
     <Routes>

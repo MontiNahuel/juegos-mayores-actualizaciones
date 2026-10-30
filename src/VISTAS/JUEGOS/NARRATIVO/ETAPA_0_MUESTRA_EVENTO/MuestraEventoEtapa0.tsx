@@ -1,3 +1,4 @@
+/* Presenta el comienzo del evento antes de pasar a sus decisiones. */
 import type { CSSProperties } from 'react';
 import BotonNarrativo from '../COMPARTIDOS/BOTON_NARRATIVO/BotonNarrativo';
 import TituloConversacion from '../COMPARTIDOS/TITULO_NARRATIVO/TituloConversacion';
@@ -9,14 +10,14 @@ import { imagenPrecargada } from '../../../../services/assetPreloader';
 export default function MuestraEventoEtapa0({ eventos, onContinuar }: { eventos: any[]; onContinuar: () => void }) {
   const titulo = calcularTituloCiclo(eventos);
   const cantidad = Math.max(6, Math.min(eventos.length || 0, 16));
-  const muestra = eventos.find((evento) => evento?.titulo || evento?.nombre) || {};
+  const muestra = eventos.find(/* Busca el primer elemento que cumple esta condición. */ (evento) => evento?.titulo || evento?.nombre) || {};
 
   return (
     <section className="muestra-evento" aria-label="Muestra de eventos" style={{ '--marco-carta': `url("${imagenPrecargada('/assets/narrative/card-frame.png')}")` } as CSSProperties}>
       <TituloConversacion titulo={titulo} />
       <div className="muestra-evento__barajado">
           <div className="muestra-evento__mazo" role="group" aria-label={`${cantidad} cartas de evento barajándose`}>
-            {Array.from({ length: cantidad }, (_, indice) => {
+            {Array.from({ length: cantidad }, /* Completa este paso con los datos recibidos por la operación. */ (_, indice) => {
               const izquierda = indice < cantidad / 2;
               const estilo = {
                 '--indice': indice,

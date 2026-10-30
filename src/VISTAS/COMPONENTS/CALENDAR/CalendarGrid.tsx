@@ -1,3 +1,4 @@
+/* Ordena los días del mes en la grilla de desafíos. */
 import type { CSSProperties } from 'react';
 import type { DayChallenge, CalendarTheme } from './types';
 import { CalendarCell } from './CalendarCell';
@@ -22,6 +23,7 @@ interface CalendarGridProps {
   onCellClick: (item: DayChallenge) => void;
 }
 
+// Ordena los días del mes en la grilla de desafíos.
 export function CalendarGrid({
   challenges,
   loading,
@@ -62,7 +64,7 @@ export function CalendarGrid({
       </div>
 
       <div className="mb-2 grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-[#64748B] sm:gap-2 sm:text-sm" aria-hidden="true">
-        {WEEKDAYS.map((day) => (
+        {WEEKDAYS.map(/* Prepara el resultado de cada elemento. */ (day) => (
           <span key={day} className="min-w-0 py-1">
             {day}
           </span>
@@ -76,10 +78,10 @@ export function CalendarGrid({
         </div>
       ) : (
         <div className="grid grid-cols-7 gap-1 sm:gap-2">
-          {Array.from({ length: leading }, (_, i) => (
+          {Array.from({ length: leading }, /* Completa este paso con los datos recibidos por la operación. */ (_, i) => (
             <span key={`before-${i}`} aria-hidden="true" />
           ))}
-          {challenges.map((item) => (
+          {challenges.map(/* Prepara el resultado de cada elemento. */ (item) => (
             <CalendarCell
               key={item.dateKey}
               item={item}
@@ -88,7 +90,7 @@ export function CalendarGrid({
               onClick={onCellClick}
             />
           ))}
-          {Array.from({ length: trailing }, (_, i) => (
+          {Array.from({ length: trailing }, /* Completa este paso con los datos recibidos por la operación. */ (_, i) => (
             <span key={`after-${i}`} aria-hidden="true" />
           ))}
         </div>
@@ -100,7 +102,7 @@ export function CalendarGrid({
           { label: 'Para jugar', color: theme.pendingBorder },
           { label: 'Completado', color: theme.completedBorder },
           { label: 'Anterior (con puntos)', color: '#94A3B8' },
-        ].map(({ label, color }) => (
+        ].map(/* Prepara el resultado de cada elemento. */ ({ label, color }) => (
           <li key={label} className="flex items-center gap-2">
             <span aria-hidden="true" className="size-2.5 rounded-full" style={{ backgroundColor: color }} />
             {label}

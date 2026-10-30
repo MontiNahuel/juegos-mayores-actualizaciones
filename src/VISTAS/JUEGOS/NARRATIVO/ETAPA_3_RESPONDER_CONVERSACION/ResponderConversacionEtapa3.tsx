@@ -1,3 +1,4 @@
+/* Presenta la charla con los personajes y permite elegir una respuesta. */
 // Conversación de corte: muestra los personajes, sus frases y las decisiones.
 import { useEffect, useRef, useState } from 'react';
 import TituloConversacion from '../COMPARTIDOS/TITULO_NARRATIVO/TituloConversacion';
@@ -12,7 +13,7 @@ const FONDO_DE_CORTE = '/assets/narrative/conversation-hall.png';
 const imagenDe = (imagen: string) => imagenPrecargada(/^(https?:|blob:|data:)/.test(imagen) ? imagen : `${API_URL}${imagen || ''}`);
 
 // Genera iniciales si no existe el retrato.
-const iniciales = (nombre: string) => nombre?.split(' ').map((parte) => parte[0]).join('').slice(0, 2) || '?';
+const iniciales = (nombre: string) => nombre?.split(' ').map(/* Prepara el resultado de cada elemento. */ (parte) => parte[0]).join('').slice(0, 2) || '?';
 
 // Muestra ambos retratos o solamente al personaje que habla.
 function Retrato({ personaje, activo, lado, solo }: any) {
@@ -26,7 +27,7 @@ function Retrato({ personaje, activo, lado, solo }: any) {
     >
       <div className={`relative flex h-[70svh] min-h-[32rem] w-full shrink-0 items-end drop-shadow-[0_6px_12px_rgba(0,0,0,0.35)] transition duration-700 ease-out ${solo ? lado === 'derecha' ? 'translate-x-[2%] justify-end' : '-translate-x-[2%] justify-center' : 'justify-center'}`}>
         <span className="absolute inset-0 grid place-items-center text-4xl font-semibold text-amber-100/70">{iniciales(personaje.nombre)}</span>
-        {personaje.imagen && <img className="relative z-10 block h-full w-auto max-w-none object-contain object-bottom" src={imagenDe(personaje.imagen)} alt={personaje.nombre} onError={(e) => e.currentTarget.classList.add('hidden')} />}
+        {personaje.imagen && <img className="relative z-10 block h-full w-auto max-w-none object-contain object-bottom" src={imagenDe(personaje.imagen)} alt={personaje.nombre} onError={/* Responde a error desde este control. */ (e) => e.currentTarget.classList.add('hidden')} />}
       </div>
     </div>
   );
@@ -40,32 +41,34 @@ export default function ResponderConversacionEtapa3({ conversacion, personajes, 
   const escena = useRef<HTMLDivElement>(null);
 
   // Detecta cuándo se superponen los retratos y deja visible uno solo.
-  useEffect(() => {
+  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
     const elemento = escena.current!;
+    // Mide el espacio para acomodar el diálogo en pantalla.
     const medir = () => {
       const imagenes = [...elemento.querySelectorAll('img')];
-      if (imagenes.length < 2 || imagenes.some((img) => !img.naturalHeight)) return;
+      if (imagenes.length < 2 || imagenes.some(/* Comprueba si algún elemento cumple esta condición. */ (img) => !img.naturalHeight)) return;
       const estilo = getComputedStyle(elemento);
       const ancho = elemento.clientWidth - parseFloat(estilo.paddingLeft) - parseFloat(estilo.paddingRight);
-      const alto = Math.max(...imagenes.map((img) => img.clientHeight));
+      const alto = Math.max(...imagenes.map(/* Prepara el resultado de cada elemento. */ (img) => img.clientHeight));
       const maximo = parseFloat(getComputedStyle(imagenes[0].parentElement!.parentElement!).maxWidth);
       const separacion = ancho - Math.min(ancho / 2, maximo);
-      setSolo(imagenes.reduce((total, img) => total + alto * img.naturalWidth / img.naturalHeight, 0) >= separacion * 2);
+      setSolo(imagenes.reduce(/* Acumula los valores en un solo resultado. */ (total, img) => total + alto * img.naturalWidth / img.naturalHeight, 0) >= separacion * 2);
     };
     const observador = new ResizeObserver(medir);
     observador.observe(elemento);
     elemento.addEventListener('load', medir, true);
-    return () => { observador.disconnect(); elemento.removeEventListener('load', medir, true); };
+    return /* Libera los recursos de este efecto cuando deja de usarse. */ () => { observador.disconnect(); elemento.removeEventListener('load', medir, true); };
   }, []);
 
   // Resuelve participantes, hablante y frase actual usando la corte existente.
-  const buscarPersonaje = (id: string) => personajes.find((p: any) => p._id === id || p.id === id);
-  const actores = conversacion.requisitos.map(({ personajeId }: any) => buscarPersonaje(personajeId)).filter(Boolean);
+  const buscarPersonaje = (id: string) => personajes.find(/* Busca el primer elemento que cumple esta condición. */ (p: any) => p._id === id || p.id === id);
+  const actores = conversacion.requisitos.map(/* Prepara el resultado de cada elemento. */ ({ personajeId }: any) => buscarPersonaje(personajeId)).filter(Boolean);
   const participantes = actores.length ? actores : personajes.slice(0, 2);
   const frase = conversacion.frases[paso];
   const quienHabla = buscarPersonaje(frase?.personajeId) || participantes[paso % participantes.length] || { nombre: 'Consejero' };
   const ultimoDialogo = paso >= conversacion.frases.length - 1;
   const idActivo = quienHabla.id || quienHabla._id;
+  // Devuelve el texto visible del nodo actual de la conversación.
   const texto = (valor: string) => modoSimple ? ocultarCambiosNumericos(valor) : valor;
   const fondo = conversacion.imagen ? imagenDe(conversacion.imagen) : imagenPrecargada(FONDO_DE_CORTE);
 
@@ -77,8 +80,8 @@ export default function ResponderConversacionEtapa3({ conversacion, personajes, 
           src={fondo}
           alt=""
           decoding="sync"
-          onLoad={() => setFondoListo(true)}
-          onError={(e) => {
+          onLoad={/* Responde a load desde este control. */ () => setFondoListo(true)}
+          onError={/* Responde a error desde este control. */ (e) => {
             const respaldo = imagenPrecargada(FONDO_DE_CORTE);
             if (e.currentTarget.getAttribute('src') !== respaldo) e.currentTarget.src = respaldo;
             else setFondoListo(true);
@@ -99,10 +102,11 @@ export default function ResponderConversacionEtapa3({ conversacion, personajes, 
           titulo={quienHabla.nombre}
           texto={texto(frase?.texto)}
           indicacion={!ultimoDialogo ? 'Tocá para continuar ›' : undefined}
-          onContinuar={!ultimoDialogo ? () => setPaso((actual) => actual + 1) : undefined}
-          opciones={ultimoDialogo ? conversacion.decisiones.map((decision: any) => ({
+          onContinuar={!ultimoDialogo ? /* Completa este paso con los datos recibidos por la operación. */ () => setPaso(/* Actualiza paso a partir del valor anterior. */ (actual) => actual + 1) : undefined}
+          opciones={ultimoDialogo ? conversacion.decisiones.map(/* Prepara el resultado de cada elemento. */ (decision: any) => ({
             id: decision.opcion,
             texto: texto(decision.texto),
+            // Registra la opción elegida y avanza la historia.
             onElegir: () => onElegir(decision),
           })) : []}
         />

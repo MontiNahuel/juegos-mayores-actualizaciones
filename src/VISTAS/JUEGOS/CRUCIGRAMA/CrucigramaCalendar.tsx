@@ -1,8 +1,9 @@
+/* Conecta el calendario con los desafíos y dificultades del crucigrama. */
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DailyChallengeCalendar, type DayChallenge } from '../../COMPONENTS/CALENDAR';
 import { DifficultyModal, type DifficultyOptionConfig } from '../../COMPONENTS/DIFICULTAD';
-import { CrucigramaCompletedModal } from './CrucigramaCompletedModal';
+import { CompletedModal } from '../../COMPONENTS/MODALS/CompletedModal';
 import { loadActiveCrucigrama, type CrucigramaDifficulty } from './crucigramaStorage';
 
 export type { DayChallenge };
@@ -38,10 +39,12 @@ const DIFFICULTY_BY_LEVEL: Record<number, CrucigramaDifficulty> = {
   2: 'dificil',
 };
 
+// Conecta el calendario con los desafíos y dificultades del crucigrama.
 export const CrucigramaCalendar: React.FC = () => {
   const navigate = useNavigate();
   const [selectedChallengeForPlay, setSelectedChallengeForPlay] = useState<DayChallenge | null>(null);
 
+  // Prepara el desafío elegido antes de abrir el juego.
   const handlePlayChallenge = (challenge: DayChallenge) => {
     // Si ya existe una partida en curso guardada, reanudar sin volver a preguntar la dificultad
     if (loadActiveCrucigrama(challenge.dateKey, 'facil')) {
@@ -60,6 +63,7 @@ export const CrucigramaCalendar: React.FC = () => {
     setSelectedChallengeForPlay(challenge);
   };
 
+  // Abre el juego con la dificultad que eligió el jugador.
   const handleSelectDifficulty = (level: number) => {
     if (!selectedChallengeForPlay) return;
 
@@ -84,8 +88,8 @@ export const CrucigramaCalendar: React.FC = () => {
         heroSubtitle="Elegí tu dificultad: crucigrama 7x7 fácil o 11x11 difícil con pistas claras."
         difficulty="facil"
         onPlayChallenge={handlePlayChallenge}
-        renderCompletedModal={(challenge, onClose) => (
-          <CrucigramaCompletedModal challenge={challenge} onClose={onClose} />
+        renderCompletedModal={/* Responde a render completed modal desde este control. */ (challenge, onClose) => (
+          <CompletedModal gameId="crucigrama" challenge={challenge} onClose={onClose} />
         )}
       />
 
@@ -97,7 +101,7 @@ export const CrucigramaCalendar: React.FC = () => {
           categoryBadge="Cuaderno de Mente Activa"
           options={CRUCIGRAMA_DIFFICULTY_OPTIONS}
           onSelectDifficulty={handleSelectDifficulty}
-          onClose={() => setSelectedChallengeForPlay(null)}
+          onClose={/* Responde a close desde este control. */ () => setSelectedChallengeForPlay(null)}
         />
       )}
     </>

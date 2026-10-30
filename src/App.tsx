@@ -1,7 +1,9 @@
+/* Arma la aplicación con sus pantallas y las ventanas de tienda y pistas. */
 import { IonApp, setupIonicReact } from '@ionic/react';
 import AppRoutes from './VISTAS/routes';
 import { PlayerEconomyProvider } from './context/PlayerEconomyContext';
-import MiniTiendaModal from './VISTAS/COMPONENTS/MiniTiendaModal';
+import MiniTiendaModal from './VISTAS/COMPONENTS/MODALS/MiniTiendaModal';
+import ComprarPistaModal from './VISTAS/COMPONENTS/MODALS/ComprarPistaModal';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -35,11 +37,13 @@ import './theme/variables.css';
 
 setupIonicReact();
 
+// Arma la aplicación con sus pantallas y las ventanas de tienda y pistas.
 const App: React.FC = () => (
   <IonApp>
     <PlayerEconomyProvider>
       <AppRoutes />
       <MiniTiendaModal />
+      <ComprarPistaModal />
     </PlayerEconomyProvider>
   </IonApp>
 );

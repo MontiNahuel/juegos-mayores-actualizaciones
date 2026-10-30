@@ -1,3 +1,4 @@
+/* Guía la elección de personajes y cartas antes de tomar decisiones. */
 // Permite elegir las cartas de preparacion o la carta mensual.
 import { useLayoutEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
@@ -10,18 +11,18 @@ export default function SeleccionarCartasEtapa0y1({ titulo, descripcion, cartas,
   const [seleccion, setSeleccion] = useState<any[]>([]);
   const [confirmando, setConfirmando] = useState(false);
   const mazo = useRef<HTMLDivElement>(null);
-  const tanda = `${titulo}:${cartas.map((carta: any) => carta.id).join(',')}`;
+  const tanda = `${titulo}:${cartas.map(/* Prepara el resultado de cada elemento. */ (carta: any) => carta.id).join(',')}`;
 
   // Reparte antes de pintar cada tanda nueva; seleccionar una carta no reinicia el shuffle.
-  useLayoutEffect(() => shuffleCartas(mazo.current), [tanda]);
+  useLayoutEffect(/* Ajusta la vista antes de mostrar el cambio. */ () => shuffleCartas(mazo.current), [tanda]);
 
   // Agrega o quita una carta sin superar la cantidad pedida.
   const seleccionar = (carta: any) => {
-    const esta = seleccion.some((item) => item.id === carta.id);
+    const esta = seleccion.some(/* Comprueba si algún elemento cumple esta condición. */ (item) => item.id === carta.id);
 
     setSeleccion(
       esta
-        ? seleccion.filter((item) => item.id !== carta.id)
+        ? seleccion.filter(/* Conserva los elementos que cumplen esta condición. */ (item) => item.id !== carta.id)
         : seleccion.length < cantidad
           ? [...seleccion, carta]
           : seleccion
@@ -57,8 +58,8 @@ export default function SeleccionarCartasEtapa0y1({ titulo, descripcion, cartas,
       </header>
 
       <div ref={mazo} className="mx-auto my-4 grid w-[clamp(150px,55vw,210px)] grid-cols-1 items-start justify-center gap-3 md:w-full md:[grid-template-columns:repeat(var(--columnas),minmax(0,1fr))] md:[max-width:min(100%,calc(var(--columnas)*min(220px,(100svh-240px)*2/3)))]">
-        {cartas.map((carta: any) => {
-          const selected = seleccion.some((item) => item.id === carta.id);
+        {cartas.map(/* Prepara el resultado de cada elemento. */ (carta: any) => {
+          const selected = seleccion.some(/* Comprueba si algún elemento cumple esta condición. */ (item) => item.id === carta.id);
 
           return (
             <CartaSeleccionableEtapa0y1
@@ -66,7 +67,7 @@ export default function SeleccionarCartasEtapa0y1({ titulo, descripcion, cartas,
               carta={carta}
               selected={selected}
               disabled={confirmando || (!selected && seleccion.length === cantidad)}
-              onSelect={() => seleccionar(carta)}
+              onSelect={/* Responde a select desde este control. */ () => seleccionar(carta)}
             />
           );
         })}

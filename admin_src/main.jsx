@@ -1,3 +1,4 @@
+/* Arranca React y lo conecta con la página donde se muestra la aplicación. */
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';

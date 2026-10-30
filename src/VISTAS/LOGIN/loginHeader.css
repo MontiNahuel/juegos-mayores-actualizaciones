@@ -1,0 +1,168 @@
+/* Acomoda el saludo y las acciones de cuenta del encabezado. */
+.login-header-layout {
+  display: flex;
+  gap: 12px;
+}
+
+.login-header-signin[hidden],
+.login-header-logout[hidden] {
+  display: none !important;
+}
+
+.login-header-layout--titled {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, auto) minmax(0, 1fr);
+}
+
+.login-header-layout--titled > :last-child {
+  justify-self: end;
+}
+
+.login-header-lives-left {
+  display: none;
+}
+
+.login-header-lives-right {
+  display: inline-flex;
+}
+
+.login-header-title {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  margin: 0;
+  text-align: center;
+  font-size: clamp(18px, 2.4vw, 22px);
+  font-weight: 900;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.login-header-home {
+  display: flex;
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.login-header-home:focus-visible {
+  outline: 2px solid #294c6b;
+  outline-offset: 4px;
+}
+
+@media (max-width: 799px) {
+  .login-header-logout {
+    display: none !important;
+  }
+
+  .login-header-layout--compact .login-header-greeting {
+    display: none;
+  }
+
+}
+
+@media (max-width: 639px) {
+  .login-header-layout--titled .login-header-home {
+    display: flex;
+  }
+
+  .login-header-layout--titled .login-header-logo {
+    display: block;
+  }
+
+  .login-header-layout--titled.login-header-layout--authenticated {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .login-header-layout--titled.login-header-layout--authenticated .login-header-title {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    white-space: normal;
+  }
+}
+
+@media (max-width: 399px) {
+  .login-header-layout--titled {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .login-header-layout--titled .login-header-title {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    white-space: normal;
+  }
+}
+
+@media (min-width: 800px) {
+  .login-header-layout--titled {
+    grid-template-columns: minmax(0, 1fr) minmax(0, auto) minmax(0, 1fr);
+  }
+
+  .login-header-title {
+    grid-column: 2;
+    grid-row: 1;
+    max-width: 240px;
+  }
+}
+
+@media (max-width: 639px) {
+  .login-header-home,
+  .login-header-logo,
+  .login-header-lives-label,
+  .login-header-lives-plus,
+  .login-header-signin > span {
+    display: none;
+  }
+
+  .login-header-signin {
+    justify-content: center;
+    width: 42px;
+    padding: 8px !important;
+  }
+
+  .login-header-editor,
+  .login-header-logout {
+    display: none !important;
+  }
+
+  .login-header-stat-label {
+    display: none;
+  }
+
+  .login-header-layout--menu .login-header-greeting {
+    display: none;
+  }
+
+  .login-header-layout--menu .login-header-logo {
+    display: block;
+  }
+}
+
+.login-header-layout.login-header-layout--game {
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+}
+
+.login-header-layout--game .login-header-home {
+  display: flex;
+}
+
+.login-header-layout--game .login-header-greeting {
+  display: none;
+}
+
+.login-header-game-title {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+}
+
+.login-header-layout--game .login-header-title {
+  max-width: none;
+  white-space: normal;
+  overflow: visible;
+}

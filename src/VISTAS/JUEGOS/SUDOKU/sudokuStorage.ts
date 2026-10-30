@@ -1,3 +1,4 @@
+/* Guarda el Sudoku en el navegador para seguirlo después de recargar. */
 /**
  * sudokuStorage.ts
  * Manejador de persistencia local (localStorage) para el estado en tiempo real de Sudoku.
@@ -37,7 +38,8 @@ export function getSudokuLocalProgress(dateKey: string): SudokuSavedProgress | n
     const raw = localStorage.getItem(key);
     if (!raw) return null;
 
-    const parsed = JSON.parse(raw);
+    const progress = JSON.parse(raw);
+    const parsed = progress.gameData?.cells ? { ...progress.gameData, status: progress.status, date: dateKey } : progress;
     if (
       parsed &&
       parsed.status === 'in_progress' &&

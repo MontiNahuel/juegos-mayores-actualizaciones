@@ -1,3 +1,4 @@
+/* Permite crear, buscar y editar cartas narrativas. */
 import { useState, useEffect } from 'react';
 import {
   LayersIcon,
@@ -15,6 +16,7 @@ import {
 } from '../Icons';
 import ImageUploadField from './ImageUploadField';
 
+// Permite crear, buscar y editar cartas narrativas.
 export default function CartasTab({ universos = [] }) {
   const [cartas, setCartas] = useState([]);
   const [universoFiltro, setUniversoFiltro] = useState('');
@@ -39,6 +41,7 @@ export default function CartasTab({ universos = [] }) {
   const [tagsInput, setTagsInput] = useState('');
   const [efectos, setEfectos] = useState([]);
 
+  // Carga cartas con los datos de este paso.
   const cargarCartas = async (uId = universoFiltro) => {
     setCargando(true);
     setError('');
@@ -61,10 +64,11 @@ export default function CartasTab({ universos = [] }) {
     }
   };
 
-  useEffect(() => {
+  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
     cargarCartas(universoFiltro);
   }, [universoFiltro]);
 
+  // Abre el formulario vacío para crear un registro.
   const abrirModalNuevo = () => {
     setEsEdicion(false);
     setId('card_' + Date.now().toString(36));
@@ -80,6 +84,7 @@ export default function CartasTab({ universos = [] }) {
     setModalAbierto(true);
   };
 
+  // Carga el registro en el formulario de edición.
   const abrirModalEditar = (c) => {
     setEsEdicion(true);
     setId(c._id || c.id);
@@ -95,6 +100,7 @@ export default function CartasTab({ universos = [] }) {
     setModalAbierto(true);
   };
 
+  // Agrega efecto con los datos de este paso.
   const handleAgregarEfecto = () => {
     setEfectos([
       ...efectos,
@@ -106,6 +112,7 @@ export default function CartasTab({ universos = [] }) {
     ]);
   };
 
+  // Actualiza efecto con los datos de este paso.
   const handleCambiarEfecto = (index, campo, valor) => {
     const nuevos = [...efectos];
     if (campo === 'disparador') {
@@ -116,10 +123,12 @@ export default function CartasTab({ universos = [] }) {
     setEfectos(nuevos);
   };
 
+  // Quita efecto con los datos de este paso.
   const handleEliminarEfecto = (index) => {
-    setEfectos(efectos.filter((_, idx) => idx !== index));
+    setEfectos(efectos.filter(/* Conserva los elementos que cumplen esta condición. */ (_, idx) => idx !== index));
   };
 
+  // Valida el formulario y guarda los cambios.
   const handleGuardar = async (e) => {
     e.preventDefault();
     if (!id.trim() || !nombre.trim() || !universoId.trim()) {
@@ -133,7 +142,7 @@ export default function CartasTab({ universos = [] }) {
 
     const tags = tagsInput
       .split(',')
-      .map((t) => t.trim().toLowerCase())
+      .map(/* Prepara el resultado de cada elemento. */ (t) => t.trim().toLowerCase())
       .filter(Boolean);
 
     const payload = {
@@ -144,7 +153,7 @@ export default function CartasTab({ universos = [] }) {
       descripcion: descripcion.trim(),
       imagen: imagen.trim() || '/assets/narrative/cartas/default.webp',
       tags: tags,
-      efectos: efectos.map((ef) => ({
+      efectos: efectos.map(/* Prepara el resultado de cada elemento. */ (ef) => ({
         disparador: ef.disparador,
         condiciones: [],
         accion: {
@@ -170,7 +179,7 @@ export default function CartasTab({ universos = [] }) {
       }
 
       setExito('Carta guardada correctamente.');
-      setTimeout(() => {
+      setTimeout(/* Ejecuta este paso cuando se cumple la espera. */ () => {
         setModalAbierto(false);
         cargarCartas(universoFiltro);
       }, 600);
@@ -182,6 +191,7 @@ export default function CartasTab({ universos = [] }) {
     }
   };
 
+  // Pide borrar el registro y actualiza la lista.
   const handleEliminar = async (cId) => {
     if (!confirm(`¿Estás seguro de eliminar la carta "${cId}"?`)) return;
     try {
@@ -200,7 +210,7 @@ export default function CartasTab({ universos = [] }) {
     }
   };
 
-  const cartasFiltradas = cartas.filter((c) => {
+  const cartasFiltradas = cartas.filter(/* Conserva los elementos que cumplen esta condición. */ (c) => {
     if (categoriaFiltro !== 'TODAS' && c.categoria !== categoriaFiltro) {
       return false;
     }
@@ -209,10 +219,11 @@ export default function CartasTab({ universos = [] }) {
     return (
       (c.nombre && c.nombre.toLowerCase().includes(q)) ||
       (c._id && c._id.toLowerCase().includes(q)) ||
-      (c.tags && c.tags.some((t) => t.toLowerCase().includes(q)))
+      (c.tags && c.tags.some(/* Comprueba si algún elemento cumple esta condición. */ (t) => t.toLowerCase().includes(q)))
     );
   });
 
+  // Elige el estilo de la etiqueta según la categoría de la carta.
   const getCategoriaBadge = (cat) => {
     switch (cat) {
       case 'item':
@@ -236,11 +247,11 @@ export default function CartasTab({ universos = [] }) {
             <FilterIcon size={14} className="text-slate-500" />
             <select
               value={universoFiltro}
-              onChange={(e) => setUniversoFiltro(e.target.value)}
+              onChange={/* Responde a change desde este control. */ (e) => setUniversoFiltro(e.target.value)}
               className="bg-transparent font-bold text-slate-800 focus:outline-none cursor-pointer"
             >
               <option value="">Todos los Universos</option>
-              {universos.map((u) => (
+              {universos.map(/* Prepara el resultado de cada elemento. */ (u) => (
                 <option key={u._id || u.id} value={u._id || u.id}>
                   {u.nombre}
                 </option>
@@ -250,11 +261,11 @@ export default function CartasTab({ universos = [] }) {
 
           {/* Selector de Categoría */}
           <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-bold">
-            {['TODAS', 'item', 'bonus', 'personaje'].map((cat) => (
+            {['TODAS', 'item', 'bonus', 'personaje'].map(/* Prepara el resultado de cada elemento. */ (cat) => (
               <button
                 key={cat}
                 type="button"
-                onClick={() => setCategoriaFiltro(cat)}
+                onClick={/* Responde a click desde este control. */ () => setCategoriaFiltro(cat)}
                 className={`px-2.5 py-1 rounded-lg transition cursor-pointer capitalize ${
                   categoriaFiltro === cat ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'
                 }`}
@@ -270,7 +281,7 @@ export default function CartasTab({ universos = [] }) {
             <input
               type="text"
               value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
+              onChange={/* Responde a change desde este control. */ (e) => setBusqueda(e.target.value)}
               placeholder="Buscar por nombre o tag..."
               className="pl-8 pr-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:border-[#002B5E] w-48 sm:w-60"
             />
@@ -280,7 +291,7 @@ export default function CartasTab({ universos = [] }) {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => cargarCartas(universoFiltro)}
+            onClick={/* Responde a click desde este control. */ () => cargarCartas(universoFiltro)}
             disabled={cargando}
             className="p-2 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-600 transition cursor-pointer"
             title="Refrescar lista"
@@ -310,7 +321,7 @@ export default function CartasTab({ universos = [] }) {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {cartasFiltradas.map((c) => {
+          {cartasFiltradas.map(/* Prepara el resultado de cada elemento. */ (c) => {
             const cid = c._id || c.id;
             return (
               <div
@@ -325,7 +336,7 @@ export default function CartasTab({ universos = [] }) {
                         <img
                           src={c.imagen || '/assets/narrative/cartas/default.webp'}
                           alt={c.nombre}
-                          onError={(e) => {
+                          onError={/* Responde a error desde este control. */ (e) => {
                             e.target.onerror = null;
                             e.target.src = '/assets/narrative/cartas/default.webp';
                           }}
@@ -348,7 +359,7 @@ export default function CartasTab({ universos = [] }) {
                     <div className="flex items-center gap-1">
                       <button
                         type="button"
-                        onClick={() => abrirModalEditar(c)}
+                        onClick={/* Responde a click desde este control. */ () => abrirModalEditar(c)}
                         className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 transition cursor-pointer"
                         title="Editar carta"
                       >
@@ -356,7 +367,7 @@ export default function CartasTab({ universos = [] }) {
                       </button>
                       <button
                         type="button"
-                        onClick={() => handleEliminar(cid)}
+                        onClick={/* Responde a click desde este control. */ () => handleEliminar(cid)}
                         className="p-1.5 rounded-lg border border-rose-200 bg-rose-50/50 hover:bg-rose-100 text-rose-600 transition cursor-pointer"
                         title="Eliminar carta"
                       >
@@ -376,7 +387,7 @@ export default function CartasTab({ universos = [] }) {
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                         Efecto Pasivo:
                       </span>
-                      {c.efectos.map((ef, idx) => {
+                      {c.efectos.map(/* Prepara el resultado de cada elemento. */ (ef, idx) => {
                         const a = ef.accion || {};
                         return (
                           <div
@@ -398,7 +409,7 @@ export default function CartasTab({ universos = [] }) {
                 {/* Tags */}
                 <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
                   <div className="flex flex-wrap gap-1">
-                    {(c.tags || []).map((t, idx) => (
+                    {(c.tags || []).map(/* Prepara el resultado de cada elemento. */ (t, idx) => (
                       <span
                         key={idx}
                         className="px-2 py-0.5 rounded-md bg-slate-100 font-mono text-[10px] text-slate-600 font-semibold"
@@ -435,7 +446,7 @@ export default function CartasTab({ universos = [] }) {
 
               <button
                 type="button"
-                onClick={() => setModalAbierto(false)}
+                onClick={/* Responde a click desde este control. */ () => setModalAbierto(false)}
                 className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer"
               >
                 <XIcon size={18} />
@@ -465,7 +476,7 @@ export default function CartasTab({ universos = [] }) {
                   <input
                     type="text"
                     value={id}
-                    onChange={(e) => setId(e.target.value)}
+                    onChange={/* Responde a change desde este control. */ (e) => setId(e.target.value)}
                     disabled={esEdicion}
                     placeholder="ej. card_sello_real"
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-mono font-semibold text-slate-800 disabled:bg-slate-100 disabled:text-slate-500 focus:outline-none focus:border-[#002B5E]"
@@ -478,10 +489,10 @@ export default function CartasTab({ universos = [] }) {
                   </label>
                   <select
                     value={universoId}
-                    onChange={(e) => setUniversoId(e.target.value)}
+                    onChange={/* Responde a change desde este control. */ (e) => setUniversoId(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-800 focus:outline-none focus:border-[#002B5E]"
                   >
-                    {universos.map((u) => (
+                    {universos.map(/* Prepara el resultado de cada elemento. */ (u) => (
                       <option key={u._id || u.id} value={u._id || u.id}>
                         {u.nombre}
                       </option>
@@ -495,7 +506,7 @@ export default function CartasTab({ universos = [] }) {
                   </label>
                   <select
                     value={categoria}
-                    onChange={(e) => setCategoria(e.target.value)}
+                    onChange={/* Responde a change desde este control. */ (e) => setCategoria(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-800 focus:outline-none focus:border-[#002B5E]"
                   >
                     <option value="item">Ítem (Herramienta / Recurso)</option>
@@ -512,7 +523,7 @@ export default function CartasTab({ universos = [] }) {
                 <input
                   type="text"
                   value={nombre}
-                  onChange={(e) => setNombre(e.target.value)}
+                  onChange={/* Responde a change desde este control. */ (e) => setNombre(e.target.value)}
                   placeholder="ej. Sello Real de la Corona"
                   className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-800 focus:outline-none focus:border-[#002B5E]"
                 />
@@ -525,7 +536,7 @@ export default function CartasTab({ universos = [] }) {
                 <textarea
                   rows={2}
                   value={descripcion}
-                  onChange={(e) => setDescripcion(e.target.value)}
+                  onChange={/* Responde a change desde este control. */ (e) => setDescripcion(e.target.value)}
                   placeholder="Permite emitir decretos supremos y confiscar bienes con autoridad real..."
                   className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:border-[#002B5E]"
                 />
@@ -546,7 +557,7 @@ export default function CartasTab({ universos = [] }) {
                 <input
                   type="text"
                   value={tagsInput}
-                  onChange={(e) => setTagsInput(e.target.value)}
+                  onChange={/* Responde a change desde este control. */ (e) => setTagsInput(e.target.value)}
                   placeholder="ej. sello_real, autoridad, diplomacia"
                   className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-mono text-slate-800 focus:outline-none focus:border-[#002B5E]"
                 />
@@ -569,14 +580,14 @@ export default function CartasTab({ universos = [] }) {
                 </div>
 
                 <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                  {efectos.map((ef, idx) => (
+                  {efectos.map(/* Prepara el resultado de cada elemento. */ (ef, idx) => (
                     <div
                       key={idx}
                       className="p-3 rounded-xl border border-slate-200 bg-slate-50/60 flex flex-col sm:flex-row items-center gap-2 text-xs"
                     >
                       <select
                         value={ef.disparador}
-                        onChange={(e) => handleCambiarEfecto(idx, 'disparador', e.target.value)}
+                        onChange={/* Responde a change desde este control. */ (e) => handleCambiarEfecto(idx, 'disparador', e.target.value)}
                         className="w-full sm:w-32 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white font-bold text-[11px] text-slate-800"
                       >
                         <option value="al_obtener">Al Obtener</option>
@@ -586,7 +597,7 @@ export default function CartasTab({ universos = [] }) {
 
                       <select
                         value={ef.accion?.tipo || 'modificar_recurso'}
-                        onChange={(e) => handleCambiarEfecto(idx, 'tipo', e.target.value)}
+                        onChange={/* Responde a change desde este control. */ (e) => handleCambiarEfecto(idx, 'tipo', e.target.value)}
                         className="w-full sm:w-36 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white font-bold text-[11px] text-slate-800"
                       >
                         <option value="modificar_recurso">Modificar Recurso</option>
@@ -597,7 +608,7 @@ export default function CartasTab({ universos = [] }) {
                         <input
                           type="text"
                           value={ef.accion?.tag || ''}
-                          onChange={(e) => handleCambiarEfecto(idx, 'tag', e.target.value)}
+                          onChange={/* Responde a change desde este control. */ (e) => handleCambiarEfecto(idx, 'tag', e.target.value)}
                           placeholder="Nombre del tag..."
                           className="w-full sm:flex-1 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-[11px] font-mono"
                         />
@@ -605,7 +616,7 @@ export default function CartasTab({ universos = [] }) {
                         <div className="flex items-center gap-2 w-full sm:flex-1">
                           <select
                             value={ef.accion?.clave || 'oro'}
-                            onChange={(e) => handleCambiarEfecto(idx, 'clave', e.target.value)}
+                            onChange={/* Responde a change desde este control. */ (e) => handleCambiarEfecto(idx, 'clave', e.target.value)}
                             className="w-24 px-2 py-1.5 rounded-lg border border-slate-200 bg-white font-bold text-[11px] text-slate-800"
                           >
                             <option value="oro">Oro</option>
@@ -616,7 +627,7 @@ export default function CartasTab({ universos = [] }) {
                           <input
                             type="number"
                             value={ef.accion?.valor ?? 10}
-                            onChange={(e) => handleCambiarEfecto(idx, 'valor', parseFloat(e.target.value))}
+                            onChange={/* Responde a change desde este control. */ (e) => handleCambiarEfecto(idx, 'valor', parseFloat(e.target.value))}
                             className="w-20 px-2 py-1.5 rounded-lg border border-slate-200 bg-white text-[11px] font-bold text-center"
                           />
                         </div>
@@ -624,7 +635,7 @@ export default function CartasTab({ universos = [] }) {
 
                       <button
                         type="button"
-                        onClick={() => handleEliminarEfecto(idx)}
+                        onClick={/* Responde a click desde este control. */ () => handleEliminarEfecto(idx)}
                         className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer ml-auto"
                         title="Quitar efecto"
                       >
@@ -639,7 +650,7 @@ export default function CartasTab({ universos = [] }) {
               <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-2">
                 <button
                   type="button"
-                  onClick={() => setModalAbierto(false)}
+                  onClick={/* Responde a click desde este control. */ () => setModalAbierto(false)}
                   className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition cursor-pointer"
                 >
                   Cancelar

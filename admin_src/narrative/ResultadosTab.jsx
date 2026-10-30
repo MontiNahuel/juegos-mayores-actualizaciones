@@ -1,3 +1,4 @@
+/* Permite editar resultados de eventos y efectos en la partida. */
 import { useState, useEffect } from 'react';
 import {
   SparklesIcon,
@@ -15,6 +16,7 @@ import {
 } from '../Icons';
 import ImageUploadField from './ImageUploadField';
 
+// Permite editar resultados de eventos y efectos en la partida.
 export default function ResultadosTab({ universos = [], personajes = [] }) {
   const [resultados, setResultados] = useState([]);
   const [universoFiltro, setUniversoFiltro] = useState('');
@@ -39,6 +41,7 @@ export default function ResultadosTab({ universos = [], personajes = [] }) {
   const [efectos, setEfectos] = useState([]);
   const [afinidades, setAfinidades] = useState([]);
 
+  // Carga resultados con los datos de este paso.
   const cargarResultados = async (uId = universoFiltro) => {
     setCargando(true);
     setError('');
@@ -61,10 +64,11 @@ export default function ResultadosTab({ universos = [], personajes = [] }) {
     }
   };
 
-  useEffect(() => {
+  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
     cargarResultados(universoFiltro);
   }, [universoFiltro]);
 
+  // Abre el formulario vacío para crear un registro.
   const abrirModalNuevo = () => {
     setEsEdicion(false);
     setId('res_' + Date.now().toString(36));
@@ -80,6 +84,7 @@ export default function ResultadosTab({ universos = [], personajes = [] }) {
     setModalAbierto(true);
   };
 
+  // Carga el registro en el formulario de edición.
   const abrirModalEditar = (r) => {
     setEsEdicion(true);
     setId(r._id || r.id);
@@ -90,14 +95,14 @@ export default function ResultadosTab({ universos = [], personajes = [] }) {
     setTipoResultado(r.tipo_resultado || 'positivo');
 
     // Mapear efectos existentes
-    const efs = (r.efectos || []).map((ef) => ({
+    const efs = (r.efectos || []).map(/* Prepara el resultado de cada elemento. */ (ef) => ({
       clave: ef.accion?.clave || 'oro',
       valor: ef.accion?.valor ?? 10,
     }));
     setEfectos(efs.length > 0 ? efs : []);
 
     // Mapear afinidades existentes
-    const afs = (r.impacto_afinidad || []).map((af) => ({
+    const afs = (r.impacto_afinidad || []).map(/* Prepara el resultado de cada elemento. */ (af) => ({
       personaje_id: af.personaje_id,
       delta: af.delta,
     }));
@@ -108,35 +113,42 @@ export default function ResultadosTab({ universos = [], personajes = [] }) {
     setModalAbierto(true);
   };
 
+  // Agrega efecto con los datos de este paso.
   const handleAgregarEfecto = () => {
     setEfectos([...efectos, { clave: 'pueblo', valor: 10 }]);
   };
 
+  // Actualiza efecto con los datos de este paso.
   const handleCambiarEfecto = (idx, campo, valor) => {
     const nuevos = [...efectos];
     nuevos[idx][campo] = valor;
     setEfectos(nuevos);
   };
 
+  // Quita efecto con los datos de este paso.
   const handleEliminarEfecto = (idx) => {
-    setEfectos(efectos.filter((_, i) => i !== idx));
+    setEfectos(efectos.filter(/* Conserva los elementos que cumplen esta condición. */ (_, i) => i !== idx));
   };
 
+  // Agrega afinidad con los datos de este paso.
   const handleAgregarAfinidad = () => {
     const defaultPj = personajes[0]?._id || personajes[0]?.id || 'pj_canciller_elena';
     setAfinidades([...afinidades, { personaje_id: defaultPj, delta: 10 }]);
   };
 
+  // Actualiza afinidad con los datos de este paso.
   const handleCambiarAfinidad = (idx, campo, valor) => {
     const nuevos = [...afinidades];
     nuevos[idx][campo] = valor;
     setAfinidades(nuevos);
   };
 
+  // Quita afinidad con los datos de este paso.
   const handleEliminarAfinidad = (idx) => {
-    setAfinidades(afinidades.filter((_, i) => i !== idx));
+    setAfinidades(afinidades.filter(/* Conserva los elementos que cumplen esta condición. */ (_, i) => i !== idx));
   };
 
+  // Valida el formulario y guarda los cambios.
   const handleGuardar = async (e) => {
     e.preventDefault();
     if (!id.trim() || !titulo.trim() || !universoId.trim()) {
@@ -155,7 +167,7 @@ export default function ResultadosTab({ universos = [], personajes = [] }) {
       texto: texto.trim(),
       imagen: imagen.trim() || '/assets/narrative/resultados/default.webp',
       tipo_resultado: tipoResultado,
-      efectos: efectos.map((ef) => ({
+      efectos: efectos.map(/* Prepara el resultado de cada elemento. */ (ef) => ({
         disparador: 'al_obtener',
         condiciones: [],
         accion: {
@@ -165,7 +177,7 @@ export default function ResultadosTab({ universos = [], personajes = [] }) {
           tipo_calculo: 'fijo',
         },
       })),
-      impacto_afinidad: afinidades.map((af) => ({
+      impacto_afinidad: afinidades.map(/* Prepara el resultado de cada elemento. */ (af) => ({
         personaje_id: af.personaje_id,
         delta: parseInt(af.delta, 10) || 0,
       })),
@@ -184,7 +196,7 @@ export default function ResultadosTab({ universos = [], personajes = [] }) {
       }
 
       setExito('Resultado guardado correctamente.');
-      setTimeout(() => {
+      setTimeout(/* Ejecuta este paso cuando se cumple la espera. */ () => {
         setModalAbierto(false);
         cargarResultados(universoFiltro);
       }, 600);
@@ -196,6 +208,7 @@ export default function ResultadosTab({ universos = [], personajes = [] }) {
     }
   };
 
+  // Pide borrar el registro y actualiza la lista.
   const handleEliminar = async (rId) => {
     if (!confirm(`¿Estás seguro de eliminar el resultado "${rId}"?`)) return;
     try {
@@ -214,6 +227,7 @@ export default function ResultadosTab({ universos = [], personajes = [] }) {
     }
   };
 
+  // Elige el estilo de la etiqueta según el tipo de resultado.
   const getTipoBadge = (tipo) => {
     switch (tipo) {
       case 'positivo':
@@ -226,7 +240,7 @@ export default function ResultadosTab({ universos = [], personajes = [] }) {
     }
   };
 
-  const resultadosFiltrados = resultados.filter((r) => {
+  const resultadosFiltrados = resultados.filter(/* Conserva los elementos que cumplen esta condición. */ (r) => {
     if (tipoFiltro !== 'TODOS' && r.tipo_resultado !== tipoFiltro) {
       return false;
     }
@@ -249,11 +263,11 @@ export default function ResultadosTab({ universos = [], personajes = [] }) {
             <FilterIcon size={14} className="text-slate-500" />
             <select
               value={universoFiltro}
-              onChange={(e) => setUniversoFiltro(e.target.value)}
+              onChange={/* Responde a change desde este control. */ (e) => setUniversoFiltro(e.target.value)}
               className="bg-transparent font-bold text-slate-800 focus:outline-none cursor-pointer"
             >
               <option value="">Todos los Universos</option>
-              {universos.map((u) => (
+              {universos.map(/* Prepara el resultado de cada elemento. */ (u) => (
                 <option key={u._id || u.id} value={u._id || u.id}>
                   {u.nombre}
                 </option>
@@ -263,11 +277,11 @@ export default function ResultadosTab({ universos = [], personajes = [] }) {
 
           {/* Selector de Tipo */}
           <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-bold">
-            {['TODOS', 'positivo', 'neutro', 'negativo'].map((t) => (
+            {['TODOS', 'positivo', 'neutro', 'negativo'].map(/* Prepara el resultado de cada elemento. */ (t) => (
               <button
                 key={t}
                 type="button"
-                onClick={() => setTipoFiltro(t)}
+                onClick={/* Responde a click desde este control. */ () => setTipoFiltro(t)}
                 className={`px-2.5 py-1 rounded-lg transition cursor-pointer capitalize ${
                   tipoFiltro === t ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800'
                 }`}
@@ -283,7 +297,7 @@ export default function ResultadosTab({ universos = [], personajes = [] }) {
             <input
               type="text"
               value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
+              onChange={/* Responde a change desde este control. */ (e) => setBusqueda(e.target.value)}
               placeholder="Buscar resultado por título..."
               className="pl-8 pr-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:border-[#002B5E] w-48 sm:w-60"
             />
@@ -293,7 +307,7 @@ export default function ResultadosTab({ universos = [], personajes = [] }) {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => cargarResultados(universoFiltro)}
+            onClick={/* Responde a click desde este control. */ () => cargarResultados(universoFiltro)}
             disabled={cargando}
             className="p-2 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-600 transition cursor-pointer"
             title="Refrescar lista"
@@ -323,7 +337,7 @@ export default function ResultadosTab({ universos = [], personajes = [] }) {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {resultadosFiltrados.map((r) => {
+          {resultadosFiltrados.map(/* Prepara el resultado de cada elemento. */ (r) => {
             const rid = r._id || r.id;
             return (
               <div
@@ -337,7 +351,7 @@ export default function ResultadosTab({ universos = [], personajes = [] }) {
                         <img
                           src={r.imagen || '/assets/narrative/resultados/default.webp'}
                           alt={r.titulo}
-                          onError={(e) => {
+                          onError={/* Responde a error desde este control. */ (e) => {
                             e.target.onerror = null;
                             e.target.src = '/assets/narrative/resultados/default.webp';
                           }}
@@ -360,7 +374,7 @@ export default function ResultadosTab({ universos = [], personajes = [] }) {
                     <div className="flex items-center gap-1">
                       <button
                         type="button"
-                        onClick={() => abrirModalEditar(r)}
+                        onClick={/* Responde a click desde este control. */ () => abrirModalEditar(r)}
                         className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 transition cursor-pointer"
                         title="Editar resultado"
                       >
@@ -368,7 +382,7 @@ export default function ResultadosTab({ universos = [], personajes = [] }) {
                       </button>
                       <button
                         type="button"
-                        onClick={() => handleEliminar(rid)}
+                        onClick={/* Responde a click desde este control. */ () => handleEliminar(rid)}
                         className="p-1.5 rounded-lg border border-rose-200 bg-rose-50/50 hover:bg-rose-100 text-rose-600 transition cursor-pointer"
                         title="Eliminar resultado"
                       >
@@ -388,7 +402,7 @@ export default function ResultadosTab({ universos = [], personajes = [] }) {
                         Impacto en Recursos:
                       </span>
                       <div className="flex flex-wrap gap-1.5">
-                        {r.efectos.map((ef, idx) => {
+                        {r.efectos.map(/* Prepara el resultado de cada elemento. */ (ef, idx) => {
                           const a = ef.accion || {};
                           const isPos = a.valor > 0;
                           return (
@@ -418,7 +432,7 @@ export default function ResultadosTab({ universos = [], personajes = [] }) {
                         Impacto en Afinidad:
                       </span>
                       <div className="flex flex-wrap gap-1">
-                        {r.impacto_afinidad.map((af, idx) => {
+                        {r.impacto_afinidad.map(/* Prepara el resultado de cada elemento. */ (af, idx) => {
                           const isPos = af.delta > 0;
                           return (
                             <span
@@ -470,7 +484,7 @@ export default function ResultadosTab({ universos = [], personajes = [] }) {
 
               <button
                 type="button"
-                onClick={() => setModalAbierto(false)}
+                onClick={/* Responde a click desde este control. */ () => setModalAbierto(false)}
                 className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer"
               >
                 <XIcon size={18} />
@@ -500,7 +514,7 @@ export default function ResultadosTab({ universos = [], personajes = [] }) {
                   <input
                     type="text"
                     value={id}
-                    onChange={(e) => setId(e.target.value)}
+                    onChange={/* Responde a change desde este control. */ (e) => setId(e.target.value)}
                     disabled={esEdicion}
                     placeholder="ej. res_victoria_militar"
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-mono font-semibold text-slate-800 disabled:bg-slate-100 disabled:text-slate-500 focus:outline-none focus:border-[#002B5E]"
@@ -513,10 +527,10 @@ export default function ResultadosTab({ universos = [], personajes = [] }) {
                   </label>
                   <select
                     value={universoId}
-                    onChange={(e) => setUniversoId(e.target.value)}
+                    onChange={/* Responde a change desde este control. */ (e) => setUniversoId(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-800 focus:outline-none focus:border-[#002B5E]"
                   >
-                    {universos.map((u) => (
+                    {universos.map(/* Prepara el resultado de cada elemento. */ (u) => (
                       <option key={u._id || u.id} value={u._id || u.id}>
                         {u.nombre}
                       </option>
@@ -530,7 +544,7 @@ export default function ResultadosTab({ universos = [], personajes = [] }) {
                   </label>
                   <select
                     value={tipoResultado}
-                    onChange={(e) => setTipoResultado(e.target.value)}
+                    onChange={/* Responde a change desde este control. */ (e) => setTipoResultado(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-800 focus:outline-none focus:border-[#002B5E]"
                   >
                     <option value="positivo">Positivo (Éxito / Victoria)</option>
@@ -548,7 +562,7 @@ export default function ResultadosTab({ universos = [], personajes = [] }) {
                 <input
                   type="text"
                   value={titulo}
-                  onChange={(e) => setTitulo(e.target.value)}
+                  onChange={/* Responde a change desde este control. */ (e) => setTitulo(e.target.value)}
                   placeholder="ej. Victoria Aplastante en la Frontera"
                   className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-800 focus:outline-none focus:border-[#002B5E]"
                 />
@@ -561,7 +575,7 @@ export default function ResultadosTab({ universos = [], personajes = [] }) {
                 <textarea
                   rows={3}
                   value={texto}
-                  onChange={(e) => setTexto(e.target.value)}
+                  onChange={/* Responde a change desde este control. */ (e) => setTexto(e.target.value)}
                   placeholder="Relata qué sucedió exactamente tras tomar esta decisión..."
                   className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:border-[#002B5E]"
                 />
@@ -592,14 +606,14 @@ export default function ResultadosTab({ universos = [], personajes = [] }) {
                 </div>
 
                 <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
-                  {efectos.map((ef, idx) => (
+                  {efectos.map(/* Prepara el resultado de cada elemento. */ (ef, idx) => (
                     <div
                       key={idx}
                       className="p-2.5 rounded-xl border border-slate-200 bg-slate-50/60 flex items-center gap-2 text-xs"
                     >
                       <select
                         value={ef.clave}
-                        onChange={(e) => handleCambiarEfecto(idx, 'clave', e.target.value)}
+                        onChange={/* Responde a change desde este control. */ (e) => handleCambiarEfecto(idx, 'clave', e.target.value)}
                         className="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white font-bold text-[11px] text-slate-800 w-36"
                       >
                         <option value="oro">Oro</option>
@@ -612,13 +626,13 @@ export default function ResultadosTab({ universos = [], personajes = [] }) {
                       <input
                         type="number"
                         value={ef.valor}
-                        onChange={(e) => handleCambiarEfecto(idx, 'valor', parseFloat(e.target.value))}
+                        onChange={/* Responde a change desde este control. */ (e) => handleCambiarEfecto(idx, 'valor', parseFloat(e.target.value))}
                         className="w-24 px-2 py-1.5 rounded-lg border border-slate-200 bg-white text-[11px] font-bold text-center"
                       />
 
                       <button
                         type="button"
-                        onClick={() => handleEliminarEfecto(idx)}
+                        onClick={/* Responde a click desde este control. */ () => handleEliminarEfecto(idx)}
                         className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer ml-auto"
                         title="Quitar efecto"
                       >
@@ -646,7 +660,7 @@ export default function ResultadosTab({ universos = [], personajes = [] }) {
                 </div>
 
                 <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
-                  {afinidades.map((af, idx) => (
+                  {afinidades.map(/* Prepara el resultado de cada elemento. */ (af, idx) => (
                     <div
                       key={idx}
                       className="p-2.5 rounded-xl border border-slate-200 bg-slate-50/60 flex items-center gap-2 text-xs"
@@ -654,7 +668,7 @@ export default function ResultadosTab({ universos = [], personajes = [] }) {
                       <input
                         type="text"
                         value={af.personaje_id}
-                        onChange={(e) => handleCambiarAfinidad(idx, 'personaje_id', e.target.value)}
+                        onChange={/* Responde a change desde este control. */ (e) => handleCambiarAfinidad(idx, 'personaje_id', e.target.value)}
                         placeholder="ID Personaje (ej. pj_canciller_elena)"
                         className="flex-1 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white font-mono text-[11px]"
                       />
@@ -663,13 +677,13 @@ export default function ResultadosTab({ universos = [], personajes = [] }) {
                       <input
                         type="number"
                         value={af.delta}
-                        onChange={(e) => handleCambiarAfinidad(idx, 'delta', parseInt(e.target.value, 10))}
+                        onChange={/* Responde a change desde este control. */ (e) => handleCambiarAfinidad(idx, 'delta', parseInt(e.target.value, 10))}
                         className="w-20 px-2 py-1.5 rounded-lg border border-slate-200 bg-white text-[11px] font-bold text-center"
                       />
 
                       <button
                         type="button"
-                        onClick={() => handleEliminarAfinidad(idx)}
+                        onClick={/* Responde a click desde este control. */ () => handleEliminarAfinidad(idx)}
                         className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer ml-auto"
                         title="Quitar afinidad"
                       >
@@ -684,7 +698,7 @@ export default function ResultadosTab({ universos = [], personajes = [] }) {
               <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-2">
                 <button
                   type="button"
-                  onClick={() => setModalAbierto(false)}
+                  onClick={/* Responde a click desde este control. */ () => setModalAbierto(false)}
                   className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition cursor-pointer"
                 >
                   Cancelar

@@ -1,13 +1,15 @@
+/* Saluda al jugador y muestra su cuenta, su progreso y el acceso. */
 import React, { useState, useEffect } from 'react';
 import type { CSSProperties } from 'react';
-import { useNavigate } from 'react-router-dom';
+
 import { IonHeader, IonToolbar, IonIcon } from '@ionic/react';
-import { logInOutline, logOutOutline, bookOutline } from 'ionicons/icons';
+import { logInOutline, logOutOutline } from 'ionicons/icons';
 import { FlameIcon, StarIcon } from '../COMPONENTS/Icons/Icons';
 import { IconHeart } from '../COMPONENTS/GameHeader/LivesBadge';
-import { AuthModal } from './AuthModal';
+import { AuthModal } from '../COMPONENTS/MODALS/AuthModal';
 import { usePlayerEconomy } from '../../context/PlayerEconomyContext';
 import { esUsuarioAdmin, limpiarTodasLasSesiones } from '../AUTH/authUtils';
+import './loginHeader.css';
 
 export interface Usuario {
   id: number;
@@ -34,8 +36,17 @@ const color = {
 
 interface LoginHeaderProps {
   onUsuarioChange?: (user: Usuario | null) => void;
+  title?: string;
+  onBack?: () => void;
+  primaryColor?: string;
+  ocultarSaludoEnMovil?: boolean;
+  menuPrincipal?: boolean;
+  ocultarSesion?: boolean;
+  gameDetails?: React.ReactNode;
+  rightAction?: React.ReactNode;
 }
 
+// Elige el saludo según la hora del día.
 function getGreeting(): string {
   const hour = new Date().getHours();
   if (hour >= 6 && hour < 13) return '¡Buenos días!';
@@ -43,10 +54,11 @@ function getGreeting(): string {
   return '¡Buenas noches!';
 }
 
-export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange }) => {
+// Saluda al jugador y muestra su cuenta, su progreso y el acceso.
+export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title, onBack, primaryColor = color.blue, ocultarSaludoEnMovil = false, menuPrincipal = false, ocultarSesion = false, gameDetails, rightAction }) => {
   const economy = usePlayerEconomy();
-  const navigate = useNavigate();
-  const [usuario, setUsuario] = useState<Usuario | null>(() => {
+
+  const [usuario, setUsuario] = useState<Usuario | null>(/* Prepara el valor inicial al montar la pantalla. */ () => {
     try {
       const saved = localStorage.getItem('usuario') || localStorage.getItem('user');
       return saved ? JSON.parse(saved) : null;
@@ -57,7 +69,7 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange }) => 
 
   const [showAuthModal, setShowAuthModal] = useState<boolean>(false);
 
-  useEffect(() => {
+  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('abrirLogin') === 'true') {
       setShowAuthModal(true);
@@ -67,7 +79,8 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange }) => 
     }
   }, []);
 
-  useEffect(() => {
+  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
+    // Vuelve a leer el progreso cuando otra pantalla o pestaña avisa que cambió.
     const handleProgressUpdate = () => {
       try {
         const saved = localStorage.getItem('usuario') || localStorage.getItem('user');
@@ -81,7 +94,7 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange }) => 
 
     window.addEventListener('user_progress_updated', handleProgressUpdate);
     window.addEventListener('storage', handleProgressUpdate);
-    return () => {
+    return /* Libera los recursos de este efecto cuando deja de usarse. */ () => {
       window.removeEventListener('user_progress_updated', handleProgressUpdate);
       window.removeEventListener('storage', handleProgressUpdate);
     };
@@ -96,6 +109,7 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange }) => 
         esUsuarioAdmin())
   );
 
+  // Limpia la sesión y actualiza la pantalla.
   const handleLogout = () => {
     limpiarTodasLasSesiones();
     setUsuario(null);
@@ -103,19 +117,52 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange }) => 
     economy.recargarEconomia();
   };
 
+  // Actualiza los datos visibles después de entrar a la cuenta.
   const handleAuthSuccess = (loggedUser: Usuario) => {
     setUsuario(loggedUser);
     onUsuarioChange?.(loggedUser);
     economy.recargarEconomia();
   };
 
+  const livesButton = (
+    <button
+                type="button"
+                onClick={economy.abrirMiniTienda}
+                style={{
+                  alignItems: 'center',
+                  background: '#FFE4E6',
+                  border: '1px solid #FECDD3',
+                  borderRadius: 14,
+                  color: '#BE123C',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  fontSize: 13,
+                  fontWeight: 800,
+                  gap: 4,
+                  padding: '6px 10px',
+                  transition: 'all 0.2s ease',
+                }}
+                className="hover:bg-rose-200 active:scale-95"
+                title="Vidas restantes. Hacé clic para abrir la Tienda de Vidas."
+              >
+                <IconHeart filled={economy.vidas > 0} size={16} />
+                <span>{economy.vidas}</span>
+                <span className="login-header-lives-label hidden sm:inline">
+                  {economy.vidas === 1 ? 'vida' : 'vidas'}
+                </span>
+                <span className="login-header-lives-plus" style={{ fontSize: 10, background: '#FDA4AF', color: '#881337', padding: '1px 4px', borderRadius: 6, fontWeight: 900 }}>
+                  +
+                </span>
+              </button>
+  );
+
   return (
     <IonHeader style={{ boxShadow: '0 2px 10px rgba(23, 59, 99, 0.12)' }}>
       <IonToolbar style={{ '--background': '#FFFFFF', '--border-width': 0 } as CSSProperties}>
         <div
+          className={`login-header-layout${title ? ' login-header-layout--titled' : ''}${ocultarSaludoEnMovil ? ' login-header-layout--compact' : ''}${usuario ? ' login-header-layout--authenticated' : ''}${menuPrincipal ? ' login-header-layout--menu' : ''}${gameDetails !== undefined ? ' login-header-layout--game' : ''}`}
           style={{
             alignItems: 'center',
-            display: 'flex',
             justifyContent: 'space-between',
             margin: '0 auto',
             maxWidth: 1180,
@@ -127,12 +174,17 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange }) => 
         >
           {/* Identidad ASISTODO y Saludo */}
           <div style={{ alignItems: 'center', display: 'flex', gap: 12, minWidth: 0 }}>
-            <img
+            {onBack ? <button type="button" onClick={onBack} aria-label="Volver al menú principal"
+              className="login-header-home" title="Volver al menú principal">
+              <img alt="ASISTODO" src="/asistodo-logo.svg" style={{ height: 42, width: 42 }} />
+            </button> : <img
+              className="login-header-logo"
               alt="ASISTODO"
               src="/asistodo-logo.svg"
               style={{ height: 42, width: 42, flexShrink: 0 }}
-            />
-            <div style={{ minWidth: 0 }}>
+            />}
+            {gameDetails === undefined && <span className="login-header-lives-left">{livesButton}</span>}
+            <div className="login-header-greeting" hidden={gameDetails !== undefined} style={{ minWidth: 0 }}>
               {usuario ? (
                 /* Con sesión: ¡Hola, [Nombre]! */
                 <>
@@ -188,8 +240,15 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange }) => 
             </div>
           </div>
 
+          {title && (gameDetails !== undefined ? (
+            <div className="login-header-game-title">
+              <h1 className="login-header-title" style={{ color: primaryColor }}>{title}</h1>
+              <div className="flex flex-wrap items-center justify-center gap-1.5">{gameDetails}</div>
+            </div>
+          ) : <h1 className="login-header-title" style={{ color: primaryColor }}>{title}</h1>)}
+
           {/* Lado derecho: Sesión activa (Racha + Vidas + Puntos + Salir) ó Botón Iniciar Sesión */}
-          {usuario ? (
+          {gameDetails !== undefined ? <div className="flex items-center justify-end gap-2">{rightAction}</div> : usuario ? (
             <div
               style={{
                 alignItems: 'center',
@@ -198,35 +257,6 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange }) => 
                 flexShrink: 0,
               }}
             >
-              {/* Botón de Acceso al Editor Narrativo - SOLO VISIBLE SI ES ADMIN */}
-              {esAdmin && (
-                <button
-                  type="button"
-                  onClick={() => navigate('/editor-narrativo')}
-                  title="Ingresar a la Suite del Editor Narrativo"
-                  style={{
-                    alignItems: 'center',
-                    background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
-                    border: '1.5px solid #F59E0B',
-                    borderRadius: 14,
-                    boxShadow: '0 3px 10px rgba(245, 158, 11, 0.25)',
-                    color: '#FCD34D',
-                    cursor: 'pointer',
-                    display: 'inline-flex',
-                    fontSize: 13,
-                    fontWeight: 800,
-                    gap: 6,
-                    padding: '7px 12px',
-                    transition: 'all 0.15s ease',
-                  }}
-                  className="hover:scale-105 active:scale-95 hover:border-amber-400"
-                >
-                  <IonIcon icon={bookOutline} style={{ fontSize: 16, color: '#FCD34D' }} />
-                  <span className="hidden sm:inline">Editor Narrativo</span>
-                  <span className="sm:hidden">Editor</span>
-                </button>
-              )}
-
               {/* Racha */}
               <div
                 style={{
@@ -245,41 +275,12 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange }) => 
               >
                 <FlameIcon size={16} />
                 <span>{(usuario as any)?.racha ?? 1}</span>
-                <span className="hidden sm:inline">
+                <span className="login-header-stat-label hidden sm:inline">
                   {(usuario as any)?.racha === 1 ? 'día' : 'días'}
                 </span>
               </div>
 
-              {/* Vidas Globales (Click abre Mini-Tienda) */}
-              <button
-                type="button"
-                onClick={economy.abrirMiniTienda}
-                style={{
-                  alignItems: 'center',
-                  background: '#FFE4E6',
-                  border: '1px solid #FECDD3',
-                  borderRadius: 14,
-                  color: '#BE123C',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  fontSize: 13,
-                  fontWeight: 800,
-                  gap: 4,
-                  padding: '6px 10px',
-                  transition: 'all 0.2s ease',
-                }}
-                className="hover:bg-rose-200 active:scale-95"
-                title="Vidas restantes. Hacé clic para abrir la Tienda de Vidas."
-              >
-                <IconHeart filled={economy.vidas > 0} size={16} />
-                <span>{economy.vidas}</span>
-                <span className="hidden sm:inline">
-                  {economy.vidas === 1 ? 'vida' : 'vidas'}
-                </span>
-                <span style={{ fontSize: 10, background: '#FDA4AF', color: '#881337', padding: '1px 4px', borderRadius: 6, fontWeight: 900 }}>
-                  +
-                </span>
-              </button>
+              <span className="login-header-lives-right">{livesButton}</span>
 
               {/* Puntos (Click abre Mini-Tienda) */}
               <button
@@ -304,7 +305,7 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange }) => 
               >
                 <StarIcon size={15} />
                 <span>{economy.puntos}</span>
-                <span className="hidden sm:inline">pts</span>
+                <span className="login-header-stat-label hidden sm:inline">pts</span>
               </button>
 
               {/* Botón Salir */}
@@ -325,7 +326,8 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange }) => 
                   gap: 4,
                   padding: '7px 11px',
                 }}
-                className="hover:bg-slate-200 active:bg-slate-300 transition-colors"
+                className="login-header-logout hover:bg-slate-200 active:bg-slate-300 transition-colors"
+                hidden={ocultarSesion}
               >
                 <IonIcon icon={logOutOutline} style={{ fontSize: 16 }} />
                 <span className="hidden sm:inline">Salir</span>
@@ -333,40 +335,13 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange }) => 
             </div>
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {/* Vidas para invitado */}
-              <button
-                type="button"
-                onClick={economy.abrirMiniTienda}
-                style={{
-                  alignItems: 'center',
-                  background: '#FFE4E6',
-                  border: '1px solid #FECDD3',
-                  borderRadius: 14,
-                  color: '#BE123C',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  fontSize: 13,
-                  fontWeight: 800,
-                  gap: 4,
-                  padding: '6px 10px',
-                }}
-                className="hover:bg-rose-200 active:scale-95"
-                title="Vidas restantes. Hacé clic para abrir la Tienda de Vidas."
-              >
-                <IconHeart filled={economy.vidas > 0} size={16} />
-                <span>{economy.vidas}</span>
-                <span className="hidden sm:inline">
-                  {economy.vidas === 1 ? 'vida' : 'vidas'}
-                </span>
-                <span style={{ fontSize: 10, background: '#FDA4AF', color: '#881337', padding: '1px 4px', borderRadius: 6, fontWeight: 900 }}>
-                  +
-                </span>
-              </button>
+              <span className="login-header-lives-right">{livesButton}</span>
 
               {/* Botón para abrir el Modal de Inicio de Sesión / Registro */}
               <button
                 type="button"
-                onClick={() => setShowAuthModal(true)}
+                onClick={/* Responde a click desde este control. */ () => setShowAuthModal(true)}
+                aria-label="Iniciar sesión"
                 style={{
                   alignItems: 'center',
                   background: '#294C6B',
@@ -383,7 +358,8 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange }) => 
                   padding: '8px 16px',
                   whiteSpace: 'nowrap',
                 }}
-                className="active:bg-slate-800 transition-colors"
+                className="login-header-signin active:bg-slate-800 transition-colors"
+                hidden={ocultarSesion}
               >
                 <IonIcon icon={logInOutline} style={{ fontSize: 18 }} />
                 <span>Iniciar sesión</span>
@@ -396,7 +372,7 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange }) => 
       {/* Modal de Acceso (Código / Registro / Admin) */}
       <AuthModal
         isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
+        onClose={/* Responde a close desde este control. */ () => setShowAuthModal(false)}
         onSuccess={handleAuthSuccess}
       />
     </IonHeader>

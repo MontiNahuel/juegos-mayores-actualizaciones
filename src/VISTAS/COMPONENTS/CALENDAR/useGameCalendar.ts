@@ -1,3 +1,4 @@
+/* Maneja la carga de meses y los datos del calendario de desafíos. */
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { DayChallenge } from './types';
 import {
@@ -17,6 +18,7 @@ interface UseGameCalendarOptions {
   todayDay?: number;
 }
 
+// Maneja la carga de meses y los datos del calendario de desafíos.
 export function useGameCalendar({
   gameId,
   difficulty = 'standard',
@@ -37,9 +39,10 @@ export function useGameCalendar({
   const serverTodayRef = useRef<ServerTodayInfo | null>(null);
 
   // 1. Inicialización: sincronizar fecha del servidor y límites de fecha en MongoDB
-  useEffect(() => {
+  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
     let isMounted = true;
 
+    // Busca la fecha del servidor y prepara el primer mes del calendario.
     async function init() {
       try {
         const [todayInfo, rangeInfo] = await Promise.all([
@@ -82,7 +85,7 @@ export function useGameCalendar({
 
     init();
 
-    return () => {
+    return /* Libera los recursos de este efecto cuando deja de usarse. */ () => {
       isMounted = false;
     };
   }, [gameId, difficulty, propYear, propMonth, propTodayDay]);
@@ -140,6 +143,7 @@ export function useGameCalendar({
     loadMonth(nextY, nextM);
   }, [canGoPrev, viewYear, viewMonth, loadMonth]);
 
+  // Mueve el calendario al mes siguiente.
   const goToNextMonth = useCallback(() => {
     if (!canGoNext) return;
     let nextY = viewYear;
@@ -153,6 +157,7 @@ export function useGameCalendar({
     loadMonth(nextY, nextM);
   }, [canGoNext, viewYear, viewMonth, loadMonth]);
 
+  // Vuelve a cargar los datos que se están mostrando.
   const reload = useCallback(() => {
     loadMonth(viewYear, viewMonth);
   }, [loadMonth, viewYear, viewMonth]);

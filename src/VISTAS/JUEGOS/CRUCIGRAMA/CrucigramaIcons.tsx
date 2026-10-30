@@ -1,5 +1,7 @@
+/* Reúne los iconos de navegación y acciones del crucigrama. */
 import React from 'react';
 
+// Dibuja el icono de chevron left para reutilizarlo en pantalla.
 export const IconChevronLeft: React.FC<{ size?: number; color?: string }> = ({
   size = 20,
   color = 'currentColor',
@@ -18,6 +20,7 @@ export const IconChevronLeft: React.FC<{ size?: number; color?: string }> = ({
   </svg>
 );
 
+// Dibuja el icono de chevron right para reutilizarlo en pantalla.
 export const IconChevronRight: React.FC<{ size?: number; color?: string }> = ({
   size = 20,
   color = 'currentColor',
@@ -36,6 +39,7 @@ export const IconChevronRight: React.FC<{ size?: number; color?: string }> = ({
   </svg>
 );
 
+// Dibuja el icono de backspace para reutilizarlo en pantalla.
 export const IconBackspace: React.FC<{ size?: number; color?: string }> = ({
   size = 20,
   color = 'currentColor',
@@ -56,6 +60,7 @@ export const IconBackspace: React.FC<{ size?: number; color?: string }> = ({
   </svg>
 );
 
+// Dibuja el icono de list para reutilizarlo en pantalla.
 export const IconList: React.FC<{ size?: number; color?: string }> = ({
   size = 20,
   color = 'currentColor',
@@ -79,6 +84,7 @@ export const IconList: React.FC<{ size?: number; color?: string }> = ({
   </svg>
 );
 
+// Dibuja el icono de clock para reutilizarlo en pantalla.
 export const IconClock: React.FC<{ size?: number; color?: string }> = ({
   size = 16,
   color = 'currentColor',
@@ -98,6 +104,7 @@ export const IconClock: React.FC<{ size?: number; color?: string }> = ({
   </svg>
 );
 
+// Dibuja el icono de lightbulb para reutilizarlo en pantalla.
 export const IconLightbulb: React.FC<{ size?: number; color?: string }> = ({
   size = 18,
   color = 'currentColor',

@@ -1,3 +1,4 @@
+/* Muestra los desafíos diarios y permite elegir o desbloquear un día. */
 import { useEffect, useMemo, useState, useCallback, type CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
@@ -9,6 +10,7 @@ import { CalendarGrid } from './CalendarGrid';
 import { IconInfo, IconClose, IconCheck, IconStarSolid, IconLock, IconCoins, IconSpinner } from './icons';
 import { usePlayerEconomy } from '../../../context/PlayerEconomyContext';
 
+// Muestra los desafíos diarios y permite elegir o desbloquear un día.
 export function DailyChallengeCalendar({
   gameId,
   title,
@@ -25,7 +27,7 @@ export function DailyChallengeCalendar({
   renderCompletedModal,
 }: DailyChallengeCalendarProps) {
   const navigate = useNavigate();
-  const theme = useMemo(() => ({ ...DEFAULT_CALENDAR_THEME, ...themeProp }), [themeProp]);
+  const theme = useMemo(/* Recalcula este dato cuando cambian sus dependencias. */ () => ({ ...DEFAULT_CALENDAR_THEME, ...themeProp }), [themeProp]);
   const {
     challenges,
     todayChallenge,
@@ -62,12 +64,13 @@ export function DailyChallengeCalendar({
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
   const esInvitado = !token;
 
-  useEffect(() => {
+  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
     if (!futureNotice) return;
-    const timer = window.setTimeout(() => setFutureNotice(null), 3500);
-    return () => window.clearTimeout(timer);
+    const timer = window.setTimeout(/* Ejecuta este paso cuando se cumple la espera. */ () => setFutureNotice(null), 3500);
+    return /* Libera los recursos de este efecto cuando deja de usarse. */ () => window.clearTimeout(timer);
   }, [futureNotice]);
 
+  // Comprueba si hace falta desbloquear ese desafío anterior.
   const isItemHistoricalLocked = useCallback(
     (item: DayChallenge): boolean => {
       if (item.status !== 'pending' || item.isToday) return false;
@@ -77,6 +80,7 @@ export function DailyChallengeCalendar({
     [gameId, suscripcion, isDiaDesbloqueado]
   );
 
+  // Abre el juego con los datos del día elegido.
   const ejecutarJuego = useCallback(
     (item: DayChallenge) => {
       if (onPlayChallenge) {
@@ -99,6 +103,7 @@ export function DailyChallengeCalendar({
     [navigate, onPlayChallenge, playRoute]
   );
 
+  // Responde a la casilla elegida y actualiza la selección.
   const handleCellClick = (item: DayChallenge) => {
     if (item.status === 'completed') {
       setSelectedCompleted(item);
@@ -118,6 +123,7 @@ export function DailyChallengeCalendar({
     setFutureNotice(`El desafío del día ${item.day} estará disponible el ${item.dateStr}.`);
   };
 
+  // Confirma la compra del día y permite entrar si se pudo desbloquear.
   const handleConfirmarDesbloqueo = async () => {
     if (!challengeParaDesbloquear) return;
     setDesbloqueando(true);
@@ -142,7 +148,7 @@ export function DailyChallengeCalendar({
     >
       <CalendarHeader
         title={title}
-        onBack={() => (onBack ? onBack() : navigate('/menu'))}
+        onBack={/* Responde a back desde este control. */ () => (onBack ? onBack() : navigate('/menu'))}
         primaryColor={theme.primaryBlue}
       />
       <IonContent style={{ '--background': theme.primaryBlue } as CSSProperties}>
@@ -161,7 +167,7 @@ export function DailyChallengeCalendar({
               <button
                 type="button"
                 aria-label="Cerrar aviso"
-                onClick={() => setFutureNotice(null)}
+                onClick={/* Responde a click desde este control. */ () => setFutureNotice(null)}
                 className="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-md hover:bg-[#DEE3EA] focus-visible:outline-2 focus-visible:outline-[#53BFC9]"
               >
                 <IconClose size={18} color="currentColor" />
@@ -196,9 +202,9 @@ export function DailyChallengeCalendar({
         {/* Modal Desafío Completado */}
         {selectedCompleted &&
           (renderCompletedModal ? (
-            renderCompletedModal(selectedCompleted, () => setSelectedCompleted(null))
+            renderCompletedModal(selectedCompleted, /* Completa este paso con los datos recibidos por la operación. */ () => setSelectedCompleted(null))
           ) : (
-            <div className="fixed inset-0 z-[999] flex items-center justify-center bg-[#294C6B]/55 px-4 py-[var(--app-safe-bottom)] backdrop-blur-sm">
+            <div onClick={/* Responde a click desde este control. */ event => { if (event.target === event.currentTarget) setSelectedCompleted(null); }} className="fixed inset-0 z-[999] flex items-center justify-center bg-[#294C6B]/55 px-4 py-[var(--app-safe-bottom)] backdrop-blur-sm">
               <section
                 role="dialog"
                 aria-modal="true"
@@ -218,7 +224,7 @@ export function DailyChallengeCalendar({
                   <p className="m-0 text-sm font-semibold text-slate-700">¡Completado con éxito!</p>
                   {selectedCompleted.stars != null && (
                     <div className="mt-2 flex justify-center gap-1" aria-label={`${selectedCompleted.stars} estrellas`}>
-                      {Array.from({ length: selectedCompleted.stars }, (_, i) => (
+                      {Array.from({ length: selectedCompleted.stars }, /* Completa este paso con los datos recibidos por la operación. */ (_, i) => (
                         <IconStarSolid key={i} size={19} color="#AFA1E8" />
                       ))}
                     </div>
@@ -226,7 +232,7 @@ export function DailyChallengeCalendar({
                 </div>
                 <button
                   type="button"
-                  onClick={() => setSelectedCompleted(null)}
+                  onClick={/* Responde a click desde este control. */ () => setSelectedCompleted(null)}
                   className="min-h-11 w-full cursor-pointer rounded-xl bg-[var(--calendar-primary)] px-4 py-3 text-sm font-bold text-white hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#53BFC9]"
                 >
                   Cerrar
@@ -237,7 +243,7 @@ export function DailyChallengeCalendar({
 
         {/* Modal Desbloquear Día Anterior */}
         {challengeParaDesbloquear && (
-          <div className="fixed inset-0 z-[999] flex items-center justify-center bg-slate-900/60 px-4 py-[var(--app-safe-bottom)] backdrop-blur-sm animate-in fade-in duration-150">
+          <div onClick={/* Responde a click desde este control. */ event => { if (event.target === event.currentTarget) setChallengeParaDesbloquear(null); }} className="fixed inset-0 z-[999] flex items-center justify-center bg-slate-900/60 px-4 py-[var(--app-safe-bottom)] backdrop-blur-sm animate-in fade-in duration-150">
             <section
               role="dialog"
               aria-modal="true"
@@ -268,14 +274,14 @@ export function DailyChallengeCalendar({
                   <div className="flex flex-col gap-2 pt-2">
                     <button
                       type="button"
-                      onClick={() => navigate('/login')}
+                      onClick={/* Responde a click desde este control. */ () => navigate('/login')}
                       className="min-h-11 w-full cursor-pointer rounded-xl bg-[#002B5E] px-4 py-3 text-sm font-bold text-white hover:bg-slate-900 transition shadow-sm"
                     >
                       Iniciar Sesión / Registrarse
                     </button>
                     <button
                       type="button"
-                      onClick={() => setChallengeParaDesbloquear(null)}
+                      onClick={/* Responde a click desde este control. */ () => setChallengeParaDesbloquear(null)}
                       className="min-h-10 w-full cursor-pointer rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition"
                     >
                       Volver al calendario
@@ -345,7 +351,7 @@ export function DailyChallengeCalendar({
                         </button>
                         <button
                           type="button"
-                          onClick={() => setChallengeParaDesbloquear(null)}
+                          onClick={/* Responde a click desde este control. */ () => setChallengeParaDesbloquear(null)}
                           className="min-h-10 w-full cursor-pointer rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition"
                         >
                           Cancelar
@@ -360,7 +366,7 @@ export function DailyChallengeCalendar({
                       <div className="pt-2">
                         <button
                           type="button"
-                          onClick={() => setChallengeParaDesbloquear(null)}
+                          onClick={/* Responde a click desde este control. */ () => setChallengeParaDesbloquear(null)}
                           className="min-h-11 w-full cursor-pointer rounded-xl bg-slate-800 hover:bg-slate-900 px-4 py-3 text-sm font-bold text-white transition shadow-sm"
                         >
                           Entendido

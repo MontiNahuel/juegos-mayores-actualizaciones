@@ -1,3 +1,4 @@
+/* Cuenta qué pasó después de la decisión y permite continuar. */
 // Muestra el resultado de una decision o el cierre de la partida.
 import { useEffect, useRef, useState } from 'react';
 import type { FinalizacionApi, ResultadoApi } from '../narrativeService';
@@ -19,7 +20,7 @@ export default function MostrarResultadoEtapa4({ resultado, finalizacion, efecto
 }) {
   const [saliendo, setSaliendo] = useState(false);
   const temporizador = useRef<number | null>(null);
-  useEffect(() => () => { if (temporizador.current !== null) window.clearTimeout(temporizador.current); }, []);
+  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => /* Completa este paso con los datos recibidos por la operación. */ () => { if (temporizador.current !== null) window.clearTimeout(temporizador.current); }, []);
 
   // Retira el pergamino antes de mostrar la corte; nunca duplica ni descarga su imagen.
   const continuar = () => {
@@ -39,7 +40,7 @@ export default function MostrarResultadoEtapa4({ resultado, finalizacion, efecto
     : resultado?.tipo_resultado || 'neutro';
   const efecto = efectoTexto || (finalizacion
     ? finalizacion.rango ? `Rango final: ${finalizacion.rango}` : 'Partida finalizada'
-    : resultado?.efectos.map(({ accion }) => `${accion.valor > 0 ? '+' : ''}${accion.valor} ${accion.clave}`).join(', ') || 'Sin cambios');
+    : resultado?.efectos.map(/* Prepara el resultado de cada elemento. */ ({ accion }) => `${accion.valor > 0 ? '+' : ''}${accion.valor} ${accion.clave}`).join(', ') || 'Sin cambios');
 
   return (
     <section className={`flex min-h-full w-full flex-col items-center text-center text-[#25170d] motion-safe:transition-opacity motion-safe:duration-[650ms] [&>.titulo-narrativo]:w-full ${saliendo ? 'opacity-0' : ''}`}>

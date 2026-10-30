@@ -1,9 +1,11 @@
+/* Abre la sopa de letras desde su calendario de desafíos. */
 import React from 'react';
 import { DailyChallengeCalendar, type DayChallenge } from '../../COMPONENTS/CALENDAR';
-import { SopaLetrasCompletedModal } from './SopaLetrasCompletedModal';
+import { CompletedModal } from '../../COMPONENTS/MODALS/CompletedModal';
 
 export type { DayChallenge };
 
+// Abre la sopa de letras desde su calendario de desafíos.
 export const SopaLetrasCalendar: React.FC = () => {
   return (
     <DailyChallengeCalendar
@@ -12,8 +14,8 @@ export const SopaLetrasCalendar: React.FC = () => {
       heroBadge="¡Desafío de hoy!"
       heroSubtitle="4 palabras temáticas para ejercitar tu atención visual, rastreo y memoria."
       playRoute="/juegos/sopa-letras/jugar"
-      renderCompletedModal={(challenge, onClose) => (
-        <SopaLetrasCompletedModal challenge={challenge} onClose={onClose} />
+      renderCompletedModal={/* Responde a render completed modal desde este control. */ (challenge, onClose) => (
+        <CompletedModal gameId="sopa_letras" challenge={challenge} onClose={onClose} />
       )}
     />
   );
