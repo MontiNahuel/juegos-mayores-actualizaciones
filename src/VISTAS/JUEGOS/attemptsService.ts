@@ -225,7 +225,7 @@ export async function getActiveGameProgress(
  * - Si es invitado: guarda sólo en localStorage.
  * - Si tiene cuenta: guarda en localStorage y sincroniza en segundo plano con MongoDB.
  */
-export async function saveActiveGameProgress(payload: SaveProgressPayload): Promise<void> {
+export async function saveActiveGameProgress(payload: SaveProgressPayload, confirmarServidor = false): Promise<void> {
   const progress: ActiveGameProgress = {
     gameId: payload.gameId,
     date: payload.date,
@@ -279,15 +279,18 @@ export async function saveActiveGameProgress(payload: SaveProgressPayload): Prom
 
     // Sincroniza el avance con el servidor sin bloquear la partida.
     const sendBackend = async (url: string) => {
-      await fetch(url, {
+      const res = await fetch(url, {
         method: 'POST',
         headers,
         body: JSON.stringify(body),
+        keepalive: true,
       });
+      if (!res.ok) throw new Error('No se pudo guardar la partida en el servidor.');
     };
 
     await guardarEnOrden(storageKey, /* Completa este paso con los datos recibidos por la operación. */ () => sendBackend(`${API_URL}/api/games/attempts`));
-  } catch {
+  } catch (error) {
+    if (confirmarServidor) throw error;
     // Modo offline seguro
   }
 }

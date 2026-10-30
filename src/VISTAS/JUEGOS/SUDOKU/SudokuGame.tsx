@@ -31,7 +31,7 @@ export const SudokuGame: React.FC = () => {
         onBack={game.goBack}
         backLabel="Calendario"
         onHint={game.useHint}
-        hintDisabled={!game.progressReady || game.lives <= 0 || game.isWon || game.isGameOver || game.hintsLeft <= 0}
+        hintDisabled={!game.progressReady || game.lives <= 0 || game.isWon || game.isGameOver}
         badges={
           <div className="flex items-center gap-1.5 sm:gap-2">
             <span

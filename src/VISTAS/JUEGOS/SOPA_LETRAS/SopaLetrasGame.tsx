@@ -517,11 +517,10 @@ export const SopaLetrasGame: React.FC = () => {
           onHint={/* Responde a hint desde este control. */ () => {
             const indice = targetWords.findIndex(/* Busca la posición del elemento que cumple esta condición. */ (word, idx) => !foundWords.includes(word) && !pistasCompradas[idx]);
             if (indice < 0) { setShowHintModal(true); return; }
-            economy.abrirComprarPista({ vidasDisponibles: lives, onSinVidas: gameLives.openRefill, game_id: 'sopa_letras', date: dateStrKey, hint_index: indice,
+            economy.abrirComprarPista({ game_id: 'sopa_letras', date: dateStrKey, hint_index: indice,
               // Aplica al tablero la pista que confirmó el servidor.
               onRecibir: data => {
-              gameLives.consumeLife();
-                setPistasCompradas(/* Actualiza pistas compradas a partir del valor anterior. */ prev => ({ ...prev, [indice]: data.pista || 'Sin texto de pista.' }));
+              setPistasCompradas(/* Actualiza pistas compradas a partir del valor anterior. */ prev => ({ ...prev, [indice]: data.pista || 'Sin texto de pista.' }));
                 setShowHintModal(true);
               },
             });

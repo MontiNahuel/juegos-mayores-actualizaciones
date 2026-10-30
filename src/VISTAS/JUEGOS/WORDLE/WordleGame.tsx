@@ -390,10 +390,9 @@ const WordleGame: React.FC = () => {
           badges={<LivesBadge lives={lives} maxLives={4} onClick={gameLives.openRefill} />}
           onHint={/* Responde a hint desde este control. */ () => {
             if (gameStatus !== 'playing') return;
-            abrirComprarPista({ vidasDisponibles: lives, onSinVidas: gameLives.openRefill, game_id: 'wordle', date: dateStrKey, hint_index: hintIndex,
+            abrirComprarPista({ game_id: 'wordle', date: dateStrKey, hint_index: hintIndex,
               // Aplica al tablero la pista que confirmó el servidor.
               onRecibir: data => {
-                gameLives.consumeLife();
                 setPistaComprada(data.pista || 'Sin texto de pista.');
                 setShowHint(true);
                 setHintIndex(/* Actualiza hint index a partir del valor anterior. */ indice => (indice + 1) % hints.length);

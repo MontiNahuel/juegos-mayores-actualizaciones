@@ -1,18 +1,4 @@
-/* Guarda el Sudoku en el navegador para seguirlo después de recargar. */
-/**
- * sudokuStorage.ts
- * Manejador de persistencia local (localStorage) para el estado en tiempo real de Sudoku.
- * 
- * Reglas de negocio:
- * 1. Partida activa (in_progress): se almacena exclusivamente en localStorage para evitar
- *    saturar la base de datos con decenas de llamadas HTTP por cada número o nota colocada.
- * 2. Derrota (sin vidas): NO se envía a la base de datos. Se limpia la clave local para
- *    permitir reintentos ilimitados sin penalizar el progreso del usuario.
- * 3. Victoria: se limpia la clave local y se sincroniza definitivamente con la base de datos.
- * 4. Aislamiento por usuario: utiliza getActiveProgressStorageKey para no mezclar partidas entre
- *    usuarios autenticados y modo invitado.
- */
-
+// Lee partidas locales antiguas de Sudoku y permite limpiar una partida al reiniciar.
 import { getActiveProgressStorageKey } from '../attemptsService';
 import { SudokuCell, SudokuGrid, DifficultyLevel } from './types';
 
@@ -23,7 +9,6 @@ export interface SudokuSavedProgress {
   solution: SudokuGrid;
   lives: number;
   errors: number;
-  hintsLeft: number;
   status: 'in_progress' | 'won' | 'completed';
   updatedAt: string;
 }
@@ -53,31 +38,6 @@ export function getSudokuLocalProgress(dateKey: string): SudokuSavedProgress | n
     console.warn('[sudokuStorage] Error al leer progreso local:', err);
   }
   return null;
-}
-
-/**
- * Guarda el estado actual de la partida en localStorage de forma instantánea y sincrónica.
- */
-export function saveSudokuLocalProgress(data: {
-  date: string;
-  difficultyLevel: DifficultyLevel;
-  cells: SudokuCell[][];
-  solution: SudokuGrid;
-  lives: number;
-  errors: number;
-  hintsLeft: number;
-}): void {
-  try {
-    const key = getActiveProgressStorageKey('sudoku', data.date);
-    const payload: SudokuSavedProgress = {
-      ...data,
-      status: 'in_progress',
-      updatedAt: new Date().toISOString(),
-    };
-    localStorage.setItem(key, JSON.stringify(payload));
-  } catch (err) {
-    console.error('[sudokuStorage] Error al guardar progreso local:', err);
-  }
 }
 
 /**
