@@ -9,10 +9,12 @@ interface Props {
   challenge: DayChallenge;
   onPlay: () => void;
   onClose: () => void;
+  inline?: boolean;
+  onBuyingChange?: (buying: boolean) => void;
 }
 
 /** Comparte la compra de desafíos históricos entre el calendario y el resultado. */
-export function HistoricalChallengeAccess({ gameId, challenge, onPlay, onClose }: Props) {
+export function HistoricalChallengeAccess({ gameId, challenge, onPlay, onClose, inline = false, onBuyingChange }: Props) {
   const { puntos, costoDesbloqueoDiaPuntos: costo, desbloquearDia } = usePlayerEconomy();
   const navigate = useNavigate();
   const titleId = useId();
@@ -26,6 +28,7 @@ export function HistoricalChallengeAccess({ gameId, challenge, onPlay, onClose }
     if (pending.current) return;
     pending.current = true;
     setBuying(true);
+    onBuyingChange?.(true);
     setError(null);
     try {
       const result = await desbloquearDia(gameId, challenge.dateKey);
@@ -36,11 +39,11 @@ export function HistoricalChallengeAccess({ gameId, challenge, onPlay, onClose }
     } finally {
       pending.current = false;
       setBuying(false);
+      onBuyingChange?.(false);
     }
   };
 
-  return (
-    <ModalBase isOpen onClose={() => { if (!pending.current) onClose(); }} labelledBy={titleId}>
+  const content = (
       <div className="space-y-4 p-2 text-slate-700">
         <h2 id={titleId} className="text-xl font-extrabold text-[#294C6B]">Desafío del {challenge.dateStr}</h2>
         {guest ? <>
@@ -59,6 +62,6 @@ export function HistoricalChallengeAccess({ gameId, challenge, onPlay, onClose }
         </>}
         <button type="button" disabled={buying} onClick={onClose} className={`${button} bg-slate-100 hover:bg-slate-200`}>Volver</button>
       </div>
-    </ModalBase>
   );
+  return inline ? content : <ModalBase isOpen onClose={() => { if (!pending.current) onClose(); }} labelledBy={titleId}>{content}</ModalBase>;
 }

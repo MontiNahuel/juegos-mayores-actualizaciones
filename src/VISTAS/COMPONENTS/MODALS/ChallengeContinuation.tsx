@@ -1,20 +1,19 @@
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePlayerEconomy } from '../../../context/PlayerEconomyContext';
 import { getCalendarMonthData } from '../CALENDAR/calendarService';
 import type { DayChallenge } from '../CALENDAR/types';
 import { HistoricalChallengeAccess } from '../CALENDAR/HistoricalChallengeAccess';
-import { ModalBase } from './ModalBase';
 
 export interface ChallengeContinuationProps {
   gameId: string;
   dateKey: string;
   onClose: () => void;
+  onBuyingChange?: (buying: boolean) => void;
 }
 
-export function ChallengeContinuation({ gameId, dateKey, onClose }: ChallengeContinuationProps) {
+export function ChallengeContinuation({ gameId, dateKey, onClose, onBuyingChange }: ChallengeContinuationProps) {
   const navigate = useNavigate();
-  const titleId = useId();
   const { isDiaDesbloqueado, costoDesbloqueoDiaPuntos } = usePlayerEconomy();
   const [previous, setPrevious] = useState<DayChallenge | null>(null);
   const [loading, setLoading] = useState(true);
@@ -42,11 +41,9 @@ export function ChallengeContinuation({ gameId, dateKey, onClose }: ChallengeCon
   };
   const locked = previous && !isDiaDesbloqueado(gameId, previous.dateKey);
 
-  if (buying && previous) return <HistoricalChallengeAccess gameId={gameId} challenge={previous} onPlay={play} onClose={() => setBuying(false)} />;
+  if (buying && previous) return <HistoricalChallengeAccess inline gameId={gameId} challenge={previous} onPlay={play} onClose={() => setBuying(false)} onBuyingChange={onBuyingChange} />;
 
-  return <ModalBase isOpen onClose={onClose} labelledBy={titleId}>
-    <div className="space-y-4 p-2 text-slate-700">
-      <h2 id={titleId} className="text-xl font-extrabold text-[#294C6B]">¿Seguimos jugando?</h2>
+  return <div className="space-y-3 border-t border-slate-200 pt-4 text-slate-700">
       {loading ? <p role="status">Buscando el desafío anterior...</p> : previous?.status === 'completed' ? <p className="text-sm">Ya completaste el desafío del día anterior. Elegí otro desde el calendario.</p> : previous ? <>
         <p className="text-sm">Resolvé el desafío del {previous.dateStr}.</p>
         <button type="button" onClick={() => locked ? setBuying(true) : play()} className="min-h-12 w-full rounded-xl bg-[#294C6B] px-4 py-3 text-sm font-bold text-white hover:bg-[#1E364D]">
@@ -54,6 +51,5 @@ export function ChallengeContinuation({ gameId, dateKey, onClose }: ChallengeCon
         </button>
       </> : <p role="status" className="text-sm">{error ? 'No pudimos cargar el desafío anterior. Podés buscarlo en el calendario.' : 'No hay un desafío disponible para el día anterior.'}</p>}
       <button type="button" onClick={onClose} className="min-h-12 w-full rounded-xl bg-slate-100 px-4 py-3 text-sm font-bold hover:bg-slate-200">Volver al calendario</button>
-    </div>
-  </ModalBase>;
+    </div>;
 }
