@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { usePlayerEconomy } from '../../../context/PlayerEconomyContext';
 import { ModalBase } from '../MODALS/ModalBase';
 import type { DayChallenge } from './types';
+import { PointsBadge } from '../PointsBadge';
 
 interface Props {
   gameId: string;
@@ -52,12 +53,12 @@ export function HistoricalChallengeAccess({ gameId, challenge, onPlay, onClose, 
         </> : <>
           <p className="text-sm">Desbloqueá este día con puntos y empezá a jugar.</p>
           <div className="flex justify-between gap-3 rounded-xl bg-slate-50 p-4 text-sm">
-            <span>Tu saldo: <strong>{puntos} pts</strong></span>
-            <span>Costo: <strong>{costo} pts</strong></span>
+            <div className="space-y-1"><p>Tu saldo</p><PointsBadge points={puntos} unit="pts" /></div>
+            <div className="space-y-1"><p>Costo</p><PointsBadge points={costo} unit="pts" /></div>
           </div>
           {error && <p role="alert" className="rounded-xl bg-rose-50 p-3 text-sm text-rose-800">{error}</p>}
-          {puntos >= costo ? <button type="button" disabled={buying} onClick={buy} className={`${button} bg-amber-500 text-white hover:bg-amber-600`}>
-            {buying ? 'Desbloqueando...' : `Desbloquear y jugar por ${costo} pts`}
+          {puntos >= costo ? <button type="button" disabled={buying} onClick={buy} aria-label={buying ? 'Desbloqueando...' : `Desbloquear y jugar por ${costo} pts`} className={`${button} flex flex-wrap items-center justify-center gap-2 bg-emerald-700 text-white hover:bg-emerald-800`}>
+            {buying ? 'Desbloqueando...' : <><span>Desbloquear y jugar</span><PointsBadge points={costo} unit="pts" /></>}
           </button> : <p role="status" className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">Te faltan {costo - puntos} puntos. Podés sumar puntos jugando los desafíos de hoy.</p>}
         </>}
         <button type="button" disabled={buying} onClick={onClose} className={`${button} bg-slate-100 hover:bg-slate-200`}>Volver</button>

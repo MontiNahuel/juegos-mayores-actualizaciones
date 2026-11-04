@@ -34,7 +34,8 @@ const textos: Record<Juego, { titulo: string; descripcion: string }> = {
 };
 
 // Muestra cómo terminó el desafío y permite seguir navegando.
-export function CompletedModal({ gameId, challenge, dateStr, stars, performance, isGameOver: gameOver = false, onRestart, onClose, closeLabel = 'Volver al calendario', completion, continuationDateKey }: CompletedModalProps) {
+export function CompletedModal(props: CompletedModalProps) {
+  const { gameId, challenge, dateStr, stars, performance, isGameOver: gameOver = false, onClose, closeLabel = 'Volver al calendario', completion, continuationDateKey } = props;
   const titleId = useId();
   const [buying, setBuying] = useState(false);
   const close = () => { if (!buying) onClose(); };
@@ -93,7 +94,7 @@ export function CompletedModal({ gameId, challenge, dateStr, stars, performance,
           </ul>
         )}
         <div className="flex flex-col gap-2">
-          {(isGameOver || gameId === 'wordle') && onRestart && <button type="button" disabled={buying} onClick={onRestart} className={`${boton} bg-slate-100 hover:bg-slate-200 disabled:opacity-50`}>Jugar de nuevo</button>}
+          {/* {(isGameOver || gameId === 'wordle') && props.onRestart && <button type="button" disabled={buying} onClick={props.onRestart} className={`${boton} bg-slate-100 hover:bg-slate-200 disabled:opacity-50`}>Jugar de nuevo</button>} */}
           {continuationDateKey && !isGameOver ? (
             <ChallengeContinuation gameId={gameId} dateKey={continuationDateKey} onClose={close} onBuyingChange={setBuying} />
           ) : <button type="button" onClick={onClose} className={`${boton} bg-[#294C6B] text-white hover:bg-[#1E364D]`}>{closeLabel}</button>}

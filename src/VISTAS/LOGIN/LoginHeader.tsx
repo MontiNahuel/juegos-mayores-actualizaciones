@@ -5,6 +5,7 @@ import type { CSSProperties } from 'react';
 import { IonHeader, IonToolbar, IonIcon } from '@ionic/react';
 import { logInOutline, logOutOutline } from 'ionicons/icons';
 import { FlameIcon, StarIcon } from '../COMPONENTS/Icons/Icons';
+import { PointsBadge } from '../COMPONENTS/PointsBadge';
 import { AuthModal } from '../COMPONENTS/MODALS/AuthModal';
 import { usePlayerEconomy } from '../../context/PlayerEconomyContext';
 import { esUsuarioAdmin, limpiarTodasLasSesiones } from '../AUTH/authUtils';
@@ -211,10 +212,7 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title
               <h1 className="login-header-title" style={{ color: primaryColor }}>{title}</h1>
               <div className="flex flex-wrap items-center justify-center gap-1.5">
                 {gameDetails}
-                <span className="inline-flex items-center gap-1 rounded-full border border-[#8FD5CA] bg-[#E8F8F5] px-2.5 py-1 text-xs font-extrabold text-[#17695F]" aria-label={`${economy.puntos} puntos`}>
-                  <StarIcon size={14} />
-                  <span>{economy.puntos}</span>
-                </span>
+                <PointsBadge points={economy.puntos} />
               </div>
             </div>
           ) : <h1 className="login-header-title" style={{ color: primaryColor }}>{title}</h1>)}
