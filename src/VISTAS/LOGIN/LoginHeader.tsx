@@ -5,7 +5,7 @@ import type { CSSProperties } from 'react';
 import { IonHeader, IonToolbar, IonIcon } from '@ionic/react';
 import { logInOutline, logOutOutline } from 'ionicons/icons';
 import { FlameIcon, StarIcon } from '../COMPONENTS/Icons/Icons';
-import { PointsBadge } from '../COMPONENTS/PointsBadge';
+import { AnimatedPointsBadge } from '../COMPONENTS/AnimatedPointsBadge';
 import { AuthModal } from '../COMPONENTS/MODALS/AuthModal';
 import { usePlayerEconomy } from '../../context/PlayerEconomyContext';
 import { esUsuarioAdmin, limpiarTodasLasSesiones } from '../AUTH/authUtils';
@@ -43,6 +43,7 @@ interface LoginHeaderProps {
   menuPrincipal?: boolean;
   ocultarSesion?: boolean;
   gameDetails?: React.ReactNode;
+  pointsEarned?: number;
   rightAction?: React.ReactNode;
 }
 
@@ -55,7 +56,7 @@ function getGreeting(): string {
 }
 
 // Saluda al jugador y muestra su cuenta, su progreso y el acceso.
-export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title, onBack, primaryColor = color.blue, ocultarSaludoEnMovil = false, menuPrincipal = false, ocultarSesion = false, gameDetails, rightAction }) => {
+export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title, onBack, primaryColor = color.blue, ocultarSaludoEnMovil = false, menuPrincipal = false, ocultarSesion = false, gameDetails, rightAction, pointsEarned }) => {
   const economy = usePlayerEconomy();
 
   const [usuario, setUsuario] = useState<Usuario | null>(/* Prepara el valor inicial al montar la pantalla. */ () => {
@@ -212,7 +213,7 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title
               <h1 className="login-header-title" style={{ color: primaryColor }}>{title}</h1>
               <div className="flex flex-wrap items-center justify-center gap-1.5">
                 {gameDetails}
-                <PointsBadge points={economy.puntos} />
+                <AnimatedPointsBadge points={economy.puntos} earned={pointsEarned} />
               </div>
             </div>
           ) : <h1 className="login-header-title" style={{ color: primaryColor }}>{title}</h1>)}
