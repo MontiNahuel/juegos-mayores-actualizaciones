@@ -2,6 +2,7 @@
 import { useEffect, useId, useState } from 'react';
 import { ChallengeContinuation } from './ChallengeContinuation';
 import { SuccessFireworks } from '../ANIMATIONS/SuccessFireworks';
+import { SuccessCheckmark } from '../ANIMATIONS/SuccessCheckmark';
 import type { DayChallenge } from '../CALENDAR/types';
 import { ModalBase } from './ModalBase';
 import { GamePerformance, type GamePerformanceProps } from './GamePerformance';
@@ -72,9 +73,7 @@ export function CompletedModal(props: CompletedModalProps) {
     <ModalBase isOpen onClose={close} labelledBy={titleId}>
       <div className="relative isolate space-y-4 p-5 text-center text-slate-700 sm:p-6">
         {!isGameOver && continuationDateKey && <SuccessFireworks />}
-        <div className={`mx-auto flex h-14 w-14 items-center justify-center rounded-2xl text-3xl ${isGameOver ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-700'}`} aria-hidden="true">
-          {isGameOver ? '💔' : '✓'}
-        </div>
+        {isGameOver ? <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-50 text-3xl text-rose-600" aria-hidden="true">💔</div> : <SuccessCheckmark />}
         <div>
           <h2 id={titleId} className="text-xl font-extrabold text-[#294C6B]">{isGameOver ? (gameId === 'wordle' ? '¡Buen intento!' : '¡Sin vidas restantes!') : textos[gameId].titulo}</h2>
           {(dateStr ?? challenge?.dateStr) && <p className="mt-1 text-sm text-slate-500">{dateStr ?? challenge?.dateStr}</p>}
