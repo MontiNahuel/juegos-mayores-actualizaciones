@@ -21,7 +21,6 @@ function Destination() {
 function renderResult(gameId: 'wordle' | 'sudoku' | 'sopa_letras' | 'crucigrama' = 'wordle') {
   const close = vi.fn();
   render(<MemoryRouter><CompletedModal gameId={gameId} continuationDateKey="2026-11-01" onClose={close} /><Destination /></MemoryRouter>);
-  fireEvent.click(screen.getByRole('button', { name: 'Finalizar' }));
   return close;
 }
 beforeEach(() => {
@@ -34,9 +33,12 @@ beforeEach(() => {
 });
 afterEach(() => { cleanup(); localStorage.clear(); sessionStorage.clear(); });
 
-it('al finalizar permite volver al calendario y busca el día anterior entre meses', async () => {
+it('integra las acciones en el resultado y busca el día anterior entre meses', async () => {
   const close = renderResult();
   await screen.findByRole('button', { name: 'Resolver el día anterior' });
+  expect(screen.getByRole('heading', { name: '¡Palabra descubierta!' })).toBeTruthy();
+  expect(screen.getAllByRole('dialog')).toHaveLength(1);
+  expect(screen.queryByText('¿Seguimos jugando?')).toBeNull();
   expect(getCalendarMonthData).toHaveBeenCalledWith('wordle', 2026, 10, undefined, 'standard');
   fireEvent.click(screen.getByRole('button', { name: 'Volver al calendario' }));
   expect(close).toHaveBeenCalledOnce();
@@ -59,6 +61,10 @@ it('compra desde el resultado y continúa únicamente después de confirmar el d
   fireEvent.click(await screen.findByRole('button', { name: /Desbloquear día anterior/ }));
   fireEvent.click(screen.getByRole('button', { name: 'Desbloquear y jugar por 30 pts' }));
   expect(economy.desbloquearDia).toHaveBeenCalledWith('wordle', '2026-10-31');
+  expect(screen.getByRole('heading', { name: '¡Palabra descubierta!' })).toBeTruthy();
+  expect(screen.getAllByRole('dialog')).toHaveLength(1);
+  fireEvent.keyDown(document, { key: 'Escape' });
+  expect(screen.getByRole('dialog')).toBeTruthy();
   expect(screen.getByRole('button', { name: 'Desbloqueando...' })).toBeDisabled();
   expect(JSON.parse(screen.getByTestId('destination').textContent!).path).toBe('/');
   resolve({ success: true });
