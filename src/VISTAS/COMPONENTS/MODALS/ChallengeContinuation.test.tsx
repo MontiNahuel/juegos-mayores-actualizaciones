@@ -13,6 +13,7 @@ vi.mock('../../../context/PlayerEconomyContext', () => ({ usePlayerEconomy: () =
 vi.mock('../CALENDAR/calendarService', () => ({ getCalendarMonthData: vi.fn() }));
 vi.mock('../../JUEGOS/useClassicChallenge', () => ({ useClassicChallenge: () => ({ completion: {} }) }));
 vi.mock('../ANIMATIONS/SuccessFireworks', () => ({ SuccessFireworks: () => null }));
+vi.mock('../GameHeader', () => ({ GameHeader: () => <header>Navbar del juego</header> }));
 
 const previous: DayChallenge = { day: 31, dateKey: '2026-10-31', dateStr: '31 de Octubre', dayName: 'Sábado', config: { solution: 'HOGAR' }, status: 'pending' };
 function Destination() {
@@ -54,14 +55,17 @@ it.each(['wordle', 'sudoku', 'sopa_letras', 'crucigrama'] as const)('continúa %
   expect(economy.desbloquearDia).not.toHaveBeenCalled();
 });
 
-it('compra desde el resultado y continúa únicamente después de confirmar el desbloqueo', async () => {
+it('compra con un solo toque, evita cobros duplicados y espera el desbloqueo antes de continuar', async () => {
   economy.isDiaDesbloqueado.mockReturnValue(false);
   let resolve!: (value: { success: boolean }) => void;
   economy.desbloquearDia.mockReturnValue(new Promise(done => { resolve = done; }));
   renderResult();
-  fireEvent.click(await screen.findByRole('button', { name: /Desbloquear día anterior/ }));
-  fireEvent.click(screen.getByRole('button', { name: 'Desbloquear y jugar por 30 pts' }));
+  fireEvent.click(await screen.findByRole('button', { name: /Desbloquear y jugar/ }));
   expect(economy.desbloquearDia).toHaveBeenCalledWith('wordle', '2026-10-31');
+  expect(screen.queryByText('Tu saldo')).toBeNull();
+  expect(screen.queryByText('Costo')).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'Desbloqueando...' }));
+  expect(economy.desbloquearDia).toHaveBeenCalledOnce();
   expect(screen.getByRole('heading', { name: '¡Palabra descubierta!' })).toBeTruthy();
   expect(screen.getAllByRole('dialog')).toHaveLength(1);
   fireEvent.keyDown(document, { key: 'Escape' });
@@ -76,8 +80,7 @@ it('muestra el error de compra y permite reintentar sin salir del resultado', as
   economy.isDiaDesbloqueado.mockReturnValue(false);
   economy.desbloquearDia.mockResolvedValue({ success: false, message: 'Sin conexión' });
   renderResult();
-  fireEvent.click(await screen.findByRole('button', { name: /Desbloquear día anterior/ }));
-  fireEvent.click(screen.getByRole('button', { name: /Desbloquear y jugar/ }));
+  fireEvent.click(await screen.findByRole('button', { name: /Desbloquear y jugar/ }));
   expect(await screen.findByRole('alert')).toHaveTextContent('Sin conexión');
   expect(JSON.parse(screen.getByTestId('destination').textContent!).path).toBe('/');
 });
@@ -94,17 +97,17 @@ it('evita compras sin saldo suficiente', async () => {
   economy.puntos = 10;
   economy.isDiaDesbloqueado.mockReturnValue(false);
   renderResult();
-  fireEvent.click(await screen.findByRole('button', { name: /Desbloquear día anterior/ }));
+  expect(await screen.findByRole('button', { name: /Desbloquear y jugar/ })).toBeDisabled();
   expect(screen.getByText(/Te faltan 20 puntos/)).toBeTruthy();
-  expect(screen.queryByRole('button', { name: /Desbloquear y jugar/ })).toBeNull();
+  expect(economy.desbloquearDia).not.toHaveBeenCalled();
 });
 
 it('pide iniciar sesión a invitados antes de comprar', async () => {
   localStorage.clear();
   economy.isDiaDesbloqueado.mockReturnValue(false);
   renderResult();
-  fireEvent.click(await screen.findByRole('button', { name: /Desbloquear día anterior/ }));
-  expect(screen.getByRole('button', { name: 'Iniciar sesión / Registrarse' })).toBeTruthy();
+  fireEvent.click(await screen.findByRole('button', { name: 'Iniciar sesión / Registrarse' }));
+  expect(JSON.parse(screen.getByTestId('destination').textContent!).path).toBe('/login');
   expect(economy.desbloquearDia).not.toHaveBeenCalled();
 });
 

@@ -3,6 +3,7 @@ import { useEffect, useId, useState } from 'react';
 import { ChallengeContinuation } from './ChallengeContinuation';
 import { SuccessFireworks } from '../ANIMATIONS/SuccessFireworks';
 import { SuccessCheckmark } from '../ANIMATIONS/SuccessCheckmark';
+import { GameHeader } from '../GameHeader';
 import type { DayChallenge } from '../CALENDAR/types';
 import { ModalBase } from './ModalBase';
 import { GamePerformance, type GamePerformanceProps } from './GamePerformance';
@@ -70,7 +71,7 @@ export function CompletedModal(props: CompletedModalProps) {
   const boton = 'min-h-12 w-full rounded-xl px-4 py-3 text-sm font-bold transition-colors';
 
   return (
-    <ModalBase isOpen onClose={close} labelledBy={titleId}>
+    <ModalBase isOpen onClose={close} labelledBy={titleId} header={continuationDateKey ? <GameHeader title="Resultado del desafío" onBack={close} /> : undefined}>
       <div className="relative isolate space-y-4 p-5 text-center text-slate-700 sm:p-6">
         {!isGameOver && continuationDateKey && <SuccessFireworks />}
         {isGameOver ? <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-50 text-3xl text-rose-600" aria-hidden="true">💔</div> : <SuccessCheckmark />}
@@ -95,7 +96,7 @@ export function CompletedModal(props: CompletedModalProps) {
         <div className="flex flex-col gap-2">
           {/* {(isGameOver || gameId === 'wordle') && props.onRestart && <button type="button" disabled={buying} onClick={props.onRestart} className={`${boton} bg-slate-100 hover:bg-slate-200 disabled:opacity-50`}>Jugar de nuevo</button>} */}
           {continuationDateKey && !isGameOver ? (
-            <ChallengeContinuation gameId={gameId} dateKey={continuationDateKey} onClose={close} onBuyingChange={setBuying} />
+            <ChallengeContinuation gameId={gameId} dateKey={continuationDateKey} onClose={close} buying={buying} onBuyingChange={setBuying} />
           ) : <button type="button" onClick={onClose} className={`${boton} bg-[#294C6B] text-white hover:bg-[#1E364D]`}>{closeLabel}</button>}
         </div>
       </div>
