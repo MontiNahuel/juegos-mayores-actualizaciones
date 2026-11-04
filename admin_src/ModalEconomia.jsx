@@ -10,7 +10,7 @@ import {
   TrashIcon,
   RefreshIcon,
 } from './Icons';
-import { OPERADOR_STORAGE_KEY } from './LoginSistemas';
+import { OPERADOR_STORAGE_KEY } from './authService';
 
 const JUEGOS_DEFAULT = [
   { id: 'wordle', nombre: 'Wordle', defaultPts: 50, emoji: '🟩' },
@@ -28,8 +28,54 @@ const CALIFICACIONES_CONFIG = [
   { id: 'F', nombre: 'Derrota / Fallido', estrellas: '0 ⭐', badge: 'bg-rose-100 text-rose-900 border-rose-300', emoji: '❌', desc: 'Sin vidas restantes', defaultPts: 0 },
 ];
 
+const JUEGOS_CRONOMETRADOS = [
+  { id: 'sudoku', nombre: 'Sudoku', emoji: '🔢', badge: 'bg-indigo-50 text-indigo-800 border-indigo-200' },
+  { id: 'crucigrama', nombre: 'Crucigrama', emoji: '📝', badge: 'bg-emerald-50 text-emerald-800 border-emerald-200' },
+  { id: 'sopa_letras', nombre: 'Sopa de Letras', emoji: '🔍', badge: 'bg-amber-50 text-amber-800 border-amber-200' },
+];
+
+const DEFAULT_ESCALAS_TIEMPO_FRONT = {
+  sudoku: [
+    { grade: 'S', tiempo_max_segundos: 180, puntos: 100, estrellas: 3, titulo: '¡Impecable!', descripcion: 'Menos de 03:00' },
+    { grade: 'A', tiempo_max_segundos: 300, puntos: 90, estrellas: 3, titulo: '¡Excelente!', descripcion: '03:01 a 05:00' },
+    { grade: 'B', tiempo_max_segundos: 480, puntos: 75, estrellas: 2, titulo: '¡Muy Bueno!', descripcion: '05:01 a 08:00' },
+    { grade: 'C', tiempo_max_segundos: 720, puntos: 50, estrellas: 1, titulo: '¡Buen Trabajo!', descripcion: '08:01 a 12:00' },
+    { grade: 'D', tiempo_max_segundos: 999999, puntos: 25, estrellas: 1, titulo: '¡Completado!', descripcion: 'Más de 12:00' },
+  ],
+  crucigrama: [
+    { grade: 'S', tiempo_max_segundos: 240, puntos: 100, estrellas: 3, titulo: '¡Impecable!', descripcion: 'Menos de 04:00' },
+    { grade: 'A', tiempo_max_segundos: 420, puntos: 90, estrellas: 3, titulo: '¡Excelente!', descripcion: '04:01 a 07:00' },
+    { grade: 'B', tiempo_max_segundos: 600, puntos: 75, estrellas: 2, titulo: '¡Muy Bueno!', descripcion: '07:01 a 10:00' },
+    { grade: 'C', tiempo_max_segundos: 900, puntos: 50, estrellas: 1, titulo: '¡Buen Trabajo!', descripcion: '10:01 a 15:00' },
+    { grade: 'D', tiempo_max_segundos: 999999, puntos: 25, estrellas: 1, titulo: '¡Completado!', descripcion: 'Más de 15:00' },
+  ],
+  sopa_letras: [
+    { grade: 'S', tiempo_max_segundos: 120, puntos: 100, estrellas: 3, titulo: '¡Impecable!', descripcion: 'Menos de 02:00' },
+    { grade: 'A', tiempo_max_segundos: 240, puntos: 90, estrellas: 3, titulo: '¡Excelente!', descripcion: '02:01 a 04:00' },
+    { grade: 'B', tiempo_max_segundos: 360, puntos: 75, estrellas: 2, titulo: '¡Muy Bueno!', descripcion: '04:01 a 06:00' },
+    { grade: 'C', tiempo_max_segundos: 600, puntos: 50, estrellas: 1, titulo: '¡Buen Trabajo!', descripcion: '06:01 a 10:00' },
+    { grade: 'D', tiempo_max_segundos: 999999, puntos: 25, estrellas: 1, titulo: '¡Completado!', descripcion: 'Más de 10:00' },
+  ],
+};
+
+const secToMMSS = (sec) => {
+  if (!sec || sec >= 999990) return 'Sin límite';
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+};
+
+const mmssToSec = (str) => {
+  if (!str || str.toLowerCase().includes('sin') || str.toLowerCase().includes('limite')) return 999999;
+  const parts = str.split(':');
+  if (parts.length === 2) {
+    return (parseInt(parts[0], 10) || 0) * 60 + (parseInt(parts[1], 10) || 0);
+  }
+  return parseInt(str, 10) || 0;
+};
+
 // Permite editar precios, paquetes y puntos de los juegos.
-export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso }) {
+export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso, embebido = false }) {
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -48,6 +94,8 @@ export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso }) 
     C: 50,
     F: 0,
   });
+  const [juegoTiempoTab, setJuegoTiempoTab] = useState('sudoku');
+  const [escalasTiempoPorJuego, setEscalasTiempoPorJuego] = useState(DEFAULT_ESCALAS_TIEMPO_FRONT);
   const [puntosPorJuego, setPuntosPorJuego] = useState({
     wordle: 50,
     sopa_letras: 50,
@@ -91,6 +139,9 @@ export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso }) 
             F: data.puntos_por_calificacion.F ?? 0,
           });
         }
+        if (data.escalas_tiempo_por_juego) {
+          setEscalasTiempoPorJuego(data.escalas_tiempo_por_juego);
+        }
         setVidasMaximas(data.vidas_maximas != null ? String(data.vidas_maximas) : '');
         setPuntosPorJuego(
           data.puntos_por_juego || {
@@ -131,6 +182,45 @@ export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso }) 
       ...prev,
       [grade]: num,
     }));
+  };
+
+  // Manejadores para Calificación por Tiempo (Sin Vidas)
+  const handleEscalaFieldChange = (gameId, index, field, value) => {
+    setEscalasTiempoPorJuego((prev) => {
+      const list = [...(prev[gameId] || [])];
+      if (!list[index]) return prev;
+      let finalVal = value;
+      if (field === 'tiempo_max_segundos') {
+        finalVal = mmssToSec(value);
+      } else if (field === 'puntos' || field === 'estrellas') {
+        finalVal = Math.max(0, parseInt(value, 10) || 0);
+      }
+      list[index] = { ...list[index], [field]: finalVal };
+      return { ...prev, [gameId]: list };
+    });
+  };
+
+  const handleAgregarEscala = (gameId) => {
+    setEscalasTiempoPorJuego((prev) => {
+      const list = [...(prev[gameId] || [])];
+      const nueva = {
+        grade: 'NUEVA',
+        tiempo_max_segundos: 600,
+        puntos: 40,
+        estrellas: 1,
+        titulo: '¡Buen intento!',
+        descripcion: 'Tiempo adicional',
+      };
+      return { ...prev, [gameId]: [...list, nueva] };
+    });
+  };
+
+  const handleEliminarEscala = (gameId, index) => {
+    setEscalasTiempoPorJuego((prev) => {
+      const list = [...(prev[gameId] || [])];
+      list.splice(index, 1);
+      return { ...prev, [gameId]: list };
+    });
   };
 
   // Actualiza los puntos que entrega el juego al completarlo.
@@ -192,6 +282,7 @@ export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso }) 
           C: Math.max(0, parseInt(puntosPorCalificacion.C, 10) || 0),
           F: Math.max(0, parseInt(puntosPorCalificacion.F, 10) || 0),
         },
+        escalas_tiempo_por_juego: escalasTiempoPorJuego,
         puntos_por_juego: puntosPorJuego,
         paquetes_tienda: paquetesTienda.map(/* Prepara el resultado de cada elemento. */ (p, idx) => ({
           id: p.id || `pack_${idx + 1}`,
@@ -228,40 +319,54 @@ export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso }) 
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-hidden">
-      <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+    <div
+      className={
+        embebido
+          ? 'w-full'
+          : 'fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-hidden'
+      }
+    >
+      <div
+        className={
+          embebido
+            ? 'bg-white rounded-2xl border border-white/10 shadow-xl w-full flex flex-col overflow-hidden'
+            : 'bg-white rounded-3xl border border-slate-200/80 shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150'
+        }
+      >
         
         {/* Cabecera del Modal */}
-        <header className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-amber-500/15 text-amber-700 flex items-center justify-center border border-amber-300/40 shadow-xs">
-              <CoinsIcon size={22} />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-base font-black text-slate-900 leading-tight">
-                  Configuración Global de Economía & Vidas
-                </h2>
-                <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-200 px-2 py-0.5 rounded-full flex items-center gap-1">
-                  <HeartIcon size={11} className="text-rose-500 fill-rose-500" />
-                  Vidas & Puntos
-                </span>
+        {!embebido && (
+          <header className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-amber-500/15 text-amber-700 flex items-center justify-center border border-amber-300/40 shadow-xs">
+                <CoinsIcon size={22} />
               </div>
-              <p className="text-[11px] text-slate-500 font-medium">
-                Gestioná las vidas de nuevos usuarios, la tasa de canje en la mini-tienda y las recompensas por juego
-              </p>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base font-black text-slate-900 leading-tight">
+                    Configuración Global de Economía & Vidas
+                  </h2>
+                  <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <HeartIcon size={11} className="text-rose-500 fill-rose-500" />
+                    Vidas & Puntos
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 font-medium">
+                  Gestioná las vidas de nuevos usuarios, la tasa de canje en la mini-tienda y las recompensas por juego
+                </p>
+              </div>
             </div>
-          </div>
 
-          <button
-            type="button"
-            onClick={onCerrar}
-            className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition cursor-pointer"
-            title="Cerrar ventana"
-          >
-            <XIcon size={20} />
-          </button>
-        </header>
+            <button
+              type="button"
+              onClick={onCerrar}
+              className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition cursor-pointer"
+              title="Cerrar ventana"
+            >
+              <XIcon size={20} />
+            </button>
+          </header>
+        )}
 
         {/* Contenido con scroll */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
@@ -387,7 +492,161 @@ export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso }) 
 
 
 
-              {/* SECCIÓN 2: Puntaje por Calificación de Desempeño */}
+              {/* SECCIÓN 2: Calificación por Tiempo (Sin Vidas en Sudoku, Crucigrama, Sopa de Letras) */}
+              <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4.5 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">⏱️</span>
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-800">
+                        2. Calificación por Tiempo (Sin Vidas) por Juego
+                      </h3>
+                      <p className="text-xs text-slate-500">
+                        En Sudoku, Crucigrama y Sopa de Letras no hay Game Over por vidas. Los jugadores reciben su calificación y puntos según el tiempo en que completan el desafío.
+                      </p>
+                    </div>
+                  </div>
+                  <span className="self-start sm:self-auto text-[11px] font-bold text-indigo-800 bg-indigo-100 border border-indigo-300 px-2.5 py-0.5 rounded-full whitespace-nowrap">
+                    Cronómetro & Calificación
+                  </span>
+                </div>
+
+                {/* Pestañas de juego */}
+                <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
+                  {JUEGOS_CRONOMETRADOS.map((j) => (
+                    <button
+                      key={j.id}
+                      type="button"
+                      onClick={() => setJuegoTiempoTab(j.id)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl transition ${
+                        juegoTiempoTab === j.id
+                          ? 'bg-[#002B5E] text-white shadow-xs'
+                          : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      <span>{j.emoji}</span>
+                      <span>{j.nombre}</span>
+                      <span className="text-[10px] opacity-75">
+                        ({(escalasTiempoPorJuego[j.id] || []).length})
+                      </span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Lista de escalas para el juego seleccionado */}
+                <div className="space-y-2.5">
+                  <div className="grid grid-cols-12 gap-2 text-[11px] font-bold text-slate-500 uppercase px-2">
+                    <div className="col-span-2 sm:col-span-1 text-center">Rango</div>
+                    <div className="col-span-3 sm:col-span-2">Tiempo Máx (MM:SS)</div>
+                    <div className="col-span-2 sm:col-span-2">Puntos (pts)</div>
+                    <div className="col-span-2 sm:col-span-2">Estrellas</div>
+                    <div className="col-span-3 sm:col-span-4">Título / Detalle</div>
+                    <div className="col-span-2 sm:col-span-1 text-center">Acción</div>
+                  </div>
+
+                  {(escalasTiempoPorJuego[juegoTiempoTab] || []).map((escala, idx) => (
+                    <div
+                      key={idx}
+                      className="grid grid-cols-12 gap-2 items-center bg-white border border-slate-200 rounded-xl p-2.5 shadow-2xs hover:border-slate-300 transition"
+                    >
+                      {/* Rango / Letra */}
+                      <div className="col-span-2 sm:col-span-1">
+                        <input
+                          type="text"
+                          value={escala.grade}
+                          onChange={(e) => handleEscalaFieldChange(juegoTiempoTab, idx, 'grade', e.target.value.toUpperCase())}
+                          className="w-full text-center px-1 py-1 text-xs font-black bg-amber-50 border border-amber-300 text-amber-900 rounded-lg focus:ring-2 focus:ring-[#002B5E] focus:outline-hidden"
+                          title="Letra o código de calificación (ej: S, A, B, C, D)"
+                        />
+                      </div>
+
+                      {/* Tiempo Máx */}
+                      <div className="col-span-3 sm:col-span-2">
+                        <input
+                          type="text"
+                          value={secToMMSS(escala.tiempo_max_segundos)}
+                          onChange={(e) => handleEscalaFieldChange(juegoTiempoTab, idx, 'tiempo_max_segundos', e.target.value)}
+                          placeholder="MM:SS o Sin límite"
+                          className="w-full px-2 py-1 text-xs font-bold font-mono bg-slate-50 border border-slate-300 text-slate-800 rounded-lg focus:ring-2 focus:ring-[#002B5E] focus:outline-hidden"
+                          title="Tiempo límite en minutos y segundos (ej: 03:00) o 'Sin límite'"
+                        />
+                      </div>
+
+                      {/* Puntos */}
+                      <div className="col-span-2 sm:col-span-2 flex items-center gap-1">
+                        <input
+                          type="number"
+                          min="0"
+                          value={escala.puntos}
+                          onChange={(e) => handleEscalaFieldChange(juegoTiempoTab, idx, 'puntos', e.target.value)}
+                          className="w-full text-right px-2 py-1 text-xs font-black bg-slate-50 border border-slate-300 text-slate-800 rounded-lg focus:ring-2 focus:ring-[#002B5E] focus:outline-hidden"
+                        />
+                        <span className="text-[10px] font-bold text-amber-700">pts</span>
+                      </div>
+
+                      {/* Estrellas */}
+                      <div className="col-span-2 sm:col-span-2">
+                        <select
+                          value={escala.estrellas ?? 3}
+                          onChange={(e) => handleEscalaFieldChange(juegoTiempoTab, idx, 'estrellas', e.target.value)}
+                          className="w-full px-1.5 py-1 text-xs font-bold bg-slate-50 border border-slate-300 text-slate-800 rounded-lg focus:ring-2 focus:ring-[#002B5E] focus:outline-hidden"
+                        >
+                          <option value="3">3 ⭐⭐⭐</option>
+                          <option value="2">2 ⭐⭐</option>
+                          <option value="1">1 ⭐</option>
+                          <option value="0">0 ⭐</option>
+                        </select>
+                      </div>
+
+                      {/* Título y Descripción */}
+                      <div className="col-span-3 sm:col-span-4 flex flex-col gap-1">
+                        <input
+                          type="text"
+                          value={escala.titulo || ''}
+                          onChange={(e) => handleEscalaFieldChange(juegoTiempoTab, idx, 'titulo', e.target.value)}
+                          placeholder="Título (ej: ¡Impecable!)"
+                          className="w-full px-2 py-0.5 text-xs font-bold bg-slate-50 border border-slate-200 text-slate-800 rounded focus:ring-1 focus:ring-[#002B5E] focus:outline-hidden"
+                        />
+                        <input
+                          type="text"
+                          value={escala.descripcion || ''}
+                          onChange={(e) => handleEscalaFieldChange(juegoTiempoTab, idx, 'descripcion', e.target.value)}
+                          placeholder="Descripción (ej: Menos de 03:00)"
+                          className="w-full px-2 py-0.5 text-[10px] bg-slate-50 border border-slate-200 text-slate-600 rounded focus:ring-1 focus:ring-[#002B5E] focus:outline-hidden"
+                        />
+                      </div>
+
+                      {/* Botón Eliminar */}
+                      <div className="col-span-2 sm:col-span-1 flex justify-center">
+                        <button
+                          type="button"
+                          onClick={() => handleEliminarEscala(juegoTiempoTab, idx)}
+                          title="Eliminar esta calificación"
+                          className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                        >
+                          <TrashIcon size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+
+                  <div className="pt-2 flex justify-between items-center">
+                    <button
+                      type="button"
+                      onClick={() => handleAgregarEscala(juegoTiempoTab)}
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-[#002B5E] hover:text-[#001D40] bg-white border border-[#002B5E]/30 hover:border-[#002B5E] px-3 py-1.5 rounded-xl shadow-2xs transition"
+                    >
+                      <PlusIcon size={14} />
+                      <span>Agregar Calificación a {JUEGOS_CRONOMETRADOS.find(j => j.id === juegoTiempoTab)?.nombre}</span>
+                    </button>
+                    <span className="text-[11px] text-slate-400">
+                      Podés agregar tantas escalas como necesites.
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* SECCIÓN 3: Puntaje por Calificación de Desempeño */}
               <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4.5 space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -452,7 +711,7 @@ export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso }) 
                 <div className="flex items-center gap-2">
                   <CoinsIcon size={18} className="text-amber-600" />
                   <h3 className="text-sm font-bold text-slate-800">
-                    3. Puntos Base de Respaldo por Juego
+                    4. Puntos Base de Respaldo por Juego
                   </h3>
                 </div>
                 <p className="text-xs text-slate-500">
@@ -496,7 +755,7 @@ export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso }) 
                   <div className="flex items-center gap-2">
                     <span className="text-base">🛍️</span>
                     <h3 className="text-sm font-bold text-slate-800">
-                      4. Paquetes de la Mini-Tienda (Canje de Vidas)
+                      5. Paquetes de la Mini-Tienda (Canje de Vidas)
                     </h3>
                   </div>
                   <button
@@ -611,7 +870,7 @@ export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso }) 
               onClick={onCerrar}
               className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-200 rounded-xl transition cursor-pointer"
             >
-              Cancelar
+              {embebido ? 'Volver' : 'Cancelar'}
             </button>
             <button
               type="submit"

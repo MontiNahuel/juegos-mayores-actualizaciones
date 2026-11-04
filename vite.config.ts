@@ -47,7 +47,7 @@ export default defineConfig(/* Completa este paso con los datos recibidos por la
           target: backendUrl,
           changeOrigin: true,
         },
-        '^/admin(/|$)': {
+        '^/admin(?:/|\\?|$)': {
           target: backendUrl,
           changeOrigin: true,
           // Deja que Vite atienda los archivos del panel sin enviarlos al servidor.

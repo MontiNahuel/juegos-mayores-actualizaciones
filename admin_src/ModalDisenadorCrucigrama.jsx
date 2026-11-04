@@ -12,7 +12,7 @@ import {
   TrashIcon,
   XIcon,
 } from './Icons';
-import { OPERADOR_STORAGE_KEY } from './LoginSistemas';
+import { OPERADOR_STORAGE_KEY } from './authService';
 
 const API = '/api/challenges/admin/crucigrama/templates';
 const TAMANOS = [7, 11];

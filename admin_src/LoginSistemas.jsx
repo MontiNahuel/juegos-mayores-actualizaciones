@@ -1,9 +1,13 @@
 /* Permite que el personal entre al panel de administración. */
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { LockIcon, ShieldIcon, AlertTriangleIcon } from './Icons';
-
-export const OPERADOR_STORAGE_KEY = 'asistodo_operador_session';
+import { useNavigate } from 'react-router-dom';
+import { CrownIcon, LockIcon, AlertTriangleIcon } from './Icons';
+import {
+  canjearTicketSSO,
+  irAlMenuDeJuegos,
+  limpiarSesion,
+  loginSistemas,
+} from './authService';
 
 // Permite que el personal entre al panel de administración.
 export default function LoginSistemas() {
@@ -13,9 +17,8 @@ export default function LoginSistemas() {
   const [cargando, setCargando] = useState(false);
 
   const navigate = useNavigate();
-  const location = useLocation();
 
-  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
+  useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const ticketParam = params.get('ticket');
 
@@ -23,185 +26,116 @@ export default function LoginSistemas() {
       setCargando(true);
       setErrorMsg('');
 
-      fetch('/api/auth/sso/canjear-ticket', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ticket: ticketParam }),
-      })
-        .then(/* Continúa cuando está listo el resultado anterior. */ (res) => res.json())
-        .then(/* Continúa cuando está listo el resultado anterior. */ (data) => {
-          if (data.success && data.token) {
-            const sessionData = {
-              user: data.user?.name || data.user?.email || 'Administrador SSO',
-              email: data.user?.email || '',
-              token: data.token,
-              tipoUsuario: 2,
-              loginTime: new Date().toISOString(),
-            };
-            localStorage.setItem(OPERADOR_STORAGE_KEY, JSON.stringify(sessionData));
-            navigate('/', { replace: true });
-          } else {
-            setErrorMsg(data.detail || data.message || 'Ticket SSO inválido o expirado.');
-          }
+      canjearTicketSSO(ticketParam)
+        .then(() => navigate('/juegos', { replace: true }))
+        .catch((err) => {
+          setErrorMsg(err.message || 'Ticket SSO inválido o expirado.');
         })
-        .catch(/* Maneja el fallo de esta operación. */ (err) => {
-          console.error('Error al canjear ticket SSO:', err);
-          setErrorMsg('Error de conexión al canjear ticket SSO.');
-        })
-        .finally(/* Libera el trabajo pendiente tanto si terminó bien como si falló. */ () => {
+        .finally(() => {
           setCargando(false);
         });
       return;
     }
 
-    try {
-      localStorage.removeItem(OPERADOR_STORAGE_KEY);
-      sessionStorage.removeItem(OPERADOR_STORAGE_KEY);
-    } catch (e) {
-      console.error(e);
-    }
+    limpiarSesion();
   }, [navigate]);
 
   // Envía las credenciales y prepara la sesión de administración.
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg('');
-
-    const u = usuario.trim().toLowerCase();
-    const p = password.trim();
-
-    if (!u || !p) {
-      setErrorMsg('Por favor completá todos los campos.');
-      return;
-    }
-
-    try {
-      localStorage.removeItem(OPERADOR_STORAGE_KEY);
-      sessionStorage.removeItem(OPERADOR_STORAGE_KEY);
-    } catch (e) {
-      console.error(e);
-    }
     setCargando(true);
-    const emailAEnviar = u.includes('@') ? u : (u === 'admin' ? 'admin@sistemas.com' : `${u}@sistemas.com`);
 
     try {
-      const response = await fetch('/api/auth/login-sistemas', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: emailAEnviar, password: p }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok && data.success && data.token) {
-        const rolUsuario = Number(data.user?.tipoUsuario);
-        if (rolUsuario !== 2) {
-          localStorage.removeItem(OPERADOR_STORAGE_KEY);
-          sessionStorage.removeItem(OPERADOR_STORAGE_KEY);
-          setErrorMsg('Acceso denegado: esta cuenta no posee rol de operador de sistemas.');
-          return;
-        }
-
-        if (typeof data.token !== 'string' || data.token.split('.').length !== 3) {
-          localStorage.removeItem(OPERADOR_STORAGE_KEY);
-          sessionStorage.removeItem(OPERADOR_STORAGE_KEY);
-          setErrorMsg('Token de autenticación inválido emitido por el servidor.');
-          return;
-        }
-
-        const sessionData = {
-          user: data.user?.name || data.user?.email || u,
-          email: data.user?.email || emailAEnviar,
-          token: data.token,
-          tipoUsuario: 2,
-          loginTime: new Date().toISOString(),
-        };
-
-        localStorage.setItem(OPERADOR_STORAGE_KEY, JSON.stringify(sessionData));
-        navigate('/', { replace: true });
-        return;
-      } else {
-        localStorage.removeItem(OPERADOR_STORAGE_KEY);
-        sessionStorage.removeItem(OPERADOR_STORAGE_KEY);
-        setErrorMsg(data?.detail || data?.message || 'Usuario o clave de operador incorrectos.');
-      }
+      await loginSistemas(usuario, password);
+      navigate('/juegos', { replace: true });
     } catch (err) {
-      console.error('Error al iniciar sesión:', err);
-      setErrorMsg('Error de conexión con el servidor. Verificá que el backend esté en ejecución.');
+      const mensaje =
+        err instanceof TypeError
+          ? 'Error de conexión con el servidor. Verificá que el backend esté en ejecución.'
+          : err.message || 'Error al iniciar sesión de administrador.';
+      setErrorMsg(mensaje);
     } finally {
       setCargando(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 font-sans">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="flex justify-center">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-[#002B5E] to-blue-600 flex items-center justify-center text-white shadow-lg border border-blue-400/20">
-            <ShieldIcon size={30} />
+    <div className="flex min-h-screen flex-col justify-center bg-slate-950 px-4 py-12 font-sans text-slate-100 selection:bg-amber-500/30">
+      <div className="mx-auto w-full max-w-sm">
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20">
+            <CrownIcon size={22} />
+          </div>
+          <div>
+            <p className="text-lg font-black tracking-tight text-white">CogniJuegos</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-400/80">
+              Torre de Control
+            </p>
           </div>
         </div>
-        <h1 className="mt-4 text-center text-2xl font-black text-white tracking-tight">
-          Torre de Control
-        </h1>
-        <p className="mt-1 text-center text-xs text-slate-400">
-          Mayores Actualizaciones · Acceso para Operadores
-        </p>
-      </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-slate-800/90 backdrop-blur-md py-8 px-6 shadow-2xl rounded-2xl sm:px-10 border border-slate-700/80">
-          <form className="space-y-5" onSubmit={handleSubmit}>
+        <div className="mt-8 rounded-2xl border border-white/5 bg-slate-900/50 p-6">
+          <h1 className="text-base font-bold text-white">Acceso de operadores</h1>
+          <p className="mt-1 text-xs text-slate-500">
+            Ingresá con tu cuenta de sistemas para administrar el motor lúdico.
+          </p>
+
+          <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
             {errorMsg && (
-              <div className="rounded-xl bg-red-500/10 border border-red-500/20 p-3 flex items-start gap-3">
-                <AlertTriangleIcon size={18} className="text-red-400 mt-0.5 flex-shrink-0" />
-                <div className="text-xs text-red-200">{errorMsg}</div>
+              <div className="flex items-start gap-2 rounded-xl border border-rose-500/30 bg-rose-950/40 p-3 text-xs text-rose-300">
+                <AlertTriangleIcon size={15} className="mt-0.5 flex-shrink-0" />
+                <span>{errorMsg}</span>
               </div>
             )}
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                Correo o Identificador
+              <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                Correo o identificador
               </label>
               <input
                 type="text"
                 value={usuario}
-                onChange={/* Responde a change desde este control. */ (e) => setUsuario(e.target.value)}
+                onChange={(e) => setUsuario(e.target.value)}
                 placeholder="admin@sistemas.com"
                 disabled={cargando}
-                className="w-full px-3.5 py-2.5 bg-slate-900/80 border border-slate-700 rounded-xl text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                className="w-full rounded-xl border border-white/10 bg-slate-950/60 px-3.5 py-2.5 text-sm text-white placeholder-slate-600 focus:border-amber-500/60 focus:outline-none focus:ring-2 focus:ring-amber-500/20 disabled:opacity-60"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                Contraseña de Seguridad
+              <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                Contraseña
               </label>
               <input
                 type="password"
                 value={password}
-                onChange={/* Responde a change desde este control. */ (e) => setPassword(e.target.value)}
+                onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 disabled={cargando}
-                className="w-full px-3.5 py-2.5 bg-slate-900/80 border border-slate-700 rounded-xl text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                className="w-full rounded-xl border border-white/10 bg-slate-950/60 px-3.5 py-2.5 text-sm text-white placeholder-slate-600 focus:border-amber-500/60 focus:outline-none focus:ring-2 focus:ring-amber-500/20 disabled:opacity-60"
               />
             </div>
 
             <button
               type="submit"
               disabled={cargando}
-              className="w-full flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-xl text-sm font-bold text-white bg-blue-600 hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-lg shadow-blue-600/30 transition disabled:opacity-60 cursor-pointer"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 px-4 py-3 text-sm font-bold text-slate-950 transition hover:bg-amber-400 disabled:opacity-60"
             >
-              {cargando ? (
-                <span>Validando credenciales...</span>
-              ) : (
-                <>
-                  <LockIcon size={16} />
-                  <span>Ingresar al Sistema</span>
-                </>
-              )}
+              <LockIcon size={15} />
+              <span>{cargando ? 'Validando credenciales...' : 'Ingresar'}</span>
             </button>
           </form>
+        </div>
+
+        <div className="mt-6 text-center">
+          <button
+            type="button"
+            onClick={irAlMenuDeJuegos}
+            className="text-xs font-semibold text-slate-500 transition hover:text-amber-400"
+          >
+            ← Volver al menú de juegos
+          </button>
         </div>
       </div>
     </div>

@@ -10,7 +10,7 @@ import {
   RefreshIcon,
   UserIcon,
 } from './Icons';
-import { OPERADOR_STORAGE_KEY } from './LoginSistemas';
+import { OPERADOR_STORAGE_KEY } from './authService';
 
 // Permite buscar un jugador y ajustar vidas, puntos o suscripción.
 export default function ModalAsignarEconomia({

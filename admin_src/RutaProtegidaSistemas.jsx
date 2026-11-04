@@ -1,8 +1,7 @@
 /* Comprueba la sesión antes de dejar entrar al panel. */
 import { useState, useEffect } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
-import { OPERADOR_STORAGE_KEY } from './LoginSistemas';
-import { canjearTicketSSO } from './ssoService';
+import { Link, Navigate, useLocation } from 'react-router-dom';
+import { canjearTicketSSO, obtenerSesionValida } from './authService';
 import { ShieldIcon, AlertTriangleIcon } from './Icons';
 
 // Comprueba la sesión antes de dejar entrar al panel.
@@ -12,119 +11,68 @@ export default function RutaProtegidaSistemas({ children }) {
   const [errorSSO, setErrorSSO] = useState('');
   const [ssoAutenticado, setSsoAutenticado] = useState(false);
 
-  // Verificar si viene un ticket SSO descartable en la URL (?ticket=sso_tk_...)
-  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
-    try {
-      const searchParams = new URLSearchParams(window.location.search);
-      const ticket = searchParams.get('ticket');
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const ticket = searchParams.get('ticket');
+    if (!ticket) return;
 
-      if (ticket) {
-        // Limpiar inmediatamente el ticket de la barra de direcciones del navegador
-        window.history.replaceState({}, document.title, window.location.pathname);
-        setCargandoSSO(true);
-        setErrorSSO('');
+    // El ticket es de un solo uso: se quita de la barra antes de canjearlo.
+    window.history.replaceState({}, document.title, window.location.pathname);
+    setCargandoSSO(true);
+    setErrorSSO('');
 
-        canjearTicketSSO(ticket)
-          .then(/* Continúa cuando está listo el resultado anterior. */ () => {
-            setSsoAutenticado(true);
-            setCargandoSSO(false);
-          })
-          .catch(/* Maneja el fallo de esta operación. */ (err) => {
-            console.error('Fallo al canjear ticket SSO:', err);
-            setErrorSSO(err.message || 'El enlace de acceso expiró o es inválido.');
-            setCargandoSSO(false);
-          });
-      }
-    } catch (e) {
-      console.error('Error al procesar parámetros de URL:', e);
-    }
+    canjearTicketSSO(ticket)
+      .then(() => {
+        setSsoAutenticado(true);
+        setCargandoSSO(false);
+      })
+      .catch((err) => {
+        console.error('Fallo al canjear ticket SSO:', err);
+        setErrorSSO(err.message || 'El enlace de acceso expiró o es inválido.');
+        setCargandoSSO(false);
+      });
   }, []);
 
-  // Pantalla de carga mientras se canjea el ticket efímero de 30s
   if (cargandoSSO) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
-        <div className="bg-slate-800 border border-slate-700/80 rounded-2xl p-8 max-w-md w-full shadow-2xl text-center space-y-4">
-          <div className="w-16 h-16 bg-indigo-500/10 text-indigo-400 rounded-2xl flex items-center justify-center mx-auto ring-1 ring-indigo-500/30 animate-pulse">
-            <ShieldIcon className="w-8 h-8" />
+      <div className="flex min-h-screen items-center justify-center bg-slate-950 p-4 font-sans">
+        <div className="w-full max-w-sm space-y-4 rounded-2xl border border-white/5 bg-slate-900/50 p-6 text-center shadow-2xl">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400 ring-1 ring-amber-500/30">
+            <ShieldIcon size={26} />
           </div>
-          <h2 className="text-xl font-bold text-white">Iniciando sesión segura</h2>
-          <p className="text-slate-400 text-sm">
+          <h2 className="text-base font-bold text-white">Iniciando sesión segura</h2>
+          <p className="text-xs text-slate-400">
             Validando ticket de acceso único con el Autenticador Central...
           </p>
-          <div className="w-8 h-8 border-3 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mt-4" />
+          <div className="mx-auto h-7 w-7 animate-spin rounded-full border-2 border-amber-500 border-t-transparent" />
         </div>
       </div>
     );
   }
 
-  // Pantalla de error si el ticket expiró (más de 30s) o fue reutilizado
   if (errorSSO) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
-        <div className="bg-slate-800 border border-red-500/30 rounded-2xl p-8 max-w-md w-full shadow-2xl text-center space-y-5">
-          <div className="w-16 h-16 bg-red-500/10 text-red-400 rounded-2xl flex items-center justify-center mx-auto ring-1 ring-red-500/30">
-            <AlertTriangleIcon className="w-8 h-8" />
+      <div className="flex min-h-screen items-center justify-center bg-slate-950 p-4 font-sans">
+        <div className="w-full max-w-sm space-y-5 rounded-2xl border border-white/5 bg-slate-900/50 p-6 text-center shadow-2xl">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-rose-500/10 text-rose-400 ring-1 ring-rose-500/30">
+            <AlertTriangleIcon size={26} />
           </div>
-          <h2 className="text-xl font-bold text-white">Acceso SSO no autorizado</h2>
-          <p className="text-red-300 text-sm bg-red-950/40 p-3 rounded-lg border border-red-500/20">
+          <h2 className="text-base font-bold text-white">Acceso SSO no autorizado</h2>
+          <p className="rounded-lg border border-rose-500/20 bg-rose-950/40 p-3 text-xs text-rose-300">
             {errorSSO}
           </p>
-          <a
-            href="/admin/login"
-            className="inline-block w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl transition-colors shadow-lg shadow-indigo-600/30 text-sm"
+          <Link
+            to="/login"
+            className="inline-block w-full rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-bold text-slate-950 transition-colors hover:bg-amber-400"
           >
             Ir al inicio de sesión manual
-          </a>
+          </Link>
         </div>
       </div>
     );
   }
 
-  // Validación estándar de sesión en localStorage
-  let estaAutenticado = ssoAutenticado;
-  if (!estaAutenticado) {
-    try {
-      const sesion = localStorage.getItem(OPERADOR_STORAGE_KEY) || sessionStorage.getItem(OPERADOR_STORAGE_KEY);
-      if (sesion) {
-        const parsed = JSON.parse(sesion);
-        const esAdmin = parsed && (parsed.tipoUsuario === 2 || parsed.tipoUsuario === '2');
-        const tieneUsuario = Boolean(parsed && parsed.user);
-        const token = parsed?.token;
-        const esJwtValido = typeof token === 'string' &&
-          token.split('.').length === 3 &&
-          !token.startsWith('op_local_');
-
-        let tokenVigente = false;
-        if (esJwtValido) {
-          try {
-            const payloadBase64 = token.split('.')[1];
-            const decodedJson = JSON.parse(
-              atob(payloadBase64.replace(/-/g, '+').replace(/_/g, '/'))
-            );
-            if (decodedJson.exp) {
-              tokenVigente = decodedJson.exp * 1000 > Date.now();
-            } else {
-              tokenVigente = true;
-            }
-          } catch {
-            tokenVigente = false;
-          }
-        }
-
-        if (esAdmin && tieneUsuario && esJwtValido && tokenVigente) {
-          estaAutenticado = true;
-        } else {
-          localStorage.removeItem(OPERADOR_STORAGE_KEY);
-          sessionStorage.removeItem(OPERADOR_STORAGE_KEY);
-          estaAutenticado = false;
-        }
-      }
-    } catch (e) {
-      console.error('Error al validar sesión de operador:', e);
-      estaAutenticado = false;
-    }
-  }
+  const estaAutenticado = ssoAutenticado || Boolean(obtenerSesionValida());
 
   if (!estaAutenticado) {
     const search = location.search || '';

@@ -8,9 +8,9 @@ import {
   LayersIcon,
 } from './Icons';
 import ModalDisenadorCrucigrama from './ModalDisenadorCrucigrama';
-import { OPERADOR_STORAGE_KEY } from './LoginSistemas';
+import { OPERADOR_STORAGE_KEY } from './authService';
 
-export default function ModalDesafios({ abierto, onCerrar }) {
+export default function ModalDesafios({ abierto, onCerrar, embebido = false }) {
   const [modalDisenadorAbierto, setModalDisenadorAbierto] = useState(false);
   const [desafiosJuego, setDesafiosJuego] = useState('sudoku');
   const [desafiosAnio, setDesafiosAnio] = useState(2026);
@@ -85,32 +85,46 @@ export default function ModalDesafios({ abierto, onCerrar }) {
   if (!abierto) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
-      <div className="bg-slate-900 rounded-3xl max-w-3xl w-full p-6 shadow-2xl border border-slate-700/80 max-h-[90vh] flex flex-col text-slate-100 animate-scale-in">
+    <div
+      className={
+        embebido
+          ? 'w-full'
+          : 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in'
+      }
+    >
+      <div
+        className={
+          embebido
+            ? 'w-full rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-xl flex flex-col text-slate-100'
+            : 'bg-slate-900 rounded-3xl max-w-3xl w-full p-6 shadow-2xl border border-slate-700/80 max-h-[90vh] flex flex-col text-slate-100 animate-scale-in'
+        }
+      >
         {/* Cabecera del modal */}
-        <div className="flex items-center justify-between pb-4 border-b border-slate-800">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center shadow-xs">
-              <CalendarIcon size={20} />
+        {!embebido && (
+          <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 flex items-center justify-center shadow-xs">
+                <CalendarIcon size={20} />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-slate-100 leading-tight">
+                  Cobertura de Desafíos Diarios
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Auditoría y generación automática de puzzles mensuales
+                </p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-base font-black text-slate-100 leading-tight">
-                Cobertura de Desafíos Diarios
-              </h3>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Auditoría y generación automática de puzzles mensuales
-              </p>
-            </div>
-          </div>
 
-          <button
-            type="button"
-            onClick={onCerrar}
-            className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-slate-200 transition cursor-pointer"
-          >
-            <XIcon size={16} />
-          </button>
-        </div>
+            <button
+              type="button"
+              onClick={onCerrar}
+              className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-slate-200 transition cursor-pointer"
+            >
+              <XIcon size={16} />
+            </button>
+          </div>
+        )}
 
         {/* Selector de Juego y Año */}
         <div className="py-4 flex flex-wrap items-center justify-between gap-3 border-b border-slate-800">
@@ -308,13 +322,15 @@ export default function ModalDesafios({ abierto, onCerrar }) {
               ? '💡 Las palabras de Wordle se toman del banco ordenado por frecuencia real en español.'
               : '💡 Las sopas de letras se generan procedimentalmente a partir de más de 60 temas culturales.'}
           </span>
-          <button
-            type="button"
-            onClick={onCerrar}
-            className="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 transition cursor-pointer"
-          >
-            Cerrar
-          </button>
+          {!embebido && (
+            <button
+              type="button"
+              onClick={onCerrar}
+              className="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 transition cursor-pointer"
+            >
+              Cerrar
+            </button>
+          )}
         </div>
       </div>
 

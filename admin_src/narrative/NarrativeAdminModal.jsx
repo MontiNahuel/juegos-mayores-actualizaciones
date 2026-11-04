@@ -24,7 +24,7 @@ import CalendarioTab from './CalendarioTab';
 import GrafosV2Tab from './GrafosV2Tab';
 
 // Organiza las pestañas para administrar el contenido narrativo.
-export default function NarrativeAdminModal({ abierto, onCerrar }) {
+export default function NarrativeAdminModal({ abierto, onCerrar, embebido = false }) {
   const [tabActiva, setTabActiva] = useState('universos');
   const [universos, setUniversos] = useState([]);
   const [personajes, setPersonajes] = useState([]);
@@ -76,6 +76,97 @@ export default function NarrativeAdminModal({ abierto, onCerrar }) {
     { id: 'grafos_v2', label: '9. Grafos V2 (Nodos)', Icon: GitBranchIcon },
   ];
 
+  const barraTabs = (
+    <div className="bg-white px-6 border-b border-slate-200/80 flex items-center justify-between gap-4 overflow-x-auto flex-shrink-0">
+      <div className="flex items-center gap-1.5 py-2.5">
+        {tabsConfig.map(/* Prepara el resultado de cada elemento. */ (tab) => {
+          const { id, label, Icon, count } = tab;
+          const estaActiva = tabActiva === id;
+          return (
+            <button
+              key={id}
+              type="button"
+              onClick={/* Responde a click desde este control. */ () => setTabActiva(id)}
+              className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap cursor-pointer ${
+                estaActiva
+                  ? 'bg-[#002B5E] text-white shadow-xs'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              <Icon size={14} />
+              <span>{label}</span>
+              {typeof count === 'number' && (
+                <span
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
+                    estaActiva
+                      ? 'bg-white/20 text-white'
+                      : 'bg-slate-200 text-slate-700'
+                  }`}
+                >
+                  {count}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      <span className="text-[11px] font-semibold text-slate-400 hidden xl:inline-block whitespace-nowrap">
+        Universo Activo:{' '}
+        <strong className="text-slate-700">{universos[0]?.nombre || 'Corte Medieval'}</strong>
+      </span>
+    </div>
+  );
+
+  const contenidoTabs = (
+    <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+      {tabActiva === 'universos' && (
+        <UniversosTab onUniversosChange={setUniversos} />
+      )}
+
+      {tabActiva === 'personajes' && (
+        <PersonajesTab universos={universos} />
+      )}
+
+      {tabActiva === 'cartas' && (
+        <CartasTab universos={universos} />
+      )}
+
+      {tabActiva === 'resultados' && (
+        <ResultadosTab universos={universos} personajes={personajes} />
+      )}
+
+      {tabActiva === 'eventos' && (
+        <EventosTab universos={universos} personajes={personajes} />
+      )}
+
+      {tabActiva === 'conversaciones' && (
+        <ConversacionesTab universos={universos} personajes={personajes} />
+      )}
+
+      {tabActiva === 'finalizaciones' && (
+        <FinalizacionesTab universos={universos} />
+      )}
+
+      {tabActiva === 'calendario' && (
+        <CalendarioTab universos={universos} />
+      )}
+
+      {tabActiva === 'grafos_v2' && (
+        <GrafosV2Tab universos={universos} personajes={personajes} />
+      )}
+    </div>
+  );
+
+  if (embebido) {
+    return (
+      <section className="overflow-hidden rounded-2xl border border-white/10 bg-slate-50 shadow-xl">
+        {barraTabs}
+        {contenidoTabs}
+      </section>
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-hidden">
       <div className="bg-slate-50 rounded-3xl border border-slate-200/80 shadow-2xl w-full max-w-7xl h-full max-h-[96vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
@@ -110,85 +201,8 @@ export default function NarrativeAdminModal({ abierto, onCerrar }) {
           </button>
         </header>
 
-        {/* Barra de Pestañas de Navegación (7 Pestañas ABM) */}
-        <div className="bg-white px-6 border-b border-slate-200/80 flex items-center justify-between gap-4 overflow-x-auto flex-shrink-0">
-          <div className="flex items-center gap-1.5 py-2.5">
-            {tabsConfig.map(/* Prepara el resultado de cada elemento. */ (tab) => {
-              const { id, label, Icon, count } = tab;
-              const estaActiva = tabActiva === id;
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={/* Responde a click desde este control. */ () => setTabActiva(id)}
-                  className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap cursor-pointer ${
-                    estaActiva
-                      ? 'bg-[#002B5E] text-white shadow-xs'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                  }`}
-                >
-                  <Icon size={14} />
-                  <span>{label}</span>
-                  {typeof count === 'number' && (
-                    <span
-                      className={`text-[10px] px-1.5 py-0.2 rounded-full font-extrabold ${
-                        estaActiva
-                          ? 'bg-white/20 text-white'
-                          : 'bg-slate-200 text-slate-700'
-                      }`}
-                    >
-                      {count}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          <span className="text-[11px] font-semibold text-slate-400 hidden xl:inline-block whitespace-nowrap">
-            Universo Activo:{' '}
-            <strong className="text-slate-700">{universos[0]?.nombre || 'Corte Medieval'}</strong>
-          </span>
-        </div>
-
-        {/* Contenedor de la Pestaña Activa */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-          {tabActiva === 'universos' && (
-            <UniversosTab onUniversosChange={setUniversos} />
-          )}
-
-          {tabActiva === 'personajes' && (
-            <PersonajesTab universos={universos} />
-          )}
-
-          {tabActiva === 'cartas' && (
-            <CartasTab universos={universos} />
-          )}
-
-          {tabActiva === 'resultados' && (
-            <ResultadosTab universos={universos} personajes={personajes} />
-          )}
-
-          {tabActiva === 'eventos' && (
-            <EventosTab universos={universos} personajes={personajes} />
-          )}
-
-          {tabActiva === 'conversaciones' && (
-            <ConversacionesTab universos={universos} personajes={personajes} />
-          )}
-
-          {tabActiva === 'finalizaciones' && (
-            <FinalizacionesTab universos={universos} />
-          )}
-
-          {tabActiva === 'calendario' && (
-            <CalendarioTab universos={universos} />
-          )}
-
-          {tabActiva === 'grafos_v2' && (
-            <GrafosV2Tab universos={universos} personajes={personajes} />
-          )}
-        </div>
+        {barraTabs}
+        {contenidoTabs}
 
         {/* Pie de Panel */}
         <footer className="bg-white px-6 py-3 border-t border-slate-200/80 flex items-center justify-between text-xs text-slate-500 flex-shrink-0">

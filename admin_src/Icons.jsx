@@ -236,6 +236,15 @@ export const SparklesIcon = ({ size = 16, className = '', ...props }) => (
   </svg>
 );
 
+// Dibuja el icono de menu para reutilizarlo en pantalla.
+export const MenuIcon = ({ size = 16, className = '', ...props }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" {...defaultProps} className={`flex-shrink-0 ${className}`} {...props}>
+    <line x1="4" y1="6" x2="20" y2="6" />
+    <line x1="4" y1="12" x2="20" y2="12" />
+    <line x1="4" y1="18" x2="20" y2="18" />
+  </svg>
+);
+
 // Dibuja el icono de filter para reutilizarlo en pantalla.
 export const FilterIcon = ({ size = 16, className = '', ...props }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" {...defaultProps} className={`flex-shrink-0 ${className}`} {...props}>
