@@ -889,7 +889,7 @@ export const SopaLetrasGame: React.FC = () => {
 
         {/* Modal de Felicitación / Victoria o Game Over */}
         {(showVictoryModal) && (
-          <CompletedModal gameId="sopa_letras" completion={classic.completion}
+          <CompletedModal gameId="sopa_letras" completion={classic.completion} continuationDateKey={dateStrKey}
             challenge={{
               dateStr: dateDisplay,
               config: {

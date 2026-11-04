@@ -655,14 +655,13 @@ const WordleGame: React.FC = () => {
         {showEndModal && (
           <CompletedModal
             gameId="wordle"
-            completion={classic.completion}
+            completion={classic.completion} continuationDateKey={dateStrKey}
             challenge={{
               attempts: guesses.length,
               config: { solution: activeSolution },
             }}
             onRestart={handleRestart}
-            onClose={/* Responde a close desde este control. */ () => navigate('/menu')}
-            closeLabel="Volver al menú"
+            onClose={/* Responde a close desde este control. */ () => navigate('/juegos/wordle')}
           />
         )}
       </IonContent>

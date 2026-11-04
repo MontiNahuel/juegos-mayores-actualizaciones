@@ -1,5 +1,6 @@
 /* Muestra cómo terminó el desafío y permite seguir navegando. */
-import { useEffect, useId } from 'react';
+import { useEffect, useId, useState } from 'react';
+import { ChallengeContinuation } from './ChallengeContinuation';
 import type { DayChallenge } from '../CALENDAR/types';
 import { ModalBase } from './ModalBase';
 import { GamePerformance, type GamePerformanceProps } from './GamePerformance';
@@ -21,6 +22,7 @@ interface CompletedModalProps {
   onClose: () => void;
   closeLabel?: string;
   completion?: ClassicCompletion;
+  continuationDateKey?: string;
 }
 
 const textos: Record<Juego, { titulo: string; descripcion: string }> = {
@@ -31,8 +33,9 @@ const textos: Record<Juego, { titulo: string; descripcion: string }> = {
 };
 
 // Muestra cómo terminó el desafío y permite seguir navegando.
-export function CompletedModal({ gameId, challenge, dateStr, stars, performance, isGameOver: gameOver = false, onRestart, onClose, closeLabel = 'Volver al calendario', completion }: CompletedModalProps) {
+export function CompletedModal({ gameId, challenge, dateStr, stars, performance, isGameOver: gameOver = false, onRestart, onClose, closeLabel = 'Volver al calendario', completion, continuationDateKey }: CompletedModalProps) {
   const titleId = useId();
+  const [finished, setFinished] = useState(false);
   const isGameOver = gameOver || (performance !== undefined && performance.remainingLives <= 0);
   const config = challenge?.config;
   const registro = challenge?.completedData;
@@ -62,6 +65,8 @@ export function CompletedModal({ gameId, challenge, dateStr, stars, performance,
   ];
   const boton = 'min-h-12 w-full rounded-xl px-4 py-3 text-sm font-bold transition-colors';
 
+  if (finished && continuationDateKey) return <ChallengeContinuation gameId={gameId} dateKey={continuationDateKey} onClose={onClose} />;
+
   return (
     <ModalBase isOpen onClose={onClose} labelledBy={titleId}>
       <div className="space-y-4 p-5 text-center text-slate-700 sm:p-6">
@@ -88,7 +93,7 @@ export function CompletedModal({ gameId, challenge, dateStr, stars, performance,
         )}
         <div className="flex flex-col gap-2">
           {(isGameOver || gameId === 'wordle') && onRestart && <button type="button" onClick={onRestart} className={`${boton} bg-slate-100 hover:bg-slate-200`}>Jugar de nuevo</button>}
-          <button type="button" onClick={onClose} className={`${boton} bg-[#294C6B] text-white hover:bg-[#1E364D]`}>{closeLabel}</button>
+          <button type="button" onClick={() => continuationDateKey && !isGameOver ? setFinished(true) : onClose()} className={`${boton} bg-[#294C6B] text-white hover:bg-[#1E364D]`}>{continuationDateKey && !isGameOver ? 'Finalizar' : closeLabel}</button>
         </div>
       </div>
     </ModalBase>

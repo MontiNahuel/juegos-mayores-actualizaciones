@@ -307,6 +307,7 @@ export function useSudokuGame() {
   }, [inputNumber, eraseCell, useHint, isWon, progressReady]);
 
   return {
+    dateKey,
     dateStr,
     completion: classic.completion,
     progressReady,

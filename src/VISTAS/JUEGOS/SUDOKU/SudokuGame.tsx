@@ -63,7 +63,7 @@ export const SudokuGame: React.FC = () => {
 
       {/* Modal accesible de victoria */}
       {game.isWon && (
-        <CompletedModal gameId="sudoku" completion={game.completion}
+        <CompletedModal gameId="sudoku" completion={game.completion} continuationDateKey={game.dateKey}
           dateStr={game.dateStr}
           onRestart={game.restart}
           onClose={game.goBack}

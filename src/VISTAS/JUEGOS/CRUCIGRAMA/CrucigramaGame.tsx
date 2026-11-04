@@ -1144,7 +1144,7 @@ export const CrucigramaGame: React.FC = () => {
 
           {/* MODAL DE VICTORIA O GAME OVER */}
           {(showVictoryModal) && (
-            <CompletedModal gameId="crucigrama" completion={classic.completion}
+            <CompletedModal gameId="crucigrama" completion={classic.completion} continuationDateKey={targetDate}
               challenge={{
                 dateStr: targetDate,
                 config: {

@@ -1,13 +1,14 @@
 /* Muestra los desafíos diarios y permite elegir o desbloquear un día. */
-import { useEffect, useMemo, useState, useCallback, type CSSProperties } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useState, useCallback, useRef, type CSSProperties } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
 import { type DailyChallengeCalendarProps, type DayChallenge, DEFAULT_CALENDAR_THEME } from './types';
 import { useGameCalendar } from './useGameCalendar';
 import { CalendarHeader } from './CalendarHeader';
 import { CalendarHeroCard } from './CalendarHeroCard';
 import { CalendarGrid } from './CalendarGrid';
-import { IconInfo, IconClose, IconCheck, IconStarSolid, IconLock, IconCoins, IconSpinner } from './icons';
+import { IconInfo, IconClose, IconCheck, IconStarSolid } from './icons';
+import { HistoricalChallengeAccess } from './HistoricalChallengeAccess';
 import { usePlayerEconomy } from '../../../context/PlayerEconomyContext';
 
 // Muestra los desafíos diarios y permite elegir o desbloquear un día.
@@ -27,6 +28,7 @@ export function DailyChallengeCalendar({
   renderCompletedModal,
 }: DailyChallengeCalendarProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const theme = useMemo(/* Recalcula este dato cuando cambian sus dependencias. */ () => ({ ...DEFAULT_CALENDAR_THEME, ...themeProp }), [themeProp]);
   const {
     challenges,
@@ -48,21 +50,13 @@ export function DailyChallengeCalendar({
   });
 
   const {
-    puntos,
-    costoDesbloqueoDiaPuntos,
     suscripcion,
     isDiaDesbloqueado,
-    desbloquearDia,
   } = usePlayerEconomy();
 
   const [selectedCompleted, setSelectedCompleted] = useState<DayChallenge | null>(null);
   const [challengeParaDesbloquear, setChallengeParaDesbloquear] = useState<DayChallenge | null>(null);
-  const [desbloqueando, setDesbloqueando] = useState(false);
-  const [errorDesbloqueo, setErrorDesbloqueo] = useState<string | null>(null);
   const [futureNotice, setFutureNotice] = useState<string | null>(null);
-
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-  const esInvitado = !token;
 
   useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
     if (!futureNotice) return;
@@ -104,7 +98,7 @@ export function DailyChallengeCalendar({
   );
 
   // Responde a la casilla elegida y actualiza la selección.
-  const handleCellClick = (item: DayChallenge) => {
+  const handleCellClick = useCallback((item: DayChallenge) => {
     if (item.status === 'completed') {
       setSelectedCompleted(item);
       return;
@@ -112,7 +106,6 @@ export function DailyChallengeCalendar({
 
     if (item.status === 'pending') {
       if (isItemHistoricalLocked(item)) {
-        setErrorDesbloqueo(null);
         setChallengeParaDesbloquear(item);
         return;
       }
@@ -121,25 +114,18 @@ export function DailyChallengeCalendar({
     }
 
     setFutureNotice(`El desafío del día ${item.day} estará disponible el ${item.dateStr}.`);
-  };
+  }, [isItemHistoricalLocked, ejecutarJuego]);
 
-  // Confirma la compra del día y permite entrar si se pudo desbloquear.
-  const handleConfirmarDesbloqueo = async () => {
-    if (!challengeParaDesbloquear) return;
-    setDesbloqueando(true);
-    setErrorDesbloqueo(null);
+  const consumedContinuation = useRef<string | null>(null);
 
-    const res = await desbloquearDia(gameId, challengeParaDesbloquear.dateKey);
-    setDesbloqueando(false);
-
-    if (res.success) {
-      const itemToPlay = challengeParaDesbloquear;
-      setChallengeParaDesbloquear(null);
-      ejecutarJuego(itemToPlay);
-    } else {
-      setErrorDesbloqueo(res.message);
-    }
-  };
+  // Consume una continuación una sola vez y conserva el flujo propio de cada juego.
+  useEffect(() => {
+    const item = location.state?.continueChallenge as DayChallenge | undefined;
+    if (!item || consumedContinuation.current === location.key) return;
+    consumedContinuation.current = location.key;
+    navigate(location.pathname, { replace: true, state: null });
+    handleCellClick(item);
+  }, [location.key, location.state, location.pathname, navigate, handleCellClick]);
 
   return (
     <IonPage
@@ -241,143 +227,17 @@ export function DailyChallengeCalendar({
             </div>
           ))}
 
-        {/* Modal Desbloquear Día Anterior */}
         {challengeParaDesbloquear && (
-          <div onClick={/* Responde a click desde este control. */ event => { if (event.target === event.currentTarget) setChallengeParaDesbloquear(null); }} className="fixed inset-0 z-[999] flex items-center justify-center bg-slate-900/60 px-4 py-[var(--app-safe-bottom)] backdrop-blur-sm animate-in fade-in duration-150">
-            <section
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="modal-desbloqueo-title"
-              className="calendar-shared-modal-card w-full max-w-[400px] rounded-3xl border border-slate-200 bg-white p-6 text-center text-[#46556D] shadow-2xl space-y-4"
-            >
-              {esInvitado ? (
-                <>
-                  <div className="mx-auto size-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-200 shadow-xs">
-                    <IconLock size={26} color="#D97706" />
-                  </div>
-                  <div>
-                    <h2 id="modal-desbloqueo-title" className="text-lg font-black text-slate-900">
-                      Desafío del {challengeParaDesbloquear.dateStr}
-                    </h2>
-                    <p className="text-xs text-slate-500 font-medium mt-1">
-                      Este desafío pertenece a un día anterior.
-                    </p>
-                  </div>
-                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs text-slate-700 space-y-2">
-                    <p className="font-semibold text-slate-800">
-                      Iniciá sesión o registrate para desbloquear desafíos de días anteriores y acumular puntos.
-                    </p>
-                    <p className="text-[11px] text-slate-500">
-                      El desafío de hoy está siempre disponible para que juegues gratis.
-                    </p>
-                  </div>
-                  <div className="flex flex-col gap-2 pt-2">
-                    <button
-                      type="button"
-                      onClick={/* Responde a click desde este control. */ () => navigate('/login')}
-                      className="min-h-11 w-full cursor-pointer rounded-xl bg-[#002B5E] px-4 py-3 text-sm font-bold text-white hover:bg-slate-900 transition shadow-sm"
-                    >
-                      Iniciar Sesión / Registrarse
-                    </button>
-                    <button
-                      type="button"
-                      onClick={/* Responde a click desde este control. */ () => setChallengeParaDesbloquear(null)}
-                      className="min-h-10 w-full cursor-pointer rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition"
-                    >
-                      Volver al calendario
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="mx-auto size-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-200 shadow-xs">
-                    <IconCoins size={28} color="#D97706" />
-                  </div>
-                  <div>
-                    <h2 id="modal-desbloqueo-title" className="text-lg font-black text-slate-900">
-                      Desbloquear Desafío Histórico
-                    </h2>
-                    <p className="text-xs text-slate-500 font-medium mt-0.5">
-                      Día {challengeParaDesbloquear.day} · {challengeParaDesbloquear.dateStr}
-                    </p>
-                  </div>
-
-                  {errorDesbloqueo && (
-                    <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 font-semibold text-left">
-                      {errorDesbloqueo}
-                    </div>
-                  )}
-
-                  {/* Resumen de Saldo y Costo */}
-                  <div className="grid grid-cols-2 gap-2.5 bg-slate-50 border border-slate-200 rounded-2xl p-3.5">
-                    <div className="text-left">
-                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tus Puntos</div>
-                      <div className="text-base font-black text-slate-900 flex items-center gap-1">
-                        <IconCoins size={14} color="#D97706" />
-                        <span>{puntos}</span>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Costo</div>
-                      <div className="text-base font-black text-amber-600">
-                        {costoDesbloqueoDiaPuntos} pts
-                      </div>
-                    </div>
-                  </div>
-
-                  {puntos >= costoDesbloqueoDiaPuntos ? (
-                    <>
-                      <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                        ¿Querés desbloquear este desafío? Quedará disponible en tu cuenta para siempre y podrás sumar puntos al ganarlo.
-                      </p>
-                      <div className="flex flex-col gap-2 pt-2">
-                        <button
-                          type="button"
-                          onClick={handleConfirmarDesbloqueo}
-                          disabled={desbloqueando}
-                          className="min-h-11 w-full cursor-pointer rounded-xl bg-amber-500 hover:bg-amber-600 px-4 py-3 text-sm font-extrabold text-white transition shadow-md flex items-center justify-center gap-2 disabled:opacity-50"
-                        >
-                          {desbloqueando ? (
-                            <>
-                              <IconSpinner size={18} color="#FFFFFF" />
-                              <span>Desbloqueando...</span>
-                            </>
-                          ) : (
-                            <>
-                              <IconCoins size={16} color="#FFFFFF" />
-                              <span>Desbloquear por {costoDesbloqueoDiaPuntos} pts</span>
-                            </>
-                          )}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={/* Responde a click desde este control. */ () => setChallengeParaDesbloquear(null)}
-                          className="min-h-10 w-full cursor-pointer rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition"
-                        >
-                          Cancelar
-                        </button>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-3 text-xs text-amber-900 font-medium">
-                        Te faltan <strong>{costoDesbloqueoDiaPuntos - puntos} puntos</strong> para desbloquear este día. ¡Jugá los desafíos de hoy para sumar puntos o pasate a Premium!
-                      </div>
-                      <div className="pt-2">
-                        <button
-                          type="button"
-                          onClick={/* Responde a click desde este control. */ () => setChallengeParaDesbloquear(null)}
-                          className="min-h-11 w-full cursor-pointer rounded-xl bg-slate-800 hover:bg-slate-900 px-4 py-3 text-sm font-bold text-white transition shadow-sm"
-                        >
-                          Entendido
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </>
-              )}
-            </section>
-          </div>
+          <HistoricalChallengeAccess
+            gameId={gameId}
+            challenge={challengeParaDesbloquear}
+            onPlay={() => {
+              const item = challengeParaDesbloquear;
+              setChallengeParaDesbloquear(null);
+              ejecutarJuego(item);
+            }}
+            onClose={() => setChallengeParaDesbloquear(null)}
+          />
         )}
       </IonContent>
     </IonPage>
