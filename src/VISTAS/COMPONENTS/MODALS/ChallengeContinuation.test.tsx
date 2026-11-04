@@ -12,6 +12,7 @@ const economy = vi.hoisted(() => ({
 vi.mock('../../../context/PlayerEconomyContext', () => ({ usePlayerEconomy: () => economy }));
 vi.mock('../CALENDAR/calendarService', () => ({ getCalendarMonthData: vi.fn() }));
 vi.mock('../../JUEGOS/useClassicChallenge', () => ({ useClassicChallenge: () => ({ completion: {} }) }));
+vi.mock('../ANIMATIONS/SuccessFireworks', () => ({ SuccessFireworks: () => null }));
 
 const previous: DayChallenge = { day: 31, dateKey: '2026-10-31', dateStr: '31 de Octubre', dayName: 'Sábado', config: { solution: 'HOGAR' }, status: 'pending' };
 function Destination() {

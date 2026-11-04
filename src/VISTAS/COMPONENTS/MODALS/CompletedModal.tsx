@@ -1,6 +1,7 @@
 /* Muestra cómo terminó el desafío y permite seguir navegando. */
 import { useEffect, useId, useState } from 'react';
 import { ChallengeContinuation } from './ChallengeContinuation';
+import { SuccessFireworks } from '../ANIMATIONS/SuccessFireworks';
 import type { DayChallenge } from '../CALENDAR/types';
 import { ModalBase } from './ModalBase';
 import { GamePerformance, type GamePerformanceProps } from './GamePerformance';
@@ -68,7 +69,8 @@ export function CompletedModal({ gameId, challenge, dateStr, stars, performance,
 
   return (
     <ModalBase isOpen onClose={close} labelledBy={titleId}>
-      <div className="space-y-4 p-5 text-center text-slate-700 sm:p-6">
+      <div className="relative isolate space-y-4 p-5 text-center text-slate-700 sm:p-6">
+        {!isGameOver && continuationDateKey && <SuccessFireworks />}
         <div className={`mx-auto flex h-14 w-14 items-center justify-center rounded-2xl text-3xl ${isGameOver ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-700'}`} aria-hidden="true">
           {isGameOver ? '💔' : '✓'}
         </div>
