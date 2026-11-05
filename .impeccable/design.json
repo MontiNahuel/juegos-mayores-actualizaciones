@@ -1,0 +1,357 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-05T20:46:45.387104+00:00",
+  "title": "Design System: CogniJuegos — menú experimental",
+  "extensions": {
+    "colorMeta": {
+      "marine-ink": {
+        "role": "primary",
+        "displayName": "Marine Ink",
+        "tonalRamp": [
+          "oklch(15% 0.0267 253.33)",
+          "oklch(26% 0.0496 253.33)",
+          "oklch(38% 0.0686 253.33)",
+          "oklch(50% 0.0763 253.33)",
+          "oklch(62% 0.0763 253.33)",
+          "oklch(74% 0.0610 253.33)",
+          "oklch(86% 0.0381 253.33)",
+          "oklch(95% 0.0153 253.33)"
+        ]
+      },
+      "marine-hero": {
+        "role": "primary",
+        "displayName": "Marine Hero",
+        "tonalRamp": [
+          "oklch(15% 0.0458 260.68)",
+          "oklch(26% 0.0851 260.68)",
+          "oklch(38% 0.1178 260.68)",
+          "oklch(50% 0.1309 260.68)",
+          "oklch(62% 0.1309 260.68)",
+          "oklch(74% 0.1047 260.68)",
+          "oklch(86% 0.0654 260.68)",
+          "oklch(95% 0.0262 260.68)"
+        ]
+      },
+      "marine-challenge": {
+        "role": "primary",
+        "displayName": "Marine Challenge",
+        "tonalRamp": [
+          "oklch(15% 0.0593 261.47)",
+          "oklch(26% 0.1102 261.47)",
+          "oklch(38% 0.1526 261.47)",
+          "oklch(50% 0.1695 261.47)",
+          "oklch(62% 0.1695 261.47)",
+          "oklch(74% 0.1356 261.47)",
+          "oklch(86% 0.0848 261.47)",
+          "oklch(95% 0.0339 261.47)"
+        ]
+      },
+      "cobalt-action": {
+        "role": "primary",
+        "displayName": "Cobalt Action",
+        "tonalRamp": [
+          "oklch(15% 0.0672 262.57)",
+          "oklch(26% 0.1248 262.57)",
+          "oklch(38% 0.1728 262.57)",
+          "oklch(50% 0.1920 262.57)",
+          "oklch(62% 0.1920 262.57)",
+          "oklch(74% 0.1536 262.57)",
+          "oklch(86% 0.0960 262.57)",
+          "oklch(95% 0.0384 262.57)"
+        ]
+      },
+      "slate-copy": {
+        "role": "neutral",
+        "displayName": "Slate Copy",
+        "tonalRamp": [
+          "oklch(15% 0.0177 250.86)",
+          "oklch(26% 0.0329 250.86)",
+          "oklch(38% 0.0456 250.86)",
+          "oklch(50% 0.0507 250.86)",
+          "oklch(62% 0.0507 250.86)",
+          "oklch(74% 0.0405 250.86)",
+          "oklch(86% 0.0253 250.86)",
+          "oklch(95% 0.0101 250.86)"
+        ]
+      },
+      "ice-ground": {
+        "role": "neutral",
+        "displayName": "Ice Ground",
+        "tonalRamp": [
+          "oklch(15% 0.0046 251.56)",
+          "oklch(26% 0.0085 251.56)",
+          "oklch(38% 0.0118 251.56)",
+          "oklch(50% 0.0131 251.56)",
+          "oklch(62% 0.0131 251.56)",
+          "oklch(74% 0.0105 251.56)",
+          "oklch(86% 0.0065 251.56)",
+          "oklch(95% 0.0026 251.56)"
+        ]
+      },
+      "white-surface": {
+        "role": "neutral",
+        "displayName": "White Surface",
+        "tonalRamp": [
+          "oklch(15% 0.0000 89.88)",
+          "oklch(26% 0.0000 89.88)",
+          "oklch(38% 0.0000 89.88)",
+          "oklch(50% 0.0000 89.88)",
+          "oklch(62% 0.0000 89.88)",
+          "oklch(74% 0.0000 89.88)",
+          "oklch(86% 0.0000 89.88)",
+          "oklch(95% 0.0000 89.88)"
+        ]
+      },
+      "pale-action": {
+        "role": "neutral",
+        "displayName": "Pale Action",
+        "tonalRamp": [
+          "oklch(15% 0.0058 259.42)",
+          "oklch(26% 0.0108 259.42)",
+          "oklch(38% 0.0149 259.42)",
+          "oklch(50% 0.0165 259.42)",
+          "oklch(62% 0.0165 259.42)",
+          "oklch(74% 0.0132 259.42)",
+          "oklch(86% 0.0083 259.42)",
+          "oklch(95% 0.0033 259.42)"
+        ]
+      },
+      "narrative-surface": {
+        "role": "neutral",
+        "displayName": "Narrative Surface",
+        "tonalRamp": [
+          "oklch(15% 0.0092 251.67)",
+          "oklch(26% 0.0172 251.67)",
+          "oklch(38% 0.0238 251.67)",
+          "oklch(50% 0.0264 251.67)",
+          "oklch(62% 0.0264 251.67)",
+          "oklch(74% 0.0211 251.67)",
+          "oklch(86% 0.0132 251.67)",
+          "oklch(95% 0.0053 251.67)"
+        ]
+      },
+      "cyan-piece": {
+        "role": "secondary",
+        "displayName": "Cyan Piece",
+        "tonalRamp": [
+          "oklch(15% 0.0205 219.46)",
+          "oklch(26% 0.0382 219.46)",
+          "oklch(38% 0.0528 219.46)",
+          "oklch(50% 0.0587 219.46)",
+          "oklch(62% 0.0587 219.46)",
+          "oklch(74% 0.0470 219.46)",
+          "oklch(86% 0.0293 219.46)",
+          "oklch(95% 0.0117 219.46)"
+        ]
+      },
+      "pale-piece": {
+        "role": "secondary",
+        "displayName": "Pale Piece",
+        "tonalRamp": [
+          "oklch(15% 0.0092 264.44)",
+          "oklch(26% 0.0170 264.44)",
+          "oklch(38% 0.0236 264.44)",
+          "oklch(50% 0.0262 264.44)",
+          "oklch(62% 0.0262 264.44)",
+          "oklch(74% 0.0209 264.44)",
+          "oklch(86% 0.0131 264.44)",
+          "oklch(95% 0.0052 264.44)"
+        ]
+      },
+      "cyan-focus": {
+        "role": "secondary",
+        "displayName": "Cyan Focus",
+        "tonalRamp": [
+          "oklch(15% 0.0211 220.29)",
+          "oklch(26% 0.0391 220.29)",
+          "oklch(38% 0.0541 220.29)",
+          "oklch(50% 0.0601 220.29)",
+          "oklch(62% 0.0601 220.29)",
+          "oklch(74% 0.0481 220.29)",
+          "oklch(86% 0.0301 220.29)",
+          "oklch(95% 0.0120 220.29)"
+        ]
+      },
+      "blue-focus": {
+        "role": "secondary",
+        "displayName": "Blue Focus",
+        "tonalRamp": [
+          "oklch(15% 0.0587 255.98)",
+          "oklch(26% 0.1090 255.98)",
+          "oklch(38% 0.1509 255.98)",
+          "oklch(50% 0.1677 255.98)",
+          "oklch(62% 0.1677 255.98)",
+          "oklch(74% 0.1342 255.98)",
+          "oklch(86% 0.0839 255.98)",
+          "oklch(95% 0.0335 255.98)"
+        ]
+      },
+      "chip-border": {
+        "role": "neutral",
+        "displayName": "Chip Border",
+        "tonalRamp": [
+          "oklch(15% 0.0134 253.25)",
+          "oklch(26% 0.0250 253.25)",
+          "oklch(38% 0.0346 253.25)",
+          "oklch(50% 0.0384 253.25)",
+          "oklch(62% 0.0384 253.25)",
+          "oklch(74% 0.0307 253.25)",
+          "oklch(86% 0.0192 253.25)",
+          "oklch(95% 0.0077 253.25)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Título del hero del menú."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Título del catálogo."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Nombre del juego."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Descripción de tarjeta."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Habilidad del juego."
+      }
+    },
+    "shadows": [
+      {
+        "name": "hero-piece",
+        "value": "0 5px 12px #123b8666",
+        "purpose": "Sombra suave de las letras del hero; no se aplica a tarjetas."
+      }
+    ],
+    "motion": [
+      {
+        "name": "hero-board-tilt",
+        "value": "rotate(-4deg)",
+        "purpose": "Inclinación estática, sin animación."
+      },
+      {
+        "name": "mini-board-tilt",
+        "value": "rotate(-5deg)",
+        "purpose": "Inclinación estática, sin animación."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "compact-desktop",
+        "value": "1000px"
+      },
+      {
+        "name": "mobile",
+        "value": "767px"
+      },
+      {
+        "name": "narrow",
+        "value": "359px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Acción clara del hero",
+      "kind": "button",
+      "refersTo": "button-light",
+      "description": "Invitación al calendario de Palabra del día sobre el plano marino.",
+      "html": "<div class=\"ds-hero-preview\"><button class=\"ds-light\">Jugar con palabras <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" aria-hidden=\"true\"><path d=\"M4 12h16m-6-6 6 6-6 6\"/></svg></button></div>",
+      "css": ".ds-hero-preview{background:#2056bb;padding:24px}.ds-light{display:inline-flex;align-items:center;justify-content:center;gap:20px;border:0;font-family:'Nunito Sans','Segoe UI',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;min-height:48px;padding:12px 20px;border-radius:10px;background:#fff;color:#184897}.ds-light:hover{background:#d6f4ff}.ds-light:focus-visible{outline:3px solid #b7edff;outline-offset:4px}"
+    },
+    {
+      "name": "Acción de juego",
+      "kind": "button",
+      "refersTo": "button-play",
+      "description": "Acción de tarjeta clásica con estados hover, activo y deshabilitado.",
+      "html": "<button class=\"ds-play ds-focus\">Jugar <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" aria-hidden=\"true\"><path d=\"M4 12h16m-6-6 6 6-6 6\"/></svg></button>",
+      "css": ".ds-play{display:inline-flex;align-items:center;justify-content:center;gap:20px;border:0;font-family:'Nunito Sans','Segoe UI',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;min-height:44px;padding:9px 16px;border-radius:9px;background:#edf4ff;color:#194fac}.ds-play:hover{background:#d4e5ff}.ds-play:active{background:#bed5fa}.ds-play:disabled{background:#e5eaf0;color:#536479;cursor:default}.ds-focus:focus-visible{outline:3px solid #1f70d1;outline-offset:4px}"
+    },
+    {
+      "name": "Acción narrativa",
+      "kind": "button",
+      "refersTo": "button-narrative",
+      "description": "Variante cobalto de la tarjeta narrativa.",
+      "html": "<button class=\"ds-narrative ds-focus\">Jugar <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" aria-hidden=\"true\"><path d=\"M4 12h16m-6-6 6 6-6 6\"/></svg></button>",
+      "css": ".ds-narrative{display:inline-flex;align-items:center;justify-content:center;gap:20px;border:0;font-family:'Nunito Sans','Segoe UI',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;min-height:44px;padding:9px 16px;border-radius:9px;background:#2159cf;color:#fff}.ds-narrative:hover{background:#17469f}.ds-narrative:active{background:#bed5fa}.ds-focus:focus-visible{outline:3px solid #1f70d1;outline-offset:4px}"
+    },
+    {
+      "name": "Filtro por habilidad",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "La selección usa aria-pressed y conserva contorno de foco.",
+      "html": "<div class=\"ds-filters\" role=\"group\" aria-label=\"Filtrar juegos por habilidad\"><button class=\"ds-filter ds-focus\" aria-pressed=\"true\">Todos</button><button class=\"ds-filter ds-focus\" aria-pressed=\"false\">Memoria</button></div>",
+      "css": ".ds-filters{display:flex;flex-wrap:wrap;gap:10px}.ds-filter{font-family:'Nunito Sans','Segoe UI',sans-serif;font-size:1rem;min-height:44px;border:1px solid #b7cae1;border-radius:24px;padding:9px 20px;background:transparent;color:#284c75;cursor:pointer}.ds-filter:hover{background:#dceaff}.ds-filter[aria-pressed=true]{background:#2159cf;color:#fff;border-color:#2159cf}@media(max-width:767px){.ds-filters{gap:8px}.ds-filter{padding-inline:16px}}.ds-focus:focus-visible{outline:3px solid #1f70d1;outline-offset:4px}"
+    },
+    {
+      "name": "Tarjeta de juego clásico",
+      "kind": "card",
+      "refersTo": "game-card",
+      "description": "Superficie blanca plana con miniatura, habilidad y acción explícita.",
+      "html": "<article class=\"ds-card\"><div class=\"ds-board\" aria-hidden=\"true\"><span>1</span><span></span><span>3</span><span></span><span>2</span><span></span><span>3</span><span></span><span>1</span></div><div class=\"ds-copy\"><h3>Sudoku diario</h3><p class=\"ds-skill\">Lógica y concentración</p><p class=\"ds-description\">Tableros adaptados con 3 niveles de dificultad para entrenar sin apuro.</p><button class=\"ds-card-play ds-focus\">Jugar <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" aria-hidden=\"true\"><path d=\"M4 12h16m-6-6 6 6-6 6\"/></svg></button></div></article>",
+      "css": ".ds-card{display:grid;grid-template-columns:104px minmax(0,1fr);gap:22px;padding:26px;border-radius:16px;background:#fff;color:#15365b;font-family:'Nunito Sans','Segoe UI',sans-serif;}.ds-copy{display:flex;flex-direction:column;align-items:flex-start;min-width:0}.ds-copy h3{margin:0;font-size:1.375rem;line-height:1.3;font-weight:700}.ds-skill{margin:6px 0 0;font-size:.875rem;line-height:1.5;color:#1f5bb0}.ds-description{margin:14px 0 20px;font-size:1rem;line-height:1.55;color:#4e6680;max-width:65ch}.ds-card-play{display:inline-flex;align-items:center;justify-content:center;gap:20px;border:0;font-family:'Nunito Sans','Segoe UI',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;min-height:44px;padding:9px 16px;border-radius:9px;margin-top:auto;background:#edf4ff;color:#194fac}.ds-card-play:hover{background:#d4e5ff}.ds-card-play:active{background:#bed5fa}.ds-board{display:grid;grid-template-columns:repeat(3,1fr);width:100px;gap:4px;transform:rotate(-5deg);font-family:'Nunito Sans','Segoe UI',sans-serif;}.ds-board span{display:grid;place-items:center;height:30px;background:#e4edff;border-radius:5px;color:#2351a0;font-size:17px;font-weight:700}.ds-board span:nth-child(2n){background:#f0f5ff}@media(max-width:1000px){.ds-card{grid-template-columns:76px minmax(0,1fr);padding:24px;gap:18px}.ds-board{width:76px}}@media(max-width:359px){.ds-card{grid-template-columns:60px minmax(0,1fr);padding:20px;gap:14px}.ds-board{width:60px;gap:2px}}.ds-focus:focus-visible{outline:3px solid #1f70d1;outline-offset:4px}"
+    },
+    {
+      "name": "Tablero en miniatura",
+      "kind": "custom",
+      "refersTo": "game-card",
+      "description": "Firma decorativa construida con celdas HTML/CSS; no es una partida interactiva.",
+      "html": "<div class=\"ds-board\" aria-hidden=\"true\"><span>1</span><span></span><span>3</span><span></span><span>2</span><span></span><span>3</span><span></span><span>1</span></div>",
+      "css": ".ds-board{display:grid;grid-template-columns:repeat(3,1fr);width:100px;gap:4px;transform:rotate(-5deg);font-family:'Nunito Sans','Segoe UI',sans-serif;}.ds-board span{display:grid;place-items:center;height:30px;background:#e4edff;border-radius:5px;color:#2351a0;font-size:17px;font-weight:700}.ds-board span:nth-child(2n){background:#f0f5ff}"
+    },
+    {
+      "name": "Navbar del menú",
+      "kind": "nav",
+      "refersTo": "navbar",
+      "description": "Extracto de identidad y acciones; las cifras son muestras del componente, no promesas de progreso. El logo SVG existente permanece en la aplicación.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Menú principal\"><a class=\"ds-brand ds-focus\" href=\"/menu\">ASISTODO<small>Mente en juego</small></a><div class=\"ds-actions\"><span class=\"ds-points\" aria-label=\"0 puntos acumulados\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" aria-hidden=\"true\"><path d=\"m12 3 2.8 5.8 6.4.9-4.6 4.5 1.1 6.3-5.7-3-5.7 3 1.1-6.3L2.8 9.7l6.4-.9Z\"/></svg><span>0</span><span class=\"ds-point-label\">puntos</span></span><button class=\"ds-session ds-focus\" aria-label=\"Iniciar sesión\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" aria-hidden=\"true\"><path d=\"M14 4h6v16h-6M3 12h12m-5-5 5 5-5 5\"/></svg><span>Iniciar sesión</span></button></div></nav>",
+      "css": ".ds-nav{font-family:'Nunito Sans','Segoe UI',sans-serif;display:flex;flex-wrap:wrap;align-items:center;gap:24px;max-width:1180px;margin:auto;min-height:88px;padding:16px 36px;background:#fff;border-bottom:1px solid #d5e3f1;color:#15365b}.ds-brand{flex-shrink:0;color:#15365b;text-decoration:none;font-size:17px;font-weight:800;line-height:1.2}.ds-brand small{display:block;margin-top:4px;font-size:13px;font-weight:400;color:#4e6680}.ds-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;max-width:100%;min-width:0;align-items:center;gap:16px;margin-left:auto}.ds-points{display:flex;align-items:center;gap:5px;font-size:15px;white-space:nowrap;font-variant-numeric:tabular-nums;color:#184ca6;padding:10px 12px;background:#edf4ff;border-radius:10px}.ds-session{display:flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:10px 16px;border:1px solid #c3d3e8;border-radius:10px;background:#fff;font-family:'Nunito Sans','Segoe UI',sans-serif;font-size:15px;color:#15365b;cursor:pointer}.ds-session:hover{background:#edf4ff}@media(max-width:767px){.ds-nav{padding:12px 20px;min-height:78px;gap:14px}.ds-actions{gap:10px}.ds-session{padding:10px}.ds-session span,.ds-point-label{display:none}.ds-brand{font-size:15px}.ds-brand small{font-size:12px}}@media(max-width:359px){.ds-nav{padding-inline:12px;gap:6px}.ds-actions{gap:6px}.ds-points{padding-inline:8px}.ds-brand small{display:none}}.ds-focus:focus-visible{outline:3px solid #1f70d1;outline-offset:4px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "La mesa de juegos cognitivos",
+    "overview": "Un espacio amable y lúdico para público general, con azules cognitivos, piezas reconocibles y controles claros. El tono cercano en español acompaña la elección de juegos sin inventar recompensas, progreso ni beneficios clínicos. La identidad ASISTODO conserva su logo existente.\n\nEste sistema experimental describe exclusivamente el menú principal y la navbar activada por `menuPrincipal`. No establece una migración visual para los juegos, sus calendarios, el editor narrativo ni el modal de autenticación. La implementación final en `src/VISTAS/MENU/Menu.css` y sus componentes es la fuente de esta documentación.",
+    "keyCharacteristics": [
+      "Fondo azul hielo, superficies blancas y bienvenida marina.",
+      "Nunito Sans legible, jerarquía clara y controles cómodos.",
+      "Tableros pequeños de letras y números como firma visual.",
+      "Puntos y racha reales; composición que envuelve en pantallas estrechas."
+    ],
+    "rules": [
+      {
+        "name": "Real Progress Rule",
+        "body": "Puntos y racha representan los datos de cuenta existentes; nunca se dibujan premios ni avances ficticios.",
+        "section": "colors"
+      },
+      {
+        "name": "Menu Boundary Rule",
+        "body": "Aplicar estos patrones dentro del menú y su navbar; cualquier extensión a otros destinos requiere una decisión explícita de diseño.",
+        "section": "layout"
+      },
+      {
+        "name": "Piece Depth Rule",
+        "body": "La sombra pertenece a las piezas del hero; las tarjetas del catálogo permanecen planas.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do conservar la identidad ASISTODO y la voz cercana en español.",
+      "Do mantener los contadores reales y permitir que la navbar envuelva.",
+      "Do usar texto legible, foco visible y controles de al menos 44px en este menú.",
+      "Do preservar las miniaturas de letras y números como ilustraciones decorativas."
+    ],
+    "donts": [
+      "Don't aplicar este experimento a los juegos o calendarios por extensión automática.",
+      "Don't inventar recompensas, progreso ni afirmaciones clínicas.",
+      "Don't añadir sombras a las tarjetas a partir de la sombra de las piezas del hero.",
+      "Don't sustituir el logo existente ni presentar un icono sin nombre accesible como único control."
+    ]
+  }
+}

@@ -1,13 +1,12 @@
 /* Muestra los juegos y permite abrir sus calendarios. */
-import React, { useState, useEffect } from 'react';
-import type { CSSProperties } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IonContent, IonPage, IonIcon } from '@ionic/react';
-import { bookOutline, gridOutline, peopleOutline, searchOutline, textOutline } from 'ionicons/icons';
-import { BrainIcon } from '../COMPONENTS/Icons/Icons';
+import { arrowForwardOutline, sparklesOutline, bookOutline, gridOutline, peopleOutline, searchOutline, textOutline } from 'ionicons/icons';
 import MenuCard, { type GameGroup, type MenuCardGame } from './MenuCard';
 import LoginHeader from '../LOGIN/LoginHeader';
 import { esUsuarioAdmin } from '../AUTH/authUtils';
+import './Menu.css';
 
 const color = {
   blue: '#294C6B',
@@ -53,31 +52,23 @@ const groups: { title: GameGroup; description: string }[] = [
   { title: 'Puzzles', description: 'Próximamente.' },
 ];
 
-const styles: Record<string, CSSProperties> = {
-  shell: {
-    background: color.blue,
-    margin: '0 auto',
-    maxWidth: 1050,
-    minHeight: '100%',
-    padding: '34px clamp(18px, 5vw, 58px) max(calc(env(safe-area-inset-bottom, 0px) + 32px), 56px)',
-  },
-  heading: { color: color.ink, fontSize: 25, lineHeight: 1.18, margin: 0, fontWeight: 800 },
-  description: { color: color.ink, fontSize: 16, lineHeight: 1.45, margin: '8px 0 0' },
-};
-
 // Muestra los juegos y permite abrir sus calendarios.
 const Menu: React.FC = () => {
   const navigate = useNavigate();
-  const [esAdmin, setEsAdmin] = useState<boolean>(/* Prepara el valor inicial al montar la pantalla. */ () => esUsuarioAdmin());
+  const catalogRef = useRef<HTMLDivElement>(null);
+  const [skill, setSkill] = useState('Todos');
+  const skills = ['Todos', 'Memoria', 'Lenguaje', 'Atención', 'Lógica'];
+  const matchesSkill = (game: MenuCardGame) => skill === 'Todos' || (skill === 'Lenguaje' ? /vocabulario|Lenguaje/.test(game.skill) : game.skill.toLocaleLowerCase('es').includes(skill.toLocaleLowerCase('es')));
+  const [esAdmin, setEsAdmin] = useState<boolean>(esUsuarioAdmin);
 
-  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
+  useEffect(() => {
     // Comprueba si la sesión permite mostrar la administración.
     const checkAdmin = () => {
       setEsAdmin(esUsuarioAdmin());
     };
     window.addEventListener('user_progress_updated', checkAdmin);
     window.addEventListener('storage', checkAdmin);
-    return /* Libera los recursos de este efecto cuando deja de usarse. */ () => {
+    return () => {
       window.removeEventListener('user_progress_updated', checkAdmin);
       window.removeEventListener('storage', checkAdmin);
     };
@@ -94,110 +85,65 @@ const Menu: React.FC = () => {
 
   return (
     <IonPage>
-      <LoginHeader menuPrincipal onUsuarioChange={/* Responde a usuario change desde este control. */ () => setEsAdmin(esUsuarioAdmin())} />
-      <IonContent style={{ '--background': color.blue } as CSSProperties}>
-        <div style={{ background: color.blue, minHeight: '100%' }}>
-          <main style={styles.shell}>
-            <header style={{ alignItems: 'center', display: 'flex', gap: 13, marginBottom: 30 }}>
-              <div aria-hidden="true" style={{ color: color.teal, height: 42, width: 42 }}>
-                <BrainIcon className="" size={42} />
-              </div>
-              <h1 style={{ color: '#FFFFFF', fontSize: 31, lineHeight: 1.18, margin: 0 }}>
-                Ejercicios para tu mente
-              </h1>
-            </header>
+      <LoginHeader menuPrincipal onUsuarioChange={() => setEsAdmin(esUsuarioAdmin())} />
+      <IonContent className="menu-content">
+        <main className="menu-shell">
+          <header className="menu-hero">
+            <div className="menu-hero__intro">
+              <h1>Una mente activa.<br />Un juego a la vez.</h1>
+              <p>Descubrí, recordá y conectá ideas.<br />Elegí un desafío y disfrutá de tu momento.</p>
+              <a href="/menu#menu-games" className="menu-hero__explore" onClick={event => { event.preventDefault(); catalogRef.current?.focus({ preventScroll: true }); catalogRef.current?.scrollIntoView({ block: 'start' }); }}>Explorar los juegos <IonIcon icon={arrowForwardOutline} aria-hidden="true" /></a>
+              <div className="menu-hero__note"><IonIcon icon={sparklesOutline} aria-hidden="true" />A tu ritmo, todos los días.</div>
+            </div>
+            <div className="menu-hero__challenge">
+              <div className="menu-hero__letters" aria-hidden="true">{'JUEGO'.split('').map((letter, i) => <span key={i}>{letter}</span>)}</div>
+              <h2>Tu próxima palabra<br />te está esperando.</h2>
+              <p>Palabra del día · Memoria y vocabulario</p>
+              <button className="menu-button menu-button--light" onClick={() => startGame('wordle')}>Jugar con palabras <IonIcon icon={arrowForwardOutline} aria-hidden="true" /></button>
+            </div>
+          </header>
 
-            {/* Banner exclusivo para Administradores - NUNCA visible para alumnos */}
-            {esAdmin && (
-              <div
-                style={{
-                  background: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
-                  border: '1.5px solid #F59E0B',
-                  borderRadius: 20,
-                  boxShadow: '0 8px 24px rgba(0, 0, 0, 0.25)',
-                  padding: '16px 20px',
-                  marginBottom: 32,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  flexWrap: 'wrap',
-                  gap: 14,
-                }}
+          <div className="menu-catalog-heading" id="menu-games" ref={catalogRef} tabIndex={-1}>
+            <div><h2>¿A qué jugamos hoy?</h2><p>Cada juego, una forma de activar tu mente.</p></div>
+            <span className="menu-catalog-count">{games.filter(matchesSkill).length} {games.filter(matchesSkill).length === 1 ? 'juego para descubrir' : 'juegos para descubrir'}</span>
+          </div>
+          <div className="menu-filters" role="group" aria-label="Filtrar juegos por habilidad">
+            {skills.map(item => <button key={item} type="button" aria-pressed={skill === item} onClick={() => setSkill(item)}>{item}</button>)}
+          </div>
+          <p className="menu-sr-only" aria-live="polite">{games.filter(matchesSkill).length} juegos disponibles para {skill.toLocaleLowerCase('es')}</p>
+
+          {esAdmin && (
+            <aside className="menu-admin" aria-labelledby="menu-admin-title">
+              <div className="menu-admin__copy">
+                <h2 id="menu-admin-title">Torre de Control Narrativa</h2>
+                <p>Rol Administrador</p>
+                <p>Configuración completa: universos, personajes, cartas, eventos y desafíos del juego narrativo.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate('/editor-narrativo')}
+                className="menu-admin__action"
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                  <div
-                    style={{
-                      width: 46,
-                      height: 46,
-                      borderRadius: 14,
-                      background: 'rgba(245, 158, 11, 0.15)',
-                      color: '#FCD34D',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                    }}
-                  >
-                    <IonIcon icon={bookOutline} style={{ fontSize: 24 }} />
-                  </div>
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span
-                        style={{
-                          background: 'rgba(245, 158, 11, 0.2)',
-                          color: '#FCD34D',
-                          fontSize: 10,
-                          fontWeight: 800,
-                          letterSpacing: '0.05em',
-                          textTransform: 'uppercase',
-                          padding: '2px 8px',
-                          borderRadius: 6,
-                        }}
-                      >
-                        Rol Administrador
-                      </span>
-                      <strong style={{ color: '#FFFFFF', fontSize: 16 }}>Torre de Control Narrativa</strong>
-                    </div>
-                    <p style={{ color: '#94A3B8', fontSize: 13, margin: '4px 0 0', lineHeight: 1.3 }}>
-                      Configuración completa: universos, personajes, cartas, eventos y desafíos del juego narrativo.
-                    </p>
-                  </div>
-                </div>
+                Abrir Editor Narrativo
+              </button>
+            </aside>
+          )}
 
-                <button
-                  type="button"
-                  onClick={/* Responde a click desde este control. */ () => navigate('/editor-narrativo')}
-                  style={{
-                    background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
-                    border: 'none',
-                    borderRadius: 12,
-                    color: '#0F172A',
-                    cursor: 'pointer',
-                    fontSize: 14,
-                    fontWeight: 800,
-                    padding: '10px 18px',
-                    boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)',
-                  }}
-                  className="hover:brightness-110 active:scale-95 transition-all"
-                >
-                  Abrir Editor Narrativo
-                </button>
-              </div>
-            )}
-
-            {groups.map(/* Prepara el resultado de cada elemento. */ (group, index) => (
-              <section key={group.title} style={{ marginTop: index ? 38 : 0 }}>
-                <h2 style={{ ...styles.heading, color: '#FFFFFF' }}>{group.title}</h2>
-                <p style={{ ...styles.description, color: '#DCE9F2' }}>{group.description}</p>
-                <div className="mt-4 grid grid-cols-1 gap-[18px] md:grid-cols-2">
-                  {games.filter(/* Conserva los elementos que cumplen esta condición. */ (game) => game.group === group.title).map(/* Prepara el resultado de cada elemento. */ (game) => (
+          {groups.filter(group => skill === 'Todos' || games.some(game => game.group === group.title && matchesSkill(game))).map((group) => (
+            <section key={group.title} className="menu-section" aria-labelledby={`group-${group.title}`}>
+              <h2 id={`group-${group.title}`}>{group.title}</h2>
+              <p className="menu-section__description">{group.description}</p>
+              {games.some((game) => game.group === group.title) && (
+                <div className="menu-grid">
+                  {games.filter((game) => game.group === group.title && matchesSkill(game)).map((game) => (
                     <MenuCard game={game} key={game.id} onStart={startGame} />
                   ))}
                 </div>
-              </section>
-            ))}
-          </main>
-        </div>
+              )}
+            </section>
+          ))}
+          <footer className="menu-footer"><span>ASISTODO · Mente en juego</span><span>Un pequeño desafío. Un momento para vos.</span></footer>
+        </main>
       </IonContent>
     </IonPage>
   );

@@ -10,6 +10,7 @@ import { AuthModal } from '../COMPONENTS/MODALS/AuthModal';
 import { usePlayerEconomy } from '../../context/PlayerEconomyContext';
 import { esUsuarioAdmin, limpiarTodasLasSesiones } from '../AUTH/authUtils';
 import './loginHeader.css';
+import MenuNavbar from '../MENU/MenuNavbar';
 
 export interface Usuario {
   id: number;
@@ -124,6 +125,14 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({ onUsuarioChange, title
     onUsuarioChange?.(loggedUser);
     economy.recargarEconomia();
   };
+
+  if (menuPrincipal) {
+    return <>
+      <MenuNavbar usuario={usuario} puntos={economy.puntos} loading={economy.isLoading}
+        onLogin={() => setShowAuthModal(true)} onLogout={handleLogout} />
+      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} onSuccess={handleAuthSuccess} />
+    </>;
+  }
 
   return (
     <IonHeader style={{ boxShadow: '0 2px 10px rgba(23, 59, 99, 0.12)' }}>
