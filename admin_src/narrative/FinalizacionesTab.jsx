@@ -258,10 +258,10 @@ export default function FinalizacionesTab({ universos = [] }) {
   return (
     <div className="space-y-6">
       {/* Barra de Controles y Filtros */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+      <div className="bg-slate-900 p-4 rounded-2xl border border-white/10 shadow-xs flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
         <div className="flex flex-wrap items-center gap-3 flex-1">
           {/* Selector de Universo */}
-          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200/80 rounded-xl px-3 py-1.5 text-xs">
+          <div className="flex items-center gap-2 bg-slate-950/60 border border-white/10 rounded-xl px-3 py-1.5 text-xs">
             <CrownIcon size={14} className="text-slate-500" />
             <select
               value={universoFiltro}
@@ -269,7 +269,7 @@ export default function FinalizacionesTab({ universos = [] }) {
                 setUniversoFiltro(e.target.value);
                 setRecursoFiltro('');
               }}
-              className="bg-transparent font-semibold text-slate-700 outline-none cursor-pointer"
+              className="bg-transparent font-semibold text-slate-300 outline-none cursor-pointer"
             >
               <option value="">Todos los Universos</option>
               {universos.map(/* Prepara el resultado de cada elemento. */ (u) => (
@@ -281,12 +281,12 @@ export default function FinalizacionesTab({ universos = [] }) {
           </div>
 
           {/* Selector de Recurso */}
-          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200/80 rounded-xl px-3 py-1.5 text-xs">
+          <div className="flex items-center gap-2 bg-slate-950/60 border border-white/10 rounded-xl px-3 py-1.5 text-xs">
             <CoinsIcon size={14} className="text-slate-500" />
             <select
               value={recursoFiltro}
               onChange={/* Responde a change desde este control. */ (e) => setRecursoFiltro(e.target.value)}
-              className="bg-transparent font-semibold text-slate-700 outline-none cursor-pointer"
+              className="bg-transparent font-semibold text-slate-300 outline-none cursor-pointer"
             >
               <option value="">Todos los Recursos</option>
               {recursosFiltroDisponibles.map(/* Prepara el resultado de cada elemento. */ (r) => (
@@ -298,20 +298,20 @@ export default function FinalizacionesTab({ universos = [] }) {
           </div>
 
           {/* Buscador */}
-          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200/80 rounded-xl px-3 py-1.5 text-xs flex-1 min-w-[200px]">
+          <div className="flex items-center gap-2 bg-slate-950/60 border border-white/10 rounded-xl px-3 py-1.5 text-xs flex-1 min-w-[200px]">
             <SearchIcon size={14} className="text-slate-400" />
             <input
               type="text"
               placeholder="Buscar por título, universo o recurso..."
               value={busqueda}
               onChange={/* Responde a change desde este control. */ (e) => setBusqueda(e.target.value)}
-              className="bg-transparent text-slate-700 font-medium outline-none w-full placeholder:text-slate-400"
+              className="bg-transparent text-slate-300 font-medium outline-none w-full placeholder:text-slate-400"
             />
             {busqueda && (
               <button
                 type="button"
                 onClick={/* Responde a click desde este control. */ () => setBusqueda('')}
-                className="text-slate-400 hover:text-slate-600 cursor-pointer"
+                className="text-slate-400 hover:text-slate-300 cursor-pointer"
               >
                 <XIcon size={12} />
               </button>
@@ -325,17 +325,17 @@ export default function FinalizacionesTab({ universos = [] }) {
             type="button"
             onClick={autoSembrarFinalizaciones}
             disabled={sembrando}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/15 text-amber-200 border border-amber-500/30 text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50"
             title="Generar finales de derrota para los recursos de este universo que aún no tengan finalización"
           >
-            <SparklesIcon size={14} className={sembrando ? 'animate-spin' : 'text-amber-600'} />
+            <SparklesIcon size={14} className={sembrando ? 'animate-spin' : 'text-amber-300'} />
             <span className="hidden sm:inline">Generar Finales Base</span>
           </button>
 
           <button
             type="button"
             onClick={/* Responde a click desde este control. */ () => cargarFinalizaciones(universoFiltro, recursoFiltro)}
-            className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition cursor-pointer"
+            className="p-2 rounded-xl bg-white/5 hover:bg-white/15 text-slate-400 transition cursor-pointer"
             title="Refrescar lista"
           >
             <RefreshIcon size={16} className={cargando ? 'animate-spin' : ''} />
@@ -366,7 +366,7 @@ export default function FinalizacionesTab({ universos = [] }) {
       )}
 
       {exito && (
-        <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200/80 text-emerald-700 text-xs font-semibold flex items-center justify-between">
+        <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-semibold flex items-center justify-between">
           <div className="flex items-center gap-2">
             <CheckIcon size={16} />
             <span>{exito}</span>
@@ -380,13 +380,13 @@ export default function FinalizacionesTab({ universos = [] }) {
       {/* Listado en Cuadrícula */}
       {cargando ? (
         <div className="py-20 flex flex-col items-center justify-center text-slate-400 gap-3">
-          <RefreshIcon size={24} className="animate-spin text-[#002B5E]" />
+          <RefreshIcon size={24} className="animate-spin text-amber-300" />
           <p className="text-xs font-semibold">Cargando finalizaciones asociadas a cada universo...</p>
         </div>
       ) : finalizacionesFiltradas.length === 0 ? (
-        <div className="py-16 text-center bg-white rounded-2xl border border-dashed border-slate-300 p-8">
+        <div className="py-16 text-center bg-slate-900 rounded-2xl border border-dashed border-white/15 p-8">
           <SkullIcon size={36} className="mx-auto text-slate-300 mb-3" />
-          <h3 className="text-sm font-bold text-slate-700">No hay finalizaciones para el filtro actual</h3>
+          <h3 className="text-sm font-bold text-slate-300">No hay finalizaciones para el filtro actual</h3>
           <p className="text-xs text-slate-400 max-w-md mx-auto mt-1 mb-4">
             Cada universo tiene sus propias finalizaciones personalizadas. Puedes autogenerar las plantillas base con un clic.
           </p>
@@ -394,7 +394,7 @@ export default function FinalizacionesTab({ universos = [] }) {
             <button
               type="button"
               onClick={autoSembrarFinalizaciones}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs transition cursor-pointer"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-slate-950 font-bold text-xs transition cursor-pointer"
             >
               <SparklesIcon size={14} />
               <span>Autogenerar para este Universo</span>
@@ -418,7 +418,7 @@ export default function FinalizacionesTab({ universos = [] }) {
             return (
               <div
                 key={fin._id || fin.id}
-                className="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-xs hover:shadow-md transition flex flex-col"
+                className="bg-slate-900 rounded-2xl border border-white/10 overflow-hidden shadow-xs hover:shadow-md transition flex flex-col"
               >
                 {/* Cabecera con Imagen */}
                 <div className="relative h-40 bg-slate-900 overflow-hidden">
@@ -466,23 +466,23 @@ export default function FinalizacionesTab({ universos = [] }) {
                           <strong className="uppercase">{fin.recurso_clave} ≤ 0</strong>
                         </div>
                       ) : (
-                        <span className="text-[10px] px-2 py-0.5 rounded-lg bg-slate-100 text-slate-600 font-semibold">
+                        <span className="text-[10px] px-2 py-0.5 rounded-lg bg-white/5 text-slate-400 font-semibold">
                           Sin recurso asignado
                         </span>
                       )}
 
-                      <span className="text-[10px] px-2 py-0.5 rounded-lg bg-slate-100 text-slate-600 font-mono">
+                      <span className="text-[10px] px-2 py-0.5 rounded-lg bg-white/5 text-slate-400 font-mono">
                         univ: {fin.universo_id}
                       </span>
                     </div>
 
-                    <p className="text-xs text-slate-600 line-clamp-3 leading-relaxed">
+                    <p className="text-xs text-slate-400 line-clamp-3 leading-relaxed">
                       {fin.texto}
                     </p>
                   </div>
 
                   {/* Acciones */}
-                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
+                  <div className="pt-3 border-t border-white/5 flex items-center justify-between">
                     <span className="text-[10px] font-mono text-slate-400 truncate max-w-[140px]" title={fin._id}>
                       {fin._id}
                     </span>
@@ -491,7 +491,7 @@ export default function FinalizacionesTab({ universos = [] }) {
                       <button
                         type="button"
                         onClick={/* Responde a click desde este control. */ () => abrirModalEditar(fin)}
-                        className="p-1.5 rounded-lg text-slate-500 hover:text-[#002B5E] hover:bg-slate-100 transition cursor-pointer"
+                        className="p-1.5 rounded-lg text-slate-500 hover:text-amber-300 hover:bg-white/10 transition cursor-pointer"
                         title="Editar finalización"
                       >
                         <EditIcon size={14} />
@@ -516,7 +516,7 @@ export default function FinalizacionesTab({ universos = [] }) {
       {/* Modal Crear / Editar */}
       {modalAbierto && (
         <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl border border-slate-200/80 shadow-2xl w-full max-w-2xl my-auto overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+          <div className="bg-slate-900 rounded-3xl border border-white/10 shadow-2xl w-full max-w-2xl my-auto overflow-hidden animate-in fade-in zoom-in-95 duration-150">
             {/* Cabecera Modal */}
             <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -547,14 +547,14 @@ export default function FinalizacionesTab({ universos = [] }) {
               {/* Universo y Recurso (Filtrado estricto) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
+                  <label className="block text-[11px] font-bold text-slate-300 uppercase mb-1">
                     Universo Asociado *
                   </label>
                   <select
                     value={universoId}
                     disabled={esEdicion}
                     onChange={/* Responde a change desde este control. */ (e) => handleCambioUniversoModal(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-800 font-semibold focus:bg-white focus:border-[#002B5E] outline-none cursor-pointer disabled:opacity-60"
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-white/10 bg-slate-950/60 text-slate-200 font-semibold focus:bg-slate-950/60 focus:border-amber-500/60 outline-none cursor-pointer disabled:opacity-60"
                   >
                     {universos.map(/* Prepara el resultado de cada elemento. */ (u) => (
                       <option key={u._id || u.id} value={u._id || u.id}>
@@ -565,13 +565,13 @@ export default function FinalizacionesTab({ universos = [] }) {
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
+                  <label className="block text-[11px] font-bold text-slate-300 uppercase mb-1">
                     Recurso Agotado de este Universo
                   </label>
                   <select
                     value={recursoClave}
                     onChange={/* Responde a change desde este control. */ (e) => handleCambioRecursoModal(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-800 font-semibold focus:bg-white focus:border-[#002B5E] outline-none cursor-pointer"
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-white/10 bg-slate-950/60 text-slate-200 font-semibold focus:bg-slate-950/60 focus:border-amber-500/60 outline-none cursor-pointer"
                   >
                     <option value="">(Sin recurso / Victoria especial)</option>
                     {recursosModalDisponibles.map(/* Prepara el resultado de cada elemento. */ (r) => (
@@ -581,7 +581,7 @@ export default function FinalizacionesTab({ universos = [] }) {
                     ))}
                   </select>
                   {recursosModalDisponibles.length === 0 && (
-                    <span className="text-[10px] text-amber-600 block mt-0.5">
+                    <span className="text-[10px] text-amber-300 block mt-0.5">
                       Este universo no tiene recursos configurados aún.
                     </span>
                   )}
@@ -591,7 +591,7 @@ export default function FinalizacionesTab({ universos = [] }) {
               {/* ID y Tipo */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
+                  <label className="block text-[11px] font-bold text-slate-300 uppercase mb-1">
                     ID Único (namespaced) *
                   </label>
                   <input
@@ -601,18 +601,18 @@ export default function FinalizacionesTab({ universos = [] }) {
                     value={id}
                     onChange={/* Responde a change desde este control. */ (e) => setId(e.target.value)}
                     placeholder="ej: fin_granjero_oro_cero"
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-800 font-mono disabled:opacity-60 focus:bg-white focus:border-[#002B5E] outline-none"
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-white/10 bg-slate-950/60 text-slate-200 font-mono disabled:opacity-60 focus:bg-slate-950/60 focus:border-amber-500/60 outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
+                  <label className="block text-[11px] font-bold text-slate-300 uppercase mb-1">
                     Tipo de Desenlace
                   </label>
                   <select
                     value={tipo}
                     onChange={/* Responde a change desde este control. */ (e) => setTipo(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-800 font-semibold focus:bg-white focus:border-[#002B5E] outline-none cursor-pointer"
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-white/10 bg-slate-950/60 text-slate-200 font-semibold focus:bg-slate-950/60 focus:border-amber-500/60 outline-none cursor-pointer"
                   >
                     {TIPOS_FINALIZACION.map(/* Prepara el resultado de cada elemento. */ (t) => (
                       <option key={t.id} value={t.id}>
@@ -626,13 +626,13 @@ export default function FinalizacionesTab({ universos = [] }) {
               {/* Rango y Título */}
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                 <div>
-                  <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
+                  <label className="block text-[11px] font-bold text-slate-300 uppercase mb-1">
                     Rango
                   </label>
                   <select
                     value={rango}
                     onChange={/* Responde a change desde este control. */ (e) => setRango(e.target.value)}
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-800 font-bold focus:bg-white focus:border-[#002B5E] outline-none cursor-pointer"
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-white/10 bg-slate-950/60 text-slate-200 font-bold focus:bg-slate-950/60 focus:border-amber-500/60 outline-none cursor-pointer"
                   >
                     {RANGOS.map(/* Prepara el resultado de cada elemento. */ (rg) => (
                       <option key={rg} value={rg}>
@@ -643,7 +643,7 @@ export default function FinalizacionesTab({ universos = [] }) {
                 </div>
 
                 <div className="sm:col-span-3">
-                  <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
+                  <label className="block text-[11px] font-bold text-slate-300 uppercase mb-1">
                     Título del Desenlace *
                   </label>
                   <input
@@ -652,14 +652,14 @@ export default function FinalizacionesTab({ universos = [] }) {
                     value={titulo}
                     onChange={/* Responde a change desde este control. */ (e) => setTitulo(e.target.value)}
                     placeholder={`ej: Embargo de la Granja, Bancarrota, etc.`}
-                    className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-800 font-bold focus:bg-white focus:border-[#002B5E] outline-none"
+                    className="w-full px-3 py-2 text-xs rounded-xl border border-white/10 bg-slate-950/60 text-slate-200 font-bold focus:bg-slate-950/60 focus:border-amber-500/60 outline-none"
                   />
                 </div>
               </div>
 
               {/* Texto / Relato */}
               <div>
-                <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">
+                <label className="block text-[11px] font-bold text-slate-300 uppercase mb-1">
                   Relato Narrativo de la Finalización
                 </label>
                 <textarea
@@ -667,7 +667,7 @@ export default function FinalizacionesTab({ universos = [] }) {
                   value={texto}
                   onChange={/* Responde a change desde este control. */ (e) => setTexto(e.target.value)}
                   placeholder="Describe qué ocurrió en este universo particular al agotarse el recurso o alcanzar este final..."
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50 text-slate-800 font-medium focus:bg-white focus:border-[#002B5E] outline-none leading-relaxed"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-white/10 bg-slate-950/60 text-slate-200 font-medium focus:bg-slate-950/60 focus:border-amber-500/60 outline-none leading-relaxed"
                 />
               </div>
 
@@ -709,11 +709,11 @@ export default function FinalizacionesTab({ universos = [] }) {
               </div>
 
               {/* Botones de acción */}
-              <div className="pt-4 border-t border-slate-200 flex items-center justify-end gap-2">
+              <div className="pt-4 border-t border-white/10 flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={/* Responde a click desde este control. */ () => setModalAbierto(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/15 text-slate-300 font-bold text-xs transition cursor-pointer"
                 >
                   Cancelar
                 </button>

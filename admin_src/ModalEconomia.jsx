@@ -9,29 +9,85 @@ import {
   PlusIcon,
   TrashIcon,
   RefreshIcon,
+  SearchIcon,
+  CrownIcon,
+  GridIcon,
+  PuzzleIcon,
+  StarIcon,
+  TrophyIcon,
+  ShoppingBagIcon,
+  StopwatchIcon,
+  ThumbsUpIcon,
+  XCircleIcon,
+  SparklesIcon,
 } from './Icons';
 import { OPERADOR_STORAGE_KEY } from './authService';
 
 const JUEGOS_DEFAULT = [
-  { id: 'wordle', nombre: 'Wordle', defaultPts: 50, emoji: '🟩' },
-  { id: 'sopa_letras', nombre: 'Sopa de Letras', defaultPts: 50, emoji: '🔍' },
-  { id: 'sudoku', nombre: 'Sudoku', defaultPts: 60, emoji: '🔢' },
-  { id: 'crucigrama', nombre: 'Crucigrama', defaultPts: 70, emoji: '✏️' },
-  { id: 'narrativo', nombre: 'Juego Narrativo (Crónicas)', defaultPts: 80, emoji: '👑' },
+  { id: 'wordle', nombre: 'Wordle', defaultPts: 50, Icon: GridIcon },
+  { id: 'sopa_letras', nombre: 'Sopa de letras', defaultPts: 50, Icon: SearchIcon },
+  { id: 'sudoku', nombre: 'Sudoku', defaultPts: 60, Icon: GridIcon },
+  { id: 'crucigrama', nombre: 'Crucigrama', defaultPts: 70, Icon: PuzzleIcon },
+  { id: 'narrativo', nombre: 'Crónicas narrativas', defaultPts: 80, Icon: CrownIcon },
 ];
 
 const CALIFICACIONES_CONFIG = [
-  { id: 'S', nombre: 'Excelente / Impecable', estrellas: '3 ⭐', badge: 'bg-amber-100 text-amber-900 border-amber-300', emoji: '🏆', desc: 'Mínimos intentos o sin errores', defaultPts: 100 },
-  { id: 'A', nombre: 'Muy Bueno', estrellas: '3 ⭐', badge: 'bg-emerald-100 text-emerald-900 border-emerald-300', emoji: '⭐', desc: 'Desempeño destacado', defaultPts: 90 },
-  { id: 'B', nombre: 'Bueno', estrellas: '2 ⭐', badge: 'bg-blue-100 text-blue-900 border-blue-300', emoji: '✨', desc: 'Desempeño estándar', defaultPts: 75 },
-  { id: 'C', nombre: 'Aprobado', estrellas: '1 ⭐', badge: 'bg-slate-100 text-slate-800 border-slate-300', emoji: '👍', desc: 'Al límite de vidas/intentos', defaultPts: 50 },
-  { id: 'F', nombre: 'Derrota / Fallido', estrellas: '0 ⭐', badge: 'bg-rose-100 text-rose-900 border-rose-300', emoji: '❌', desc: 'Sin vidas restantes', defaultPts: 0 },
+  {
+    id: 'S',
+    nombre: 'Impecable',
+    estrellas: 3,
+    badge: 'border-amber-500/30 bg-amber-500/10 text-amber-300',
+    icono: 'text-amber-300',
+    Icon: TrophyIcon,
+    desc: 'Mínimos intentos o sin errores',
+    defaultPts: 100,
+  },
+  {
+    id: 'A',
+    nombre: 'Muy bueno',
+    estrellas: 3,
+    badge: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300',
+    icono: 'text-emerald-300',
+    Icon: StarIcon,
+    desc: 'Desempeño destacado',
+    defaultPts: 90,
+  },
+  {
+    id: 'B',
+    nombre: 'Bueno',
+    estrellas: 2,
+    badge: 'border-blue-500/30 bg-blue-500/10 text-blue-300',
+    icono: 'text-blue-300',
+    Icon: SparklesIcon,
+    desc: 'Desempeño estándar',
+    defaultPts: 75,
+  },
+  {
+    id: 'C',
+    nombre: 'Aprobado',
+    estrellas: 1,
+    badge: 'border-white/10 bg-white/5 text-slate-300',
+    icono: 'text-slate-300',
+    Icon: ThumbsUpIcon,
+    desc: 'Al límite de vidas o intentos',
+    defaultPts: 50,
+  },
+  {
+    id: 'F',
+    nombre: 'Fallido',
+    estrellas: 0,
+    badge: 'border-rose-500/30 bg-rose-500/10 text-rose-300',
+    icono: 'text-rose-300',
+    Icon: XCircleIcon,
+    desc: 'Sin vidas restantes',
+    defaultPts: 0,
+  },
 ];
 
 const JUEGOS_CRONOMETRADOS = [
-  { id: 'sudoku', nombre: 'Sudoku', emoji: '🔢', badge: 'bg-indigo-50 text-indigo-800 border-indigo-200' },
-  { id: 'crucigrama', nombre: 'Crucigrama', emoji: '📝', badge: 'bg-emerald-50 text-emerald-800 border-emerald-200' },
-  { id: 'sopa_letras', nombre: 'Sopa de Letras', emoji: '🔍', badge: 'bg-amber-50 text-amber-800 border-amber-200' },
+  { id: 'sudoku', nombre: 'Sudoku', Icon: GridIcon },
+  { id: 'crucigrama', nombre: 'Crucigrama', Icon: PuzzleIcon },
+  { id: 'sopa_letras', nombre: 'Sopa de letras', Icon: SearchIcon },
 ];
 
 const DEFAULT_ESCALAS_TIEMPO_FRONT = {
@@ -58,6 +114,13 @@ const DEFAULT_ESCALAS_TIEMPO_FRONT = {
   ],
 };
 
+const CAMPO =
+  'w-full rounded-lg border border-white/10 bg-slate-950/60 px-3 py-2 text-sm font-semibold text-white placeholder:text-slate-600 focus:border-amber-500/60 focus:outline-none focus:ring-2 focus:ring-amber-500/20';
+const CAMPO_MINI =
+  'w-full rounded-md border border-white/10 bg-slate-950/60 px-2 py-1 text-xs font-semibold text-slate-200 focus:border-amber-500/60 focus:outline-none focus:ring-1 focus:ring-amber-500/20';
+const ETIQUETA = 'block text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500';
+const AYUDA = 'mt-1 text-[10px] leading-relaxed text-slate-600';
+
 const secToMMSS = (sec) => {
   if (!sec || sec >= 999990) return 'Sin límite';
   const m = Math.floor(sec / 60);
@@ -73,6 +136,30 @@ const mmssToSec = (str) => {
   }
   return parseInt(str, 10) || 0;
 };
+
+function Seccion({ Icon, titulo, descripcion, accion, children }) {
+  return (
+    <section>
+      <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div className="flex items-start gap-3">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-amber-300">
+            <Icon size={16} />
+          </span>
+          <div>
+            <h3 className="text-sm font-semibold text-white">{titulo}</h3>
+            {descripcion && (
+              <p className="mt-0.5 max-w-2xl text-xs leading-relaxed text-slate-500">
+                {descripcion}
+              </p>
+            )}
+          </div>
+        </div>
+        {accion}
+      </div>
+      {children}
+    </section>
+  );
+}
 
 // Permite editar precios, paquetes y puntos de los juegos.
 export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso, embebido = false }) {
@@ -318,581 +405,509 @@ export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso, em
     }
   };
 
-  return (
-    <div
-      className={
-        embebido
-          ? 'w-full'
-          : 'fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-hidden'
-      }
-    >
-      <div
-        className={
-          embebido
-            ? 'bg-white rounded-2xl border border-white/10 shadow-xl w-full flex flex-col overflow-hidden'
-            : 'bg-white rounded-3xl border border-slate-200/80 shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150'
-        }
-      >
-        
-        {/* Cabecera del Modal */}
-        {!embebido && (
-          <header className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center justify-between flex-shrink-0">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-amber-500/15 text-amber-700 flex items-center justify-center border border-amber-300/40 shadow-xs">
-                <CoinsIcon size={22} />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="text-base font-black text-slate-900 leading-tight">
-                    Configuración Global de Economía & Vidas
-                  </h2>
-                  <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-200 px-2 py-0.5 rounded-full flex items-center gap-1">
-                    <HeartIcon size={11} className="text-rose-500 fill-rose-500" />
-                    Vidas & Puntos
-                  </span>
-                </div>
-                <p className="text-[11px] text-slate-500 font-medium">
-                  Gestioná las vidas de nuevos usuarios, la tasa de canje en la mini-tienda y las recompensas por juego
-                </p>
-              </div>
+  const juegoActual = JUEGOS_CRONOMETRADOS.find((j) => j.id === juegoTiempoTab);
+
+  const contenido = cargando ? (
+    <div className="flex flex-col items-center justify-center gap-3 py-20">
+      <RefreshIcon size={26} className="animate-spin text-slate-500" />
+      <p className="text-xs font-semibold text-slate-500">Cargando configuración de economía...</p>
+    </div>
+  ) : (
+    <>
+      {(errorMsg || exitoMsg) && (
+        <div className="mb-6 space-y-2">
+          {errorMsg && (
+            <div className="flex items-center gap-2.5 rounded-xl border border-rose-500/30 bg-rose-500/10 px-3.5 py-2.5 text-xs font-medium text-rose-300">
+              <AlertTriangleIcon size={16} className="flex-shrink-0" />
+              <span>{errorMsg}</span>
             </div>
-
-            <button
-              type="button"
-              onClick={onCerrar}
-              className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition cursor-pointer"
-              title="Cerrar ventana"
-            >
-              <XIcon size={20} />
-            </button>
-          </header>
-        )}
-
-        {/* Contenido con scroll */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          {cargando ? (
-            <div className="flex flex-col items-center justify-center py-16 gap-3">
-              <RefreshIcon size={28} className="animate-spin text-slate-400" />
-              <p className="text-xs font-semibold text-slate-500">Cargando configuración de economía...</p>
+          )}
+          {exitoMsg && (
+            <div className="flex items-center gap-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-2.5 text-xs font-medium text-emerald-300">
+              <CheckIcon size={16} className="flex-shrink-0" />
+              <span>{exitoMsg}</span>
             </div>
-          ) : (
-            <form id="form-economia" onSubmit={handleGuardar} className="space-y-6">
-              
-              {/* Alertas */}
-              {errorMsg && (
-                <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl flex items-center gap-2.5 text-xs text-rose-800 font-medium animate-in fade-in">
-                  <AlertTriangleIcon size={16} className="text-rose-600 flex-shrink-0" />
-                  <span>{errorMsg}</span>
-                </div>
-              )}
-              {exitoMsg && (
-                <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center gap-2.5 text-xs text-emerald-800 font-medium animate-in fade-in">
-                  <CheckIcon size={16} className="text-emerald-600 flex-shrink-0" />
-                  <span>{exitoMsg}</span>
-                </div>
-              )}
-
-              {/* SECCIÓN 1: Vidas Iniciales y Costo Base */}
-              <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4.5 space-y-4">
-                <div className="flex items-center gap-2">
-                  <HeartIcon size={18} className="text-rose-500 fill-rose-500" />
-                  <h3 className="text-sm font-bold text-slate-800">
-                    1. Vidas Iniciales y Costo Base
-                  </h3>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Vidas Iniciales por Cuenta
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="99"
-                      value={vidasIniciales}
-                      onChange={/* Responde a change desde este control. */ (e) => setVidasIniciales(e.target.value)}
-                      required
-                      className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#002B5E] focus:outline-hidden font-semibold text-slate-900"
-                    />
-                    <p className="text-[10px] text-slate-500 mt-1">
-                      Vidas con las que arranca un usuario nuevo o invitado.
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Costo Base de 1 Vida (Puntos)
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={costoVidaPuntos}
-                      onChange={/* Responde a change desde este control. */ (e) => setCostoVidaPuntos(e.target.value)}
-                      required
-                      className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#002B5E] focus:outline-hidden font-semibold text-slate-900"
-                    />
-                    <p className="text-[10px] text-slate-500 mt-1">
-                      Precio de referencia por vida en la mini-tienda.
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Tope Máximo de Vidas (Opcional)
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      placeholder="Sin límite"
-                      value={vidasMaximas}
-                      onChange={/* Responde a change desde este control. */ (e) => setVidasMaximas(e.target.value)}
-                      className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#002B5E] focus:outline-hidden font-semibold text-slate-900"
-                    />
-                    <p className="text-[10px] text-slate-500 mt-1">
-                      Dejar vacío si las vidas pueden acumularse sin límite.
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Costo Desbloqueo Día (Pts)
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={costoDesbloqueoDia}
-                      onChange={/* Responde a change desde este control. */ (e) => setCostoDesbloqueoDia(e.target.value)}
-                      required
-                      className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#002B5E] focus:outline-hidden font-semibold text-slate-900"
-                    />
-                    <p className="text-[10px] text-slate-500 mt-1">
-                      Puntos para desbloquear días anteriores (Suscripción Básica).
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Costo por Pista (Pts)
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={costoPistaPuntos}
-                      onChange={(e) => setCostoPistaPuntos(e.target.value)}
-                      required
-                      className="w-full px-3 py-2 text-sm bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#002B5E] focus:outline-hidden font-semibold text-slate-900"
-                    />
-                    <p className="text-[10px] text-slate-500 mt-1">
-                      Puntos descontados al pedir una pista en cualquier juego.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-
-
-              {/* SECCIÓN 2: Calificación por Tiempo (Sin Vidas en Sudoku, Crucigrama, Sopa de Letras) */}
-              <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4.5 space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">⏱️</span>
-                    <div>
-                      <h3 className="text-sm font-bold text-slate-800">
-                        2. Calificación por Tiempo (Sin Vidas) por Juego
-                      </h3>
-                      <p className="text-xs text-slate-500">
-                        En Sudoku, Crucigrama y Sopa de Letras no hay Game Over por vidas. Los jugadores reciben su calificación y puntos según el tiempo en que completan el desafío.
-                      </p>
-                    </div>
-                  </div>
-                  <span className="self-start sm:self-auto text-[11px] font-bold text-indigo-800 bg-indigo-100 border border-indigo-300 px-2.5 py-0.5 rounded-full whitespace-nowrap">
-                    Cronómetro & Calificación
-                  </span>
-                </div>
-
-                {/* Pestañas de juego */}
-                <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
-                  {JUEGOS_CRONOMETRADOS.map((j) => (
-                    <button
-                      key={j.id}
-                      type="button"
-                      onClick={() => setJuegoTiempoTab(j.id)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl transition ${
-                        juegoTiempoTab === j.id
-                          ? 'bg-[#002B5E] text-white shadow-xs'
-                          : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
-                      }`}
-                    >
-                      <span>{j.emoji}</span>
-                      <span>{j.nombre}</span>
-                      <span className="text-[10px] opacity-75">
-                        ({(escalasTiempoPorJuego[j.id] || []).length})
-                      </span>
-                    </button>
-                  ))}
-                </div>
-
-                {/* Lista de escalas para el juego seleccionado */}
-                <div className="space-y-2.5">
-                  <div className="grid grid-cols-12 gap-2 text-[11px] font-bold text-slate-500 uppercase px-2">
-                    <div className="col-span-2 sm:col-span-1 text-center">Rango</div>
-                    <div className="col-span-3 sm:col-span-2">Tiempo Máx (MM:SS)</div>
-                    <div className="col-span-2 sm:col-span-2">Puntos (pts)</div>
-                    <div className="col-span-2 sm:col-span-2">Estrellas</div>
-                    <div className="col-span-3 sm:col-span-4">Título / Detalle</div>
-                    <div className="col-span-2 sm:col-span-1 text-center">Acción</div>
-                  </div>
-
-                  {(escalasTiempoPorJuego[juegoTiempoTab] || []).map((escala, idx) => (
-                    <div
-                      key={idx}
-                      className="grid grid-cols-12 gap-2 items-center bg-white border border-slate-200 rounded-xl p-2.5 shadow-2xs hover:border-slate-300 transition"
-                    >
-                      {/* Rango / Letra */}
-                      <div className="col-span-2 sm:col-span-1">
-                        <input
-                          type="text"
-                          value={escala.grade}
-                          onChange={(e) => handleEscalaFieldChange(juegoTiempoTab, idx, 'grade', e.target.value.toUpperCase())}
-                          className="w-full text-center px-1 py-1 text-xs font-black bg-amber-50 border border-amber-300 text-amber-900 rounded-lg focus:ring-2 focus:ring-[#002B5E] focus:outline-hidden"
-                          title="Letra o código de calificación (ej: S, A, B, C, D)"
-                        />
-                      </div>
-
-                      {/* Tiempo Máx */}
-                      <div className="col-span-3 sm:col-span-2">
-                        <input
-                          type="text"
-                          value={secToMMSS(escala.tiempo_max_segundos)}
-                          onChange={(e) => handleEscalaFieldChange(juegoTiempoTab, idx, 'tiempo_max_segundos', e.target.value)}
-                          placeholder="MM:SS o Sin límite"
-                          className="w-full px-2 py-1 text-xs font-bold font-mono bg-slate-50 border border-slate-300 text-slate-800 rounded-lg focus:ring-2 focus:ring-[#002B5E] focus:outline-hidden"
-                          title="Tiempo límite en minutos y segundos (ej: 03:00) o 'Sin límite'"
-                        />
-                      </div>
-
-                      {/* Puntos */}
-                      <div className="col-span-2 sm:col-span-2 flex items-center gap-1">
-                        <input
-                          type="number"
-                          min="0"
-                          value={escala.puntos}
-                          onChange={(e) => handleEscalaFieldChange(juegoTiempoTab, idx, 'puntos', e.target.value)}
-                          className="w-full text-right px-2 py-1 text-xs font-black bg-slate-50 border border-slate-300 text-slate-800 rounded-lg focus:ring-2 focus:ring-[#002B5E] focus:outline-hidden"
-                        />
-                        <span className="text-[10px] font-bold text-amber-700">pts</span>
-                      </div>
-
-                      {/* Estrellas */}
-                      <div className="col-span-2 sm:col-span-2">
-                        <select
-                          value={escala.estrellas ?? 3}
-                          onChange={(e) => handleEscalaFieldChange(juegoTiempoTab, idx, 'estrellas', e.target.value)}
-                          className="w-full px-1.5 py-1 text-xs font-bold bg-slate-50 border border-slate-300 text-slate-800 rounded-lg focus:ring-2 focus:ring-[#002B5E] focus:outline-hidden"
-                        >
-                          <option value="3">3 ⭐⭐⭐</option>
-                          <option value="2">2 ⭐⭐</option>
-                          <option value="1">1 ⭐</option>
-                          <option value="0">0 ⭐</option>
-                        </select>
-                      </div>
-
-                      {/* Título y Descripción */}
-                      <div className="col-span-3 sm:col-span-4 flex flex-col gap-1">
-                        <input
-                          type="text"
-                          value={escala.titulo || ''}
-                          onChange={(e) => handleEscalaFieldChange(juegoTiempoTab, idx, 'titulo', e.target.value)}
-                          placeholder="Título (ej: ¡Impecable!)"
-                          className="w-full px-2 py-0.5 text-xs font-bold bg-slate-50 border border-slate-200 text-slate-800 rounded focus:ring-1 focus:ring-[#002B5E] focus:outline-hidden"
-                        />
-                        <input
-                          type="text"
-                          value={escala.descripcion || ''}
-                          onChange={(e) => handleEscalaFieldChange(juegoTiempoTab, idx, 'descripcion', e.target.value)}
-                          placeholder="Descripción (ej: Menos de 03:00)"
-                          className="w-full px-2 py-0.5 text-[10px] bg-slate-50 border border-slate-200 text-slate-600 rounded focus:ring-1 focus:ring-[#002B5E] focus:outline-hidden"
-                        />
-                      </div>
-
-                      {/* Botón Eliminar */}
-                      <div className="col-span-2 sm:col-span-1 flex justify-center">
-                        <button
-                          type="button"
-                          onClick={() => handleEliminarEscala(juegoTiempoTab, idx)}
-                          title="Eliminar esta calificación"
-                          className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
-                        >
-                          <TrashIcon size={14} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-
-                  <div className="pt-2 flex justify-between items-center">
-                    <button
-                      type="button"
-                      onClick={() => handleAgregarEscala(juegoTiempoTab)}
-                      className="inline-flex items-center gap-1.5 text-xs font-bold text-[#002B5E] hover:text-[#001D40] bg-white border border-[#002B5E]/30 hover:border-[#002B5E] px-3 py-1.5 rounded-xl shadow-2xs transition"
-                    >
-                      <PlusIcon size={14} />
-                      <span>Agregar Calificación a {JUEGOS_CRONOMETRADOS.find(j => j.id === juegoTiempoTab)?.nombre}</span>
-                    </button>
-                    <span className="text-[11px] text-slate-400">
-                      Podés agregar tantas escalas como necesites.
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* SECCIÓN 3: Puntaje por Calificación de Desempeño */}
-              <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4.5 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">🏆</span>
-                    <h3 className="text-sm font-bold text-slate-800">
-                      2. Puntaje por Calificación de Desempeño (S, A, B, C, F)
-                    </h3>
-                  </div>
-                  <span className="text-[11px] font-bold text-amber-800 bg-amber-100 border border-amber-300 px-2.5 py-0.5 rounded-full">
-                    Puntuación Dinámica
-                  </span>
-                </div>
-                <p className="text-xs text-slate-500">
-                  Configurá cuántos puntos gana el usuario según la calificación obtenida (evaluada en base a vidas e intentos restantes al completar la partida).
-                </p>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
-                  {CALIFICACIONES_CONFIG.map((c) => {
-                    const valor = puntosPorCalificacion[c.id] ?? c.defaultPts;
-                    return (
-                      <div
-                        key={c.id}
-                        className="bg-white border border-slate-200 rounded-xl p-3 flex flex-col justify-between shadow-xs hover:border-slate-300 transition"
-                      >
-                        <div>
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-1.5">
-                              <span className={`w-7 h-7 rounded-lg font-black text-xs flex items-center justify-center border shadow-2xs ${c.badge}`}>
-                                {c.id}
-                              </span>
-                              <span className="text-xs font-bold text-slate-800">{c.estrellas}</span>
-                            </div>
-                            <span className="text-sm">{c.emoji}</span>
-                          </div>
-
-                          <div className="text-[11px] font-bold text-slate-800 leading-tight mb-1">
-                            {c.nombre}
-                          </div>
-                          <div className="text-[10px] text-slate-400 mb-3">
-                            {c.desc}
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-1.5 pt-2 border-t border-slate-100">
-                          <input
-                            type="number"
-                            min="0"
-                            value={valor}
-                            onChange={(e) => handlePuntosCalificacionChange(c.id, e.target.value)}
-                            className="w-full text-right px-2 py-1 text-xs font-black bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#002B5E] focus:outline-hidden text-slate-900"
-                          />
-                          <span className="text-[11px] font-bold text-amber-700">pts</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* SECCIÓN 3: Puntos Base de Respaldo por Juego */}
-              <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4.5 space-y-4">
-                <div className="flex items-center gap-2">
-                  <CoinsIcon size={18} className="text-amber-600" />
-                  <h3 className="text-sm font-bold text-slate-800">
-                    4. Puntos Base de Respaldo por Juego
-                  </h3>
-                </div>
-                <p className="text-xs text-slate-500">
-                  Definí cuántos puntos gana el usuario automáticamente cada vez que completa un desafío diario o partida victoriosa.
-                </p>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                  {JUEGOS_DEFAULT.map(/* Prepara el resultado de cada elemento. */ (jg) => {
-                    const valorActual = puntosPorJuego[jg.id] ?? jg.defaultPts;
-                    return (
-                      <div
-                        key={jg.id}
-                        className="bg-white border border-slate-200 rounded-xl p-3 flex items-center justify-between shadow-xs"
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <span className="text-xl">{jg.emoji}</span>
-                          <div>
-                            <div className="text-xs font-bold text-slate-900">{jg.nombre}</div>
-                            <div className="text-[10px] text-slate-400 font-mono">{jg.id}</div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1.5 w-24">
-                          <input
-                            type="number"
-                            min="0"
-                            value={valorActual}
-                            onChange={/* Responde a change desde este control. */ (e) => handlePuntosJuegoChange(jg.id, e.target.value)}
-                            className="w-full text-right px-2 py-1 text-xs font-bold bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#002B5E] focus:outline-hidden"
-                          />
-                          <span className="text-[11px] font-bold text-amber-700">pts</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* SECCIÓN 3: Paquetes de la Mini-Tienda */}
-              <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4.5 space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-base">🛍️</span>
-                    <h3 className="text-sm font-bold text-slate-800">
-                      5. Paquetes de la Mini-Tienda (Canje de Vidas)
-                    </h3>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleAgregarPaquete}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-xl bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 transition shadow-2xs cursor-pointer"
-                  >
-                    <PlusIcon size={14} />
-                    <span>Agregar Paquete</span>
-                  </button>
-                </div>
-
-                <div className="space-y-2.5">
-                  {paquetesTienda.length === 0 ? (
-                    <div className="p-4 text-center text-xs text-slate-400 bg-white rounded-xl border border-dashed border-slate-200">
-                      No hay paquetes configurados. Hacé clic en "Agregar Paquete".
-                    </div>
-                  ) : (
-                    paquetesTienda.map(/* Prepara el resultado de cada elemento. */ (pack, idx) => (
-                      <div
-                        key={idx}
-                        className={`bg-white border rounded-xl p-3 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 shadow-2xs transition ${
-                          pack.popular ? 'border-amber-400 ring-1 ring-amber-300/50 bg-amber-50/20' : 'border-slate-200'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <span className="w-6 h-6 rounded-lg bg-slate-100 text-slate-600 font-bold text-xs flex items-center justify-center font-mono">
-                            #{idx + 1}
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-semibold text-slate-600">Otorga:</span>
-                            <div className="flex items-center gap-1">
-                              <input
-                                type="number"
-                                min="1"
-                                value={pack.vidas}
-                                onChange={/* Responde a change desde este control. */ (e) => handlePaqueteChange(idx, 'vidas', parseInt(e.target.value, 10) || 1)}
-                                className="w-16 px-2 py-1 text-xs font-bold bg-slate-50 border border-slate-300 rounded-lg text-center"
-                              />
-                              <span className="text-xs font-bold text-rose-600">vidas</span>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-semibold text-slate-600">Por:</span>
-                            <div className="flex items-center gap-1">
-                              <input
-                                type="number"
-                                min="1"
-                                value={pack.puntos}
-                                onChange={/* Responde a change desde este control. */ (e) => handlePaqueteChange(idx, 'puntos', parseInt(e.target.value, 10) || 1)}
-                                className="w-20 px-2 py-1 text-xs font-bold bg-slate-50 border border-slate-300 rounded-lg text-center"
-                              />
-                              <span className="text-xs font-bold text-amber-700">pts</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto justify-end">
-                          <input
-                            type="text"
-                            placeholder="Badge ej: Popular"
-                            value={pack.badge || ''}
-                            onChange={/* Responde a change desde este control. */ (e) => handlePaqueteChange(idx, 'badge', e.target.value)}
-                            className="px-2.5 py-1 text-xs bg-slate-50 border border-slate-300 rounded-lg w-28 placeholder:text-slate-400"
-                          />
-                          <input
-                            type="text"
-                            placeholder="Ahorro ej: Ahorrá 30 pts"
-                            value={pack.descuento || ''}
-                            onChange={/* Responde a change desde este control. */ (e) => handlePaqueteChange(idx, 'descuento', e.target.value)}
-                            className="px-2.5 py-1 text-xs bg-slate-50 border border-slate-300 rounded-lg w-32 placeholder:text-slate-400"
-                          />
-
-                          <label className="inline-flex items-center gap-1.5 text-xs text-slate-700 font-semibold cursor-pointer px-2 py-1 rounded-lg hover:bg-slate-100">
-                            <input
-                              type="checkbox"
-                              checked={Boolean(pack.popular)}
-                              onChange={/* Responde a change desde este control. */ (e) => handlePaqueteChange(idx, 'popular', e.target.checked)}
-                              className="rounded-sm text-[#002B5E] focus:ring-[#002B5E]"
-                            />
-                            <span>Destacado</span>
-                          </label>
-
-                          <button
-                            type="button"
-                            onClick={/* Responde a click desde este control. */ () => handleEliminarPaquete(idx)}
-                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
-                            title="Eliminar este paquete"
-                          >
-                            <TrashIcon size={15} />
-                          </button>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-
-            </form>
           )}
         </div>
+      )}
 
-        {/* Footer de Acciones */}
-        <footer className="bg-slate-50 px-6 py-3.5 border-t border-slate-200 flex items-center justify-between flex-shrink-0">
-          <div className="text-[11px] text-slate-500 font-medium">
-            Los cambios se sincronizan en tiempo real para todos los juegos y jugadores.
+      <form id="form-economia" onSubmit={handleGuardar} className="space-y-10">
+        <Seccion
+          Icon={HeartIcon}
+          titulo="Vidas y canje"
+          descripcion="Define con cuántas vidas arranca una cuenta y cuánto cuesta reponerlas o desbloquear contenido."
+        >
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+            <div>
+              <label className={ETIQUETA}>Vidas iniciales</label>
+              <input
+                type="number"
+                min="1"
+                max="99"
+                value={vidasIniciales}
+                onChange={(e) => setVidasIniciales(e.target.value)}
+                required
+                className={`${CAMPO} mt-1.5`}
+              />
+              <p className={AYUDA}>Vidas de un usuario nuevo o invitado.</p>
+            </div>
+
+            <div>
+              <label className={ETIQUETA}>Costo de 1 vida</label>
+              <input
+                type="number"
+                min="1"
+                value={costoVidaPuntos}
+                onChange={(e) => setCostoVidaPuntos(e.target.value)}
+                required
+                className={`${CAMPO} mt-1.5`}
+              />
+              <p className={AYUDA}>Precio de referencia en la mini-tienda.</p>
+            </div>
+
+            <div>
+              <label className={ETIQUETA}>Tope de vidas</label>
+              <input
+                type="number"
+                min="1"
+                placeholder="Sin límite"
+                value={vidasMaximas}
+                onChange={(e) => setVidasMaximas(e.target.value)}
+                className={`${CAMPO} mt-1.5`}
+              />
+              <p className={AYUDA}>Vacío si pueden acumularse sin tope.</p>
+            </div>
+
+            <div>
+              <label className={ETIQUETA}>Desbloqueo de día</label>
+              <input
+                type="number"
+                min="0"
+                value={costoDesbloqueoDia}
+                onChange={(e) => setCostoDesbloqueoDia(e.target.value)}
+                required
+                className={`${CAMPO} mt-1.5`}
+              />
+              <p className={AYUDA}>Puntos para abrir días anteriores.</p>
+            </div>
+
+            <div>
+              <label className={ETIQUETA}>Costo por pista</label>
+              <input
+                type="number"
+                min="0"
+                value={costoPistaPuntos}
+                onChange={(e) => setCostoPistaPuntos(e.target.value)}
+                required
+                className={`${CAMPO} mt-1.5`}
+              />
+              <p className={AYUDA}>Puntos que se descuentan al pedir ayuda.</p>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
+        </Seccion>
+
+        <Seccion
+          Icon={CoinsIcon}
+          titulo="Puntos base por juego"
+          descripcion="Recompensa que recibe el jugador al completar cada desafío diario o partida victoriosa."
+        >
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+            {JUEGOS_DEFAULT.map(({ id, nombre, defaultPts, Icon }) => {
+              const valorActual = puntosPorJuego[id] ?? defaultPts;
+              return (
+                <div
+                  key={id}
+                  className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.02] px-3 py-2.5"
+                >
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-slate-300">
+                      <Icon size={15} />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-xs font-semibold text-slate-200">{nombre}</p>
+                      <p className="font-mono text-[10px] text-slate-600">{id}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="number"
+                      min="0"
+                      value={valorActual}
+                      onChange={(e) => handlePuntosJuegoChange(id, e.target.value)}
+                      className="w-20 rounded-md border border-white/10 bg-slate-950/60 px-2 py-1 text-right text-xs font-bold text-slate-200 focus:border-amber-500/60 focus:outline-none focus:ring-1 focus:ring-amber-500/20"
+                    />
+                    <span className="text-[10px] font-semibold text-amber-300">pts</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </Seccion>
+
+        <Seccion
+          Icon={TrophyIcon}
+          titulo="Calificación de desempeño"
+          descripcion="Puntos según vidas e intentos restantes al completar la partida."
+        >
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+            {CALIFICACIONES_CONFIG.map((calificacion) => {
+              const { id, nombre, estrellas, badge, icono, desc, defaultPts, Icon } = calificacion;
+              const valor = puntosPorCalificacion[id] ?? defaultPts;
+              return (
+                <div
+                  key={id}
+                  className="flex flex-col justify-between rounded-xl border border-white/10 bg-white/[0.02] p-3"
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`flex h-7 w-7 items-center justify-center rounded-lg border text-xs font-bold ${badge}`}
+                        >
+                          {id}
+                        </span>
+                        <span className="flex items-center gap-0.5">
+                          {[0, 1, 2].map((indice) => (
+                            <StarIcon
+                              key={indice}
+                              size={11}
+                              filled={indice < estrellas}
+                              className={indice < estrellas ? 'text-amber-300' : 'text-slate-700'}
+                            />
+                          ))}
+                        </span>
+                      </div>
+                      <Icon size={15} className={icono} />
+                    </div>
+                    <p className="mt-2.5 text-[11px] font-semibold text-slate-200">{nombre}</p>
+                    <p className="mt-0.5 text-[10px] leading-relaxed text-slate-500">{desc}</p>
+                  </div>
+                  <div className="mt-3 flex items-center gap-1.5 border-t border-white/5 pt-2.5">
+                    <input
+                      type="number"
+                      min="0"
+                      value={valor}
+                      onChange={(e) => handlePuntosCalificacionChange(id, e.target.value)}
+                      className="w-full rounded-md border border-white/10 bg-slate-950/60 px-2 py-1 text-right text-xs font-bold text-slate-200 focus:border-amber-500/60 focus:outline-none focus:ring-1 focus:ring-amber-500/20"
+                    />
+                    <span className="text-[10px] font-semibold text-amber-300">pts</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </Seccion>
+
+        <Seccion
+          Icon={StopwatchIcon}
+          titulo="Calificación por tiempo"
+          descripcion="Sudoku, crucigrama y sopa de letras no tienen Game Over por vidas: se califican según el tiempo de resolución."
+          accion={
+            <div className="inline-flex w-fit shrink-0 rounded-xl border border-white/10 bg-white/5 p-1">
+              {JUEGOS_CRONOMETRADOS.map(({ id, nombre, Icon }) => {
+                const activo = juegoTiempoTab === id;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setJuegoTiempoTab(id)}
+                    className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-bold transition ${
+                      activo
+                        ? 'bg-amber-500 text-slate-950'
+                        : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    <Icon size={13} />
+                    <span className="whitespace-nowrap">{nombre}</span>
+                    <span
+                      className={`rounded-full border px-1.5 text-[9px] leading-4 ${
+                        activo
+                          ? 'border-slate-950/30 text-slate-900'
+                          : 'border-white/10 text-slate-500'
+                      }`}
+                    >
+                      {(escalasTiempoPorJuego[id] || []).length}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          }
+        >
+          <div className="space-y-2">
+            <div className="hidden grid-cols-12 gap-2 px-2 text-[10px] font-bold uppercase tracking-wider text-slate-600 sm:grid">
+              <div className="col-span-1 text-center">Rango</div>
+              <div className="col-span-2">Tiempo máx.</div>
+              <div className="col-span-2">Puntos</div>
+              <div className="col-span-2">Estrellas</div>
+              <div className="col-span-4">Título / detalle</div>
+              <div className="col-span-1 text-center">Quitar</div>
+            </div>
+
+            {(escalasTiempoPorJuego[juegoTiempoTab] || []).map((escala, idx) => (
+              <div
+                key={idx}
+                className="grid grid-cols-12 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.02] p-2.5"
+              >
+                <div className="col-span-2 sm:col-span-1">
+                  <input
+                    type="text"
+                    value={escala.grade}
+                    onChange={(e) =>
+                      handleEscalaFieldChange(juegoTiempoTab, idx, 'grade', e.target.value.toUpperCase())
+                    }
+                    title="Letra o código de calificación"
+                    className="w-full rounded-md border border-amber-500/30 bg-amber-500/10 px-1 py-1 text-center text-xs font-black text-amber-300 focus:border-amber-500/60 focus:outline-none"
+                  />
+                </div>
+
+                <div className="col-span-3 sm:col-span-2">
+                  <input
+                    type="text"
+                    value={secToMMSS(escala.tiempo_max_segundos)}
+                    onChange={(e) =>
+                      handleEscalaFieldChange(juegoTiempoTab, idx, 'tiempo_max_segundos', e.target.value)
+                    }
+                    placeholder="MM:SS"
+                    title="Tiempo límite o 'Sin límite'"
+                    className={`${CAMPO_MINI} font-mono`}
+                  />
+                </div>
+
+                <div className="col-span-2 flex items-center gap-1">
+                  <input
+                    type="number"
+                    min="0"
+                    value={escala.puntos}
+                    onChange={(e) => handleEscalaFieldChange(juegoTiempoTab, idx, 'puntos', e.target.value)}
+                    className={`${CAMPO_MINI} text-right`}
+                  />
+                  <span className="text-[10px] font-semibold text-amber-300">pts</span>
+                </div>
+
+                <div className="col-span-2">
+                  <select
+                    value={escala.estrellas ?? 3}
+                    onChange={(e) => handleEscalaFieldChange(juegoTiempoTab, idx, 'estrellas', e.target.value)}
+                    className={`${CAMPO_MINI} px-1.5 text-slate-300`}
+                  >
+                    <option value="3">3 estrellas</option>
+                    <option value="2">2 estrellas</option>
+                    <option value="1">1 estrella</option>
+                    <option value="0">0 estrellas</option>
+                  </select>
+                </div>
+
+                <div className="col-span-3 flex flex-col gap-1 sm:col-span-4">
+                  <input
+                    type="text"
+                    value={escala.titulo || ''}
+                    onChange={(e) => handleEscalaFieldChange(juegoTiempoTab, idx, 'titulo', e.target.value)}
+                    placeholder="Título"
+                    className={CAMPO_MINI}
+                  />
+                  <input
+                    type="text"
+                    value={escala.descripcion || ''}
+                    onChange={(e) =>
+                      handleEscalaFieldChange(juegoTiempoTab, idx, 'descripcion', e.target.value)
+                    }
+                    placeholder="Detalle"
+                    className="w-full rounded-md border border-white/10 bg-slate-950/60 px-2 py-0.5 text-[10px] text-slate-400 placeholder:text-slate-600 focus:border-amber-500/60 focus:outline-none"
+                  />
+                </div>
+
+                <div className="col-span-2 flex justify-center sm:col-span-1">
+                  <button
+                    type="button"
+                    onClick={() => handleEliminarEscala(juegoTiempoTab, idx)}
+                    title="Eliminar esta calificación"
+                    className="rounded-lg p-1.5 text-slate-500 transition hover:bg-rose-500/10 hover:text-rose-300"
+                  >
+                    <TrashIcon size={14} />
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            <div className="flex flex-col gap-2 pt-2 sm:flex-row sm:items-center sm:justify-between">
+              <button
+                type="button"
+                onClick={() => handleAgregarEscala(juegoTiempoTab)}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-bold text-amber-300 transition hover:bg-amber-500/15"
+              >
+                <PlusIcon size={14} />
+                <span>Agregar rango a {juegoActual?.nombre}</span>
+              </button>
+              <span className="text-[10px] text-slate-600">
+                Podés agregar tantos rangos como necesites.
+              </span>
+            </div>
+          </div>
+        </Seccion>
+
+        <Seccion
+          Icon={ShoppingBagIcon}
+          titulo="Mini-tienda"
+          descripcion="Paquetes de vidas que los jugadores pueden canjear con sus puntos."
+          accion={
             <button
               type="button"
-              onClick={onCerrar}
-              className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-200 rounded-xl transition cursor-pointer"
+              onClick={handleAgregarPaquete}
+              className="inline-flex w-fit items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-bold text-slate-300 transition hover:bg-white/10"
             >
-              {embebido ? 'Volver' : 'Cancelar'}
+              <PlusIcon size={14} />
+              <span>Agregar paquete</span>
             </button>
-            <button
-              type="submit"
-              form="form-economia"
-              disabled={guardando || cargando}
-              className="inline-flex items-center gap-1.5 px-5 py-2 text-xs font-bold text-white bg-[#002B5E] hover:bg-slate-900 rounded-xl transition shadow-sm cursor-pointer disabled:opacity-50"
-            >
-              {guardando ? (
-                <>
-                  <RefreshIcon size={14} className="animate-spin" />
-                  <span>Guardando...</span>
-                </>
-              ) : (
-                <>
-                  <CheckIcon size={14} />
-                  <span>Guardar Cambios</span>
-                </>
-              )}
-            </button>
-          </div>
-        </footer>
+          }
+        >
+          <div className="space-y-2.5">
+            {paquetesTienda.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-white/10 px-4 py-6 text-center text-xs text-slate-500">
+                No hay paquetes configurados. Usá “Agregar paquete” para crear el primero.
+              </div>
+            ) : (
+              paquetesTienda.map((pack, idx) => (
+                <div
+                  key={idx}
+                  className={`flex flex-col gap-3 rounded-xl border px-3 py-3 transition md:flex-row md:items-center md:justify-between ${
+                    pack.popular
+                      ? 'border-amber-500/40 bg-amber-500/[0.06]'
+                      : 'border-white/10 bg-white/[0.02]'
+                  }`}
+                >
+                  <div className="flex flex-wrap items-center gap-3">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-md bg-white/5 font-mono text-[10px] font-bold text-slate-400">
+                      {idx + 1}
+                    </span>
 
+                    <label className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400">
+                      Otorga
+                      <input
+                        type="number"
+                        min="1"
+                        value={pack.vidas}
+                        onChange={(e) =>
+                          handlePaqueteChange(idx, 'vidas', parseInt(e.target.value, 10) || 1)
+                        }
+                        className="w-14 rounded-md border border-white/10 bg-slate-950/60 px-2 py-1 text-center text-xs font-bold text-slate-200 focus:border-amber-500/60 focus:outline-none"
+                      />
+                      <span className="font-semibold text-rose-300">vidas</span>
+                    </label>
+
+                    <label className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400">
+                      Por
+                      <input
+                        type="number"
+                        min="1"
+                        value={pack.puntos}
+                        onChange={(e) =>
+                          handlePaqueteChange(idx, 'puntos', parseInt(e.target.value, 10) || 1)
+                        }
+                        className="w-20 rounded-md border border-white/10 bg-slate-950/60 px-2 py-1 text-center text-xs font-bold text-slate-200 focus:border-amber-500/60 focus:outline-none"
+                      />
+                      <span className="font-semibold text-amber-300">pts</span>
+                    </label>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    <input
+                      type="text"
+                      placeholder="Badge"
+                      value={pack.badge || ''}
+                      onChange={(e) => handlePaqueteChange(idx, 'badge', e.target.value)}
+                      className="w-24 rounded-md border border-white/10 bg-slate-950/60 px-2.5 py-1 text-xs text-slate-200 placeholder:text-slate-600 focus:border-amber-500/60 focus:outline-none"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Ahorro"
+                      value={pack.descuento || ''}
+                      onChange={(e) => handlePaqueteChange(idx, 'descuento', e.target.value)}
+                      className="w-28 rounded-md border border-white/10 bg-slate-950/60 px-2.5 py-1 text-xs text-slate-200 placeholder:text-slate-600 focus:border-amber-500/60 focus:outline-none"
+                    />
+
+                    <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-2 py-1 text-[11px] font-semibold text-slate-400 transition hover:bg-white/5">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(pack.popular)}
+                        onChange={(e) => handlePaqueteChange(idx, 'popular', e.target.checked)}
+                        className="rounded border-white/20 bg-slate-950 text-amber-500 focus:ring-amber-500/40"
+                      />
+                      <span>Destacado</span>
+                    </label>
+
+                    <button
+                      type="button"
+                      onClick={() => handleEliminarPaquete(idx)}
+                      title="Eliminar este paquete"
+                      className="rounded-lg p-1.5 text-slate-500 transition hover:bg-rose-500/10 hover:text-rose-300"
+                    >
+                      <TrashIcon size={15} />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </Seccion>
+      </form>
+
+      <div className="sticky bottom-0 z-10 -mx-4 mt-8 border-t border-white/10 bg-slate-950/90 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-[11px] text-slate-500">
+            Los cambios se aplican a todos los juegos y jugadores.
+          </p>
+          <button
+            type="submit"
+            form="form-economia"
+            disabled={guardando || cargando}
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-amber-500 px-5 py-2 text-xs font-bold text-slate-950 transition hover:bg-amber-400 disabled:opacity-50"
+          >
+            {guardando ? (
+              <>
+                <RefreshIcon size={14} className="animate-spin" />
+                <span>Guardando...</span>
+              </>
+            ) : (
+              <>
+                <CheckIcon size={14} />
+                <span>Guardar cambios</span>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </>
+  );
+
+  if (embebido) return <div className="w-full">{contenido}</div>;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-slate-950/80 p-3 backdrop-blur-sm sm:p-6">
+      <div className="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-slate-950 shadow-2xl">
+        <header className="flex flex-shrink-0 items-center justify-between border-b border-white/5 px-6 py-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500 text-slate-950">
+              <CoinsIcon size={20} />
+            </div>
+            <div>
+              <h2 className="text-base font-bold leading-tight text-white">Economía y vidas</h2>
+              <p className="text-[11px] font-medium text-slate-500">
+                Parámetros globales de vidas, puntos y recompensas
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onCerrar}
+            className="rounded-xl p-2 text-slate-400 transition hover:bg-white/5 hover:text-white"
+            title="Cerrar ventana"
+          >
+            <XIcon size={20} />
+          </button>
+        </header>
+
+        <div className="flex-1 overflow-y-auto px-6 py-6">{contenido}</div>
       </div>
     </div>
   );

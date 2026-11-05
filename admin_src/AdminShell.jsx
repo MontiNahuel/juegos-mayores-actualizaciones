@@ -62,6 +62,7 @@ export default function AdminShell({
   const [menuAbierto, setMenuAbierto] = useState(false);
   const titulo = TITULOS[active] || TITULOS.resumen;
   const esHerramienta = HERRAMIENTAS.some(({ id }) => id === active);
+  const ancho = esHerramienta ? 'max-w-[1400px]' : 'max-w-6xl';
 
   const navegar = (vista) => {
     setMenuAbierto(false);
@@ -196,7 +197,7 @@ export default function AdminShell({
 
       <div className="lg:pl-64">
         <header className="sticky top-0 z-20 border-b border-white/5 bg-slate-950/85 backdrop-blur">
-          <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+          <div className={`mx-auto flex h-16 ${ancho} items-center justify-between gap-4 px-4 sm:px-6 lg:px-8`}>
             <div className="flex min-w-0 items-center gap-3">
               <button
                 type="button"
@@ -234,7 +235,7 @@ export default function AdminShell({
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8">{children}</main>
+        <main className={`mx-auto w-full ${ancho} px-4 py-8 sm:px-6 lg:px-8`}>{children}</main>
       </div>
     </div>
   );
