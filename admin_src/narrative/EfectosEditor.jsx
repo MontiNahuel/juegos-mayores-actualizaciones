@@ -11,6 +11,7 @@ export default function EfectosEditor({
 }) {
   const [catalogoAcciones, setCatalogoAcciones] = useState([]);
   const [catalogoFrecuencias, setCatalogoFrecuencias] = useState([]);
+  const [catalogoPersonajes, setCatalogoPersonajes] = useState([]);
   const [recursosDinamicos, setRecursosDinamicos] = useState(recursosProps || ['oro', 'pueblo', 'ejercito', 'fe']);
   const [cargando, setCargando] = useState(false);
   const [errorCarga, setErrorCarga] = useState('');
@@ -21,10 +22,11 @@ export default function EfectosEditor({
       setCargando(true);
       setErrorCarga('');
       try {
-        const [resAcc, resFrec, resUniv] = await Promise.all([
+        const [resAcc, resFrec, resUniv, resPjs] = await Promise.all([
           fetch(`/api/narrative/admin/acciones?universo_id=${encodeURIComponent(universoId)}`),
           fetch(`/api/narrative/admin/frecuencias?universo_id=${encodeURIComponent(universoId)}`),
           fetch(`/api/narrative/admin/universos/${encodeURIComponent(universoId)}`),
+          fetch(`/api/narrative/admin/personajes?universo_id=${encodeURIComponent(universoId)}`),
         ]);
 
         if (activo) {
@@ -48,6 +50,11 @@ export default function EfectosEditor({
               setRecursosDinamicos(dataUniv.recursos.map((r) => r.clave));
             }
           }
+
+          if (resPjs.ok) {
+            const dataPjs = await resPjs.json();
+            setCatalogoPersonajes(dataPjs || []);
+          }
         }
       } catch (err) {
         console.error('Error al cargar catálogos dinámicos en EfectosEditor:', err);
@@ -69,6 +76,38 @@ export default function EfectosEditor({
     if (!acc.permitido_en || acc.permitido_en.length === 0) return true;
     return acc.permitido_en.includes(tipoEntidad) || acc.permitido_en.includes('ambos');
   });
+
+  const descomponerRuta = (ruta) => {
+    if (!ruta) return { tipo: 'recurso', clave: recursosDinamicos[0] || 'oro' };
+    if (ruta.startsWith('limites.')) {
+      const parts = ruta.split('.');
+      const rec = parts[1] || recursosDinamicos[0] || 'oro';
+      const sub = parts[2] || 'max';
+      return { tipo: sub === 'min' ? 'limite_min' : 'limite_max', clave: rec };
+    }
+    if (ruta.startsWith('recursos.')) {
+      return { tipo: 'recurso', clave: ruta.split('.')[1] || recursosDinamicos[0] || 'oro' };
+    }
+    if (ruta.startsWith('afinidad.')) {
+      return { tipo: 'afinidad', clave: ruta.split('.')[1] || 'portador' };
+    }
+    if (ruta.startsWith('variables.')) {
+      return { tipo: 'variable', clave: ruta.split('.')[1] || '' };
+    }
+    if (recursosDinamicos.includes(ruta)) {
+      return { tipo: 'recurso', clave: ruta };
+    }
+    return { tipo: 'manual', clave: ruta };
+  };
+
+  const componerRuta = (tipo, clave) => {
+    if (tipo === 'recurso') return `recursos.${clave || recursosDinamicos[0] || 'oro'}`;
+    if (tipo === 'limite_max') return `limites.${clave || recursosDinamicos[0] || 'oro'}.max`;
+    if (tipo === 'limite_min') return `limites.${clave || recursosDinamicos[0] || 'oro'}.min`;
+    if (tipo === 'afinidad') return `afinidad.${clave || 'portador'}`;
+    if (tipo === 'variable') return `variables.${clave || 'variable'}`;
+    return clave || '';
+  };
 
   // Normalizar un efecto recibido (soporta formato legacy y nuevo)
   const normalizarEfecto = (ef) => {
@@ -306,6 +345,7 @@ export default function EfectosEditor({
                   {ef.acciones.map((acc, idxAcc) => {
                     const accDoc = catalogoAcciones.find((a) => (a._id || a.id) === acc.accion_id);
                     const primitiva = accDoc?.primitiva || acc.accion_id;
+                    const rutaInfo = descomponerRuta(acc.parametros?.ruta);
 
                     return (
                       <div
@@ -352,20 +392,43 @@ export default function EfectosEditor({
                             />
                           </div>
                         ) : primitiva === 'modificar_afinidad' ? (
-                          <div className="flex items-center gap-2 flex-1 min-w-[180px]">
-                            {tipoEntidad === 'personaje' && (
+                          <div className="flex flex-wrap items-center gap-2 flex-1 min-w-[200px]">
+                            <div className="flex flex-col">
+                              <label className="text-[9px] uppercase font-bold text-slate-500 mb-0.5">Destino</label>
+                              <select
+                                value={acc.parametros?.destino || (tipoEntidad === 'personaje' ? 'portador' : 'personaje')}
+                                onChange={(e) => handleCambiarParametro(idxEf, idxAcc, 'destino', e.target.value)}
+                                className="w-24 px-1.5 py-1 rounded-md border border-white/10 bg-slate-950 text-[11px] font-semibold text-slate-200"
+                              >
+                                {tipoEntidad === 'personaje' && <option value="portador">Portador (Él)</option>}
+                                <option value="personaje">Personaje</option>
+                              </select>
+                            </div>
+
+                            {acc.parametros?.destino !== 'portador' && (
                               <div className="flex flex-col">
-                                <label className="text-[9px] uppercase font-bold text-slate-500 mb-0.5">Destino</label>
+                                <label className="text-[9px] uppercase font-bold text-slate-500 mb-0.5">Personaje</label>
                                 <select
-                                  value={acc.parametros?.destino || 'portador'}
-                                  onChange={(e) => handleCambiarParametro(idxEf, idxAcc, 'destino', e.target.value)}
-                                  className="w-24 px-1.5 py-1 rounded-md border border-white/10 bg-slate-950 text-[11px] font-semibold text-slate-200"
+                                  value={acc.parametros?.personaje_id || ''}
+                                  onChange={(e) => handleCambiarParametro(idxEf, idxAcc, 'personaje_id', e.target.value)}
+                                  className="w-36 px-1.5 py-1 rounded-md border border-white/10 bg-slate-950 font-bold text-[11px] text-amber-300"
                                 >
-                                  <option value="portador">Portador (Él)</option>
-                                  <option value="personaje">Personaje</option>
+                                  <option value="">Elegir Personaje...</option>
+                                  {catalogoPersonajes.map((pj) => {
+                                    const pid = pj._id || pj.id;
+                                    return (
+                                      <option key={pid} value={pid}>
+                                        {pj.nombre} {pj.titulo ? `(${pj.titulo})` : ''}
+                                      </option>
+                                    );
+                                  })}
+                                  {acc.parametros?.personaje_id && !catalogoPersonajes.some((p) => (p._id || p.id) === acc.parametros.personaje_id) && (
+                                    <option value={acc.parametros.personaje_id}>{acc.parametros.personaje_id} (actual)</option>
+                                  )}
                                 </select>
                               </div>
                             )}
+
                             <div className="flex flex-col">
                               <label className="text-[9px] uppercase font-bold text-slate-500 mb-0.5">Delta (+/-)</label>
                               <input
@@ -377,80 +440,131 @@ export default function EfectosEditor({
                             </div>
                           </div>
                         ) : primitiva === 'mutar_estado' ? (
-                          <div className="flex flex-wrap items-center gap-2 flex-1 min-w-[280px]">
-                            {/* Ruta / Variable de destino */}
-                            <div className="flex flex-col">
-                              <label className="text-[9px] uppercase font-bold text-slate-500 mb-0.5">Ruta Objetivo</label>
-                              <div className="flex items-center gap-1">
+                            <div className="flex flex-wrap items-center gap-2 flex-1 min-w-[320px]">
+                              {/* Selector de Categoría de Destino */}
+                              <div className="flex flex-col">
+                                <label className="text-[9px] uppercase font-bold text-slate-500 mb-0.5">Tipo Objetivo</label>
                                 <select
-                                  value={
-                                    acc.parametros?.ruta?.startsWith('recursos.')
-                                      ? 'recurso'
-                                      : acc.parametros?.ruta?.startsWith('limites.')
-                                      ? 'limite'
-                                      : acc.parametros?.ruta?.startsWith('afinidad.')
-                                      ? 'afinidad'
-                                      : acc.parametros?.ruta?.startsWith('variables.')
-                                      ? 'variable'
-                                      : 'custom'
-                                  }
+                                  value={rutaInfo.tipo}
                                   onChange={(e) => {
-                                    const tipo = e.target.value;
-                                    const primerRec = recursosDinamicos[0] || 'oro';
-                                    if (tipo === 'recurso') handleCambiarParametro(idxEf, idxAcc, 'ruta', `recursos.${primerRec}`);
-                                    else if (tipo === 'limite') handleCambiarParametro(idxEf, idxAcc, 'ruta', `limites.${primerRec}.max`);
-                                    else if (tipo === 'afinidad') handleCambiarParametro(idxEf, idxAcc, 'ruta', 'afinidad.portador');
-                                    else if (tipo === 'variable') handleCambiarParametro(idxEf, idxAcc, 'ruta', 'variables.nueva_var');
-                                    else handleCambiarParametro(idxEf, idxAcc, 'ruta', '');
+                                    const nuevoTipo = e.target.value;
+                                    let defaultClave = recursosDinamicos[0] || 'oro';
+                                    if (nuevoTipo === 'afinidad') defaultClave = 'portador';
+                                    else if (nuevoTipo === 'variable') defaultClave = 'amenaza';
+                                    else if (nuevoTipo === 'manual') defaultClave = acc.parametros?.ruta || '';
+                                    handleCambiarParametro(idxEf, idxAcc, 'ruta', componerRuta(nuevoTipo, defaultClave));
                                   }}
-                                  className="w-20 px-1 py-1 rounded-md border border-white/10 bg-slate-950 text-[10px] font-semibold text-slate-300"
+                                  className="w-32 px-1.5 py-1 rounded-md border border-white/10 bg-slate-950 text-[11px] font-semibold text-cyan-300 focus:outline-none"
                                 >
-                                  <option value="recurso">Recurso</option>
-                                  <option value="limite">Límite</option>
-                                  <option value="afinidad">Afinidad</option>
-                                  <option value="variable">Variable</option>
-                                  <option value="custom">Manual</option>
+                                  <option value="recurso">Recurso Numérico</option>
+                                  <option value="limite_max">Límite Máximo (Techo)</option>
+                                  <option value="limite_min">Límite Mínimo (Piso)</option>
+                                  <option value="afinidad">Afinidad Personaje</option>
+                                  <option value="variable">Variable del Universo</option>
+                                  <option value="manual">Ruta Manual</option>
                                 </select>
+                              </div>
 
+                              {/* Selector de Recurso dinámico de MongoDB */}
+                              {(rutaInfo.tipo === 'recurso' || rutaInfo.tipo === 'limite_max' || rutaInfo.tipo === 'limite_min') && (
+                                <div className="flex flex-col">
+                                  <label className="text-[9px] uppercase font-bold text-slate-500 mb-0.5">Recurso</label>
+                                  <select
+                                    value={rutaInfo.clave}
+                                    onChange={(e) => handleCambiarParametro(idxEf, idxAcc, 'ruta', componerRuta(rutaInfo.tipo, e.target.value))}
+                                    className="w-28 px-1.5 py-1 rounded-md border border-white/10 bg-slate-950 font-bold text-[11px] text-emerald-300 focus:outline-none"
+                                  >
+                                    {recursosDinamicos.map((r) => (
+                                      <option key={r} value={r}>
+                                        {r.charAt(0).toUpperCase() + r.slice(1)}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                              )}
+
+                              {/* Selector de Personaje dinámico de MongoDB */}
+                              {rutaInfo.tipo === 'afinidad' && (
+                                <div className="flex flex-col">
+                                  <label className="text-[9px] uppercase font-bold text-slate-500 mb-0.5">Personaje</label>
+                                  <select
+                                    value={rutaInfo.clave}
+                                    onChange={(e) => handleCambiarParametro(idxEf, idxAcc, 'ruta', componerRuta('afinidad', e.target.value))}
+                                    className="w-40 px-1.5 py-1 rounded-md border border-white/10 bg-slate-950 font-bold text-[11px] text-amber-300 focus:outline-none"
+                                  >
+                                    <option value="portador">Portador (Él mismo)</option>
+                                    {catalogoPersonajes.map((pj) => {
+                                      const pid = pj._id || pj.id;
+                                      return (
+                                        <option key={pid} value={pid}>
+                                          {pj.nombre} {pj.titulo ? `(${pj.titulo})` : ''}
+                                        </option>
+                                      );
+                                    })}
+                                    {rutaInfo.clave !== 'portador' && !catalogoPersonajes.some((p) => (p._id || p.id) === rutaInfo.clave) && (
+                                      <option value={rutaInfo.clave}>{rutaInfo.clave} (actual)</option>
+                                    )}
+                                  </select>
+                                </div>
+                              )}
+
+                              {/* Variable del Universo */}
+                              {rutaInfo.tipo === 'variable' && (
+                                <div className="flex flex-col">
+                                  <label className="text-[9px] uppercase font-bold text-slate-500 mb-0.5">Variable</label>
+                                  <input
+                                    type="text"
+                                    value={rutaInfo.clave}
+                                    onChange={(e) => handleCambiarParametro(idxEf, idxAcc, 'ruta', componerRuta('variable', e.target.value))}
+                                    placeholder="ej: inflacion"
+                                    className="w-28 px-1.5 py-1 rounded-md border border-white/10 bg-slate-950 font-mono text-[11px] text-slate-200"
+                                  />
+                                </div>
+                              )}
+
+                              {/* Ruta Manual */}
+                              {rutaInfo.tipo === 'manual' && (
+                                <div className="flex flex-col">
+                                  <label className="text-[9px] uppercase font-bold text-slate-500 mb-0.5">Ruta Técnica</label>
+                                  <input
+                                    type="text"
+                                    value={rutaInfo.clave}
+                                    onChange={(e) => handleCambiarParametro(idxEf, idxAcc, 'ruta', e.target.value)}
+                                    placeholder="ej: recursos.oro"
+                                    className="w-32 px-1.5 py-1 rounded-md border border-white/10 bg-slate-950 font-mono text-[11px] text-slate-200"
+                                  />
+                                </div>
+                              )}
+
+                              {/* Selector de Operación matemática */}
+                              <div className="flex flex-col">
+                                <label className="text-[9px] uppercase font-bold text-slate-500 mb-0.5">Operación</label>
+                                <select
+                                  value={acc.parametros?.operacion_matematica || 'sumar'}
+                                  onChange={(e) => handleCambiarParametro(idxEf, idxAcc, 'operacion_matematica', e.target.value)}
+                                  className="w-28 px-1.5 py-1 rounded-md border border-white/10 bg-slate-950 font-bold text-[11px] text-amber-300 focus:outline-none"
+                                >
+                                  <option value="sumar">Sumar (+)</option>
+                                  <option value="restar">Restar (-)</option>
+                                  <option value="multiplicar">Multiplicar (×)</option>
+                                  <option value="dividir">Dividir (/)</option>
+                                  <option value="porcentual">Porcentual (%)</option>
+                                  <option value="fijar">Fijar (=)</option>
+                                </select>
+                              </div>
+
+                              {/* Valor */}
+                              <div className="flex flex-col">
+                                <label className="text-[9px] uppercase font-bold text-slate-500 mb-0.5">Valor</label>
                                 <input
-                                  type="text"
-                                  value={acc.parametros?.ruta || ''}
-                                  onChange={(e) => handleCambiarParametro(idxEf, idxAcc, 'ruta', e.target.value)}
-                                  placeholder="ej: recursos.oro"
-                                  className="w-28 px-1.5 py-1 rounded-md border border-white/10 bg-slate-950 font-mono text-[10px] text-slate-200"
+                                  type="number"
+                                  step="any"
+                                  value={acc.parametros?.valor ?? 0}
+                                  onChange={(e) => handleCambiarParametro(idxEf, idxAcc, 'valor', parseFloat(e.target.value) || 0)}
+                                  className="w-16 px-1.5 py-1 rounded-md border border-white/10 bg-slate-950 text-[11px] font-bold text-center text-slate-200"
                                 />
                               </div>
                             </div>
-
-                            {/* Operación matemática */}
-                            <div className="flex flex-col">
-                              <label className="text-[9px] uppercase font-bold text-slate-500 mb-0.5">Operación</label>
-                              <select
-                                value={acc.parametros?.operacion_matematica || 'sumar'}
-                                onChange={(e) => handleCambiarParametro(idxEf, idxAcc, 'operacion_matematica', e.target.value)}
-                                className="w-28 px-1.5 py-1 rounded-md border border-white/10 bg-slate-950 font-bold text-[11px] text-amber-300"
-                              >
-                                <option value="sumar">Sumar (+)</option>
-                                <option value="restar">Restar (-)</option>
-                                <option value="multiplicar">Multiplicar (×)</option>
-                                <option value="dividir">Dividir (/)</option>
-                                <option value="porcentual">Porcentual (%)</option>
-                                <option value="fijar">Fijar (=)</option>
-                              </select>
-                            </div>
-
-                            {/* Valor */}
-                            <div className="flex flex-col">
-                              <label className="text-[9px] uppercase font-bold text-slate-500 mb-0.5">Valor</label>
-                              <input
-                                type="number"
-                                step="any"
-                                value={acc.parametros?.valor ?? 0}
-                                onChange={(e) => handleCambiarParametro(idxEf, idxAcc, 'valor', parseFloat(e.target.value) || 0)}
-                                className="w-16 px-1.5 py-1 rounded-md border border-white/10 bg-slate-950 text-[11px] font-bold text-center text-slate-200"
-                              />
-                            </div>
-                          </div>
                         ) : (
                           /* primitiva modificar_recurso o amortiguar_danio */
                           <div className="flex items-center gap-2 flex-1 min-w-[200px]">

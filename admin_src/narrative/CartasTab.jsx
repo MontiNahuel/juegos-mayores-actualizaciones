@@ -556,6 +556,7 @@ export default function CartasTab({ universos = [] }) {
                 <CondicionesAparicionEditor
                   condiciones={condicionesAparicion}
                   onChange={setCondicionesAparicion}
+                  universoId={universoId || universoFiltro}
                 />
               </div>
 

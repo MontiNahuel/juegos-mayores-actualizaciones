@@ -611,6 +611,7 @@ export default function PersonajesTab({ universos = [] }) {
                 <CondicionesAparicionEditor
                   condiciones={condicionesAparicion}
                   onChange={setCondicionesAparicion}
+                  universoId={universoId || universoFiltro}
                 />
               </div>
 

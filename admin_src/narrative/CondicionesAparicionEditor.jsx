@@ -1,12 +1,31 @@
 /* Editor de condiciones de aparición para Cartas y Personajes */
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { FilterIcon, PlusIcon, TrashIcon } from '../Icons';
 
 export default function CondicionesAparicionEditor({
   condiciones = [],
   onChange,
+  universoId = 'corte_medieval',
   recursosDisponibles = ['oro', 'pueblo', 'ejercito', 'fe'],
 }) {
+  const [catalogoPersonajes, setCatalogoPersonajes] = useState([]);
+
+  useEffect(() => {
+    let activo = true;
+    const cargarPersonajes = async () => {
+      try {
+        const res = await fetch(`/api/narrative/admin/personajes?universo_id=${encodeURIComponent(universoId)}`);
+        if (res.ok && activo) {
+          const data = await res.json();
+          setCatalogoPersonajes(data || []);
+        }
+      } catch (err) {
+        console.error('Error al cargar personajes para condiciones de aparicion:', err);
+      }
+    };
+    if (universoId) cargarPersonajes();
+    return () => { activo = false; };
+  }, [universoId]);
   const handleAgregar = () => {
     const nueva = {
       tipo: 'comparar_recurso',
@@ -142,15 +161,26 @@ export default function CondicionesAparicionEditor({
 
               {cond.tipo === 'afinidad_personaje' && (
                 <>
-                  <div className="flex flex-col flex-1 min-w-[130px]">
-                    <label className="text-[9px] uppercase font-bold text-slate-500 mb-0.5">ID Personaje</label>
-                    <input
-                      type="text"
+                  <div className="flex flex-col flex-1 min-w-[150px]">
+                    <label className="text-[9px] uppercase font-bold text-slate-500 mb-0.5">Personaje</label>
+                    <select
                       value={cond.personaje_id || ''}
                       onChange={(e) => handleCambiar(idx, 'personaje_id', e.target.value)}
-                      placeholder="pj_canciller_elena"
-                      className="px-2 py-1 rounded-md border border-white/10 bg-slate-950 font-mono text-[11px] text-slate-200"
-                    />
+                      className="px-2 py-1 rounded-md border border-white/10 bg-slate-950 font-bold text-[11px] text-amber-300 focus:outline-none"
+                    >
+                      <option value="">Seleccionar Personaje...</option>
+                      {catalogoPersonajes.map((pj) => {
+                        const pid = pj._id || pj.id;
+                        return (
+                          <option key={pid} value={pid}>
+                            {pj.nombre} {pj.titulo ? `(${pj.titulo})` : ''}
+                          </option>
+                        );
+                      })}
+                      {cond.personaje_id && !catalogoPersonajes.some((p) => (p._id || p.id) === cond.personaje_id) && (
+                        <option value={cond.personaje_id}>{cond.personaje_id} (actual)</option>
+                      )}
+                    </select>
                   </div>
 
                   <div className="flex flex-col">
@@ -183,14 +213,25 @@ export default function CondicionesAparicionEditor({
 
               {cond.tipo === 'tiene_personaje' && (
                 <div className="flex flex-col flex-1 min-w-[160px]">
-                  <label className="text-[9px] uppercase font-bold text-slate-500 mb-0.5">ID Personaje Requerido</label>
-                  <input
-                    type="text"
+                  <label className="text-[9px] uppercase font-bold text-slate-500 mb-0.5">Personaje Requerido</label>
+                  <select
                     value={cond.personaje_id || ''}
                     onChange={(e) => handleCambiar(idx, 'personaje_id', e.target.value)}
-                    placeholder="pj_canciller_elena"
-                    className="px-2 py-1 rounded-md border border-white/10 bg-slate-950 font-mono text-[11px] text-slate-200"
-                  />
+                    className="px-2 py-1 rounded-md border border-white/10 bg-slate-950 font-bold text-[11px] text-amber-300 focus:outline-none"
+                  >
+                    <option value="">Seleccionar Personaje...</option>
+                    {catalogoPersonajes.map((pj) => {
+                      const pid = pj._id || pj.id;
+                      return (
+                        <option key={pid} value={pid}>
+                          {pj.nombre} {pj.titulo ? `(${pj.titulo})` : ''}
+                        </option>
+                      );
+                    })}
+                    {cond.personaje_id && !catalogoPersonajes.some((p) => (p._id || p.id) === cond.personaje_id) && (
+                      <option value={cond.personaje_id}>{cond.personaje_id} (actual)</option>
+                    )}
+                  </select>
                 </div>
               )}
 
