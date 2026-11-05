@@ -14,16 +14,18 @@ export interface GameHeaderProps {
   rightAction?: React.ReactNode;
   onHint?: () => void;
   hintDisabled?: boolean;
+  pointsEarned?: number;
 }
 
 // Muestra el encabezado del juego con las vidas y sus acciones.
-export function GameHeader({ title, subtitle, badges, onBack, backRoute, rightAction, onHint, hintDisabled }: GameHeaderProps) {
+export function GameHeader({ title, subtitle, badges, onBack, backRoute, rightAction, onHint, hintDisabled, pointsEarned }: GameHeaderProps) {
   const navigate = useNavigate();
   const volver = onBack ?? (/* Completa este paso con los datos recibidos por la operación. */ () => backRoute ? navigate(backRoute) : navigate(-1));
   return <LoginHeader
     title={title}
     onBack={volver}
     gameDetails={<>{subtitle}{badges}</>}
+    pointsEarned={pointsEarned}
     rightAction={<>{rightAction}{onHint && <HintButton onClick={onHint} disabled={hintDisabled} />}</>}
     ocultarSesion
   />;
