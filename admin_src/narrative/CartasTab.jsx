@@ -15,6 +15,8 @@ import {
   TagIcon,
 } from '../Icons';
 import ImageUploadField from './ImageUploadField';
+import EfectosEditor from './EfectosEditor';
+import CondicionesAparicionEditor from './CondicionesAparicionEditor';
 
 // Permite crear, buscar y editar cartas narrativas.
 export default function CartasTab({ universos = [] }) {
@@ -39,6 +41,7 @@ export default function CartasTab({ universos = [] }) {
   const [descripcion, setDescripcion] = useState('');
   const [imagen, setImagen] = useState('/assets/narrative/cartas/default.webp');
   const [tagsInput, setTagsInput] = useState('');
+  const [condicionesAparicion, setCondicionesAparicion] = useState([]);
   const [efectos, setEfectos] = useState([]);
 
   // Carga cartas con los datos de este paso.
@@ -78,6 +81,7 @@ export default function CartasTab({ universos = [] }) {
     setDescripcion('');
     setImagen('/assets/narrative/cartas/default.webp');
     setTagsInput('');
+    setCondicionesAparicion([]);
     setEfectos([]);
     setError('');
     setExito('');
@@ -94,38 +98,11 @@ export default function CartasTab({ universos = [] }) {
     setDescripcion(c.descripcion || '');
     setImagen(c.imagen || '/assets/narrative/cartas/default.webp');
     setTagsInput((c.tags || []).join(', '));
+    setCondicionesAparicion(c.condiciones_aparicion && c.condiciones_aparicion.length > 0 ? JSON.parse(JSON.stringify(c.condiciones_aparicion)) : []);
     setEfectos(c.efectos && c.efectos.length > 0 ? JSON.parse(JSON.stringify(c.efectos)) : []);
     setError('');
     setExito('');
     setModalAbierto(true);
-  };
-
-  // Agrega efecto con los datos de este paso.
-  const handleAgregarEfecto = () => {
-    setEfectos([
-      ...efectos,
-      {
-        disparador: 'al_obtener',
-        condiciones: [],
-        accion: { tipo: 'modificar_recurso', clave: 'oro', valor: 15, tipo_calculo: 'fijo' },
-      },
-    ]);
-  };
-
-  // Actualiza efecto con los datos de este paso.
-  const handleCambiarEfecto = (index, campo, valor) => {
-    const nuevos = [...efectos];
-    if (campo === 'disparador') {
-      nuevos[index].disparador = valor;
-    } else {
-      nuevos[index].accion = { ...nuevos[index].accion, [campo]: valor };
-    }
-    setEfectos(nuevos);
-  };
-
-  // Quita efecto con los datos de este paso.
-  const handleEliminarEfecto = (index) => {
-    setEfectos(efectos.filter(/* Conserva los elementos que cumplen esta condición. */ (_, idx) => idx !== index));
   };
 
   // Valida el formulario y guarda los cambios.
@@ -153,16 +130,27 @@ export default function CartasTab({ universos = [] }) {
       descripcion: descripcion.trim(),
       imagen: imagen.trim() || '/assets/narrative/cartas/default.webp',
       tags: tags,
-      efectos: efectos.map(/* Prepara el resultado de cada elemento. */ (ef) => ({
-        disparador: ef.disparador,
-        condiciones: [],
-        accion: {
-          tipo: ef.accion.tipo || 'modificar_recurso',
-          clave: ef.accion.clave || 'oro',
-          valor: parseFloat(ef.accion.valor) || 0,
-          tipo_calculo: ef.accion.tipo_calculo || 'fijo',
-          tag: ef.accion.tag || null,
-        },
+      condiciones_aparicion: condicionesAparicion,
+      efectos: efectos.map((ef) => ({
+        frecuencia_id: ef.frecuencia_id || ef.disparador || 'al_obtener',
+        disparador: ef.disparador || ef.frecuencia_id || 'al_obtener',
+        condiciones: ef.condiciones || [],
+        acciones: (ef.acciones && ef.acciones.length > 0)
+          ? ef.acciones.map((a) => ({
+              accion_id: a.accion_id,
+              parametros: a.parametros || {},
+            }))
+          : [
+              {
+                accion_id: ef.accion?.tipo || 'modificar_recurso',
+                parametros: {
+                  clave: ef.accion?.clave || 'oro',
+                  valor: parseFloat(ef.accion?.valor) || 0,
+                  tipo_calculo: ef.accion?.tipo_calculo || 'fijo',
+                  tag: ef.accion?.tag || null,
+                },
+              },
+            ],
       })),
     };
 
@@ -387,18 +375,18 @@ export default function CartasTab({ universos = [] }) {
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                         Efecto Pasivo:
                       </span>
-                      {c.efectos.map(/* Prepara el resultado de cada elemento. */ (ef, idx) => {
-                        const a = ef.accion || {};
+                      {c.efectos.map((ef, idx) => {
+                        const frecLabel = ef.frecuencia_id || (ef.disparador === 'al_obtener' ? 'Inmediato' : 'Mensual');
+                        const resumen = (ef.acciones && ef.acciones.length > 0)
+                          ? ef.acciones.map((a) => `${a.accion_id} (${a.parametros?.clave || a.parametros?.tag || ''} ${a.parametros?.valor ? (a.parametros.valor > 0 ? `+${a.parametros.valor}` : a.parametros.valor) : ''})`).join(', ')
+                          : (ef.accion?.tipo === 'otorgar_tag' ? `Tag #${ef.accion?.tag}` : `${ef.accion?.clave || ''} ${ef.accion?.valor ? (ef.accion.valor > 0 ? `+${ef.accion.valor}` : ef.accion.valor) : ''}`);
                         return (
                           <div
                             key={idx}
-                            className="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-950/60 border border-white/10 text-slate-300"
+                            className="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-lg bg-slate-950/60 border border-white/10 text-slate-300 mr-1 mb-1"
                           >
                             <CoinsIcon size={12} className="text-amber-300" />
-                            <span>
-                              {ef.disparador === 'al_obtener' ? 'Inmediato' : 'Mensual'}:{' '}
-                              {a.tipo === 'otorgar_tag' ? `Tag #${a.tag}` : `${a.clave} ${a.valor > 0 ? `+${a.valor}` : a.valor}`}
-                            </span>
+                            <span>{frecLabel}: {resumen}</span>
                           </div>
                         );
                       })}
@@ -563,87 +551,22 @@ export default function CartasTab({ universos = [] }) {
                 />
               </div>
 
+              {/* SECCIÓN DE CONDICIONES DE APARICIÓN */}
+              <div className="pt-2 border-t border-white/5">
+                <CondicionesAparicionEditor
+                  condiciones={condicionesAparicion}
+                  onChange={setCondicionesAparicion}
+                />
+              </div>
+
               {/* SECCIÓN DE EFECTOS DE LA CARTA */}
               <div className="pt-2 border-t border-white/5">
-                <div className="flex items-center justify-between mb-2">
-                  <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider">
-                    Efectos y Modificadores de la Carta ({efectos.length})
-                  </label>
-                  <button
-                    type="button"
-                    onClick={handleAgregarEfecto}
-                    className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-300 hover:underline cursor-pointer"
-                  >
-                    <PlusIcon size={13} />
-                    <span>Agregar Efecto</span>
-                  </button>
-                </div>
-
-                <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                  {efectos.map(/* Prepara el resultado de cada elemento. */ (ef, idx) => (
-                    <div
-                      key={idx}
-                      className="p-3 rounded-xl border border-white/10 bg-slate-950/40 flex flex-col sm:flex-row items-center gap-2 text-xs"
-                    >
-                      <select
-                        value={ef.disparador}
-                        onChange={/* Responde a change desde este control. */ (e) => handleCambiarEfecto(idx, 'disparador', e.target.value)}
-                        className="w-full sm:w-32 px-2.5 py-1.5 rounded-lg border border-white/10 bg-slate-950/60 font-bold text-[11px] text-slate-200"
-                      >
-                        <option value="al_obtener">Al Obtener</option>
-                        <option value="cada_mes">Cada Mes</option>
-                        <option value="al_final_partida">Al Final</option>
-                      </select>
-
-                      <select
-                        value={ef.accion?.tipo || 'modificar_recurso'}
-                        onChange={/* Responde a change desde este control. */ (e) => handleCambiarEfecto(idx, 'tipo', e.target.value)}
-                        className="w-full sm:w-36 px-2.5 py-1.5 rounded-lg border border-white/10 bg-slate-950/60 font-bold text-[11px] text-slate-200"
-                      >
-                        <option value="modificar_recurso">Modificar Recurso</option>
-                        <option value="otorgar_tag">Otorgar Tag</option>
-                      </select>
-
-                      {ef.accion?.tipo === 'otorgar_tag' ? (
-                        <input
-                          type="text"
-                          value={ef.accion?.tag || ''}
-                          onChange={/* Responde a change desde este control. */ (e) => handleCambiarEfecto(idx, 'tag', e.target.value)}
-                          placeholder="Nombre del tag..."
-                          className="w-full sm:flex-1 px-2.5 py-1.5 rounded-lg border border-white/10 bg-slate-950/60 text-[11px] font-mono"
-                        />
-                      ) : (
-                        <div className="flex items-center gap-2 w-full sm:flex-1">
-                          <select
-                            value={ef.accion?.clave || 'oro'}
-                            onChange={/* Responde a change desde este control. */ (e) => handleCambiarEfecto(idx, 'clave', e.target.value)}
-                            className="w-24 px-2 py-1.5 rounded-lg border border-white/10 bg-slate-950/60 font-bold text-[11px] text-slate-200"
-                          >
-                            <option value="oro">Oro</option>
-                            <option value="pueblo">Pueblo</option>
-                            <option value="ejercito">Ejército</option>
-                            <option value="fe">Fe</option>
-                          </select>
-                          <input
-                            type="number"
-                            value={ef.accion?.valor ?? 10}
-                            onChange={/* Responde a change desde este control. */ (e) => handleCambiarEfecto(idx, 'valor', parseFloat(e.target.value))}
-                            className="w-20 px-2 py-1.5 rounded-lg border border-white/10 bg-slate-950/60 text-[11px] font-bold text-center"
-                          />
-                        </div>
-                      )}
-
-                      <button
-                        type="button"
-                        onClick={/* Responde a click desde este control. */ () => handleEliminarEfecto(idx)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-300 hover:bg-rose-500/10 transition cursor-pointer ml-auto"
-                        title="Quitar efecto"
-                      >
-                        <TrashIcon size={14} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                <EfectosEditor
+                  efectos={efectos}
+                  onChange={setEfectos}
+                  universoId={universoId || universoFiltro}
+                  tipoEntidad="carta"
+                />
               </div>
 
               {/* Botones de acción */}

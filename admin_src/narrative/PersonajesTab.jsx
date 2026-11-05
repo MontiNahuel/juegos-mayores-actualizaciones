@@ -15,6 +15,8 @@ import {
   CoinsIcon,
 } from '../Icons';
 import ImageUploadField from './ImageUploadField';
+import EfectosEditor from './EfectosEditor';
+import CondicionesAparicionEditor from './CondicionesAparicionEditor';
 
 // Permite editar personajes de la corte y sus efectos.
 export default function PersonajesTab({ universos = [] }) {
@@ -41,6 +43,7 @@ export default function PersonajesTab({ universos = [] }) {
   const [tagsInput, setTagsInput] = useState('');
   const [prosInput, setProsInput] = useState('');
   const [consInput, setConsInput] = useState('');
+  const [condicionesAparicion, setCondicionesAparicion] = useState([]);
   const [efectos, setEfectos] = useState([]);
 
   // Carga personajes con los datos de este paso.
@@ -83,6 +86,7 @@ export default function PersonajesTab({ universos = [] }) {
     setTagsInput('');
     setProsInput('');
     setConsInput('');
+    setCondicionesAparicion([]);
     setEfectos([]);
     setError('');
     setExito('');
@@ -102,38 +106,11 @@ export default function PersonajesTab({ universos = [] }) {
     setTagsInput((p.tags || []).join(', '));
     setProsInput((p.pros || []).join('\n'));
     setConsInput((p.cons || []).join('\n'));
+    setCondicionesAparicion(p.condiciones_aparicion && p.condiciones_aparicion.length > 0 ? JSON.parse(JSON.stringify(p.condiciones_aparicion)) : []);
     setEfectos(p.efectos && p.efectos.length > 0 ? JSON.parse(JSON.stringify(p.efectos)) : []);
     setError('');
     setExito('');
     setModalAbierto(true);
-  };
-
-  // Agrega efecto con los datos de este paso.
-  const handleAgregarEfecto = () => {
-    setEfectos([
-      ...efectos,
-      {
-        disparador: 'cada_mes',
-        condiciones: [],
-        accion: { tipo: 'modificar_recurso', clave: 'oro', valor: 10, tipo_calculo: 'fijo' },
-      },
-    ]);
-  };
-
-  // Actualiza efecto con los datos de este paso.
-  const handleCambiarEfecto = (index, campo, valor) => {
-    const nuevos = [...efectos];
-    if (campo === 'disparador') {
-      nuevos[index].disparador = valor;
-    } else {
-      nuevos[index].accion = { ...nuevos[index].accion, [campo]: valor };
-    }
-    setEfectos(nuevos);
-  };
-
-  // Quita efecto con los datos de este paso.
-  const handleEliminarEfecto = (index) => {
-    setEfectos(efectos.filter(/* Conserva los elementos que cumplen esta condición. */ (_, idx) => idx !== index));
   };
 
   // Valida el formulario y guarda los cambios.
@@ -174,16 +151,29 @@ export default function PersonajesTab({ universos = [] }) {
       cons: cons,
       tags: tags,
       afinidad_inicial: parseInt(afinidadInicial, 10) || 50,
-      efectos: efectos.map(/* Prepara el resultado de cada elemento. */ (ef) => ({
-        disparador: ef.disparador,
-        condiciones: [],
-        accion: {
-          tipo: ef.accion.tipo || 'modificar_recurso',
-          clave: ef.accion.clave || 'oro',
-          valor: parseFloat(ef.accion.valor) || 0,
-          tipo_calculo: ef.accion.tipo_calculo || 'fijo',
-          tag: ef.accion.tag || null,
-        },
+      condiciones_aparicion: condicionesAparicion,
+      efectos: efectos.map((ef) => ({
+        frecuencia_id: ef.frecuencia_id || ef.disparador || 'al_obtener',
+        disparador: ef.disparador || ef.frecuencia_id || 'al_obtener',
+        condiciones: ef.condiciones || [],
+        acciones: (ef.acciones && ef.acciones.length > 0)
+          ? ef.acciones.map((a) => ({
+              accion_id: a.accion_id,
+              parametros: a.parametros || {},
+            }))
+          : [
+              {
+                accion_id: ef.accion?.tipo || 'modificar_recurso',
+                parametros: {
+                  clave: ef.accion?.clave || 'oro',
+                  valor: parseFloat(ef.accion?.valor) || 0,
+                  tipo_calculo: ef.accion?.tipo_calculo || 'fijo',
+                  destino: ef.accion?.destino || 'portador',
+                  personaje_id: ef.accion?.personaje_id || null,
+                  tag: ef.accion?.tag || null,
+                },
+              },
+            ],
       })),
       conversaciones: [],
     };
@@ -396,17 +386,18 @@ export default function PersonajesTab({ universos = [] }) {
                   {/* Efectos pasivos */}
                   {p.efectos && p.efectos.length > 0 && (
                     <div className="mt-2.5 pt-2 border-t border-white/5 flex flex-wrap gap-1">
-                      {p.efectos.map(/* Prepara el resultado de cada elemento. */ (ef, idx) => {
-                        const a = ef.accion || {};
+                      {p.efectos.map((ef, idx) => {
+                        const frecLabel = ef.frecuencia_id || ef.disparador;
+                        const resumen = (ef.acciones && ef.acciones.length > 0)
+                          ? ef.acciones.map((a) => `${a.accion_id} (${a.parametros?.clave || a.parametros?.tag || ''} ${a.parametros?.valor ? (a.parametros.valor > 0 ? `+${a.parametros.valor}` : a.parametros.valor) : ''})`).join(', ')
+                          : `${ef.accion?.clave || ''} ${ef.accion?.valor ? (ef.accion.valor > 0 ? `+${ef.accion.valor}` : ef.accion.valor) : ''}`;
                         return (
                           <span
                             key={idx}
-                            className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-200 border border-amber-500/30"
+                            className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-200 border border-amber-500/30 mr-1 mb-1"
                           >
                             <CoinsIcon size={11} />
-                            <span>
-                              {ef.disparador}: {a.clave} {a.valor > 0 ? `+${a.valor}` : a.valor}
-                            </span>
+                            <span>{frecLabel}: {resumen}</span>
                           </span>
                         );
                       })}
@@ -615,69 +606,23 @@ export default function PersonajesTab({ universos = [] }) {
                 />
               </div>
 
+              {/* SECCIÓN DE CONDICIONES DE APARICIÓN */}
+              <div className="pt-2 border-t border-white/5">
+                <CondicionesAparicionEditor
+                  condiciones={condicionesAparicion}
+                  onChange={setCondicionesAparicion}
+                />
+              </div>
+
               {/* SECCIÓN DE EFECTOS PASIVOS */}
               <div className="pt-2 border-t border-white/5">
-                <div className="flex items-center justify-between mb-2">
-                  <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider">
-                    Efectos Pasivos de Regla ({efectos.length})
-                  </label>
-                  <button
-                    type="button"
-                    onClick={handleAgregarEfecto}
-                    className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-300 hover:underline cursor-pointer"
-                  >
-                    <PlusIcon size={13} />
-                    <span>Agregar Efecto</span>
-                  </button>
-                </div>
-
-                <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                  {efectos.map(/* Prepara el resultado de cada elemento. */ (ef, idx) => (
-                    <div
-                      key={idx}
-                      className="p-3 rounded-xl border border-white/10 bg-slate-950/40 flex flex-col sm:flex-row items-center gap-2 text-xs"
-                    >
-                      <select
-                        value={ef.disparador}
-                        onChange={/* Responde a change desde este control. */ (e) => handleCambiarEfecto(idx, 'disparador', e.target.value)}
-                        className="w-full sm:w-36 px-2.5 py-1.5 rounded-lg border border-white/10 bg-slate-950/60 font-bold text-[11px] text-slate-200"
-                      >
-                        <option value="cada_mes">Cada Mes</option>
-                        <option value="al_obtener">Al Reclutar</option>
-                        <option value="al_final_partida">Al Finalizar</option>
-                      </select>
-
-                      <select
-                        value={ef.accion?.clave || 'oro'}
-                        onChange={/* Responde a change desde este control. */ (e) => handleCambiarEfecto(idx, 'clave', e.target.value)}
-                        className="w-full sm:w-28 px-2.5 py-1.5 rounded-lg border border-white/10 bg-slate-950/60 font-bold text-[11px] text-slate-200"
-                      >
-                        <option value="oro">Oro</option>
-                        <option value="pueblo">Pueblo</option>
-                        <option value="ejercito">Ejército</option>
-                        <option value="fe">Fe</option>
-                      </select>
-
-                      <div className="flex items-center gap-2 w-full sm:w-auto">
-                        <span className="text-[11px] text-slate-500 font-bold">Delta:</span>
-                        <input
-                          type="number"
-                          value={ef.accion?.valor ?? 10}
-                          onChange={/* Responde a change desde este control. */ (e) => handleCambiarEfecto(idx, 'valor', parseFloat(e.target.value))}
-                          className="w-20 px-2 py-1.5 rounded-lg border border-white/10 bg-slate-950/60 text-[11px] font-bold text-center"
-                        />
-                        <button
-                          type="button"
-                          onClick={/* Responde a click desde este control. */ () => handleEliminarEfecto(idx)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-300 hover:bg-rose-500/10 transition cursor-pointer ml-auto"
-                          title="Quitar efecto"
-                        >
-                          <TrashIcon size={14} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <EfectosEditor
+                  efectos={efectos}
+                  onChange={setEfectos}
+                  universoId={universoId || universoFiltro}
+                  tipoEntidad="personaje"
+                  recursosDisponibles={['oro', 'pueblo', 'ejercito', 'fe']}
+                />
               </div>
 
               {/* Botones de acción */}

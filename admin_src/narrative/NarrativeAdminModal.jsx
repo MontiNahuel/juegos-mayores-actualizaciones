@@ -22,6 +22,8 @@ import ConversacionesTab from './ConversacionesTab';
 import FinalizacionesTab from './FinalizacionesTab';
 import CalendarioTab from './CalendarioTab';
 import GrafosV2Tab from './GrafosV2Tab';
+import AccionesTab from './AccionesTab';
+import FrecuenciasTab from './FrecuenciasTab';
 
 // Organiza las pestañas para administrar el contenido narrativo.
 export default function NarrativeAdminModal({ abierto, onCerrar, embebido = false }) {
@@ -71,6 +73,8 @@ export default function NarrativeAdminModal({ abierto, onCerrar, embebido = fals
         { id: 'universos', label: 'Universos', Icon: CrownIcon, count: universos.length },
         { id: 'personajes', label: 'Personajes', Icon: UsersIcon, count: personajes.length },
         { id: 'cartas', label: 'Cartas', Icon: LayersIcon },
+        { id: 'acciones', label: 'Acciones', Icon: SparklesIcon },
+        { id: 'frecuencias', label: 'Frecuencias', Icon: CalendarIcon },
         { id: 'resultados', label: 'Desenlaces', Icon: SparklesIcon },
       ],
     },
@@ -154,6 +158,8 @@ export default function NarrativeAdminModal({ abierto, onCerrar, embebido = fals
         {tabActiva === 'universos' && <UniversosTab onUniversosChange={setUniversos} />}
         {tabActiva === 'personajes' && <PersonajesTab universos={universos} />}
         {tabActiva === 'cartas' && <CartasTab universos={universos} />}
+        {tabActiva === 'acciones' && <AccionesTab universos={universos} />}
+        {tabActiva === 'frecuencias' && <FrecuenciasTab universos={universos} />}
         {tabActiva === 'resultados' && (
           <ResultadosTab universos={universos} personajes={personajes} />
         )}
