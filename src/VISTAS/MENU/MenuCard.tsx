@@ -29,14 +29,14 @@ const MenuCard: React.FC<MenuCardProps> = ({ game, onStart }) => {
 
   useEffect(() => {
     const card = cardRef.current;
-    // The viewport observer also respects Ionic's nested scroll container.
+    // Start only when most of the card is visible; re-arm after it fully leaves.
     if (!card || !('IntersectionObserver' in window)) return;
     const observer = new IntersectionObserver(entries => {
-      if (entries.some(entry => entry.isIntersecting)) {
-        setPreviewStarted(true);
-        observer.disconnect();
+      for (const entry of entries) {
+        if (entry.intersectionRatio >= 0.65) setPreviewStarted(true);
+        else if (!entry.isIntersecting) setPreviewStarted(false);
       }
-    }, { threshold: 0.35 });
+    }, { threshold: [0, 0.65] });
     observer.observe(card);
     return () => observer.disconnect();
   }, []);

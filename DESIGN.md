@@ -31,4 +31,4 @@ Acciones Jugar de al menos 48px. Navbar con acceso visible y puntos solo para us
 Mantener contraste, etiquetas claras y contenido útil. Evitar teñir todo de azul, mensajes médicos, niveles ficticios y contenido repetido.
 
 ## Motion
-Cada miniatura demuestra su juego una sola vez al entrar al 35% en pantalla: letras que se comprueban, palabra resaltada, números que completan casillas, palabras cruzadas y elección de personaje. Secuencias de menos de 1.2 segundos; sin movimiento de tarjetas ni controles. Con reduced-motion, muestras estáticas completas. En móvil: descripción a todo el ancho y botón Jugar de ancho completo.
+Cada miniatura demuestra su juego al entrar al 65% en pantalla y se rearma al salir completamente: letras que se comprueban, palabra resaltada, números que completan casillas, palabras cruzadas y elección de personaje. Secuencias de menos de 1.6 segundos; sin movimiento de tarjetas ni controles. Con reduced-motion, transiciones suaves de color y opacidad sin movimiento. En móvil: descripción a todo el ancho y botón Jugar compacto de al menos 48px de alto.
