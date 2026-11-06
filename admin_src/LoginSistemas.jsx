@@ -26,6 +26,7 @@ export default function LoginSistemas() {
       fetch('/api/auth/sso/canjear-ticket', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
         body: JSON.stringify({ ticket: ticketParam }),
       })
         .then(/* Continúa cuando está listo el resultado anterior. */ (res) => res.json())
@@ -88,6 +89,7 @@ export default function LoginSistemas() {
       const response = await fetch('/api/auth/login-sistemas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
         body: JSON.stringify({ email: emailAEnviar, password: p }),
       });
 

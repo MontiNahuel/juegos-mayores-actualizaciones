@@ -197,8 +197,9 @@ export default function PanelAltasSistemas() {
   };
 
   // Cerrar sesión
-  const handleLogout = () => {
+  const handleLogout = async () => {
     try {
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' }).catch(() => {});
       localStorage.removeItem(OPERADOR_STORAGE_KEY);
       sessionStorage.removeItem(OPERADOR_STORAGE_KEY);
     } catch (e) {
