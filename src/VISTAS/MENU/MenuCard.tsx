@@ -24,7 +24,7 @@ interface MenuCardProps {
 // Presenta un juego con su ilustración y su botón para empezar.
 const MenuCard: React.FC<MenuCardProps> = ({ game, onStart }) => (
   <article
-    className={`menu-card${game.group === 'Narrativos' ? ' menu-card--narrative' : ''}`}
+    className={`menu-card menu-card--${game.id}${game.group === 'Narrativos' ? ' menu-card--narrative' : ''}`}
     aria-labelledby={`game-${game.id}`}
   >
     <div aria-hidden="true" className={`menu-card__visual menu-card__visual--${game.id}`}>

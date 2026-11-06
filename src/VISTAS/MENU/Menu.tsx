@@ -1,8 +1,9 @@
 /* Muestra los juegos y permite abrir sus calendarios. */
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { IonContent, IonPage, IonIcon } from '@ionic/react';
-import { arrowForwardOutline, sparklesOutline, bookOutline, gridOutline, peopleOutline, searchOutline, textOutline } from 'ionicons/icons';
+import { IonContent, IonPage } from '@ionic/react';
+import { bookOutline, gridOutline, peopleOutline, searchOutline, textOutline } from 'ionicons/icons';
+import { BrainIcon } from '../COMPONENTS/Icons/Icons';
 import MenuCard, { type GameGroup, type MenuCardGame } from './MenuCard';
 import LoginHeader from '../LOGIN/LoginHeader';
 import { esUsuarioAdmin } from '../AUTH/authUtils';
@@ -55,7 +56,6 @@ const groups: { title: GameGroup; description: string }[] = [
 // Muestra los juegos y permite abrir sus calendarios.
 const Menu: React.FC = () => {
   const navigate = useNavigate();
-  const catalogRef = useRef<HTMLDivElement>(null);
   const [skill, setSkill] = useState('Todos');
   const skills = ['Todos', 'Memoria', 'Lenguaje', 'Atención', 'Lógica'];
   const matchesSkill = (game: MenuCardGame) => skill === 'Todos' || (skill === 'Lenguaje' ? /vocabulario|Lenguaje/.test(game.skill) : game.skill.toLocaleLowerCase('es').includes(skill.toLocaleLowerCase('es')));
@@ -88,25 +88,10 @@ const Menu: React.FC = () => {
       <LoginHeader menuPrincipal onUsuarioChange={() => setEsAdmin(esUsuarioAdmin())} />
       <IonContent className="menu-content">
         <main className="menu-shell">
-          <header className="menu-hero">
-            <div className="menu-hero__intro">
-              <h1>Una mente activa.<br />Un juego a la vez.</h1>
-              <p>Descubrí, recordá y conectá ideas.<br />Elegí un desafío y disfrutá de tu momento.</p>
-              <a href="/menu#menu-games" className="menu-hero__explore" onClick={event => { event.preventDefault(); catalogRef.current?.focus({ preventScroll: true }); catalogRef.current?.scrollIntoView({ block: 'start' }); }}>Explorar los juegos <IonIcon icon={arrowForwardOutline} aria-hidden="true" /></a>
-              <div className="menu-hero__note"><IonIcon icon={sparklesOutline} aria-hidden="true" />A tu ritmo, todos los días.</div>
-            </div>
-            <div className="menu-hero__challenge">
-              <div className="menu-hero__letters" aria-hidden="true">{'JUEGO'.split('').map((letter, i) => <span key={i}>{letter}</span>)}</div>
-              <h2>Tu próxima palabra<br />te está esperando.</h2>
-              <p>Palabra del día · Memoria y vocabulario</p>
-              <button className="menu-button menu-button--light" onClick={() => startGame('wordle')}>Jugar con palabras <IonIcon icon={arrowForwardOutline} aria-hidden="true" /></button>
-            </div>
+          <header className="menu-heading">
+            <div className="menu-heading__brain" aria-hidden="true"><BrainIcon className="" size={48} /></div>
+            <div><h1>Un momento para tu mente</h1><p>Elegí un juego. Disfrutá el desafío, a tu ritmo.</p></div>
           </header>
-
-          <div className="menu-catalog-heading" id="menu-games" ref={catalogRef} tabIndex={-1}>
-            <div><h2>¿A qué jugamos hoy?</h2><p>Cada juego, una forma de activar tu mente.</p></div>
-            <span className="menu-catalog-count">{games.filter(matchesSkill).length} {games.filter(matchesSkill).length === 1 ? 'juego para descubrir' : 'juegos para descubrir'}</span>
-          </div>
           <div className="menu-filters" role="group" aria-label="Filtrar juegos por habilidad">
             {skills.map(item => <button key={item} type="button" aria-pressed={skill === item} onClick={() => setSkill(item)}>{item}</button>)}
           </div>
@@ -129,10 +114,9 @@ const Menu: React.FC = () => {
             </aside>
           )}
 
-          {groups.filter(group => skill === 'Todos' || games.some(game => game.group === group.title && matchesSkill(game))).map((group) => (
+          {groups.filter(group => games.some(game => game.group === group.title && matchesSkill(game))).map((group) => (
             <section key={group.title} className="menu-section" aria-labelledby={`group-${group.title}`}>
               <h2 id={`group-${group.title}`}>{group.title}</h2>
-              <p className="menu-section__description">{group.description}</p>
               {games.some((game) => game.group === group.title) && (
                 <div className="menu-grid">
                   {games.filter((game) => game.group === group.title && matchesSkill(game)).map((game) => (
@@ -142,7 +126,6 @@ const Menu: React.FC = () => {
               )}
             </section>
           ))}
-          <footer className="menu-footer"><span>ASISTODO · Mente en juego</span><span>Un pequeño desafío. Un momento para vos.</span></footer>
         </main>
       </IonContent>
     </IonPage>
