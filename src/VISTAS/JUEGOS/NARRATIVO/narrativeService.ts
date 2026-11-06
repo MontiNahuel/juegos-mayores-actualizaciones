@@ -364,7 +364,7 @@ export const avanzarNodo = async (date: string, opcionId: string, grafoAnteriorI
 // Cierra el balance y recibe el nuevo draft o la finalizacion.
 export const avanzarMes = (date: string) => request<EstadoPartida>(NARRATIVE_GAME_PATHS.avanzarMes, {
   method: 'POST', body: JSON.stringify({ date }),
-}, esPartidaNarrativaLocal(date));
+}, esPartidaNarrativaLocal(date)).then(adaptarEstadoGrafo);
 
 const continuaciones = new Map<string, Promise<EstadoPartida>>();
 

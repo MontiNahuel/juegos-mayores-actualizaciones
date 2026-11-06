@@ -1,3 +1,4 @@
+import { validarCierreGrafo } from './validarCierreGrafo';
 import { fetchNarrativeAdmin } from './api';
 /* Permite armar y probar historias con nodos, condiciones y desenlaces. */
 import { useState, useEffect } from 'react';
@@ -239,6 +240,12 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
           }
         }
       }
+    }
+
+    const errorCierre = validarCierreGrafo(itemEnEdicion);
+    if (errorCierre) {
+      setErrorMsg(errorCierre);
+      return;
     }
 
     setGuardando(true);

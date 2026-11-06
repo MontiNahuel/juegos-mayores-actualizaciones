@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const date = '2026-11-06';
 const balance = { mes_actual: 2, fase_actual: 'BALANCE_MES', recursos: { oro: 50 } };
-const draft = { mes_actual: 3, fase_actual: 'DRAFT_MENSUAL', recursos: { oro: 48 }, cartas_draft_actual: [{ _id: 'nueva' }] };
+const draft = { grafo_actual: null, evento_actual: null, resultado_actual: null, conversacion_actual: null, mes_actual: 3, fase_actual: 'DRAFT_MENSUAL', recursos: { oro: 48 }, cartas_draft_actual: [{ _id: 'nueva' }] };
 const response = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status });
 
 beforeEach(() => {
@@ -61,6 +61,19 @@ describe('continuar la partida sin adelantarse al servidor', () => {
     expect(estado.conversacion_actual).toEqual(conversacion);
     expect(estado.resultado_actual).toBeNull();
     expect(vi.mocked(fetch).mock.calls.filter(([, opts]) => opts?.method === 'POST')).toHaveLength(1);
+  });
+
+  it('descarta el grafo y resultado anteriores también en la respuesta del cierre mensual', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(response(balance)).mockResolvedValueOnce(response({
+      ...draft, grafo_actual: { nodo_actual: { es_final: true } }, resultado_actual: { titulo: 'Anterior' },
+      conversacion_actual: { _id: 'Anterior' },
+    }));
+    const api = await import('./narrativeService');
+    const estado = await api.continuarTurno(date);
+    expect(estado.mes_actual).toBe(3);
+    expect(estado.grafo_actual).toBeNull();
+    expect(estado.resultado_actual).toBeNull();
+    expect(estado.conversacion_actual).toBeNull();
   });
 
   it('una fase ya avanzada restaura el draft sin cerrar otro mes ni mostrar un resultado viejo', async () => {

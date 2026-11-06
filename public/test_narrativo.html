@@ -53,7 +53,7 @@
   <!-- TABLERO PRINCIPAL DEL JUEGO -->
   <!-- ========================================================================= -->
   <main class="w-full max-w-4xl bg-slate-800 border-2 border-amber-900/60 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
-    
+
     <!-- 1. BARRA DE ESTADO SUPERIOR: RECURSOS Y MES -->
     <section class="bg-slate-950/90 border-b border-amber-900/50 p-4">
       <div class="flex items-center justify-between mb-3">
@@ -551,7 +551,7 @@
                 ? (isBlocked ? 'bg-slate-900/40 border-slate-800 opacity-60' : 'bg-gradient-to-r from-amber-950/40 via-slate-900 to-amber-950/30 border-amber-400 hover:border-amber-300 shadow-[0_0_20px_rgba(245,158,11,0.2)]') 
                 : 'bg-slate-900 border-slate-700 hover:border-amber-400';
               const titleClass = isSecret ? (isBlocked ? 'text-slate-400' : 'text-amber-300') : 'text-slate-100 group-hover:text-amber-300';
-              
+
               const probs = Array.isArray(op.probabilidades) ? op.probabilidades : [];
               const allExplicaciones = [];
               probs.forEach(p => {
@@ -794,7 +794,7 @@
                 }).join(' ');
 
                 return `
-                  <button onclick="responderDialogo(${num})" class="w-full text-left bg-slate-900 border border-slate-700 hover:border-amber-400 p-3.5 rounded-xl transition flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs sm:text-sm group cursor-pointer shadow hover:bg-slate-850">
+                  <button onclick="responderDialogo(${JSON.stringify(num).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')})" class="w-full text-left bg-slate-900 border border-slate-700 hover:border-amber-400 p-3.5 rounded-xl transition flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs sm:text-sm group cursor-pointer shadow hover:bg-slate-850">
                     <span class="font-medium text-slate-100 group-hover:text-amber-300">⚖️ ${dec.texto}</span>
                     <div class="flex items-center gap-1.5 flex-shrink-0">
                       ${afinidades}
@@ -867,7 +867,7 @@
             Resolución del Consejo
           </span>
           <h2 class="font-title text-xl font-bold text-slate-100 mt-3">${res.titulo}</h2>
-          
+
           <div class="bg-slate-950/70 border border-slate-800 rounded-xl p-4 my-4 text-left">
             <span class="text-xs text-amber-300 font-bold block mb-1">Tu postura:</span>
             <p class="text-xs text-slate-300 italic mb-3">"${res.decisionTexto}"</p>
@@ -1013,6 +1013,7 @@
         'DRAFT_MENSUAL': 'DRAFT',
         'TOMA_DECISION_EVENTO': 'EVENTO',
         'RESOLVER_CONVERSACION': 'DIALOGO',
+        'TOMA_DECISION_CONVERSACION': 'DIALOGO',
         'BALANCE_MES': 'RESULTADO',
         'FINALIZADA': 'FIN'
       };
@@ -1023,11 +1024,33 @@
       }
     }
 
+    function adaptarTurnoV2(turno) {
+      const fase = turno.fase_actual?.toUpperCase();
+      if (fase === 'DRAFT_MENSUAL') return { ...turno, grafo_actual: null, evento_actual: null, conversacion_actual: null, resultado_actual: null };
+      const grafo = turno.grafo_actual;
+      if (!grafo?.nodo_actual) return turno;
+      const nodo = grafo.nodo_actual;
+      const base = { ...turno, recursos: grafo.recursos ?? turno.recursos, afinidad: grafo.afinidad ?? turno.afinidad,
+        finalizacion: grafo.finalizacion ?? turno.finalizacion, evento_actual: null, conversacion_actual: null, resultado_actual: null };
+      const opciones = (nodo.opciones || []).filter(o => o.disponible);
+      const imagen = nodo.imagen || grafo.imagen;
+      if (nodo.es_final) return { ...base, conversacion_actual: grafo.conversacion_actual ?? turno.conversacion_actual,
+        resultado_actual: { titulo: grafo.titulo, texto: [nodo.texto, nodo.resultado_texto].filter(Boolean).join('\n\n'), imagen,
+          tipo_resultado: 'neutro', efectos: (nodo.impactos_recursos || []).map(i => ({ accion: { clave: i.recurso, valor: i.delta } })) } };
+      if (grafo.tipo === 'conversacion') return { ...base, conversacion_actual: { _id: grafo.grafo_id, titulo: grafo.titulo, imagen,
+        frases: [{ personajeId: nodo.hablante_id, texto: nodo.texto }],
+        decisiones: opciones.map(o => ({ opcion: o.id, texto: o.texto, impacto_afinidad: [] })) } };
+      return { ...base, evento_actual: { id: grafo.grafo_id, titulo: grafo.titulo, descripcion: nodo.texto, imagen,
+        opciones: opciones.map(o => ({ id: o.id, texto: o.texto, bloqueada: false })) } };
+    }
+
     // Mapear respuesta V2 (Ligera / Delteada) al estado visual
-    function mapearRespuestaV2(turno, corteData = null, invData = null) {
-      estado.mes = turno.mes_actual;
-      estado.recursos = { ...turno.recursos };
-      estado.afinidad = { ...(turno.afinidad || {}) };
+    function mapearRespuestaV2(turno, corteData = null, invData = null, continuando = false) {
+      turno = adaptarTurnoV2(turno);
+      if (continuando) turno.resultado_actual = null;
+      estado.mes = turno.mes_actual ?? estado.mes;
+      estado.recursos = { ...(turno.recursos || estado.recursos) };
+      estado.afinidad = { ...(turno.afinidad || estado.afinidad) };
       estado.finalizacion = turno.finalizacion || null;
       estado.apiData = {
         cartas_draft_actual: turno.cartas_draft_actual || [],
@@ -1074,13 +1097,14 @@
         'DRAFT_MENSUAL': 'DRAFT',
         'TOMA_DECISION_EVENTO': 'EVENTO',
         'RESOLVER_CONVERSACION': 'DIALOGO',
+        'TOMA_DECISION_CONVERSACION': 'DIALOGO',
         'BALANCE_MES': 'RESULTADO',
         'FINALIZADA': 'FIN'
       };
       if (turno.finalizacion || turno.status === 'completed' || turno.fase_actual === 'FINALIZADA') {
         estado.fase = 'FIN';
       } else {
-        estado.fase = faseMap[turno.fase_actual] || 'DRAFT';
+        estado.fase = turno.resultado_actual ? 'RESULTADO' : turno.conversacion_actual ? 'DIALOGO' : turno.evento_actual ? 'EVENTO' : faseMap[turno.fase_actual?.toUpperCase()] || 'DRAFT';
       }
     }
 
@@ -1235,12 +1259,21 @@
 
     async function elegirCartaDraft(nombreOCartaId, recurso, delta) {
       if (estado.modo === 'v2') {
+        if (accionV2EnCurso || continuacionEnCurso) return;
+        accionV2EnCurso = true;
         try {
-          const cartaId = typeof nombreOCartaId === 'string' && nombreOCartaId.startsWith('card_')
+          const cartaId = typeof nombreOCartaId === 'string' && (estado.apiData?.cartas_draft_actual || []).some(c => (c.id || c._id) === nombreOCartaId)
             ? nombreOCartaId
             : (estado.apiData?.cartas_draft_actual?.[0]?.id || estado.apiData?.cartas_draft_actual?.[0]?._id || 'card_diezmo_comercial');
 
           const cElegida = (estado.apiData?.cartas_draft_actual || []).find(c => (c.id || c._id) === cartaId);
+          const res = await fetch(`${API_V2}/elegir-carta-mes`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ date: TODAY, carta_id: cartaId })
+          });
+          if (!res.ok) throw new Error((await res.json()).detail);
+          const data = await res.json();
           if (cElegida) {
             estado.cartas.push({
               id: cElegida.id || cElegida._id,
@@ -1250,30 +1283,19 @@
             });
           }
 
-          const res = await fetch(`${API_V2}/elegir-carta-mes`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ date: TODAY, carta_id: cartaId })
-          });
-          if (!res.ok) throw new Error((await res.json()).detail);
-          const data = await res.json();
-          // ElegirCartaMesV2Response
-          estado.recursos = { ...data.recursos };
-          if (!estado.apiData) estado.apiData = {};
-          estado.apiData.evento_actual = data.evento_actual;
-          estado.fase = 'EVENTO';
+          mapearRespuestaV2(data);
           renderFase();
           return;
         } catch (e) {
           alert("Error de API V2: " + e.message);
           return;
-        }
+        } finally { accionV2EnCurso = false; }
       }
 
       if (estado.modo === 'v1' || estado.modo === 'api') {
         try {
-          const cartaId = typeof nombreOCartaId === 'string' && nombreOCartaId.startsWith('card_') 
-            ? nombreOCartaId 
+          const cartaId = typeof nombreOCartaId === 'string' && (estado.apiData?.cartas_draft_actual || []).some(c => (c.id || c._id) === nombreOCartaId)
+            ? nombreOCartaId
             : (estado.apiData?.cartas_draft_actual?.[0]?._id || estado.apiData?.cartas_draft_actual?.[0]?.id || 'card_diezmo_comercial');
 
           const res = await fetch(`${API_V1}/elegir-carta-mes`, {
@@ -1301,37 +1323,8 @@
 
     async function tomarDecisionEvento(opcion) {
       if (estado.modo === 'v2') {
-        try {
-          let opcionId = opcion;
-          if (opcion === 'A') opcionId = 'op_a';
-          else if (opcion === 'B') opcionId = 'op_b';
-          else if (opcion === 'C') opcionId = 'op_c';
-
-          const res = await fetch(`${API_V2}/decidir-evento`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ date: TODAY, opcion_id: opcionId })
-          });
-          if (!res.ok) throw new Error((await res.json()).detail);
-          const data = await res.json();
-          // DecidirEventoV2Response
-          estado.recursos = { ...data.recursos };
-          if (!estado.apiData) estado.apiData = {};
-          estado.apiData.resultado_actual = data.resultado_actual;
-          estado.apiData.conversacion_actual = data.conversacion_actual;
-          estado.finalizacion = data.finalizacion;
-
-          if (data.finalizacion) {
-            estado.fase = 'FIN';
-          } else {
-            estado.fase = 'RESULTADO';
-          }
-          renderFase();
-          return;
-        } catch (e) {
-          alert("Error de API V2: " + e.message);
-          return;
-        }
+        await ejecutarNodoV2(String(opcion));
+        return;
       }
 
       if (estado.modo === 'v1' || estado.modo === 'api') {
@@ -1376,13 +1369,8 @@
     }
 
     async function continuarTrasResultado() {
-      if (estado.modo === 'v2' || estado.modo === 'v1' || estado.modo === 'api') {
-        if (estado.apiData?.conversacion_actual) {
-          estado.fase = 'DIALOGO';
-          renderFase();
-        } else {
-          await avanzarMesSiguiente();
-        }
+      if (estado.modo !== 'simulado') {
+        await avanzarMesSiguiente();
         return;
       }
       // Modo simulado
@@ -1396,39 +1384,8 @@
 
     async function responderDialogo(opcion) {
       if (estado.modo === 'v2') {
-        try {
-          const conv = estado.apiData?.conversacion_actual;
-          const decisiones = conv?.decisiones || conv?.opciones || [];
-          const decElegida = decisiones.find(d => (d.opcion !== undefined ? d.opcion : d.opcion_numero) === opcion);
-
-          const res = await fetch(`${API_V2}/responder-conversacion`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ date: TODAY, opcion_numero: opcion })
-          });
-          if (!res.ok) throw new Error((await res.json()).detail);
-          const data = await res.json();
-          // ResponderConversacionV2Response
-          estado.afinidad = { ...(data.afinidad || {}) };
-          (estado.corte || []).forEach(c => {
-            if (data.afinidad && data.afinidad[c.id] !== undefined) {
-              c.afinidad = data.afinidad[c.id];
-            }
-          });
-
-          estado.dialogoResultado = {
-            titulo: conv ? conv.titulo : 'Consejo Privado',
-            texto: data.resultado_texto || decElegida?.resultado_texto || '',
-            decisionTexto: decElegida?.texto || '',
-            impacto_afinidad: data.impacto_afinidad || decElegida?.impacto_afinidad || []
-          };
-          estado.fase = 'DIALOGO_RESULTADO';
-          renderFase();
-          return;
-        } catch (e) {
-          alert("Error de API V2: " + e.message);
-          return;
-        }
+        await ejecutarNodoV2(String(opcion));
+        return;
       }
 
       if (estado.modo === 'v1' || estado.modo === 'api') {
@@ -1477,52 +1434,61 @@
       avanzarMesSiguiente();
     }
 
+    let accionV2EnCurso = false;
+    async function ejecutarNodoV2(opcionId) {
+      if (accionV2EnCurso || continuacionEnCurso) return;
+      accionV2EnCurso = true;
+      try {
+        await pedirJSON(`${API_V2}/avanzar-nodo`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ date: TODAY, opcion_id: opcionId })
+        });
+        mapearRespuestaV2(await pedirJSON(`${API_V2}/estado?date=${TODAY}`));
+        renderFase();
+      } catch (e) { alert('Error de API V2: ' + e.message); }
+      finally { accionV2EnCurso = false; }
+    }
+
+    async function pedirJSON(url, options) {
+      const res = await fetch(url, options);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || `Error ${res.status}`);
+      return data;
+    }
+
+    let continuacionEnCurso = false;
     async function avanzarMesSiguiente() {
-      if (estado.modo === 'v2') {
+      if (continuacionEnCurso || accionV2EnCurso) return;
+      if (estado.modo !== 'simulado') {
+        continuacionEnCurso = true;
+        const v2 = estado.modo === 'v2';
+        const api = v2 ? API_V2 : API_V1;
+        const leer = () => pedirJSON(`${api}/${v2 ? 'estado' : 'activa'}?date=${TODAY}`);
+        const partida = data => v2 ? data : data.run;
         try {
-          const res = await fetch(`${API_V2}/avanzar-mes`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ date: TODAY })
-          });
-          if (!res.ok) throw new Error((await res.json()).detail);
-          const data = await res.json();
-          // AvanzarMesV2Response
-          estado.mes = data.mes_actual;
-          estado.recursos = { ...data.recursos };
-          if (!estado.apiData) estado.apiData = {};
-          estado.apiData.cartas_draft_actual = data.cartas_draft_actual || [];
-          estado.finalizacion = data.finalizacion;
-
-          if (data.finalizacion || data.status === 'completed' || data.mes_actual > 12) {
-            estado.fase = 'FIN';
-          } else {
-            estado.fase = 'DRAFT';
+          let data = await leer();
+          const anterior = partida(data);
+          if (anterior.fase_actual?.toUpperCase() === 'BALANCE_MES' && !data.finalizacion) {
+            try {
+              data = await pedirJSON(`${api}/avanzar-mes`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ date: TODAY })
+              });
+            } catch (error) {
+              // El POST pudo haberse confirmado: recuperar, sin enviar otro cierre.
+              const actual = await leer().catch(() => null);
+              if (!actual || (partida(actual).mes_actual === anterior.mes_actual &&
+                  partida(actual).fase_actual === anterior.fase_actual && !actual.finalizacion)) throw error;
+              data = actual;
+            }
           }
+          if (v2) mapearRespuestaV2(data, null, null, true);
+          else mapearRespuestaAPI(data);
+          estado.dialogoResultado = null;
           renderFase();
-          return;
-        } catch (e) {
-          alert("Error de API V2: " + e.message);
-          return;
-        }
-      }
-
-      if (estado.modo === 'v1' || estado.modo === 'api') {
-        try {
-          const res = await fetch(`${API_V1}/avanzar-mes`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ date: TODAY })
-          });
-          if (!res.ok) throw new Error((await res.json()).detail);
-          const data = await res.json();
-          mapearRespuestaAPI(data);
-          renderFase();
-          return;
-        } catch (e) {
-          alert("Error de API V1: " + e.message);
-          return;
-        }
+        } catch (e) { alert('No se pudo continuar la partida: ' + e.message); }
+        finally { continuacionEnCurso = false; }
+        return;
       }
 
       // Modo simulado
