@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { IonContent, IonPage } from '@ionic/react';
 import { type DailyChallengeCalendarProps, type DayChallenge, DEFAULT_CALENDAR_THEME } from './types';
 import { useGameCalendar } from './useGameCalendar';
-import { CalendarHeader } from './CalendarHeader';
+import AppNavbar from '../Navbar/AppNavbar';
 import { CalendarHeroCard } from './CalendarHeroCard';
 import { CalendarGrid } from './CalendarGrid';
 import { IconInfo, IconClose, IconCheck, IconStarSolid } from './icons';
@@ -132,11 +132,8 @@ export function DailyChallengeCalendar({
       className="bg-[var(--calendar-primary)] text-[#46556D]"
       style={{ '--calendar-primary': theme.primaryBlue } as CSSProperties}
     >
-      <CalendarHeader
-        title={title}
-        onBack={/* Responde a back desde este control. */ () => (onBack ? onBack() : navigate('/menu'))}
-        primaryColor={theme.primaryBlue}
-      />
+      {/* El calendario solo describe su estado; AppNavbar resuelve identidad y sesión. */}
+      <AppNavbar view={{ kind: 'calendar', title, onBack: () => (onBack ? onBack() : navigate('/menu')) }} />
       <IonContent style={{ '--background': theme.primaryBlue } as CSSProperties}>
         <main className="mx-auto flex min-h-full w-full max-w-[760px] flex-col gap-5 px-3 pt-6 pb-[max(calc(env(safe-area-inset-bottom,0px)+32px),56px)] sm:gap-6 sm:px-6 sm:pt-8">
           {futureNotice && (

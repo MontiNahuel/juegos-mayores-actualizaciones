@@ -2,7 +2,6 @@
 export * from './types';
 export * from './icons';
 export * from './useGameCalendar';
-export * from './CalendarHeader';
 export * from './CalendarHeroCard';
 export * from './CalendarCell';
 export * from './CalendarGrid';

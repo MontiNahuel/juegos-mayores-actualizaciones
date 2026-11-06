@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "title": "Menú cognitivo oscuro",
+  "title": "Menús cognitivos",
   "extensions": {
     "breakpoints": [
       {
@@ -11,6 +11,6 @@
   },
   "narrative": {
     "northStar": "Un momento para tu mente",
-    "overview": "Menú oscuro legible para mayores, con acentos distintos por juego y acciones directas."
+    "overview": "Menú oscuro legible, calendario con navbar coherente y una sola estructura de navegación. Juegos y King’s Court fuera del rediseño de esta etapa."
   }
 }

@@ -15,7 +15,7 @@ src/VISTAS/COMPONENTS/CALENDAR/
 ├── icons.tsx                  # Iconografía SVG accesible (44px hit-box friendly)
 ├── calendarService.ts         # Orquestador de API REST, cache local y sync de fecha
 ├── useGameCalendar.ts         # Hook con lógica reactiva de navegación mensual y estados
-├── CalendarHeader.tsx         # Barra superior con botón de retorno y título
+├── ../Navbar/AppNavbar.tsx    # Navbar única, contexto calendar con regreso y título
 ├── CalendarHeroCard.tsx       # Tarjeta destacada superior con "¡Desafío de hoy!"
 ├── CalendarGrid.tsx           # Cuadrícula responsive de días (soporta meses de 5 y 6 filas)
 ├── CalendarCell.tsx           # Celda interactiva individual por día

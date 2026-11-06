@@ -1,11 +1,11 @@
 /* Muestra los juegos y permite abrir sus calendarios. */
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { IonContent, IonPage } from "@ionic/react";
 import { BrainIcon } from "../COMPONENTS/Icons/Icons";
 import MenuCard from "./MenuCard";
 import { gameSections } from "./menuGames";
-import LoginHeader from "../LOGIN/LoginHeader";
+import AppNavbar from "../COMPONENTS/Navbar/AppNavbar";
 import { esUsuarioAdmin } from "../AUTH/authUtils";
 import "./Menu.css";
 
@@ -14,23 +14,10 @@ const Menu: React.FC = () => {
   const navigate = useNavigate();
   const [esAdmin, setEsAdmin] = useState<boolean>(esUsuarioAdmin);
 
-  useEffect(() => {
-    // Comprueba si la sesión permite mostrar la administración.
-    const checkAdmin = () => {
-      setEsAdmin(esUsuarioAdmin());
-    };
-    window.addEventListener("user_progress_updated", checkAdmin);
-    window.addEventListener("storage", checkAdmin);
-    return () => {
-      window.removeEventListener("user_progress_updated", checkAdmin);
-      window.removeEventListener("storage", checkAdmin);
-    };
-  }, []);
-
   return (
     <IonPage>
-      <LoginHeader
-        menuPrincipal
+      <AppNavbar
+        view={{ kind: "menu" }}
         onUsuarioChange={() => setEsAdmin(esUsuarioAdmin())}
       />
       <IonContent className="menu-content">
