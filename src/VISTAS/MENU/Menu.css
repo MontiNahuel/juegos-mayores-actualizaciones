@@ -31,7 +31,7 @@
 .menu-section + .menu-section { margin-top: 34px; }
 .menu-section > h2 { margin: 0; font-size: 1.25rem; line-height: 1.3; font-weight: 700; }
 .menu-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
-.menu-card { display: grid; grid-template-columns: 104px minmax(0, 1fr); min-width: 0; gap: 22px; padding: 26px; border-radius: 16px; background: #223044; color: var(--menu-ink); }
+.menu-card { display: grid; grid-template-columns: 104px minmax(0, 1fr); min-width: 0; gap: 22px; padding: 26px; border-radius: 16px; background: #2a394c; color: var(--menu-ink); }
 .menu-card__visual { display: flex; align-items: flex-start; justify-content: center; padding-top: 4px; color: #1956bc; }
 .menu-mini-board { display: grid; grid-template-columns: repeat(3, 1fr); width: 100px; gap: 4px; transform: rotate(-5deg); }
 .menu-mini-board span { display: grid; place-items: center; height: 30px; background: #e4edff; border-radius: 5px; color: #2351a0; font-size: 17px; font-weight: 700; }
@@ -49,7 +49,7 @@
 .menu-card__play:hover { background: #3d526b; }
 .menu-card__play:active { background: #495e77; }
 .menu-card__play:disabled { background: #e5eaf0; color: #536479; cursor: default; }
-.menu-card--narrative { grid-column: 1/-1; background: #263346; grid-template-columns: 104px 1fr; }
+.menu-card--narrative { grid-column: 1/-1; background: #2e3c50; grid-template-columns: 104px 1fr; }
 .menu-card--narrative .menu-card__visual { align-items: center; }
 .menu-card--narrative .menu-card__visual ion-icon { font-size: 76px; }
 .menu-card--narrative .menu-card__play { background: #83d4ca; color: #142b2c; }
@@ -95,7 +95,7 @@
 .menu-heading h1 { font-size: 2.125rem; line-height: 1.2; letter-spacing: -.02em; margin: 0; font-weight: 700; }
 .menu-heading p { font-size: 1.125rem; line-height: 1.55; margin: 10px 0 0; color: #c0cbd7; }
 .menu-section > h2 { margin-bottom: 18px; font-size: 1.375rem; }
-.menu-card { --game-color: #99dcd1; border: 1px solid #3b4a5c; }
+.menu-card { --game-color: #99dcd1; border: 1px solid #52647b; }
 .menu-card--sopa-letras { --game-color: #f0bb98; }
 .menu-card--sudoku { --game-color: #c8bbf0; }
 .menu-card--crucigrama { --game-color: #a8ccef; }

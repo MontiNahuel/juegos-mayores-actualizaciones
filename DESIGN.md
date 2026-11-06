@@ -2,7 +2,7 @@
 name: CogniJuegos — menú cognitivo oscuro
 colors:
   ground: "#151e2b"
-  surface: "#223044"
+  surface: "#2a394c"
   navbar: "#1b2737"
   text: "#f3f6fa"
   secondary: "#c0cbd7"
@@ -22,7 +22,7 @@ Nunito Sans local. Título principal 2.125rem (1.75rem móvil), títulos de jueg
 ## Layout
 Contenedor de 1180px. Dos columnas en escritorio; una debajo de 768px. Encabezado compacto, clásicos y narrativa, sin filtros para un catálogo de cinco juegos. No banner duplicado, contador de catálogo, sección vacía ni pie promocional.
 ## Elevation & Depth
-Superficies planas con borde tenue de 1px; sin sombras decorativas.
+Superficies de pizarra #2a394c sobre fondo #151e2b, con borde definido de 1px #52647b. Narrativa usa #2e3c50. Separación discreta, sin sombras decorativas.
 ## Shapes
 Paneles de 16px y botones de 9px. Filtros redondeados, estado seleccionado en menta.
 ## Components
