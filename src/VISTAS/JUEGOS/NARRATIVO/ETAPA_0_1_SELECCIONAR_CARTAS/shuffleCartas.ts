@@ -1,9 +1,9 @@
 /* Anima el reparto y la mezcla de las cartas disponibles. */
 // Reparte desde una pila central, escalonando cada carta como en el shuffle original.
-export default function shuffleCartas(contenedor: HTMLDivElement | null) {
+export default function shuffleCartas(contenedor: HTMLDivElement | null, selector = 'button') {
   if (!contenedor || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-  const cartas = [...contenedor.querySelectorAll('button')];
+  const cartas = [...contenedor.querySelectorAll<HTMLElement>(selector)];
   const pila = contenedor.getBoundingClientRect();
   const posiciones = cartas.map(/* Prepara el resultado de cada elemento. */ (carta) => carta.getBoundingClientRect());
 

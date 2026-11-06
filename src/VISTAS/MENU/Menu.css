@@ -120,9 +120,15 @@
 /* One short game demonstration per viewport entry; content and controls never wait for motion. */
 .menu-mini-board span { position: relative; }
 .menu-mini-board--sudoku span:empty::after { content: attr(data-fill); opacity: 1; }
-.menu-court-preview { display: flex; align-items: center; gap: 5px; }
-.menu-court-preview span { display: grid; place-items: center; width: 30px; height: 48px; border: 1px solid #786f56; border-radius: 6px; }
-.menu-court-preview ion-icon { font-size: 24px !important; }
+.menu-court-preview { display: flex; align-items: center; justify-content: center; width: 104px; min-height: 90px; gap: 0; }
+.menu-court-preview span { display: block; position: relative; flex: 0 0 44px; height: 66px; background: #172433; border-radius: 5px; overflow: hidden; }
+.menu-court-preview span + span { margin-left: -16px; }
+.menu-court-preview span:nth-child(1) { rotate: -12deg; }
+.menu-court-preview span:nth-child(2) { translate: 0 -6px; z-index: 1; }
+.menu-court-preview span:nth-child(3) { rotate: 12deg; }
+.menu-court-preview__art { width: 100%; height: 100%; object-fit: cover; object-position: 50% 10%; }
+.menu-court-preview__frame { position: absolute; inset: 0; width: 100%; height: 100%; }
+
 @media (prefers-reduced-motion: no-preference) {
   .menu-card--preview .menu-mini-board--wordle span { animation: menu-letter-check 1100ms ease-out both; }
   .menu-card--preview .menu-mini-board--wordle span:nth-child(2) { animation-delay: 80ms; }
@@ -139,12 +145,11 @@
   .menu-card--preview .menu-mini-board--crucigrama span:not(:empty) { animation: menu-word-found 1200ms ease-out both; }
   .menu-card--preview .menu-mini-board--crucigrama span:nth-child(2),
   .menu-card--preview .menu-mini-board--crucigrama span:nth-child(8) { animation-delay: 300ms; }
-  .menu-card--preview .menu-court-preview span:nth-child(2) { animation: menu-court-choice 1400ms ease-out both; }
+
 }
 @keyframes menu-letter-check { 0% { transform: translateY(0) rotateX(0); } 35% { transform: translateY(-5px) rotateX(65deg); background: #418478; color: white; } 100% { transform: translateY(0) rotateX(0); } }
 @keyframes menu-word-found { 0% { background: #40556e; color: #f3f6fa; } 100% { background: var(--game-color); color: #172433; } }
 @keyframes menu-number-fill { 0% { opacity: 0; transform: translateY(3px); } 100% { opacity: 1; transform: translateY(0); } }
-@keyframes menu-court-choice { 0% { transform: translateY(0); background: transparent; } 65%,100% { transform: translateY(-6px); background: #665531; border-color: #ecd098; } }
 @media (max-width: 767px) {
   .menu-card { grid-template-columns: 80px minmax(0, 1fr); gap: 10px 18px; }
   .menu-card__copy { display: contents; }
@@ -155,8 +160,8 @@
   .menu-card__play { grid-column: 1 / -1; width: auto; justify-self: start; }
   .menu-mini-board--wordle { padding-top: 0; }
   .menu-card--narrative { grid-template-columns: 80px minmax(0, 1fr); }
-  .menu-court-preview { gap: 3px; }
-  .menu-court-preview span { width: 24px; }
+  .menu-court-preview { width: 80px; gap: 0; }
+  .menu-court-preview span { flex-basis: 38px; height: 57px; }
 }
 
 .menu-card__play { gap: 14px; padding-inline: 18px; transition: background-color 150ms ease-out; }

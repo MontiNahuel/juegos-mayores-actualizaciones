@@ -72,6 +72,11 @@ export default defineConfig(/* Completa este paso con los datos recibidos por la
         '/assets/narrative': {
           target: backendUrl,
           changeOrigin: true,
+          // Shared local artwork also serves menu previews without a running backend.
+          bypass: (req) => {
+            const assetPath = req.url?.split('?')[0];
+            if (assetPath && existsSync(`public${assetPath}`)) return req.url;
+          },
         },
       },
     },

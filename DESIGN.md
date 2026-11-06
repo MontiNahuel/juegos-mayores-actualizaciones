@@ -32,3 +32,6 @@ Mantener contraste, etiquetas claras y contenido útil. Evitar teñir todo de az
 
 ## Motion
 Cada miniatura demuestra su juego al entrar al 65% en pantalla y se rearma al salir completamente: letras que se comprueban, palabra resaltada, números que completan casillas, palabras cruzadas y elección de personaje. Secuencias de menos de 1.6 segundos; sin movimiento de tarjetas ni controles. Con reduced-motion, transiciones suaves de color y opacidad sin movimiento. En móvil: descripción a todo el ancho y botón Jugar compacto de al menos 48px de alto.
+
+### King’s Court
+La miniatura reutiliza guardia.png y card-frame.png del arte narrativo local. Tres cartas decorativas con imágenes de carga diferida y tamaño reservado. El reparto usa shuffleCartas, compartido con la selección del juego, mediante un selector opcional; no se agregan botones falsos al menú. Reduce Motion conserva las cartas estáticas.
