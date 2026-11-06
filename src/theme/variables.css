@@ -24,3 +24,10 @@
   --ion-safe-area-bottom: max(env(safe-area-inset-bottom, 0px), 36px);
   --app-safe-bottom: max(calc(env(safe-area-inset-bottom, 0px) + 16px), 48px);
 }
+
+/* Tokens used only by the main menu utilities. */
+@theme {
+  --color-menu-ink: #f3f6fa;
+  --color-menu-copy: #c0cbd7;
+  --color-menu-panel: #2a394c;
+}

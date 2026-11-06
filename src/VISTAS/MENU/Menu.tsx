@@ -1,57 +1,13 @@
 /* Muestra los juegos y permite abrir sus calendarios. */
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { IonContent, IonPage } from '@ionic/react';
-import { bookOutline, gridOutline, peopleOutline, searchOutline, textOutline } from 'ionicons/icons';
-import { BrainIcon } from '../COMPONENTS/Icons/Icons';
-import MenuCard, { type GameGroup, type MenuCardGame } from './MenuCard';
-import LoginHeader from '../LOGIN/LoginHeader';
-import { esUsuarioAdmin } from '../AUTH/authUtils';
-import './Menu.css';
-
-const color = {
-  blue: '#294C6B',
-  ink: '#46556D',
-  paper: '#F4F6F9',
-  panel: '#DEE3EA',
-  teal: '#53BFC9',
-  lavender: '#AFA1E8',
-  coral: '#E88778',
-};
-
-const games: MenuCardGame[] = [
-  {
-    id: 'wordle', group: 'Clásicos', title: 'Palabra del día', skill: 'Memoria y vocabulario',
-    description: 'Encontrá la palabra y poné a trabajar tu memoria con pistas claras.',
-    icon: textOutline, accent: color.teal, available: true,
-  },
-  {
-    id: 'sopa-letras', group: 'Clásicos', title: 'Sopa de letras', skill: 'Atención visual y rastreo',
-    description: 'Buscá 4 palabras temáticas en una cuadrícula clara y entretenida.',
-    icon: searchOutline, accent: color.coral, available: true,
-  },
-  {
-    id: 'sudoku', group: 'Clásicos', title: 'Sudoku diario', skill: 'Lógica y concentración',
-    description: 'Tableros adaptados con 3 niveles de dificultad para entrenar sin apuro.',
-    icon: gridOutline, accent: color.lavender, available: true,
-  },
-  {
-    id: 'crucigrama', group: 'Clásicos', title: 'Crucigrama diario', skill: 'Lenguaje y recuerdos',
-    description: 'Crucigrama 7x7 con pistas claras para ejercitar tu vocabulario y memoria.',
-    icon: bookOutline, accent: color.coral, available: true,
-  },
-  {
-    id: 'kings-court', group: 'Narrativos', title: "King's Court", skill: 'Decisión y memoria',
-    description: 'Elegí a los miembros de tu corte para comenzar la historia.',
-    icon: peopleOutline, accent: color.teal, available: true,
-  },
-];
-
-const groups: { title: GameGroup; description: string }[] = [
-  { title: 'Clásicos', description: 'Juegos conocidos para ejercitar lenguaje, memoria y lógica.' },
-  { title: 'Narrativos', description: 'Pequeñas historias que invitan a observar, recordar y decidir.' },
-  { title: 'Puzzles', description: 'Próximamente.' },
-];
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { IonContent, IonPage } from "@ionic/react";
+import { BrainIcon } from "../COMPONENTS/Icons/Icons";
+import MenuCard from "./MenuCard";
+import { gameSections } from "./menuGames";
+import LoginHeader from "../LOGIN/LoginHeader";
+import { esUsuarioAdmin } from "../AUTH/authUtils";
+import "./Menu.css";
 
 // Muestra los juegos y permite abrir sus calendarios.
 const Menu: React.FC = () => {
@@ -63,59 +19,86 @@ const Menu: React.FC = () => {
     const checkAdmin = () => {
       setEsAdmin(esUsuarioAdmin());
     };
-    window.addEventListener('user_progress_updated', checkAdmin);
-    window.addEventListener('storage', checkAdmin);
+    window.addEventListener("user_progress_updated", checkAdmin);
+    window.addEventListener("storage", checkAdmin);
     return () => {
-      window.removeEventListener('user_progress_updated', checkAdmin);
-      window.removeEventListener('storage', checkAdmin);
+      window.removeEventListener("user_progress_updated", checkAdmin);
+      window.removeEventListener("storage", checkAdmin);
     };
   }, []);
 
-  // Abre el calendario del juego elegido.
-  const startGame = (id: string) => {
-    if (id === 'wordle') navigate('/juegos/wordle');
-    if (id === 'sopa-letras') navigate('/juegos/sopa-letras');
-    if (id === 'sudoku') navigate('/juegos/sudoku');
-    if (id === 'crucigrama') navigate('/juegos/crucigrama');
-    if (id === 'kings-court') navigate('/juegos/kings-court');
-  };
-
   return (
     <IonPage>
-      <LoginHeader menuPrincipal onUsuarioChange={() => setEsAdmin(esUsuarioAdmin())} />
+      <LoginHeader
+        menuPrincipal
+        onUsuarioChange={() => setEsAdmin(esUsuarioAdmin())}
+      />
       <IonContent className="menu-content">
-        <main className="menu-shell">
-          <header className="menu-heading">
-            <div className="menu-heading__brain" aria-hidden="true"><BrainIcon className="" size={48} /></div>
-            <div><h1>Un momento para tu mente</h1><p>Elegí un juego. Disfrutá el desafío, a tu ritmo.</p></div>
+        <main className="menu-shell menu-theme box-border mx-auto max-w-[1180px] px-9 pt-9 pb-[max(calc(env(safe-area-inset-bottom,0px)+28px),56px)] text-menu-ink max-md:px-5 max-md:pt-6 max-md:pb-[max(calc(env(safe-area-inset-bottom,0px)+24px),48px)]">
+          <header className="menu-heading mt-3 mb-8 flex items-center gap-5 max-md:mt-2 max-md:items-start max-md:gap-3.5">
+            <div
+              className="flex shrink-0 text-[#8bd9cc] max-md:[&_svg]:size-9"
+              aria-hidden="true"
+            >
+              <BrainIcon className="" size={48} />
+            </div>
+            <div>
+              <h1 className="m-0! text-[2.125rem]! leading-[1.2]! font-bold! tracking-[-.02em] max-md:text-[1.75rem]!">
+                Un momento para tu mente
+              </h1>
+              <p className="mt-2.5 mb-0 text-lg leading-[1.55] text-menu-copy">
+                Elegí un juego. Disfrutá el desafío, a tu ritmo.
+              </p>
+            </div>
           </header>
           {esAdmin && (
-            <aside className="menu-admin" aria-labelledby="menu-admin-title">
-              <div className="menu-admin__copy">
-                <h2 id="menu-admin-title">Torre de Control Narrativa</h2>
-                <p>Rol Administrador</p>
-                <p>Configuración completa: universos, personajes, cartas, eventos y desafíos del juego narrativo.</p>
+            <aside
+              className="mb-7 flex flex-wrap items-center justify-between gap-[18px] rounded-[14px] bg-[#fff4db] p-[22px] text-[#62480e]"
+              aria-labelledby="menu-admin-title"
+            >
+              <div className="flex-[1_1_260px]">
+                <h2 id="menu-admin-title" className="m-0! text-lg!">
+                  Torre de Control Narrativa
+                </h2>
+                <p className="mt-2 mb-0 text-base leading-normal">
+                  Rol Administrador
+                </p>
+                <p className="mt-2 mb-0 text-base leading-normal">
+                  Configuración completa: universos, personajes, cartas, eventos
+                  y desafíos del juego narrativo.
+                </p>
               </div>
               <button
                 type="button"
-                onClick={() => navigate('/editor-narrativo')}
-                className="menu-admin__action"
+                onClick={() => navigate("/editor-narrativo")}
+                className="min-h-12 cursor-pointer rounded-[10px] border-0 bg-[#62480e] px-[18px] py-3 font-[inherit] text-white"
               >
                 Abrir Editor Narrativo
               </button>
             </aside>
           )}
 
-          {groups.filter(group => games.some(game => game.group === group.title)).map((group) => (
-            <section key={group.title} className="menu-section" aria-labelledby={`group-${group.title}`}>
-              <h2 id={`group-${group.title}`}>{group.title}</h2>
-              {games.some((game) => game.group === group.title) && (
-                <div className="menu-grid">
-                  {games.filter((game) => game.group === group.title).map((game) => (
-                    <MenuCard game={game} key={game.id} onStart={startGame} />
-                  ))}
-                </div>
-              )}
+          {gameSections.map((section) => (
+            <section
+              key={section.title}
+              className="menu-section [&+.menu-section]:mt-[34px]"
+              aria-labelledby={`group-${section.title}`}
+            >
+              <h2
+                id={`group-${section.title}`}
+                className="mt-0! mb-[18px]! text-[1.375rem]! leading-[1.3]! font-bold!"
+              >
+                {section.title}
+              </h2>
+              <div className="menu-grid grid grid-cols-2 gap-5 max-md:grid-cols-1 max-md:gap-4">
+                {section.games.map((game) => (
+                  <MenuCard
+                    game={game}
+                    key={game.id}
+                    onStart={() => navigate(game.path)}
+                  />
+                ))}
+              </div>
             </section>
           ))}
         </main>

@@ -35,3 +35,6 @@ Cada miniatura demuestra su juego al entrar al 65% en pantalla y se rearma al sa
 
 ### King’s Court
 La miniatura reutiliza guardia.png y card-frame.png del arte narrativo local. Tres cartas decorativas con imágenes de carga diferida y tamaño reservado. Abanico discreto de ±8 grados, centro elevado 4px y personaje ampliado para que se reconozca en móvil. El reparto usa shuffleCartas, compartido con la selección del juego, mediante un selector opcional; no se agregan botones falsos al menú. Reduce Motion conserva las cartas estáticas.
+
+## Implementation
+La estructura, tipografía, espaciado y estados del menú usan utilidades Tailwind. Los tres tokens compartidos están en src/theme/variables.css. Menu.css conserva la fuente, variables Ionic, foco y animaciones. menuGames.ts concentra los datos y rutas; GamePreview.tsx contiene las miniaturas y el shuffle. Las utilidades de títulos llevan prioridad explícita para conservar los valores frente a la tipografía de Ionic.
