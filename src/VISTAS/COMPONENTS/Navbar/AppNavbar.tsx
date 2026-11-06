@@ -168,7 +168,7 @@ export default function AppNavbar({ view, onUsuarioChange }: AppNavbarProps) {
                 {view.kind === "game" && (
                   <div className="flex flex-wrap items-center justify-center gap-1.5">
                     {view.details && (
-                      <span className="rounded-lg bg-[#e8f1f8] px-1.5 py-0.5 text-[#294C6B]">
+                      <span className="rounded-lg border border-[var(--app-border)] bg-[var(--app-panel)] px-1.5 py-0.5 text-menu-ink">
                         {view.details}
                       </span>
                     )}

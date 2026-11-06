@@ -478,7 +478,7 @@ export const SopaLetrasGame: React.FC = () => {
   const unfoundCount = targetWords.length - foundWords.length;
 
   return (
-    <IonPage style={{ background: '#F4F6F9' }}>
+    <IonPage className="cognitive-game cognitive-game--sopa">
       <>
         <AppNavbar view={{ kind: 'game',
 title: "Sopa de letras",
@@ -501,7 +501,7 @@ hintDisabled: !progressReady || showVictoryModal }} />
         fullscreen
         style={
           {
-            '--background': '#F4F6F9',
+            '--background': 'var(--app-background)',
           } as React.CSSProperties
         }
       >
@@ -521,10 +521,10 @@ hintDisabled: !progressReady || showVictoryModal }} />
           {/* Cartel de Tema y Progreso */}
           <div
             style={{
-              background: '#FFFFFF',
-              border: '1px solid #DEE3EA',
+              background: 'var(--app-panel)',
+              border: '1px solid var(--app-border)',
               borderRadius: 16,
-              boxShadow: '0 2px 8px rgba(41, 76, 107, 0.06)',
+              color: 'var(--app-text)',
               marginBottom: 10,
               padding: '10px 16px',
               textAlign: 'center',
@@ -541,10 +541,10 @@ hintDisabled: !progressReady || showVictoryModal }} />
             >
               <span
                 style={{
-                  background: '#E8F8F5',
+                  background: '#f0bb98',
                   borderRadius: 999,
-                  color: '#17695F',
-                  fontSize: 11,
+                  color: '#172433',
+                  fontSize: 12,
                   fontWeight: 900,
                   letterSpacing: '0.04em',
                   padding: '2px 8px',
@@ -555,8 +555,8 @@ hintDisabled: !progressReady || showVictoryModal }} />
               </span>
               <span
                 style={{
-                  color: '#294C6B',
-                  fontSize: 12,
+                  color: 'var(--app-text)',
+                  fontSize: 14,
                   fontWeight: 800,
                 }}
               >
@@ -566,8 +566,8 @@ hintDisabled: !progressReady || showVictoryModal }} />
 
             <p
               style={{
-                color: '#64748B',
-                fontSize: 12,
+                color: 'var(--app-copy)',
+                fontSize: 14,
                 lineHeight: 1.3,
                 margin: '4px 0 0',
               }}
@@ -596,15 +596,15 @@ hintDisabled: !progressReady || showVictoryModal }} />
                   key={idx}
                   style={{
                     alignItems: 'center',
-                    background: isJustFound ? '#CCFBF1' : isFound ? '#E8F8F5' : '#FFFFFF',
-                    border: isJustFound ? '2px solid #0D9488' : `1.5px solid ${isFound ? '#17695F' : '#DEE3EA'}`,
+                    background: isJustFound ? '#b8e3d7' : isFound ? '#d5eee6' : 'var(--app-panel-raised)',
+                    border: isJustFound ? '2px solid #73b9a6' : `1.5px solid ${isFound ? '#73b9a6' : 'var(--app-border)'}`,
                     borderRadius: 12,
                     boxShadow: isJustFound
-                      ? '0 0 16px rgba(13, 148, 136, 0.45)'
+                      ? '0 3px 10px rgba(13, 148, 136, 0.22)'
                       : isFound
                       ? '0 1px 3px rgba(23, 105, 95, 0.15)'
                       : 'none',
-                    color: isJustFound ? '#0F766E' : isFound ? '#17695F' : '#294C6B',
+                    color: isJustFound || isFound ? '#17463d' : 'var(--app-text)',
                     display: 'flex',
                     fontSize: 'clamp(13px, 3.8vw, 15px)',
                     fontWeight: 900,
@@ -635,10 +635,10 @@ hintDisabled: !progressReady || showVictoryModal }} />
             onPointerUp={handlePointerUp}
             onPointerCancel={handlePointerUp}
             style={{
-              background: '#FFFFFF',
-              border: '2px solid #DEE3EA',
+              background: 'var(--app-panel)',
+              border: '1px solid var(--app-border)',
               borderRadius: 18,
-              boxShadow: '0 4px 16px rgba(41, 76, 107, 0.08)',
+              boxShadow: '0 4px 14px rgba(0, 0, 0, 0.18)',
               display: 'grid',
               gap: 4,
               gridTemplateColumns: `repeat(${GRID_SIZE}, minmax(0, 1fr))`,
@@ -670,9 +670,9 @@ hintDisabled: !progressReady || showVictoryModal }} />
                   cellColor = '#065F46';
                   cellBorder = '2px solid #059669';
                 } else if (isSelected) {
-                  cellBg = '#53BFC9';
-                  cellColor = '#1A344A';
-                  cellBorder = '1.5px solid #294C6B';
+                  cellBg = '#f0bb98';
+                  cellColor = '#172433';
+                  cellBorder = '2px solid #c88960';
                 } else if (isFound) {
                   cellBg = '#E8F8F5';
                   cellColor = '#17695F';
@@ -699,13 +699,12 @@ hintDisabled: !progressReady || showVictoryModal }} />
                       fontWeight: 900,
                       justifyContent: 'center',
                       lineHeight: 1,
-                      outline: 'none',
                       padding: 0,
                       position: 'relative',
                       touchAction: 'none',
                       transform: isInvalid ? 'scale(1.08)' : isJustFound ? 'scale(1.14)' : isSelected ? 'scale(1.04)' : 'scale(1)',
                       zIndex: isJustFound ? 15 : isSelected ? 5 : 1,
-                      boxShadow: isInvalid ? '0 0 14px rgba(239, 68, 68, 0.45)' : isJustFound ? '0 0 14px rgba(5, 150, 105, 0.45)' : 'none',
+                      boxShadow: isInvalid ? '0 3px 10px rgba(190, 50, 50, 0.24)' : isJustFound ? '0 3px 10px rgba(5, 120, 85, 0.22)' : 'none',
                       transition:
                         'transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, border 0.15s ease, box-shadow 0.25s ease',
                       width: '100%',
@@ -727,10 +726,10 @@ hintDisabled: !progressReady || showVictoryModal }} />
                 alignItems: 'center',
                 background: 'transparent',
                 border: 'none',
-                color: '#64748B',
+                color: 'var(--app-copy)',
                 cursor: 'pointer',
                 display: 'inline-flex',
-                fontSize: 13,
+                fontSize: 14,
                 fontWeight: 700,
                 gap: 5,
                 marginTop: 14,
@@ -749,8 +748,7 @@ hintDisabled: !progressReady || showVictoryModal }} />
             onClick={/* Responde a click desde este control. */ event => { if (event.target === event.currentTarget) setShowHintModal(false); }}
             style={{
               alignItems: 'center',
-              background: 'rgba(15, 23, 42, 0.45)',
-              backdropFilter: 'blur(3px)',
+              background: 'rgba(8, 17, 28, 0.78)',
               display: 'flex',
               inset: 0,
               justifyContent: 'center',
@@ -761,10 +759,11 @@ hintDisabled: !progressReady || showVictoryModal }} />
           >
             <div
               style={{
-                background: '#FFFFFF',
-                border: '1px solid #E2E8F0',
+                background: 'var(--app-panel)',
+                border: '1px solid var(--app-border)',
                 borderRadius: 20,
-                boxShadow: '0 10px 30px rgba(0, 0, 0, 0.2)',
+                boxShadow: '0 10px 28px rgba(0, 0, 0, 0.28)',
+                color: 'var(--app-text)',
                 maxWidth: 380,
                 padding: '22px 20px',
                 width: '100%',
@@ -782,9 +781,9 @@ hintDisabled: !progressReady || showVictoryModal }} />
                   <div
                     style={{
                       alignItems: 'center',
-                      background: '#FFF8E6',
+                      background: '#3d3546',
                       borderRadius: 10,
-                      color: '#F59E0B',
+                      color: '#ecd098',
                       display: 'flex',
                       height: 36,
                       justifyContent: 'center',
@@ -793,7 +792,7 @@ hintDisabled: !progressReady || showVictoryModal }} />
                   >
                     <IonIcon icon={bulbOutline} style={{ fontSize: 22 }} />
                   </div>
-                  <h3 style={{ color: '#294C6B', fontSize: 17, fontWeight: 900, margin: 0 }}>
+                  <h3 style={{ color: 'var(--app-text)', fontSize: 18, fontWeight: 900, margin: 0 }}>
                     Pistas del tema
                   </h3>
                 </div>
@@ -802,7 +801,7 @@ hintDisabled: !progressReady || showVictoryModal }} />
                   style={{
                     background: 'transparent',
                     border: 'none',
-                    color: '#64748B',
+                    color: 'var(--app-copy)',
                     cursor: 'pointer',
                     fontSize: 20,
                     padding: 4,
@@ -829,8 +828,8 @@ hintDisabled: !progressReady || showVictoryModal }} />
                     <div
                       key={idx}
                       style={{
-                        background: isFound ? '#E8F8F5' : '#F8FAFC',
-                        border: `1px solid ${isFound ? '#A3E5D9' : '#E2E8F0'}`,
+                        background: isFound ? '#d5eee6' : 'var(--app-panel-raised)',
+                        border: `1px solid ${isFound ? '#73b9a6' : 'var(--app-border)'}`,
                         borderRadius: 12,
                         padding: '10px 12px',
                       }}
@@ -845,19 +844,19 @@ hintDisabled: !progressReady || showVictoryModal }} />
                       >
                         <span
                           style={{
-                            color: isFound ? '#17695F' : '#294C6B',
-                            fontSize: 13,
+                            color: isFound ? '#17463d' : 'var(--app-text)',
+                            fontSize: 14,
                             fontWeight: 900,
                             letterSpacing: '0.04em',
                           }}
                         >
                           {word} {isFound && '✓ (Encontrada)'}
                         </span>
-                        <span style={{ color: '#94A3B8', fontSize: 11, fontWeight: 700 }}>
+                        <span style={{ color: 'var(--app-copy)', fontSize: 12, fontWeight: 700 }}>
                           {word.length} letras
                         </span>
                       </div>
-                      <p style={{ color: '#64748B', fontSize: 12, margin: 0 }}>
+                      <p style={{ color: 'var(--app-copy)', fontSize: 14, margin: 0 }}>
                         {pistasCompradas[idx]}
                       </p>
                     </div>
@@ -868,10 +867,10 @@ hintDisabled: !progressReady || showVictoryModal }} />
               <button
                 onClick={/* Responde a click desde este control. */ () => setShowHintModal(false)}
                 style={{
-                  background: '#294C6B',
+                  background: '#f0bb98',
                   border: 'none',
                   borderRadius: 12,
-                  color: '#FFFFFF',
+                  color: '#172433',
                   cursor: 'pointer',
                   fontSize: 14,
                   fontWeight: 800,

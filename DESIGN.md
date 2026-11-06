@@ -1,6 +1,6 @@
 ---
-name: CogniJuegos — menús cognitivos
-scope: Menú principal, calendarios y navbar compartida
+name: CogniJuegos — menús y juegos cognitivos
+scope: Menú principal, calendarios, navbar compartida y juegos clásicos
 colors:
   ground: "#151e2b"
   surface: "#2a394c"
@@ -39,7 +39,7 @@ rounded:
 ## Overview
 El menú principal es la referencia visual: identidad cognitiva oscura, legible y tranquila, con pequeños estímulos que invitan a jugar. Prioriza personas mayores, acciones claras y progreso real. Se evita el azul saturado en todas las superficies para que los juegos no se mezclen con el fondo.
 
-**Alcance de esta etapa:** menú principal y navegación de calendarios. No rediseñar tableros, controles, resultados ni mecánicas de juego. La navbar de los juegos también comparte el diseño oscuro del menú, conservando indicadores, puntos y bombilla. **King’s Court queda sin cambios**, incluido su arte, su miniatura y su shuffle existentes.
+**Alcance actualizado:** el menú, los calendarios, la navbar y los cuatro juegos clásicos comparten esta identidad. Las pantallas de juego usan el fondo oscuro y superficies neutrales; los tableros conservan casillas claras para priorizar lectura y contraste. Los acentos identifican cada juego y sus estados sin cambiar reglas ni progreso. **King’s Court queda fuera de este rediseño**, incluido su arte, su miniatura y su shuffle existentes.
 
 ## Colors
 - Fondo compartido `--app-background: #151e2b` para el menú, calendarios y fallback global; tarjetas `#2a394c`, borde `#52647b`. La tarjeta narrativa existente usa `#2e3c50`.
@@ -54,7 +54,7 @@ Nunito Sans local, con su licencia OFL. Título de menú 2.125rem/700, reducido 
 ## Layout
 Contenedor de 1180px. Menú con dos columnas en escritorio y una debajo de 768px. Encabezado compacto, clásicos y narrativa. No agregar filtros para cinco juegos, contadores irrelevantes, banners repetidos ni categorías vacías.
 
-En móvil, la miniatura acompaña al título; descripción a todo el ancho y botón compacto de al menos 116 × 48px. Respetar los safe areas. La navegación permite títulos largos sin recortarlos y los indicadores de cuenta pueden bajar a otra fila.
+En móvil, la miniatura acompaña al título; descripción a todo el ancho y botón compacto de al menos 116 × 48px. Respetar los safe areas. Las pantallas de juego mantienen el recorrido en orden: instrucciones o pista activa, tablero y controles. Las pistas importantes no se recortan; teclas y acciones conservan áreas cómodas al tacto. La navegación permite títulos largos sin recortarlos y los indicadores de cuenta pueden bajar a otra fila.
 
 ## Elevation & Depth
 Superficies planas y separación tonal con borde de 1px. No introducir halos, sombras duras ni elevación exagerada para destacar tarjetas.
@@ -79,10 +79,13 @@ Documentación del contrato y estados: `src/VISTAS/COMPONENTS/Navbar/README.md`.
 ### Tarjetas y movimiento existente
 Conservar títulos, descripciones y rutas reales. Cada miniatura clásica demuestra su juego al entrar al 65% en pantalla y se rearma al salir completamente. No mover tarjetas ni controles. Reduce Motion conserva feedback suave de color/opacidad sin desplazamiento. La miniatura narrativa conserva la implementación existente; no se modifica en esta etapa.
 
+### Superficies de juego
+Usar `--app-background`, `--app-panel`, `--app-panel-raised`, `--app-border`, `--app-text` y `--app-copy` para el escenario común. Wordle usa menta, Sopa de Letras durazno, Sudoku lavanda y Crucigrama celeste. Mantener las casillas de respuesta claras con texto oscuro y reservar sus tintes para selección, aciertos y errores. Evitar sombras halo y no bajar de 14px en instrucciones o pistas esenciales.
+
 ## Do's and Don'ts
 - Mantener contraste, lectura clara, foco visible y etiquetas explícitas.
 - Mostrar racha y saldo únicamente si hay sesión; no inventar progreso ni promesas médicas.
 - Reutilizar `AppNavbar` con un contexto tipado; no crear otra navbar para una pantalla nueva.
 - Implementar estructura y estados con Tailwind; reservar CSS para fuente, integración Ionic, foco y animaciones.
-- Los tokens de menú están en `src/theme/variables.css`. Las utilidades de títulos tienen prioridad explícita frente a la tipografía de Ionic.
-- Aplicar esta guía primero a los menús. No extenderla a los juegos ni tocar King’s Court sin una instrucción posterior.
+- Los tokens compartidos están en `src/theme/variables.css`. Las utilidades de títulos tienen prioridad explícita frente a la tipografía de Ionic.
+- Aplicar esta guía a menú, calendarios y clásicos. King’s Court se mantiene independiente y sin rediseño.

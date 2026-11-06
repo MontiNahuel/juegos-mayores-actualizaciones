@@ -77,45 +77,45 @@ function evaluateGuess(guess: string, solution: string): LetterStatus[] {
 const ColorLegendContent: React.FC = () => (
   <div className="flex flex-col gap-2.5">
     {/* Verde */}
-    <div className="flex items-center gap-3 bg-emerald-50/80 p-2.5 rounded-xl border border-emerald-200">
-      <div className="w-10 h-10 rounded-lg bg-emerald-600 border border-emerald-700 text-white font-black flex items-center justify-center text-lg shadow-xs shrink-0">
+    <div className="flex items-center gap-3 rounded-xl border border-[var(--app-border)] bg-[#35475a] p-2.5">
+      <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-[#285d54] bg-[#327267] text-lg font-black text-white">
         V
       </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-xs sm:text-sm font-black text-emerald-950 leading-tight">
+      <div className="min-w-0 flex-1">
+        <p className="text-xs leading-tight font-black text-[#d8f0e9] sm:text-sm">
           Verde: Posición correcta
         </p>
-        <p className="text-[11px] sm:text-xs text-emerald-800 font-medium mt-0.5 leading-snug">
+        <p className="mt-0.5 text-sm leading-snug font-medium text-[var(--app-copy)]">
           La letra está en la palabra y en el casillero correcto.
         </p>
       </div>
     </div>
 
     {/* Amarillo */}
-    <div className="flex items-center gap-3 bg-amber-50/80 p-2.5 rounded-xl border border-amber-200">
-      <div className="w-10 h-10 rounded-lg bg-amber-500 border border-amber-600 text-white font-black flex items-center justify-center text-lg shadow-xs shrink-0">
+    <div className="flex items-center gap-3 rounded-xl border border-[var(--app-border)] bg-[#35475a] p-2.5">
+      <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-[#75500d] bg-[#956a15] text-lg font-black text-white">
         A
       </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-xs sm:text-sm font-black text-amber-950 leading-tight">
+      <div className="min-w-0 flex-1">
+        <p className="text-xs leading-tight font-black text-[#f5dfb4] sm:text-sm">
           Amarillo: En otra posición
         </p>
-        <p className="text-[11px] sm:text-xs text-amber-900 font-medium mt-0.5 leading-snug">
+        <p className="mt-0.5 text-sm leading-snug font-medium text-[var(--app-copy)]">
           La letra sí está en la palabra, pero va en otra casilla.
         </p>
       </div>
     </div>
 
     {/* Gris */}
-    <div className="flex items-center gap-3 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-      <div className="w-10 h-10 rounded-lg bg-slate-400 border border-slate-500 text-white font-black flex items-center justify-center text-lg shadow-xs shrink-0">
+    <div className="flex items-center gap-3 rounded-xl border border-[var(--app-border)] bg-[#35475a] p-2.5">
+      <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-[#526176] bg-[#526176] text-lg font-black text-white">
         G
       </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-xs sm:text-sm font-black text-slate-800 leading-tight">
+      <div className="min-w-0 flex-1">
+        <p className="text-xs leading-tight font-black text-[var(--app-text)] sm:text-sm">
           Gris: No está en la palabra
         </p>
-        <p className="text-[11px] sm:text-xs text-slate-600 font-medium mt-0.5 leading-snug">
+        <p className="mt-0.5 text-sm leading-snug font-medium text-[var(--app-copy)]">
           La letra no forma parte del desafío de hoy.
         </p>
       </div>
@@ -343,7 +343,7 @@ const WordleGame: React.FC = () => {
   ];
 
   return (
-    <IonPage style={{ background: '#F4F6F9' }}>
+    <IonPage className="cognitive-game cognitive-game--wordle">
       {/* Navbar con el mismo tamaño y estilo de Home / Menu */}
       <>
         <style>{`
@@ -378,11 +378,11 @@ onBack: () => navigate("/menu"),
 rightAction: <button
               type="button"
               onClick={/* Responde a click desde este control. */ () => setShowColorGuideModal(true)}
-              className="lg:hidden flex items-center gap-1.5 bg-[#F4F6F9] hover:bg-slate-200 text-[#294C6B] text-xs font-bold px-2.5 py-1.5 rounded-xl border border-[#DEE3EA] transition-colors"
+              className="flex items-center gap-1.5 rounded-xl border border-[var(--app-border)] bg-[var(--app-panel)] px-2.5 py-1.5 text-xs font-bold text-[var(--app-text)] transition-colors hover:bg-[var(--app-panel-raised)] lg:hidden"
               title="Guía de colores"
               aria-label="Ver qué significa cada color"
             >
-              <IonIcon icon={helpCircleOutline} className="text-base text-[#294C6B]" />
+              <IonIcon icon={helpCircleOutline} className="text-base text-[#99dcd1]" />
               <span className="hidden sm:inline">Colores</span>
             </button>,
 onHint: () => {
@@ -404,7 +404,7 @@ hintDisabled: !progressReady || gameStatus !== 'playing' }} />
         fullscreen
         scrollY={true}
         style={{
-          '--background': '#F4F6F9',
+          '--background': 'var(--app-background)',
           '--padding-top': '0px',
           '--padding-bottom': 'max(calc(env(safe-area-inset-bottom, 0px) + 8px), 24px)',
         } as React.CSSProperties}
@@ -421,35 +421,25 @@ hintDisabled: !progressReady || gameStatus !== 'playing' }} />
 
           {/* Mensaje flotante de feedback (sin alterar el layout) */}
           {message && (
-            <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-[#294C6B] text-white font-bold text-xs sm:text-sm px-4 py-1.5 rounded-full shadow-lg pointer-events-none animate-bounce">
+            <div className="fixed top-20 left-1/2 z-50 -translate-x-1/2 rounded-xl border border-[var(--app-border)] bg-[var(--app-panel)] px-4 py-2 text-sm font-bold text-[var(--app-text)] shadow-md pointer-events-none">
               {message}
             </div>
           )}
 
           {/* Tarjeta superior compacta (sin DESAFIO DIARIO) */}
-          <div className="w-full bg-white rounded-xl px-3.5 py-2 shadow-xs border border-slate-200 shrink-0">
+          <div className="w-full shrink-0 rounded-2xl border border-[var(--app-border)] bg-[var(--app-panel)] px-3.5 py-2.5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs sm:text-sm font-extrabold text-[#294C6B] leading-tight">
+                <p className="text-sm leading-tight font-extrabold text-[var(--app-text)]">
                   Adiviná la palabra de 5 letras
                 </p>
-                <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                <p className="mt-0.5 text-sm font-medium text-[var(--app-copy)]">
                   {showHint ? pistaComprada : 'Tocá la bombilla para ver una pista'}
                 </p>
               </div>
               <div className="flex items-center gap-1.5 sm:gap-2">
-                <button
-                  type="button"
-                  onClick={/* Responde a click desde este control. */ () => setShowColorGuideModal(true)}
-                  className="lg:hidden flex items-center gap-1 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold px-2 py-1 rounded-lg border border-slate-300 transition-colors"
-                  title="¿Qué significan los colores?"
-                >
-                  <span className="text-xs">🎨</span>
-                  <span>Colores</span>
-                </button>
-
-                <div className="flex items-center gap-1 bg-slate-100 px-2 py-1 rounded-lg border border-slate-200">
-                  <span className="text-xs sm:text-sm font-black text-[#294C6B]">
+                <div className="flex items-center gap-1 rounded-lg border border-[var(--app-border)] bg-[var(--app-panel-raised)] px-2 py-1">
+                  <span className="text-xs font-black text-[var(--app-text)] sm:text-sm">
                     Intentos: {guesses.length}
                   </span>
                 </div>
@@ -468,24 +458,24 @@ hintDisabled: !progressReady || gameStatus !== 'playing' }} />
                 <div key={rowIndex} className="flex gap-2 sm:gap-2.5 justify-center">
                   {Array.from({ length: WORD_LENGTH }).map(/* Prepara el resultado de cada elemento. */ (_, colIndex) => {
                     let letter = '';
-                    let statusClass = 'bg-white border-2 border-slate-300 text-slate-700';
+                    let statusClass = 'bg-[var(--app-text)] border-2 border-[#aeb9c8] text-[#172433]';
 
                     if (isPastRow && pastGuess) {
                       letter = pastGuess.word[colIndex];
                       const status = pastGuess.statuses[colIndex];
                       if (status === 'correct') {
-                        statusClass = 'bg-emerald-600 border-2 border-emerald-600 text-white font-extrabold shadow-xs';
+                        statusClass = 'bg-[#327267] border-2 border-[#327267] text-white font-extrabold';
                       } else if (status === 'present') {
-                        statusClass = 'bg-amber-500 border-2 border-amber-500 text-white font-extrabold shadow-xs';
+                        statusClass = 'bg-[#956a15] border-2 border-[#956a15] text-white font-extrabold';
                       } else {
-                        statusClass = 'bg-slate-400 border-2 border-slate-400 text-white font-bold';
+                        statusClass = 'bg-[#526176] border-2 border-[#526176] text-white font-bold';
                       }
                     } else if (isCurrentRow) {
                       letter = currentInput[colIndex] || '';
                       if (letter) {
-                        statusClass = 'bg-white border-2 border-[#294C6B] text-[#294C6B] font-extrabold scale-105 shadow-xs';
+                        statusClass = 'bg-[var(--app-text)] border-2 border-[#99dcd1] text-[#315f59] font-extrabold scale-105';
                       } else {
-                        statusClass = 'bg-white border-2 border-slate-300 text-slate-400';
+                        statusClass = 'bg-[var(--app-text)] border-2 border-[#aeb9c8] text-[#718095]';
                       }
                     }
 
@@ -516,26 +506,26 @@ hintDisabled: !progressReady || gameStatus !== 'playing' }} />
                   const isSpecial = key === 'ENVIAR' || key === 'BORRAR';
                   const status = keyboardLetterStatus[key];
 
-                  let keyBg = '#FFFFFF';
-                  let keyColor = '#1E293B';
-                  let keyBorder = '#CBD5E1';
+                  let keyBg = 'var(--app-panel-raised)';
+                  let keyColor = 'var(--app-text)';
+                  let keyBorder = 'var(--app-border)';
 
                   if (status === 'correct') {
-                    keyBg = '#059669';
+                    keyBg = '#327267';
                     keyColor = '#FFFFFF';
-                    keyBorder = '#059669';
+                    keyBorder = '#327267';
                   } else if (status === 'present') {
-                    keyBg = '#F59E0B';
+                    keyBg = '#956a15';
                     keyColor = '#FFFFFF';
-                    keyBorder = '#F59E0B';
+                    keyBorder = '#956a15';
                   } else if (status === 'absent') {
-                    keyBg = '#CBD5E1';
-                    keyColor = '#64748B';
-                    keyBorder = '#CBD5E1';
+                    keyBg = '#526176';
+                    keyColor = 'var(--app-text)';
+                    keyBorder = '#526176';
                   } else if (isSpecial) {
-                    keyBg = '#E2E8F0';
-                    keyColor = '#294C6B';
-                    keyBorder = '#CBD5E1';
+                    keyBg = '#40556e';
+                    keyColor = 'var(--app-text)';
+                    keyBorder = '#60738b';
                   }
 
                   return (
@@ -544,7 +534,7 @@ hintDisabled: !progressReady || gameStatus !== 'playing' }} />
                       onClick={/* Responde a click desde este control. */ () => handleKeyPress(key)}
                       style={{
                         borderRadius: 5,
-                        border: `1px none ${keyBorder}`,
+                        border: `1px solid ${keyBorder}`,
                         backgroundColor: keyBg,
                         color: keyColor,
                         padding: "2px 5px"
@@ -566,16 +556,16 @@ hintDisabled: !progressReady || gameStatus !== 'playing' }} />
 
           {/* Guía de colores lateral (Escritorio / Pantallas grandes) */}
           <aside
-            className="hidden lg:flex flex-col w-72 xl:w-80 bg-white rounded-2xl p-5 shadow-xs border border-slate-200 shrink-0 self-center"
+            className="hidden w-72 shrink-0 flex-col self-center rounded-2xl border border-[var(--app-border)] bg-[var(--app-panel)] p-5 text-[var(--app-text)] xl:w-80 lg:flex"
             aria-label="Guía de colores de Wordle"
           >
-            <div className="flex items-center gap-2 mb-3.5 pb-2.5 border-b border-slate-100">
+            <div className="mb-3.5 flex items-center gap-2 border-b border-[var(--app-border)] pb-2.5">
               <span className="text-xl">🎨</span>
               <div>
-                <h2 className="text-sm font-black text-[#294C6B] leading-tight">
+                <h2 className="text-sm leading-tight font-black text-[var(--app-text)]">
                   Guía de Colores
                 </h2>
-                <p className="text-[11px] text-slate-500 font-medium">
+                <p className="text-sm font-medium text-[var(--app-copy)]">
                   Qué representa cada casilla
                 </p>
               </div>
@@ -583,10 +573,10 @@ hintDisabled: !progressReady || gameStatus !== 'playing' }} />
 
             <ColorLegendContent />
 
-            <div className="mt-3.5 pt-3 border-t border-slate-100 flex items-start gap-2 text-[11px] text-slate-500 leading-snug">
+            <div className="mt-3.5 flex items-start gap-2 border-t border-[var(--app-border)] pt-3 text-xs leading-snug text-[var(--app-copy)]">
               <span className="text-sm leading-none shrink-0">💡</span>
               <p>
-                <strong className="text-slate-700">Pista:</strong> Una misma letra puede aparecer más de una vez en la palabra secreta.
+                  <strong className="text-[var(--app-text)]">Pista:</strong> Una misma letra puede aparecer más de una vez en la palabra secreta.
               </p>
             </div>
           </aside>
@@ -596,24 +586,24 @@ hintDisabled: !progressReady || gameStatus !== 'playing' }} />
         {/* Modal accesible de Guía de Colores (solo móvil / tablets) */}
         {showColorGuideModal && (
           <div
-            className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 wordle-modal-backdrop lg:hidden"
+            className="wordle-modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-[#08111c]/75 p-4 lg:hidden"
             style={{
               paddingBottom: 'max(calc(env(safe-area-inset-bottom, 0px) + 24px), 32px)',
             }}
             onClick={/* Responde a click desde este control. */ () => setShowColorGuideModal(false)}
           >
             <div
-              className="w-full max-w-sm bg-white rounded-2xl p-5 shadow-2xl border border-slate-200 wordle-modal-card"
+              className="wordle-modal-card w-full max-w-sm rounded-2xl border border-[var(--app-border)] bg-[var(--app-panel)] p-5 text-[var(--app-text)]"
               onClick={/* Responde a click desde este control. */ (e) => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between mb-3.5 pb-2 border-b border-slate-100">
+              <div className="mb-3.5 flex items-center justify-between border-b border-[var(--app-border)] pb-2">
                 <div className="flex items-center gap-2">
                   <span className="text-xl">🎨</span>
                   <div>
-                    <h2 className="text-base font-black text-[#294C6B] leading-tight">
+                    <h2 className="text-base leading-tight font-black text-[var(--app-text)]">
                       Guía de Colores
                     </h2>
-                    <p className="text-xs text-slate-500 font-medium">
+                    <p className="text-sm font-medium text-[var(--app-copy)]">
                       Qué representa cada casilla
                     </p>
                   </div>
@@ -621,7 +611,7 @@ hintDisabled: !progressReady || gameStatus !== 'playing' }} />
                 <button
                   type="button"
                   onClick={/* Responde a click desde este control. */ () => setShowColorGuideModal(false)}
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                  className="flex size-9 items-center justify-center rounded-lg text-[var(--app-copy)] transition-colors hover:bg-[var(--app-panel-raised)] hover:text-white"
                   aria-label="Cerrar guía de colores"
                 >
                   <IonIcon icon={closeOutline} className="text-xl" />
@@ -630,17 +620,17 @@ hintDisabled: !progressReady || gameStatus !== 'playing' }} />
 
               <ColorLegendContent />
 
-              <div className="mt-3.5 pt-2.5 border-t border-slate-100 flex items-start gap-2 text-xs text-slate-500 leading-snug mb-4">
+              <div className="mt-3.5 mb-4 flex items-start gap-2 border-t border-[var(--app-border)] pt-2.5 text-xs leading-snug text-[var(--app-copy)]">
                 <span className="text-sm leading-none shrink-0">💡</span>
                 <p>
-                  <strong className="text-slate-700">Pista:</strong> Las letras pueden repetirse en una misma palabra.
+                  <strong className="text-[var(--app-text)]">Pista:</strong> Las letras pueden repetirse en una misma palabra.
                 </p>
               </div>
 
               <button
                 type="button"
                 onClick={/* Responde a click desde este control. */ () => setShowColorGuideModal(false)}
-                className="w-full py-2.5 rounded-xl font-black text-sm bg-[#294C6B] hover:bg-[#1E364D] text-white transition-colors shadow-xs"
+                className="w-full rounded-xl bg-[#99dcd1] py-3 text-sm font-black text-[#172433] transition-colors hover:bg-[#b3e8df]"
               >
                 ¡Entendido!
               </button>

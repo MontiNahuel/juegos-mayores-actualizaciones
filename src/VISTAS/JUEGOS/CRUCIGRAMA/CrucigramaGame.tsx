@@ -576,14 +576,14 @@ export const CrucigramaGame: React.FC = () => {
   };
 
   return (
-    <IonPage>
+    <IonPage className="cognitive-game cognitive-game--crucigrama">
       {/* Encabezado Estandarizado con Safe Area, Cronómetro y Botón de Pistas */}
       <AppNavbar view={{ kind: 'game',
 title: `Crucigrama ${gridSize}x${gridSize}`,
 onBack: () => navigate("/juegos/crucigrama"),
 details: <>{<div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 3, color: '#294C6B', fontWeight: 800 }}>
-              <IconClock size={13} color="#294C6B" />
+            <span style={{ display: 'flex', alignItems: 'center', gap: 3, color: '#a8ccef', fontWeight: 800 }}>
+              <IconClock size={13} color="#a8ccef" />
               {formatTimer(seconds)}
             </span>
           </div>}</>,
@@ -592,21 +592,21 @@ rightAction: <button
             className="flex min-[900px]:hidden"
             onClick={/* Responde a click desde este control. */ () => setShowClueDrawer(/* Actualiza show clue drawer a partir del valor anterior. */ (prev) => !prev)}
             style={{
-              background: showClueDrawer ? '#294C6B' : '#F4F6F9',
-              border: '1px solid #DEE3EA',
+              background: showClueDrawer ? '#a8ccef' : 'var(--app-panel)',
+              border: '1px solid var(--app-border)',
               borderRadius: 14,
               height: 40,
               width: 40,
               alignItems: 'center',
               justifyContent: 'center',
-              color: showClueDrawer ? '#FFFFFF' : '#294C6B',
+              color: showClueDrawer ? '#172433' : 'var(--app-text)',
               cursor: 'pointer',
               transition: 'background-color 0.15s ease',
             }}
             aria-label="Ver todas las pistas"
             title="Ver lista de pistas"
           >
-            <IconList size={18} color={showClueDrawer ? '#FFFFFF' : '#294C6B'} />
+            <IconList size={18} color={showClueDrawer ? '#172433' : 'var(--app-text)'} />
           </button>,
 onHint: handleRevealCell,
 hintDisabled: !progressReady || isWon }} />
@@ -615,7 +615,7 @@ hintDisabled: !progressReady || isWon }} />
         fullscreen
         style={
           {
-            '--background': '#F8FAFC',
+            '--background': 'var(--app-background)',
           } as React.CSSProperties
         }
       >
@@ -625,10 +625,9 @@ hintDisabled: !progressReady || isWon }} />
           {/* BARRA DE PISTA ACTIVA FLOTANTE */}
           <div
             style={{
-              background: '#FFFFFF',
-              border: '1px solid #E2E8F0',
+              background: 'var(--app-panel)',
+              border: '1px solid var(--app-border)',
               borderRadius: 16,
-              boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
               padding: '10px 12px',
               marginBottom: 10,
               display: 'flex',
@@ -641,7 +640,7 @@ hintDisabled: !progressReady || isWon }} />
               type="button"
               onClick={/* Responde a click desde este control. */ () => handleNavigateClue(-1)}
               style={{
-                background: '#F1F5F9',
+                background: '#40556e',
                 border: 'none',
                 borderRadius: 10,
                 width: 34,
@@ -654,16 +653,16 @@ hintDisabled: !progressReady || isWon }} />
               }}
               aria-label="Pista anterior"
             >
-              <IconChevronLeft size={18} color="#475569" />
+              <IconChevronLeft size={18} color="var(--app-text)" />
             </button>
 
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
                 <span
                   style={{
-                    background: '#294C6B',
-                    color: '#FFFFFF',
-                    fontSize: 11,
+                    background: '#a8ccef',
+                    color: '#172433',
+                    fontSize: 12,
                     fontWeight: 800,
                     borderRadius: 6,
                     padding: '2px 7px',
@@ -672,20 +671,19 @@ hintDisabled: !progressReady || isWon }} />
                 >
                   {activeWord ? `${activeWord.number} ${activeWord.direction === 'horizontal' ? 'HORIZ.' : 'VERT.'}` : 'PISTA'}
                 </span>
-                <span style={{ color: '#64748B', fontSize: 11, fontWeight: 700 }}>
+                <span style={{ color: 'var(--app-copy)', fontSize: 12, fontWeight: 700 }}>
                   ({activeWord ? `${activeWord.length} letras` : ''})
                 </span>
               </div>
               <p
                 style={{
-                  color: '#1E293B',
-                  fontSize: 13,
+                  color: 'var(--app-text)',
+                  fontSize: 14,
                   fontWeight: 600,
                   margin: 0,
                   lineHeight: 1.3,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
+                  overflow: 'visible',
+                  whiteSpace: 'normal',
                 }}
               >
                 {cleanClueText(activeWord?.clue) || 'Seleccioná una casilla en el tablero para ver su pista.'}
@@ -696,7 +694,7 @@ hintDisabled: !progressReady || isWon }} />
               type="button"
               onClick={/* Responde a click desde este control. */ () => handleNavigateClue(1)}
               style={{
-                background: '#F1F5F9',
+                background: '#40556e',
                 border: 'none',
                 borderRadius: 10,
                 width: 34,
@@ -709,7 +707,7 @@ hintDisabled: !progressReady || isWon }} />
               }}
               aria-label="Pista siguiente"
             >
-              <IconChevronRight size={18} color="#475569" />
+              <IconChevronRight size={18} color="var(--app-text)" />
             </button>
           </div>
 
@@ -722,7 +720,7 @@ hintDisabled: !progressReady || isWon }} />
                 left: '50%',
                 transform: 'translateX(-50%)',
                 zIndex: 9999,
-                background: '#0F172A',
+                background: 'var(--app-panel)',
                 color: '#FFFFFF',
                 fontSize: 12,
                 fontWeight: 700,
@@ -754,12 +752,12 @@ hintDisabled: !progressReady || isWon }} />
                   justifyContent: 'center',
                   width: '100%',
                   aspectRatio: '1 / 1',
-                  background: '#FFFFFF',
+                  background: 'var(--app-panel)',
                   borderRadius: 14,
-                  border: '1px solid #E2E8F0',
+                  border: '1px solid var(--app-border)',
                   padding: 20,
                   textAlign: 'center',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                  color: 'var(--app-text)',
                 }}
               >
                 {loading ? (
@@ -768,28 +766,28 @@ hintDisabled: !progressReady || isWon }} />
                       style={{
                         width: 38,
                         height: 38,
-                        border: '3px solid #E2E8F0',
-                        borderTopColor: '#294C6B',
+                        border: '3px solid var(--app-border)',
+                        borderTopColor: '#a8ccef',
                         borderRadius: '50%',
                         animation: 'spin 1s linear infinite',
                         marginBottom: 12,
                       }}
                     />
-                    <p style={{ color: '#294C6B', fontSize: 15, fontWeight: 700, margin: 0 }}>
+                    <p style={{ color: 'var(--app-text)', fontSize: 16, fontWeight: 700, margin: 0 }}>
                       Cargando crucigrama...
                     </p>
                   </>
                 ) : (
                   <>
-                    <p style={{ color: '#475569', fontSize: 14, fontWeight: 600, margin: '0 0 14px' }}>
+                    <p style={{ color: 'var(--app-copy)', fontSize: 15, fontWeight: 600, margin: '0 0 14px' }}>
                       No se pudo cargar el desafío de esta fecha.
                     </p>
                     <button
                       type="button"
                       onClick={/* Responde a click desde este control. */ () => navigate('/juegos/crucigrama')}
                       style={{
-                        background: '#294C6B',
-                        color: '#FFFFFF',
+                        background: '#a8ccef',
+                        color: '#172433',
                         border: 'none',
                         borderRadius: 10,
                         padding: '10px 18px',
@@ -812,7 +810,7 @@ hintDisabled: !progressReady || isWon }} />
                   gap: 4,
                   width: '100%',
                   aspectRatio: '1 / 1',
-                  background: '#0F172A',
+                  background: 'var(--app-panel-raised)',
                   padding: 6,
                   borderRadius: 14,
                   boxSizing: 'border-box',
@@ -826,7 +824,7 @@ hintDisabled: !progressReady || isWon }} />
                       <div
                         key={`${r}-${c}`}
                         style={{
-                          background: '#1E293B',
+                          background: '#243247',
                           borderRadius: 6,
                           width: '100%',
                           height: '100%',
@@ -853,11 +851,11 @@ hintDisabled: !progressReady || isWon }} />
                     bg = '#BBF7D0'; // Verde menta brillante
                     border = '2px solid #16A34A'; // Verde esmeralda vivo
                   } else if (isSelected) {
-                    bg = '#FEF08A'; // Amarillo dorado brillante
-                    border = '2px solid #CA8A04';
+                    bg = '#a8ccef';
+                    border = '2px solid #5d8dbb';
                   } else if (isInActiveWord) {
-                    bg = '#FEF9C3'; // Crema cálido
-                    border = '1px solid #FDE047';
+                    bg = '#e5f0fa';
+                    border = '1px solid #a8ccef';
                   }
 
                   return (
@@ -886,9 +884,9 @@ hintDisabled: !progressReady || isWon }} />
                         transform: isFlashing ? 'scale(1.08)' : isRevealed ? 'scale(1.15)' : 'scale(1)',
                         zIndex: isFlashing ? 30 : isRevealed ? 25 : isSelected ? 5 : 1,
                         boxShadow: isFlashing
-                          ? '0 0 16px rgba(239, 68, 68, 0.55)'
+                          ? '0 3px 10px rgba(190, 50, 50, 0.24)'
                           : isRevealed
-                          ? '0 0 16px rgba(22, 163, 74, 0.55)'
+                          ? '0 3px 10px rgba(22, 120, 74, 0.22)'
                           : 'none',
                         transition:
                           'transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.15s ease, border 0.15s ease, box-shadow 0.25s ease',
@@ -904,7 +902,7 @@ hintDisabled: !progressReady || isWon }} />
                             top: 2,
                             left: 3,
                             fontWeight: 800,
-                            color: '#475569',
+                            color: '#526176',
                             lineHeight: 1,
                             pointerEvents: 'none',
                             userSelect: 'none',
@@ -919,7 +917,7 @@ hintDisabled: !progressReady || isWon }} />
                         className="text-xl min-[900px]:text-[clamp(24px,3vw,36px)]"
                         style={{
                           fontWeight: 900,
-                          color: isFlashing ? '#DC2626' : isRevealed ? '#15803D' : '#0F172A',
+                          color: isFlashing ? '#a52232' : isRevealed ? '#17695f' : '#172433',
                           textTransform: 'uppercase',
                           lineHeight: 1,
                           margin: 0,
@@ -953,11 +951,11 @@ hintDisabled: !progressReady || isWon }} />
               type="button"
               onClick={/* Responde a click desde este control. */ () => setSelectedDirection(/* Actualiza selected direction a partir del valor anterior. */ (prev) => (prev === 'H' ? 'V' : 'H'))}
               style={{
-                background: '#FFFFFF',
-                border: '1px solid #CBD5E1',
+                background: 'var(--app-panel)',
+                border: '1px solid var(--app-border)',
                 borderRadius: 12,
-                color: '#294C6B',
-                fontSize: 12,
+                color: 'var(--app-text)',
+                fontSize: 14,
                 fontWeight: 800,
                 padding: '8px 14px',
                 cursor: 'pointer',
@@ -977,7 +975,7 @@ hintDisabled: !progressReady || isWon }} />
           <div
             className="flex [@media(hover:hover)_and_(pointer:fine)]:hidden"
             style={{
-              background: '#E2E8F0',
+              background: 'var(--app-panel)',
               padding: '8px 6px',
               borderRadius: 16,
               flexDirection: 'column',
@@ -1001,11 +999,11 @@ hintDisabled: !progressReady || isWon }} />
                     onClick={/* Responde a click desde este control. */ () => handleNavigateClue(1)}
                     style={{
                       flex: 1.4,
-                      background: '#CBD5E1',
+                      background: '#40556e',
                       border: 'none',
                       borderRadius: 8,
-                      color: '#1E293B',
-                      fontSize: 11,
+                      color: '#a8ccef',
+                      fontSize: 12,
                       fontWeight: 800,
                       height: 44,
                       cursor: 'pointer',
@@ -1026,10 +1024,10 @@ hintDisabled: !progressReady || isWon }} />
                     onClick={/* Responde a click desde este control. */ () => handleInputChar(char)}
                     style={{
                       flex: 1,
-                      background: '#FFFFFF',
+                      background: 'var(--app-text)',
                       border: 'none',
                       borderRadius: 8,
-                      color: '#0F172A',
+                      color: '#172433',
                       fontSize: 16,
                       fontWeight: 800,
                       height: 44,
@@ -1051,10 +1049,10 @@ hintDisabled: !progressReady || isWon }} />
                     onClick={handleBackspace}
                     style={{
                       flex: 1.4,
-                      background: '#CBD5E1',
+                      background: '#40556e',
                       border: 'none',
                       borderRadius: 8,
-                      color: '#1E293B',
+                      color: '#a8ccef',
                       height: 44,
                       cursor: 'pointer',
                       display: 'flex',
@@ -1070,11 +1068,11 @@ hintDisabled: !progressReady || isWon }} />
             ))}
           </div>
 
-          <p className="m-0 mt-3 hidden text-center text-sm leading-relaxed text-[#64748B] [@media(hover:hover)_and_(pointer:fine)]:block">Escribí con tu teclado. Usá las flechas para moverte y Enter para pasar a la siguiente palabra.</p>
+          <p className="m-0 mt-3 hidden text-center text-sm leading-relaxed text-[var(--app-copy)] [@media(hover:hover)_and_(pointer:fine)]:block">Escribí con tu teclado. Usá las flechas para moverte y Enter para pasar a la siguiente palabra.</p>
           </div>
 
-          <aside aria-label="Todas las definiciones" className="hidden rounded-xl border border-[#DEE3EA] bg-white p-5 min-[900px]:block">
-            <h2 className="m-0 mb-5 text-xl font-extrabold text-[#294C6B]">Definiciones</h2>
+          <aside aria-label="Todas las definiciones" className="hidden rounded-2xl border border-[var(--app-border)] bg-[var(--app-panel)] p-5 text-[var(--app-text)] min-[900px]:block">
+            <h2 className="m-0 mb-5 text-xl font-extrabold text-[var(--app-text)]">Definiciones</h2>
             <CrucigramaClues words={words} activeWordId={activeWord?.id} isComplete={isWordComplete} onSelect={selectClue} />
           </aside>
 
@@ -1085,8 +1083,7 @@ hintDisabled: !progressReady || isWon }} />
               style={{
                 position: 'fixed',
                 inset: 0,
-                background: 'rgba(15, 23, 42, 0.5)',
-                backdropFilter: 'blur(3px)',
+                background: 'rgba(8, 17, 28, 0.78)',
                 zIndex: 900,
                 display: 'flex',
                 alignItems: 'flex-end',
@@ -1096,13 +1093,14 @@ hintDisabled: !progressReady || isWon }} />
             >
               <div
                 style={{
-                  background: '#FFFFFF',
+                  background: 'var(--app-panel)',
                   width: '100%',
                   maxWidth: 480,
                   maxHeight: '75vh',
                   borderTopLeftRadius: 24,
                   borderTopRightRadius: 24,
-                  padding: '18px 20px 32px',
+                  padding: '18px 20px max(calc(env(safe-area-inset-bottom, 0px) + 20px), 32px)',
+                  color: 'var(--app-text)',
                   display: 'flex',
                   flexDirection: 'column',
                   overflowY: 'auto',
@@ -1110,20 +1108,20 @@ hintDisabled: !progressReady || isWon }} />
                 onClick={/* Responde a click desde este control. */ (e) => e.stopPropagation()}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                  <h3 style={{ margin: 0, fontSize: 18, fontWeight: 900, color: '#294C6B' }}>
+                  <h3 style={{ margin: 0, fontSize: 18, fontWeight: 900, color: 'var(--app-text)' }}>
                     Pistas del Crucigrama
                   </h3>
                   <button
                     type="button"
                     onClick={/* Responde a click desde este control. */ () => setShowClueDrawer(false)}
                     style={{
-                      background: '#F1F5F9',
+                      background: '#40556e',
                       border: 'none',
                       borderRadius: 20,
                       padding: '6px 12px',
-                      fontSize: 13,
+                      fontSize: 14,
                       fontWeight: 800,
-                      color: '#475569',
+                      color: 'var(--app-text)',
                       cursor: 'pointer',
                     }}
                   >

@@ -10,10 +10,10 @@ import AppNavbar from '../../COMPONENTS/Navbar/AppNavbar';
 export const SudokuGame: React.FC = () => {
   const game = useSudokuGame();
 
-  const difficultyLabels: Record<number, { label: string; bg: string; text: string; border: string }> = {
-    1: { label: 'Nivel Inicial', bg: 'bg-emerald-50', text: 'text-emerald-800', border: 'border-emerald-300' },
-    2: { label: 'Nivel Intermedio', bg: 'bg-amber-50', text: 'text-amber-800', border: 'border-amber-300' },
-    3: { label: 'Nivel Experto', bg: 'bg-rose-50', text: 'text-rose-800', border: 'border-rose-300' },
+  const difficultyLabels: Record<number, { label: string }> = {
+    1: { label: 'Nivel Inicial' },
+    2: { label: 'Nivel Intermedio' },
+    3: { label: 'Nivel Experto' },
   };
 
   const diffBadge = difficultyLabels[game.difficultyLevel] || difficultyLabels[1];
@@ -23,7 +23,7 @@ export const SudokuGame: React.FC = () => {
       style={{
         paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 16px)',
       }}
-      className="min-h-dvh bg-[#F8FAFC] flex flex-col justify-between"
+      className="cognitive-game cognitive-game--sudoku flex min-h-dvh flex-col justify-between"
     >
       {/* Barra superior estandarizada con Safe Area y centrado geométrico */}
       <AppNavbar view={{ kind: 'game',
@@ -31,7 +31,7 @@ title: "Sudoku",
 onBack: game.goBack,
 details: <>{<div className="flex items-center gap-1.5 sm:gap-2">
             <span
-              className={`px-2.5 py-0.5 rounded-full text-xs font-extrabold border shadow-2xs whitespace-nowrap ${diffBadge.bg} ${diffBadge.text} ${diffBadge.border}`}
+              className="whitespace-nowrap rounded-full border border-[#8175a5] bg-[#3b344f] px-2.5 py-0.5 text-xs font-extrabold text-[#e0d8fa]"
             >
               {diffBadge.label}
             </span>
