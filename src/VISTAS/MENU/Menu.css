@@ -10,7 +10,7 @@
   font-family: "Nunito Sans", "Segoe UI", sans-serif;
 }
 .menu-content {
-  --background: #151e2b;
+  --background: var(--app-background);
 }
 .cognitive-navbar ion-toolbar {
   --background: #1b2737;

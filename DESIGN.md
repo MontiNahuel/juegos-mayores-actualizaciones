@@ -42,7 +42,7 @@ El menú principal es la referencia visual: identidad cognitiva oscura, legible 
 **Alcance de esta etapa:** menú principal y navegación de calendarios. No rediseñar tableros, controles, resultados ni mecánicas de juego. La navbar de los juegos también comparte el diseño oscuro del menú, conservando indicadores, puntos y bombilla. **King’s Court queda sin cambios**, incluido su arte, su miniatura y su shuffle existentes.
 
 ## Colors
-- Fondo `#151e2b`; tarjetas `#2a394c`, borde `#52647b`. La tarjeta narrativa existente usa `#2e3c50`.
+- Fondo compartido `--app-background: #151e2b` para el menú, calendarios y fallback global; tarjetas `#2a394c`, borde `#52647b`. La tarjeta narrativa existente usa `#2e3c50`.
 - Navbar oscura `#1b2737`, divisor `#364454`, texto principal `#f3f6fa` y secundario `#c0cbd7`.
 - Los acentos identifican juegos: menta para palabras, durazno para sopa de letras, lavanda para Sudoku, celeste para crucigrama y dorado para narrativa. No significan éxito o error.
 - Acciones Jugar: fondo del acento y texto `#172433`; hover mezcla el acento con 18% de blanco.

@@ -134,7 +134,7 @@ export function DailyChallengeCalendar({
     >
       {/* El calendario solo describe su estado; AppNavbar resuelve identidad y sesión. */}
       <AppNavbar view={{ kind: 'calendar', title, onBack: () => (onBack ? onBack() : navigate('/menu')) }} />
-      <IonContent style={{ '--background': theme.primaryBlue } as CSSProperties}>
+      <IonContent style={{ '--background': 'var(--app-background)' } as CSSProperties}>
         <main className="mx-auto flex min-h-full w-full max-w-[760px] flex-col gap-5 px-3 pt-6 pb-[max(calc(env(safe-area-inset-bottom,0px)+32px),56px)] sm:gap-6 sm:px-6 sm:pt-8">
           {futureNotice && (
             <div
