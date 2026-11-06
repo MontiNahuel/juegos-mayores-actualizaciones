@@ -1,5 +1,5 @@
 /* Decide qué pantalla abrir según la dirección y la sesión. */
-import { lazy, Suspense } from 'react';
+import { useEffect } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useSearchParams } from 'react-router-dom';
 import Menu from './MENU/Menu';
 import WordleCalendar from './JUEGOS/WORDLE/WordleCalendar';
@@ -14,7 +14,13 @@ import KingsCourtCalendar from './JUEGOS/NARRATIVO/KingsCourtCalendar';
 import KingsCourt from './JUEGOS/NARRATIVO/KingsCourt';
 import { AccesoToken } from './LOGIN/AccesoToken';
 
-const NarrativoAdminPage = lazy(/* Completa este paso con los datos recibidos por la operación. */ () => import('./ADMIN/NarrativoAdminPage'));
+// Redirecciona rutas legadas hacia el panel de administración central de juegos (/admin/juegos)
+const RedirectToAdmin = () => {
+  useEffect(() => {
+    window.location.href = '/admin/juegos';
+  }, []);
+  return null;
+};
 
 // Intercepta token en /menu para iniciar sesión de inmediato en vez de quedar como invitado
 const MenuWrapper = () => {
@@ -36,13 +42,6 @@ const RootRedirection = () => {
   return <Navigate to="/menu" replace />;
 };
 
-// Muestra fallback loader y conecta sus controles con la pantalla.
-const FallbackLoader = () => (
-  <div className="min-h-screen bg-slate-950 flex items-center justify-center text-amber-400 font-bold">
-    Cargando Torre de Control...
-  </div>
-);
-
 // Muestra app routes y conecta sus controles con la pantalla.
 const AppRoutes = () => (
   <BrowserRouter>
@@ -60,59 +59,14 @@ const AppRoutes = () => (
       <Route path="/juegos/kings-court" element={<KingsCourtCalendar />} />
       <Route path="/juegos/kings-court/jugar" element={<KingsCourt />} />
 
-      {/* Torre de Control / Panel Administrativo de Juegos y Narrativa */}
-      <Route
-        path="/panel"
-        element={
-          <Suspense fallback={<FallbackLoader />}>
-            <NarrativoAdminPage />
-          </Suspense>
-        }
-      />
-      <Route
-        path="/panel-juegos"
-        element={
-          <Suspense fallback={<FallbackLoader />}>
-            <NarrativoAdminPage />
-          </Suspense>
-        }
-      />
-      <Route
-        path="/editor-narrativo"
-        element={
-          <Suspense fallback={<FallbackLoader />}>
-            <NarrativoAdminPage />
-          </Suspense>
-        }
-      />
-      <Route
-        path="/admin/juegos"
-        element={
-          <Suspense fallback={<FallbackLoader />}>
-            <NarrativoAdminPage />
-          </Suspense>
-        }
-      />
-      <Route
-        path="/torre"
-        element={
-          <Suspense fallback={<FallbackLoader />}>
-            <NarrativoAdminPage />
-          </Suspense>
-        }
-      />
-      <Route
-        path="/login"
-        element={
-          <Suspense fallback={<FallbackLoader />}>
-            <NarrativoAdminPage />
-          </Suspense>
-        }
-      />
-
-      {/* Aliases de conveniencia */}
-      <Route path="/admin" element={<Navigate to="/panel" replace />} />
-      <Route path="/admin/narrativo" element={<Navigate to="/panel" replace />} />
+      {/* Redirección del antiguo editor hacia la administración central unificada (/admin/juegos) */}
+      <Route path="/editor-narrativo" element={<RedirectToAdmin />} />
+      <Route path="/panel" element={<RedirectToAdmin />} />
+      <Route path="/panel-juegos" element={<RedirectToAdmin />} />
+      <Route path="/torre" element={<RedirectToAdmin />} />
+      <Route path="/admin" element={<RedirectToAdmin />} />
+      <Route path="/admin/narrativo" element={<RedirectToAdmin />} />
+      <Route path="/login" element={<Navigate to="/menu" replace />} />
 
       <Route path="/" element={<RootRedirection />} />
       <Route path="*" element={<RootRedirection />} />
