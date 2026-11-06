@@ -11,7 +11,7 @@ import {
   IonToolbar,
   IonIcon,
 } from '@ionic/react';
-import { GameHeader } from '../../COMPONENTS/GameHeader';
+import AppNavbar from '../../COMPONENTS/Navbar/AppNavbar';
 import { usePlayerEconomy } from '../../../context/PlayerEconomyContext';
 import {
   arrowBackOutline,
@@ -372,11 +372,20 @@ const WordleGame: React.FC = () => {
             animation: wordleModalPop 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
           }
         `}</style>
-        <GameHeader
-          title="Palabra del día"
-          backRoute="/menu"
-          backLabel="Menú"
-          onHint={/* Responde a hint desde este control. */ () => {
+        <AppNavbar view={{ kind: 'game',
+title: "Palabra del día",
+onBack: () => navigate("/menu"),
+rightAction: <button
+              type="button"
+              onClick={/* Responde a click desde este control. */ () => setShowColorGuideModal(true)}
+              className="lg:hidden flex items-center gap-1.5 bg-[#F4F6F9] hover:bg-slate-200 text-[#294C6B] text-xs font-bold px-2.5 py-1.5 rounded-xl border border-[#DEE3EA] transition-colors"
+              title="Guía de colores"
+              aria-label="Ver qué significa cada color"
+            >
+              <IonIcon icon={helpCircleOutline} className="text-base text-[#294C6B]" />
+              <span className="hidden sm:inline">Colores</span>
+            </button>,
+onHint: () => {
             if (gameStatus !== 'playing') return;
             abrirComprarPista({ game_id: 'wordle', date: dateStrKey, hint_index: hintIndex,
               // Aplica al tablero la pista que confirmó el servidor.
@@ -386,21 +395,8 @@ const WordleGame: React.FC = () => {
                 setHintIndex(/* Actualiza hint index a partir del valor anterior. */ indice => (indice + 1) % hints.length);
               },
             });
-          }}
-          hintDisabled={!progressReady || gameStatus !== 'playing'}
-          rightAction={
-            <button
-              type="button"
-              onClick={/* Responde a click desde este control. */ () => setShowColorGuideModal(true)}
-              className="lg:hidden flex items-center gap-1.5 bg-[#F4F6F9] hover:bg-slate-200 text-[#294C6B] text-xs font-bold px-2.5 py-1.5 rounded-xl border border-[#DEE3EA] transition-colors"
-              title="Guía de colores"
-              aria-label="Ver qué significa cada color"
-            >
-              <IonIcon icon={helpCircleOutline} className="text-base text-[#294C6B]" />
-              <span className="hidden sm:inline">Colores</span>
-            </button>
-          }
-        />
+          },
+hintDisabled: !progressReady || gameStatus !== 'playing' }} />
       </>
 
       {/* 2. Contenedor a pantalla completa sin scroll vertical */}

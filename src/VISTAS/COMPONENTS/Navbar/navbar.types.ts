@@ -39,6 +39,9 @@ export type NavbarView =
       details?: ReactNode;
       /** Pistas y acciones específicas del juego. */
       rightAction?: ReactNode;
+      /** La propia navbar incorpora la bombilla y resuelve su estado deshabilitado. */
+      onHint?: () => void;
+      hintDisabled?: boolean;
       /** Puntos confirmados que debe animar la insignia del resultado. */
       pointsEarned?: number;
     };

@@ -13,7 +13,7 @@ vi.mock('../../../context/PlayerEconomyContext', () => ({ usePlayerEconomy: () =
 vi.mock('../CALENDAR/calendarService', () => ({ getCalendarMonthData: vi.fn() }));
 vi.mock('../../JUEGOS/useClassicChallenge', () => ({ useClassicChallenge: () => ({ completion: {} }) }));
 vi.mock('../ANIMATIONS/SuccessFireworks', () => ({ SuccessFireworks: () => null }));
-vi.mock('../GameHeader', () => ({ GameHeader: () => <header>Navbar del juego</header> }));
+vi.mock('../Navbar/AppNavbar', () => ({ default: () => <header>Navbar del juego</header> }));
 
 const previous: DayChallenge = { day: 31, dateKey: '2026-10-31', dateStr: '31 de Octubre', dayName: 'Sábado', config: { solution: 'HOGAR' }, status: 'pending' };
 function Destination() {

@@ -3,7 +3,7 @@ import { useEffect, useId, useState } from 'react';
 import { ChallengeContinuation } from './ChallengeContinuation';
 import { SuccessFireworks } from '../ANIMATIONS/SuccessFireworks';
 import { SuccessCheckmark } from '../ANIMATIONS/SuccessCheckmark';
-import { GameHeader } from '../GameHeader';
+import AppNavbar from '../Navbar/AppNavbar';
 import type { DayChallenge } from '../CALENDAR/types';
 import { ModalBase } from './ModalBase';
 import { GamePerformance, type GamePerformanceProps } from './GamePerformance';
@@ -71,7 +71,10 @@ export function CompletedModal(props: CompletedModalProps) {
   const boton = 'min-h-12 w-full rounded-xl px-4 py-3 text-sm font-bold transition-colors';
 
   return (
-    <ModalBase isOpen onClose={close} labelledBy={titleId} header={continuationDateKey ? <GameHeader title="Resultado del desafío" onBack={close} pointsEarned={state?.saving ? 0 : state?.result?.awardedPoints} /> : undefined}>
+    <ModalBase isOpen onClose={close} labelledBy={titleId} header={continuationDateKey ? <AppNavbar view={{ kind: 'game',
+title: "Resultado del desafío",
+onBack: close,
+pointsEarned: state?.saving ? 0 : state?.result?.awardedPoints }} /> : undefined}>
       <div className="relative isolate space-y-4 p-5 text-center text-slate-700 sm:p-6">
         {!isGameOver && continuationDateKey && <SuccessFireworks />}
         {isGameOver ? <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-50 text-3xl text-rose-600" aria-hidden="true">💔</div> : <SuccessCheckmark />}

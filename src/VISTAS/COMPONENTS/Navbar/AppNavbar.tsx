@@ -1,4 +1,3 @@
-import type { CSSProperties } from "react";
 import { IonHeader, IonToolbar, IonIcon } from "@ionic/react";
 import {
   flameOutline,
@@ -8,6 +7,7 @@ import {
 } from "ionicons/icons";
 import { AuthModal } from "../MODALS/AuthModal";
 import { AnimatedPointsBadge } from "../AnimatedPointsBadge";
+import { HintButton } from "../GameHeader/HintButton";
 import { useNavbarSession } from "./useNavbarSession";
 import type { AppNavbarProps, NavbarView, Usuario } from "./navbar.types";
 import "../../MENU/Menu.css";
@@ -53,16 +53,16 @@ function NavbarIdentity({
     <button
       type="button"
       onClick={view.onBack}
-      className={`flex shrink-0 cursor-pointer items-center justify-center rounded-[10px] border-0 bg-transparent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#294c6b] ${view.kind === "game" ? "size-[42px]" : "size-10 max-md:size-[34px]"}`}
+      className={`flex shrink-0 cursor-pointer items-center justify-center rounded-[10px] border-0 bg-transparent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#294c6b] size-10 max-md:size-[34px]`}
       aria-label="Volver al menú principal"
       title="Volver al menú principal"
     >
       <img
         src="/asistodo-logo.svg"
         alt="ASISTODO"
-        width={view.kind === "game" ? 42 : 40}
-        height={view.kind === "game" ? 42 : 40}
-        className={view.kind === "game" ? undefined : "max-md:size-[34px]"}
+        width="40"
+        height="40"
+        className="max-md:size-[34px]"
       />
     </button>
   );
@@ -138,61 +138,40 @@ function NavbarAccount({
   );
 }
 
-/** Única estructura de navbar: el contexto define contenidos y preserva el tema del juego hasta su rediseño. */
+/** Única navbar visual: menú, calendario y juego comparten estructura, tema y sesión. */
 export default function AppNavbar({ view, onUsuarioChange }: AppNavbarProps) {
   const { session, economy, authOpen, openAuth, closeAuth, login, logout } =
     useNavbarSession(onUsuarioChange);
   const menu = view.kind === "menu";
-  const game = view.kind === "game";
   // El menú permite saludo y cuenta; calendario/juego reservan un centro flexible para el título.
   const layoutClass = menu
     ? "menu-nav mx-auto flex min-h-[88px] max-w-[1180px] flex-wrap items-center gap-6 px-9 py-4 text-menu-ink max-md:min-h-[78px] max-md:gap-3.5 max-md:px-5 max-md:py-3 max-[360px]:gap-1.5 max-[360px]:px-3"
-    : game
-      ? "mx-auto grid min-h-[74px] w-full max-w-[1180px] grid-cols-[42px_minmax(0,1fr)_auto] items-center justify-between gap-3 px-4 py-2.5"
-      : "menu-nav mx-auto grid min-h-[88px] w-full max-w-[1180px] grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-3 px-9 py-4 text-menu-ink max-md:min-h-[78px] max-md:grid-cols-[34px_minmax(0,1fr)_auto] max-md:px-5 max-md:py-3 max-md:[&_.navbar-account]:col-span-full max-md:[&_.navbar-account]:justify-self-end max-[360px]:px-3";
+    : "menu-nav mx-auto grid min-h-[88px] w-full max-w-[1180px] grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-3 px-9 py-4 text-menu-ink max-md:min-h-[78px] max-md:grid-cols-[34px_minmax(0,1fr)_auto] max-md:px-5 max-md:py-3 max-md:[&_.navbar-account]:col-span-full max-md:[&_.navbar-account]:justify-self-end max-[360px]:px-3";
 
   return (
     <>
-      {/* La misma cabecera aplica el tema del menú a menú/calendario. El juego conserva su diseño hasta su revisión propia. */}
+      {/* Todos los contextos usan la identidad oscura del menú; solo cambian sus contenidos y acciones. */}
       <IonHeader
         data-navbar-context={view.kind}
         data-navbar-session={session.kind}
-        className={
-          game
-            ? "app-navbar-game"
-            : "cognitive-navbar menu-theme border-b border-[#364454] shadow-none"
-        }
-        style={
-          game ? { boxShadow: "0 2px 10px rgba(23, 59, 99, 0.12)" } : undefined
-        }
+        className="cognitive-navbar menu-theme border-b border-[#364454] shadow-none"
       >
-        <IonToolbar
-          style={
-            game
-              ? ({
-                  "--background": "#FFFFFF",
-                  "--border-width": 0,
-                } as CSSProperties)
-              : undefined
-          }
-        >
+        <IonToolbar>
           <div className={layoutClass}>
             <NavbarIdentity view={view} user={session.user} />
             {/* Los puntos animados pertenecen al juego/resultado; el calendario solo necesita el título. */}
             {view.kind !== "menu" && (
               <div className="min-w-0 text-center">
-                <h1
-                  className={
-                    game
-                      ? "m-0! text-[clamp(18px,2.4vw,22px)]! leading-[1.25]! font-black! text-[#294C6B] whitespace-normal"
-                      : "m-0! text-[1.375rem]! leading-tight! font-bold! text-menu-ink max-md:text-lg!"
-                  }
-                >
+                <h1 className="m-0! text-[1.375rem]! leading-tight! font-bold! text-menu-ink max-md:text-lg!">
                   {view.title}
                 </h1>
                 {view.kind === "game" && (
                   <div className="flex flex-wrap items-center justify-center gap-1.5">
-                    {view.details}
+                    {view.details && (
+                      <span className="rounded-lg bg-[#e8f1f8] px-1.5 py-0.5 text-[#294C6B]">
+                        {view.details}
+                      </span>
+                    )}
                     <AnimatedPointsBadge
                       points={economy.puntos}
                       earned={view.pointsEarned}
@@ -205,6 +184,12 @@ export default function AppNavbar({ view, onUsuarioChange }: AppNavbarProps) {
             {view.kind === "game" ? (
               <div className="flex items-center justify-end gap-2">
                 {view.rightAction}
+                {view.onHint && (
+                  <HintButton
+                    onClick={view.onHint}
+                    disabled={view.hintDisabled}
+                  />
+                )}
               </div>
             ) : (
               <NavbarAccount

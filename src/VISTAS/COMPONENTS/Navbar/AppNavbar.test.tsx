@@ -104,7 +104,7 @@ describe("AppNavbar: estructura y estados compartidos", () => {
   });
 
   /** Cambiar de contexto conserva la estructura y activa únicamente los slots correspondientes. */
-  it("comparte la estructura y conserva el tema previo del juego y sus acciones", () => {
+  it("comparte estructura y tema oscuro del menú también en el juego", () => {
     const back = vi.fn();
     const action = vi.fn();
     const { container, rerender } = render(
@@ -135,11 +135,35 @@ describe("AppNavbar: estructura y estados compartidos", () => {
       />,
     );
     expect(container.querySelectorAll("header")).toHaveLength(1);
-    expect(container.querySelector("header")).toHaveClass("app-navbar-game");
+    expect(container.querySelector("header")).toHaveClass(
+      "cognitive-navbar",
+      "menu-theme",
+    );
     expect(screen.getByText("Nivel fácil")).toBeInTheDocument();
     expect(screen.getByText("120 puntos; 20 ganados")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Pista" }));
     expect(action).toHaveBeenCalledOnce();
+  });
+
+  /** La única navbar muestra la bombilla y respeta el bloqueo de pistas del juego. */
+  it("controla la bombilla dentro de AppNavbar", () => {
+    const onHint = vi.fn();
+    const view = {
+      kind: "game" as const,
+      title: "Juego",
+      onBack: vi.fn(),
+      onHint,
+    };
+    const { rerender } = render(
+      <AppNavbar view={{ ...view, hintDisabled: true }} />,
+    );
+    const bulb = screen.getByRole("button", { name: "Pedir una pista" });
+    expect(bulb).toBeDisabled();
+    fireEvent.click(bulb);
+    expect(onHint).not.toHaveBeenCalled();
+    rerender(<AppNavbar view={{ ...view, hintDisabled: false }} />);
+    fireEvent.click(screen.getByRole("button", { name: "Pedir una pista" }));
+    expect(onHint).toHaveBeenCalledOnce();
   });
 
   /** Una sesión actualizada fuera del componente se refleja, y un JSON inválido elimina datos obsoletos. */

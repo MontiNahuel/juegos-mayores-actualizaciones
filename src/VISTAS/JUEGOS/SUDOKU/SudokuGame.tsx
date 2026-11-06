@@ -4,7 +4,7 @@ import { useSudokuGame } from './useSudokuGame';
 import { SudokuBoard } from './SudokuBoard';
 import { SudokuKeypad } from './SudokuKeypad';
 import { CompletedModal } from '../../COMPONENTS/MODALS/CompletedModal';
-import { GameHeader } from '../../COMPONENTS/GameHeader';
+import AppNavbar from '../../COMPONENTS/Navbar/AppNavbar';
 
 // Arma la pantalla de Sudoku con tablero, teclado y controles.
 export const SudokuGame: React.FC = () => {
@@ -26,22 +26,18 @@ export const SudokuGame: React.FC = () => {
       className="min-h-dvh bg-[#F8FAFC] flex flex-col justify-between"
     >
       {/* Barra superior estandarizada con Safe Area y centrado geométrico */}
-      <GameHeader
-        title="Sudoku"
-        onBack={game.goBack}
-        backLabel="Calendario"
-        onHint={game.useHint}
-        hintDisabled={!game.progressReady || game.isWon}
-        badges={
-          <div className="flex items-center gap-1.5 sm:gap-2">
+      <AppNavbar view={{ kind: 'game',
+title: "Sudoku",
+onBack: game.goBack,
+details: <>{<div className="flex items-center gap-1.5 sm:gap-2">
             <span
               className={`px-2.5 py-0.5 rounded-full text-xs font-extrabold border shadow-2xs whitespace-nowrap ${diffBadge.bg} ${diffBadge.text} ${diffBadge.border}`}
             >
               {diffBadge.label}
             </span>
-          </div>
-        }
-      />
+          </div>}</>,
+onHint: game.useHint,
+hintDisabled: !game.progressReady || game.isWon }} />
 
       {/* Área central con Tablero 9x9 y Teclado táctil acotado en desktop */}
       <main className="flex-1 flex flex-col justify-center items-center px-2 sm:px-4 py-2 w-full max-w-xl mx-auto">

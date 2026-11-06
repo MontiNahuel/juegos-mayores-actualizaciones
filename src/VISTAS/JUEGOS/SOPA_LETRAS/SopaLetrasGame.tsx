@@ -10,7 +10,7 @@ import {
   IonToolbar,
   IonIcon,
 } from '@ionic/react';
-import { GameHeader } from '../../COMPONENTS/GameHeader';
+import AppNavbar from '../../COMPONENTS/Navbar/AppNavbar';
 import { usePlayerEconomy } from '../../../context/PlayerEconomyContext';
 import { CompletedModal } from '../../COMPONENTS/MODALS/CompletedModal';
 import {
@@ -480,11 +480,10 @@ export const SopaLetrasGame: React.FC = () => {
   return (
     <IonPage style={{ background: '#F4F6F9' }}>
       <>
-        <GameHeader
-          title="Sopa de letras"
-          backRoute="/juegos/sopa-letras"
-          backLabel="Calendario"
-          onHint={/* Responde a hint desde este control. */ () => {
+        <AppNavbar view={{ kind: 'game',
+title: "Sopa de letras",
+onBack: () => navigate("/juegos/sopa-letras"),
+onHint: () => {
             const indice = targetWords.findIndex(/* Busca la posición del elemento que cumple esta condición. */ (word, idx) => !foundWords.includes(word) && !pistasCompradas[idx]);
             if (indice < 0) { setShowHintModal(true); return; }
             economy.abrirComprarPista({ game_id: 'sopa_letras', date: dateStrKey, hint_index: indice,
@@ -494,9 +493,8 @@ export const SopaLetrasGame: React.FC = () => {
                 setShowHintModal(true);
               },
             });
-          }}
-          hintDisabled={!progressReady || showVictoryModal}
-        />
+          },
+hintDisabled: !progressReady || showVictoryModal }} />
       </>
 
       <IonContent

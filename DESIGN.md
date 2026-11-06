@@ -39,7 +39,7 @@ rounded:
 ## Overview
 El menú principal es la referencia visual: identidad cognitiva oscura, legible y tranquila, con pequeños estímulos que invitan a jugar. Prioriza personas mayores, acciones claras y progreso real. Se evita el azul saturado en todas las superficies para que los juegos no se mezclen con el fondo.
 
-**Alcance de esta etapa:** menú principal y navegación de calendarios. No rediseñar tableros, controles, resultados ni mecánicas de juego. El estado `game` de la navbar conserva su apariencia anterior. **King’s Court queda sin cambios**, incluido su arte, su miniatura y su shuffle existentes.
+**Alcance de esta etapa:** menú principal y navegación de calendarios. No rediseñar tableros, controles, resultados ni mecánicas de juego. La navbar de los juegos también comparte el diseño oscuro del menú, conservando indicadores, puntos y bombilla. **King’s Court queda sin cambios**, incluido su arte, su miniatura y su shuffle existentes.
 
 ## Colors
 - Fondo `#151e2b`; tarjetas `#2a394c`, borde `#52647b`. La tarjeta narrativa existente usa `#2e3c50`.
@@ -70,9 +70,9 @@ Paneles con radio de 16px. Botones Jugar con radio de 9px; controles de sesión 
 | --- | --- | --- |
 | `menu` | Marca, saludo, racha/saldo y acceso/salida | Oscuro, referencia principal |
 | `calendar` | Regreso, título y progreso real si hay sesión | Oscuro, coherente con el menú |
-| `game` | Regreso, título, indicadores, puntos animados y acciones del juego | Conserva el tema anterior; rediseño pendiente |
+| `game` | Regreso, título, indicadores, puntos animados y acciones del juego | Oscuro, igual que el menú |
 
-`useNavbarSession` es el único controlador de acceso, modal y sincronización mediante `storage`/`user_progress_updated`. El saldo proviene de `PlayerEconomyContext`. `GameHeader` solo adapta las props existentes del juego a la navbar común; no mantiene otra cabecera ni otra sesión.
+`useNavbarSession` es el único controlador de acceso, modal y sincronización mediante `storage`/`user_progress_updated`. El saldo proviene de `PlayerEconomyContext`. Todos los juegos, calendarios, menú y resultados usan `AppNavbar` directamente. Se elimina `GameHeader`; la navbar común incorpora la bombilla y sus estados mediante `onHint`/`hintDisabled`.
 
 Documentación del contrato y estados: `src/VISTAS/COMPONENTS/Navbar/README.md`.
 

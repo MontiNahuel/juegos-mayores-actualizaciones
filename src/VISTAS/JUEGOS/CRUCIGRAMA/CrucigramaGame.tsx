@@ -12,7 +12,7 @@ import {
   clearActiveCrucigrama,
   type CrucigramaDifficulty,
 } from './crucigramaStorage';
-import { GameHeader } from '../../COMPONENTS/GameHeader';
+import AppNavbar from '../../COMPONENTS/Navbar/AppNavbar';
 import { usePlayerEconomy } from '../../../context/PlayerEconomyContext';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { CompletedModal } from '../../COMPONENTS/MODALS/CompletedModal';
@@ -578,22 +578,16 @@ export const CrucigramaGame: React.FC = () => {
   return (
     <IonPage>
       {/* Encabezado Estandarizado con Safe Area, Cronómetro y Botón de Pistas */}
-      <GameHeader
-        title={`Crucigrama ${gridSize}x${gridSize}`}
-        backRoute="/juegos/crucigrama"
-        backLabel="Calendario"
-        badges={
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
+      <AppNavbar view={{ kind: 'game',
+title: `Crucigrama ${gridSize}x${gridSize}`,
+onBack: () => navigate("/juegos/crucigrama"),
+details: <>{<div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 3, color: '#294C6B', fontWeight: 800 }}>
               <IconClock size={13} color="#294C6B" />
               {formatTimer(seconds)}
             </span>
-          </div>
-        }
-        onHint={handleRevealCell}
-        hintDisabled={!progressReady || isWon}
-        rightAction={
-          <button
+          </div>}</>,
+rightAction: <button
             type="button"
             className="flex min-[900px]:hidden"
             onClick={/* Responde a click desde este control. */ () => setShowClueDrawer(/* Actualiza show clue drawer a partir del valor anterior. */ (prev) => !prev)}
@@ -613,9 +607,9 @@ export const CrucigramaGame: React.FC = () => {
             title="Ver lista de pistas"
           >
             <IconList size={18} color={showClueDrawer ? '#FFFFFF' : '#294C6B'} />
-          </button>
-        }
-      />
+          </button>,
+onHint: handleRevealCell,
+hintDisabled: !progressReady || isWon }} />
 
       <IonContent
         fullscreen
