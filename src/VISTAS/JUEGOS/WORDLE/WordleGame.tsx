@@ -32,6 +32,7 @@ import {
 const DEFAULT_SOLUTION = 'HOGAR';
 const MIN_ROWS = 4;
 const WORD_LENGTH = 5;
+const MAX_ATTEMPTS = 6;
 
 type LetterStatus = 'correct' | 'present' | 'absent';
 
@@ -147,7 +148,7 @@ const WordleGame: React.FC = () => {
   // Estados del juego
   const [guesses, setGuesses] = useState<GuessEvaluation[]>([]);
   const [currentInput, setCurrentInput] = useState<string>('');
-  const [gameStatus, setGameStatus] = useState<'playing' | 'won'>('playing');
+  const [gameStatus, setGameStatus] = useState<'playing' | 'won' | 'lost'>('playing');
   const [loadedDate, setLoadedDate] = useState('');
   const progressReady = loadedDate === dateStrKey;
   const classic = useClassicChallenge('wordle', dateStrKey, progressReady && gameStatus === 'playing', economy);
@@ -182,6 +183,8 @@ const WordleGame: React.FC = () => {
 
       if (saved.status === 'won' || saved.status === 'completed') {
         setGameStatus('won');
+      } else if (saved.status === 'lost' || saved.status === 'failed' || (saved.guesses && saved.guesses.length >= MAX_ATTEMPTS)) {
+        setGameStatus('lost');
       } else {
         setGameStatus('playing');
         if (saved.currentInput) {
@@ -197,7 +200,7 @@ const WordleGame: React.FC = () => {
   }, [dateStrKey]);
 
   useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
-    if (!progressReady || gameStatus === 'won') return;
+    if (!progressReady || gameStatus === 'won' || gameStatus === 'lost') return;
     void saveActiveGameProgress({ gameId: 'wordle', date: dateStrKey, day: dayNum,
       word: activeSolution, guesses, currentInput, attempts: guesses.length,
       status: 'in_progress',
@@ -207,7 +210,7 @@ const WordleGame: React.FC = () => {
 
   // Esperar 1 segundo antes de mostrar el cartel de felicitación o fin de partida
   useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
-    if (gameStatus === 'won') {
+    if (gameStatus === 'won' || gameStatus === 'lost') {
       const timer = setTimeout(/* Ejecuta este paso cuando se cumple la espera. */ () => {
         setShowEndModal(true);
       }, 1000);
@@ -244,6 +247,7 @@ const WordleGame: React.FC = () => {
   // Manejador central de teclas
   const handleKeyPress = useCallback((char: string) => {
     if (!progressReady || gameStatus !== 'playing') return;
+    if (guesses.length >= MAX_ATTEMPTS) return;
 
     triggerHaptic();
 
@@ -276,6 +280,19 @@ const WordleGame: React.FC = () => {
         return;
       }
 
+      if (newGuesses.length >= MAX_ATTEMPTS) {
+        setGameStatus('lost');
+        showFeedback('¡Se agotaron los intentos!');
+        classic.complete({
+          day: dayNum,
+          word: activeSolution,
+          guesses: newGuesses,
+          status: 'lost',
+          attempts: newGuesses.length,
+          gameData: { pistaComprada, hintIndex },
+        });
+        return;
+      }
 
       return;
     }
@@ -283,7 +300,7 @@ const WordleGame: React.FC = () => {
     if (/^[A-ZÑ]$/.test(char) && currentInput.length < WORD_LENGTH) {
       setCurrentInput(/* Actualiza current input a partir del valor anterior. */ (prev) => prev + char);
     }
-  }, [currentInput, gameStatus, guesses, showHint, triggerHaptic, progressReady, activeSolution, dateStrKey, dayNum, classic]);
+  }, [currentInput, gameStatus, guesses, showHint, triggerHaptic, progressReady, activeSolution, dateStrKey, dayNum, classic, pistaComprada, hintIndex]);
 
   // Teclado físico de PC
   useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
@@ -313,8 +330,8 @@ const WordleGame: React.FC = () => {
     setShowEndModal(false);
     setMessage(null);
     setShowHint(false);
-    setHintIndex(0);
     setPistaComprada('');
+    setHintIndex(0);
   };
 
   // Mapa de estados de letras para colorear teclas
@@ -440,7 +457,7 @@ hintDisabled: !progressReady || gameStatus !== 'playing' }} />
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <div className="flex items-center gap-1 rounded-lg border border-[var(--app-border)] bg-[var(--app-panel-raised)] px-2 py-1">
                   <span className="text-xs font-black text-[var(--app-text)] sm:text-sm">
-                    Intentos: {guesses.length}
+                    Intentos: {guesses.length} / {MAX_ATTEMPTS}
                   </span>
                 </div>
               </div>
@@ -449,9 +466,9 @@ hintDisabled: !progressReady || gameStatus !== 'playing' }} />
 
           {/* 4. Tablero de Wordle (6 filas proporcionales ajustadas a la pantalla) */}
           <div className="flex flex-col gap-1.5 sm:gap-2 justify-center my-auto py-1">
-            {Array.from({ length: Math.max(MIN_ROWS, guesses.length + 1) }).map(/* Prepara el resultado de cada elemento. */ (_, rowIndex) => {
+            {Array.from({ length: MAX_ATTEMPTS }).map(/* Prepara el resultado de cada elemento. */ (_, rowIndex) => {
               const isPastRow = rowIndex < guesses.length;
-              const isCurrentRow = rowIndex === guesses.length;
+              const isCurrentRow = rowIndex === guesses.length && gameStatus === 'playing';
               const pastGuess = guesses[rowIndex];
 
               return (
@@ -641,11 +658,13 @@ hintDisabled: !progressReady || gameStatus !== 'playing' }} />
         {showEndModal && (
           <CompletedModal
             gameId="wordle"
-            completion={classic.completion} continuationDateKey={dateStrKey}
+            completion={classic.completion}
+            continuationDateKey={dateStrKey}
             challenge={{
               attempts: guesses.length,
-              config: { solution: activeSolution },
+              config: gameStatus === 'lost' ? undefined : { solution: activeSolution },
             }}
+            isGameOver={gameStatus === 'lost'}
             onRestart={handleRestart}
             onClose={/* Responde a close desde este control. */ () => navigate('/juegos/wordle')}
           />

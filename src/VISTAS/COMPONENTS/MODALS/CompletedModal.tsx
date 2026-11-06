@@ -62,7 +62,7 @@ export function CompletedModal(props: CompletedModalProps) {
   const puntaje = result ? undefined : challenge?.score ?? registro?.score;
   const palabras: Palabra[] = config?.words ?? registro?.guesses ?? [];
   const detalles = [
-    ...(gameId === 'wordle' && palabra ? [{ etiqueta: isGameOver ? 'La palabra era' : 'Palabra descubierta', valor: palabra }] : []),
+    ...(gameId === 'wordle' && palabra && !isGameOver ? [{ etiqueta: 'Palabra descubierta', valor: palabra }] : []),
     ...(gameId === 'wordle' && intentos != null ? [{ etiqueta: 'Intentos', valor: String(intentos) }] : []),
     ...(config?.theme ? [{ etiqueta: 'Tema', valor: config.theme }] : []),
     ...(puntaje != null ? [{ etiqueta: 'Puntos', valor: puntaje }] : []),
@@ -97,10 +97,27 @@ pointsEarned: state?.saving ? 0 : state?.result?.awardedPoints }} /> : undefined
           </ul>
         )}
         <div className="flex flex-col gap-2">
-          {/* {(isGameOver || gameId === 'wordle') && props.onRestart && <button type="button" disabled={buying} onClick={props.onRestart} className={`${boton} bg-slate-100 hover:bg-slate-200 disabled:opacity-50`}>Jugar de nuevo</button>} */}
+          {isGameOver && props.onRestart && (
+            <button
+              type="button"
+              disabled={buying}
+              onClick={props.onRestart}
+              className={`${boton} bg-[#294C6B] text-white hover:bg-[#1E364D]`}
+            >
+              Intentar de nuevo
+            </button>
+          )}
           {continuationDateKey && !isGameOver ? (
             <ChallengeContinuation gameId={gameId} dateKey={continuationDateKey} onClose={close} buying={buying} onBuyingChange={setBuying} />
-          ) : <button type="button" onClick={onClose} className={`${boton} bg-[#294C6B] text-white hover:bg-[#1E364D]`}>{closeLabel}</button>}
+          ) : (
+            <button
+              type="button"
+              onClick={onClose}
+              className={`${boton} ${isGameOver && props.onRestart ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' : 'bg-[#294C6B] text-white hover:bg-[#1E364D]'}`}
+            >
+              {closeLabel}
+            </button>
+          )}
         </div>
       </div>
     </ModalBase>
