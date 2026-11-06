@@ -70,6 +70,9 @@ it('muestra 6 filas de tablero y limita a 6 intentos terminando en derrota si no
   expect(screen.queryByText('PLAZA')).toBeNull();
   expect(screen.queryByText('La palabra era')).toBeNull();
 
+  // NO debe figurar el tiempo al perder
+  expect(screen.queryByText('Tiempo')).toBeNull();
+
   // El botón "Intentar de nuevo" debe estar disponible
   const restartBtn = screen.getByText('Intentar de nuevo');
   expect(restartBtn).toBeTruthy();

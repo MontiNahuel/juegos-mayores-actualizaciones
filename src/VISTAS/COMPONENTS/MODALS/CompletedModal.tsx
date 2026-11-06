@@ -65,8 +65,8 @@ export function CompletedModal(props: CompletedModalProps) {
     ...(gameId === 'wordle' && palabra && !isGameOver ? [{ etiqueta: 'Palabra descubierta', valor: palabra }] : []),
     ...(gameId === 'wordle' && intentos != null ? [{ etiqueta: 'Intentos', valor: String(intentos) }] : []),
     ...(config?.theme ? [{ etiqueta: 'Tema', valor: config.theme }] : []),
-    ...(puntaje != null ? [{ etiqueta: 'Puntos', valor: puntaje }] : []),
-    ...(typeof segundos === 'number' && Number.isFinite(segundos) ? [{ etiqueta: 'Tiempo', valor: `${Math.floor(segundos / 60)}:${String(segundos % 60).padStart(2, '0')}` }] : []),
+    ...(puntaje != null && !isGameOver ? [{ etiqueta: 'Puntos', valor: puntaje }] : []),
+    ...(!isGameOver && gameId !== 'wordle' && typeof segundos === 'number' && Number.isFinite(segundos) ? [{ etiqueta: 'Tiempo', valor: `${Math.floor(segundos / 60)}:${String(segundos % 60).padStart(2, '0')}` }] : []),
   ];
   const boton = 'min-h-12 w-full rounded-xl px-4 py-3 text-sm font-bold transition-colors';
 
