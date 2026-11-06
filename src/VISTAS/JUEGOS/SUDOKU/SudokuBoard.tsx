@@ -41,21 +41,27 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
             const borderB = (r + 1) % 3 === 0 && r !== 8 ? 'border-b-2 border-b-[#8175a5]' : '';
 
             let bg = 'bg-white';
-            if (isSelected) bg = 'bg-[#c8bbf0] ring-2 ring-inset ring-[#8175a5]';
-            else if (isSameNumber) bg = 'bg-[#e3dcf6]';
-            else if (isSameRowOrCol || isSameBlock) bg = 'bg-[#f3f0fa]';
+            if (cell.error) {
+              bg = 'bg-red-100 ring-2 ring-inset ring-red-400';
+            } else if (isSelected) {
+              bg = 'bg-[#c8bbf0] ring-2 ring-inset ring-[#8175a5]';
+            } else if (isSameNumber) {
+              bg = 'bg-[#e3dcf6]';
+            } else if (isSameRowOrCol || isSameBlock) {
+              bg = 'bg-[#f3f0fa]';
+            }
 
             let text = 'text-[#69588d] font-bold text-2xl';
             if (cell.initial) text = 'text-[#253247] font-black text-2xl';
-            if (cell.error) text = 'text-[#DC2626] font-bold text-2xl bg-red-100';
+            if (cell.error) text = 'text-[#DC2626] font-black text-2xl';
 
             return (
               <button
                 key={`${r}-${c}`}
                 type="button"
                 onClick={/* Responde a click desde este control. */ () => onSelectCell(r, c)}
-                className={`relative flex aspect-square min-w-0 items-center justify-center transition-colors ${borderR} ${borderB} ${bg}`}
-                aria-label={`Fila ${r + 1}, Columna ${c + 1}, ${cell.value > 0 ? `Valor ${cell.value}` : 'Vacío'}`}
+                className={`relative flex aspect-square min-w-0 items-center justify-center transition-colors duration-200 ${borderR} ${borderB} ${bg}`}
+                aria-label={`Fila ${r + 1}, Columna ${c + 1}, ${cell.value > 0 ? (cell.error ? `Incorrecto ${cell.value}` : `Valor ${cell.value}`) : 'Vacío'}`}
               >
                 {cell.value > 0 ? (
                   <span className={text}>{cell.value}</span>
