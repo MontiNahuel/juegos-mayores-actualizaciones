@@ -52,8 +52,8 @@ describe('respaldo del juego narrativo', /* Agrupa las pruebas de este comportam
         store.dispatch(acciones.resolverConversacion({ conversacionId: data.conversacion_actual._id, decision }));
         await api.avanzarNodo(date, String(decision.opcion), data.conversacion_actual._id);
       }
-      store.dispatch(acciones.avanzarMes());
       const siguiente = await api.avanzarMes(date);
+      store.dispatch(acciones.sincronizarPartida(siguiente));
       if (mes === 6) {
         expect(siguiente.finalizacion?.tipo).toBe('victoria_tiempo');
         store.dispatch(acciones.finalizarPartida(siguiente.finalizacion));

@@ -196,8 +196,10 @@ export function resolverRespaldoNarrativo(path: string, options: RequestInit | u
       return grafo;
     }
     case '/v2/partida/avanzar-mes': {
-      const finalizacion = finalDe(estado);
-      return finalizacion ? { finalizacion } : { cartas_draft_actual: draft(mes) };
+      const siguienteMes = mes + 1;
+      const finalizacion = finalDe({ ...estado, jugador: { ...jugador, mes_actual: siguienteMes } });
+      return { mes_actual: siguienteMes, fase_actual: 'DRAFT_MENSUAL', recursos: jugador.recursos,
+        ...(finalizacion ? { finalizacion } : { cartas_draft_actual: draft(siguienteMes) }) };
     }
     case '/v2/partida/estado':
       return foto;

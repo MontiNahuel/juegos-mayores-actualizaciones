@@ -8,6 +8,8 @@ const ESPERA_MS = 25_000;
 const DESCARGAS_SIMULTANEAS = 3;
 
 const imagenes = new Map<string, string>();
+const faltantes = new Set<string>();
+const IMAGEN_VACIA = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 const pendientes = new Map<string, { tarea: Promise<boolean>; preparar: boolean }>();
 const futuros = new Set<string>();
 let guardandoFuturos = false;
@@ -21,7 +23,7 @@ let escritura = Promise.resolve();
 const claveUrl = (src: string) => new URL(src, window.location.href).href;
 
 // Los componentes consumen la misma URL blob durante toda la sesión: no redescargan al cambiar de etapa.
-export const imagenPrecargada = (src: string) => src ? imagenes.get(claveUrl(src)) || src : src;
+export const imagenPrecargada = (src: string) => src ? imagenes.get(claveUrl(src)) || (faltantes.has(claveUrl(src)) ? IMAGEN_VACIA : src) : src;
 
 // Espera un turno libre para no lanzar demasiadas descargas a la vez.
 function enCola<T>(trabajo: () => Promise<T>, prioridad: boolean): Promise<T> {
@@ -110,10 +112,16 @@ async function cargarImagen(url: string, preparar: boolean): Promise<boolean> {
     const timeout = window.setTimeout(/* Ejecuta este paso cuando se cumple la espera. */ () => controller.abort(), ESPERA_MS);
     try {
       const respuesta = await fetch(url, { signal: controller.signal, cache: guardada ? 'no-cache' : 'default' });
-      // Evita guardar un HTML de error que un servidor haya respondido con estado 200.
-      if (!respuesta.ok || !respuesta.headers.get('Content-Type')?.startsWith('image/')) return false;
-      blob = await respuesta.blob();
-      if (cache) await guardarEnCache(cache, url, blob);
+      // Un archivo ausente no se vuelve a solicitar en cada mes; una recarga permite revalidarlo.
+      if (respuesta.status === 404 || respuesta.status === 410) {
+        if (guardada) blob = await guardada.blob();
+        else { faltantes.add(url); return false; }
+      } else {
+        // Evita guardar un HTML de error que un servidor haya respondido con estado 200.
+        if (!respuesta.ok || !respuesta.headers.get('Content-Type')?.startsWith('image/')) return false;
+        blob = await respuesta.blob();
+        if (cache) await guardarEnCache(cache, url, blob);
+      }
     } catch (error) {
       if (guardada) blob = await guardada.blob();
       else {
@@ -146,6 +154,7 @@ export function asegurarImagen(src: string, preparar = true): Promise<boolean> {
   if (!src || /^(data:|blob:)/.test(src)) return Promise.resolve(true);
   const url = claveUrl(src);
   if (imagenes.has(url)) return Promise.resolve(true);
+  if (faltantes.has(url)) return Promise.resolve(false);
   const pendiente = pendientes.get(url);
   if (pendiente) {
     return preparar && !pendiente.preparar

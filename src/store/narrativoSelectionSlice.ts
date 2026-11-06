@@ -161,6 +161,10 @@ const narrativoSelectionSlice = createSlice({
     // Guarda solo las tres cartas necesarias para el siguiente draft.
     guardarCartasDraft: (state, action: { payload: any }) => {
       state.cartasDraft = action.payload || [];
+      state.eventoActual = null;
+      state.conversacionActual = null;
+      state.resultadoActual = null;
+      state.jugador.carta_mes_actual = null;
       state.jugador.fase_actual = 'draft_mensual';
     },
 

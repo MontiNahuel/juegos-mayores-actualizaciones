@@ -6,13 +6,13 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { API_URL } from '../../../config/api';
 import { configuracionPorEdad, guardarEdad, leerEdad } from '../../../config/adaptacionEdad';
 import {
-  actualizarFondoBase, avanzarMes as avanzarMesLocal, configurarEdadNarrativa, elegirCarta, finalizarPartida,
+  actualizarFondoBase, configurarEdadNarrativa, elegirCarta, finalizarPartida,
   guardarCartasDraft, guardarCartasIniciales, guardarCorte, guardarPersonajesCorte,
   guardarResultado, iniciarJugador, limpiarResultado, mostrarConversacion, mostrarEvento,
   registrarDecisionEvento, reiniciarSeleccionNarrativa, resolverConversacion, sincronizarPartida,
 } from '../../../store/narrativoSelectionSlice';
 import {
-  agregarCondicionesSecretas, avanzarNodo, avanzarMes as avisarAvanceMes, elegirCartaMensual, esPartidaNarrativaLocal,
+  agregarCondicionesSecretas, avanzarNodo, continuarTurno, elegirCartaMensual, esPartidaNarrativaLocal,
   iniciarPartida, obtenerCatalogosCronica, obtenerCortePartida, obtenerEstadoPartida, obtenerHistorialPartida,
   reiniciarPartida,
 } from './narrativeService';
@@ -87,7 +87,8 @@ export default function KingsCourt() {
   const [setup, setSetup] = useState<any>(null);
   const [personajesDisponibles, setPersonajesDisponibles] = useState<any[]>([]);
   const [decisionConversacion, setDecisionConversacion] = useState<any>(null);
-  const [conversacionPendiente, setConversacionPendiente] = useState<any>(null);
+  const [continuando, setContinuando] = useState(false);
+  const continuacionEnCurso = useRef(false);
   const [estadisticas, setEstadisticas] = useState<any>(null);
   const [cargandoEstadisticas, setCargandoEstadisticas] = useState(false);
   const [reiniciando, setReiniciando] = useState(false);
@@ -175,11 +176,10 @@ export default function KingsCourt() {
     if (estado.finalizacion) dispatch(finalizarPartida(estado.finalizacion));
     else if (estado.resultado_actual) {
       dispatch(guardarResultado(estado.resultado_actual));
-      if (estado.conversacion_actual) setConversacionPendiente(estado.conversacion_actual);
       dispatch(sincronizarPartida(estado));
     } else if (estado.conversacion_actual) dispatch(mostrarConversacion(estado.conversacion_actual));
     else if (estado.evento_actual) await guardarEventoLocal(estado.evento_actual);
-    else if (estado.cartas_draft_actual?.length) await cargarDraft(estado.cartas_draft_actual, true);
+    else if ((!estado.fase_actual || estado.fase_actual.toUpperCase() === 'DRAFT_MENSUAL') && estado.cartas_draft_actual?.length) await cargarDraft(estado.cartas_draft_actual, true);
   };
 
   // Intenta restaurar la pantalla cuando falla la selección de carta.
@@ -287,59 +287,54 @@ export default function KingsCourt() {
     if (final) dispatch(finalizarPartida(final));
   };
 
-  // Avanza el mes localmente y busca las próximas cartas o el final.
-  const avanzarMes = async () => {
-    dispatch(avanzarMesLocal());
-    const data = await pedir(/* Completa este paso con los datos recibidos por la operación. */ () => avisarAvanceMes(date), 'El mes avanzo localmente, pero no se pudieron cargar las nuevas cartas.');
-    if (data) await mostrarEstado(data);
-  };
-
-  // Continúa la secuencia existente una vez que se vio el cambio del fondo.
-  const continuarTrasResultado = () => {
-    if (conversacionPendiente) {
-      setDemorarDialogoPorFondo(false);
-      dispatch(mostrarConversacion(conversacionPendiente));
-      setConversacionPendiente(null);
-    } else void avanzarMes();
-  };
-
   // Sólo intercala la corte si un recurso cruzó un umbral y agregó un asset visible.
-  const continuarResultado = () => {
-    const antesGuardias = juego.fondoBase.personajes.length;
-    const antesOro = juego.fondoBase.oro.length;
-    const antesManos = juego.fondoBase.manos.length;
-    const despuesGuardias = guardiasEsperados;
-    const despuesOro = oroEsperado;
-    const despuesManos = manosEsperadas;
-    if (!cambioFondoPendiente) {
-      setDemorarDialogoPorFondo(false);
+  const continuarResultado = async () => {
+    if (continuacionEnCurso.current) return;
+    continuacionEnCurso.current = true;
+    setContinuando(true);
+    try {
+      // Mantiene el resultado y el mes visibles hasta recibir la confirmación del servidor.
+      const data = await pedir(() => continuarTurno(date), 'No se pudo continuar la partida. Volvé a intentar.');
+      if (!data) return;
+      const antesGuardias = juego.fondoBase.personajes.length;
+      const antesOro = juego.fondoBase.oro.length;
+      const antesManos = juego.fondoBase.manos.length;
+      const despuesGuardias = guardiasEsperados;
+      const despuesOro = oroEsperado;
+      const despuesManos = manosEsperadas;
+      if (!cambioFondoPendiente) {
+        setDemorarDialogoPorFondo(false);
+        dispatch(limpiarResultado());
+        await mostrarEstado(data);
+        return;
+      }
+
+      // Sólo el próximo evento directo espera la entrada visual de un asset nuevo.
+      setDemorarDialogoPorFondo(true);
+      setCambioFondo(true);
       dispatch(limpiarResultado());
-      continuarTrasResultado();
-      return;
-    }
 
-    // Sólo el próximo evento directo espera la entrada visual de un asset nuevo.
-    setDemorarDialogoPorFondo(true);
-    setCambioFondo(true);
-    dispatch(limpiarResultado());
-
-    // Espera la decodificación para que el nuevo asset no aparezca de golpe al terminar la pausa.
-    const secuencia = ++secuenciaCambio.current;
-    const nuevos = [
-      ...GUARDIAS_CORTE.slice(antesGuardias, despuesGuardias),
-      ...ORO_CORTE.slice(antesOro, despuesOro),
-      ...MANOS_CORTE.slice(antesManos, despuesManos),
-    ];
-    void precargarImagenes(nuevos.map(/* Prepara el resultado de cada elemento. */ ({ src }) => src))
-      .then(/* Continúa cuando está listo el resultado anterior. */ () => {
-        if (secuencia !== secuenciaCambio.current) return;
-        const duracion = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : DURACION_CAMBIO_FONDO_MS;
-        temporizadorCambio.current = window.setTimeout(/* Ejecuta este paso cuando se cumple la espera. */ () => {
-          continuarTrasResultado();
-          setCambioFondo(false);
-          temporizadorCambio.current = null;
-        }, duracion);
+      // Espera la decodificación para que el nuevo asset no aparezca de golpe al terminar la pausa.
+      const secuencia = ++secuenciaCambio.current;
+      const nuevos = [
+        ...GUARDIAS_CORTE.slice(antesGuardias, despuesGuardias),
+        ...ORO_CORTE.slice(antesOro, despuesOro),
+        ...MANOS_CORTE.slice(antesManos, despuesManos),
+      ];
+      await precargarImagenes(nuevos.map(({ src }) => src));
+      if (secuencia !== secuenciaCambio.current) return;
+      const duracion = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : DURACION_CAMBIO_FONDO_MS;
+      await new Promise<void>(resolve => {
+        temporizadorCambio.current = window.setTimeout(resolve, duracion);
       });
+      temporizadorCambio.current = null;
+      if (secuencia !== secuenciaCambio.current) return;
+      await mostrarEstado(data);
+      setCambioFondo(false);
+    } finally {
+      continuacionEnCurso.current = false;
+      setContinuando(false);
+    }
   };
 
   // Aplica la respuesta a la conversación en el motor V2 de grafos.
@@ -437,12 +432,13 @@ export default function KingsCourt() {
       pantalla = <MostrarResultadoEtapa4
         resultado={{ titulo: 'Consecuencia', texto: decisionConversacion.resultado_texto || 'La corte escucho tu decision.', imagen: '', tipo_resultado: 'neutro' as const, efectos: [] }}
         efectoTexto={efectoTexto}
-        onContinuar={/* Responde a continuar desde este control. */ () => { setDecisionConversacion(null); void avanzarMes(); }}
+        continuando={continuando}
+        onContinuar={() => { setDecisionConversacion(null); void continuarResultado(); }}
       />;
       break;
     }
     case 'resultado':
-      pantalla = <MostrarResultadoEtapa4 resultado={juego.resultadoActual} efectoTexto={!config.mostrarNumeros ? describirEfectos(juego.resultadoActual) : undefined} animarSalida={cambioFondoPendiente} onContinuar={continuarResultado} />;
+      pantalla = <MostrarResultadoEtapa4 resultado={juego.resultadoActual} efectoTexto={!config.mostrarNumeros ? describirEfectos(juego.resultadoActual) : undefined} continuando={continuando} onContinuar={continuarResultado} />;
       break;
     case 'conversacion':
       pantalla = <ResponderConversacionEtapa3 key={etapaVisible} conversacion={juego.conversacionActual} personajes={personajes} modoSimple={!config.mostrarNumeros} onElegir={responderActual} />;

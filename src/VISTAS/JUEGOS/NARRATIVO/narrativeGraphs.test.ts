@@ -30,6 +30,17 @@ beforeEach(/* Prepara un entorno limpio antes de cada prueba. */ () => {
 afterEach(/* Limpia el entorno al terminar cada prueba. */ () => vi.unstubAllGlobals());
 
 describe('contrato de grafos narrativos V2', /* Agrupa las pruebas de este comportamiento. */ () => {
+  it('conserva el diálogo encadenado que acompaña al resultado terminal', async () => {
+    const conversacion = { _id: 'charla_pendiente', titulo: 'Audiencia', frases: [], decisiones: [], requisitos: [], imagen: '' };
+    const final = grafo({ fase_actual: 'TOMA_DECISION_CONVERSACION', conversacion_actual: conversacion });
+    final.nodo_actual.es_final = true;
+    vi.mocked(fetch).mockResolvedValue(responder(final));
+    const api = await import('./narrativeService');
+    const estado = await api.avanzarNodo(date, 'opt_guardia', 'evt_cometa');
+    expect(estado.resultado_actual).toBeTruthy();
+    expect(estado.conversacion_actual).toEqual(conversacion);
+  });
+
   it('abre el grafo al elegir carta y conserva únicamente las opciones habilitadas', /* Comprueba el comportamiento indicado en este caso. */ async () => {
     vi.mocked(fetch).mockResolvedValue(responder({ recursos, evento_actual: null, grafo_actual: grafo() }));
     const api = await import('./narrativeService');

@@ -7,11 +7,12 @@ import BotonNarrativo from '../COMPARTIDOS/BOTON_NARRATIVO/BotonNarrativo';
 import PapelUi from '../COMPARTIDOS/PAPEL_UI/PapelUi';
 
 // ETAPA 4: muestra el resultado del evento o el cierre de la partida.
-export default function MostrarResultadoEtapa4({ resultado, finalizacion, efectoTexto, animarSalida = false, onContinuar, onVerEstadisticas, cargandoEstadisticas, onTerminar, reiniciando }: {
+export default function MostrarResultadoEtapa4({ resultado, finalizacion, efectoTexto, animarSalida = false, continuando = false, onContinuar, onVerEstadisticas, cargandoEstadisticas, onTerminar, reiniciando }: {
   resultado?: ResultadoApi;
   finalizacion?: FinalizacionApi;
   efectoTexto?: string;
   animarSalida?: boolean;
+  continuando?: boolean;
   onContinuar?: () => void;
   onVerEstadisticas?: () => void;
   cargandoEstadisticas?: boolean;
@@ -24,7 +25,7 @@ export default function MostrarResultadoEtapa4({ resultado, finalizacion, efecto
 
   // Retira el pergamino antes de mostrar la corte; nunca duplica ni descarga su imagen.
   const continuar = () => {
-    if (!onContinuar || saliendo) return;
+    if (!onContinuar || saliendo || continuando) return;
     if (!animarSalida || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return onContinuar();
     setSaliendo(true);
     temporizador.current = window.setTimeout(onContinuar, 650);
@@ -55,7 +56,7 @@ export default function MostrarResultadoEtapa4({ resultado, finalizacion, efecto
       </PapelUi>
 
       <div className="mt-2.5 flex w-[min(88vw,29rem)] flex-wrap justify-center gap-2 max-[480px]:[&_.boton-narrativo]:basis-full">
-        {onContinuar && <BotonNarrativo disabled={saliendo} onClick={continuar}>Continuar</BotonNarrativo>}
+        {onContinuar && <BotonNarrativo disabled={saliendo || continuando} onClick={continuar}>{continuando ? 'Continuando...' : 'Continuar'}</BotonNarrativo>}
         {onVerEstadisticas && <BotonNarrativo disabled={cargandoEstadisticas} onClick={onVerEstadisticas}>{cargandoEstadisticas ? 'Cargando estadisticas...' : 'Ver estadisticas'}</BotonNarrativo>}
         {esFinal && onTerminar && <BotonNarrativo disabled={reiniciando} onClick={onTerminar}>{reiniciando ? 'Reiniciando...' : 'Terminar prueba'}</BotonNarrativo>}
       </div>

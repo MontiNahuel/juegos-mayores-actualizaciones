@@ -35,6 +35,25 @@ beforeEach(/* Prepara un entorno limpio antes de cada prueba. */ () => {
 afterEach(/* Limpia el entorno al terminar cada prueba. */ () => vi.unstubAllGlobals());
 
 describe('motor compartido de imágenes', /* Agrupa las pruebas de este comportamiento. */ () => {
+  it('no redescarga un 404 en cada escena y evita volver a usar la URL rota', async () => {
+    vi.mocked(fetch).mockResolvedValue(new Response('', { status: 404 }));
+    const api = await import('./assetPreloader');
+    await api.precargarImagenes(['/ausente.webp']);
+    await api.precargarImagenes(['/ausente.webp']);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(api.imagenPrecargada('/ausente.webp')).toMatch(/^data:image\//);
+    expect(guardadas.size).toBe(0);
+  });
+
+  it('permite reintentar las imágenes tras un error temporal del servidor', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(new Response('', { status: 503 }));
+    const api = await import('./assetPreloader');
+    await api.precargarImagenes(['/temporal.webp']);
+    await api.precargarImagenes(['/temporal.webp']);
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(api.imagenPrecargada('/temporal.webp')).toMatch(/^blob:/);
+  });
+
   it('comparte descargas simultáneas y conserva la misma URL al cambiar de pantalla', /* Comprueba el comportamiento indicado en este caso. */ async () => {
     const api = await import('./assetPreloader');
     await Promise.all([api.precargarImagenes(['/retrato.png']), api.precargarImagenes(['/retrato.png'])]);

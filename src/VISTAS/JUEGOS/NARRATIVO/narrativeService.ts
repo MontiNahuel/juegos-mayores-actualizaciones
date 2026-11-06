@@ -119,10 +119,14 @@ export interface EstadoGrafoApi {
   afinidad?: Record<string, number> | null;
   finalizacion?: FinalizacionApi | null;
   status: string;
+  conversacion_actual?: ConversacionApi | null;
 }
 
 // Conserva las pantallas existentes: cada nodo se presenta como evento, diálogo o resultado.
 function adaptarEstadoGrafo(estado: EstadoPartida): EstadoPartida {
+  if (estado.fase_actual?.toUpperCase() === 'DRAFT_MENSUAL') return {
+    ...estado, grafo_actual: null, evento_actual: null, resultado_actual: null, conversacion_actual: null,
+  };
   const grafo = estado.grafo_actual;
   if (!grafo) return estado;
   const nodo = grafo.nodo_actual;
@@ -135,6 +139,7 @@ function adaptarEstadoGrafo(estado: EstadoPartida): EstadoPartida {
   };
   if (nodo.es_final) return {
     ...base,
+    conversacion_actual: grafo.conversacion_actual ?? estado.conversacion_actual ?? null,
     resultado_actual: {
       titulo: grafo.titulo, texto: [nodo.texto, nodo.resultado_texto].filter(Boolean).join('\n\n'),
       imagen, tipo_resultado: 'neutro',
@@ -251,7 +256,7 @@ async function request<T>(path: string, options?: RequestInit, permitirRespaldo 
   try {
     const authHeaders = await narrativeGameHeaders();
     // La emisión inicial de la credencial tiene su propia espera; no consume la del juego.
-    if (HABILITAR_FALLBACK_NARRATIVO && permitirRespaldo) timeout = setTimeout(() => controller.abort(), ESPERA_SERVIDOR_MS);
+    timeout = setTimeout(() => controller.abort(), ESPERA_SERVIDOR_MS);
     const response = await fetch(`${API}${path}`, {
       ...options,
       credentials: 'same-origin',
@@ -359,4 +364,33 @@ export const avanzarNodo = async (date: string, opcionId: string, grafoAnteriorI
 // Cierra el balance y recibe el nuevo draft o la finalizacion.
 export const avanzarMes = (date: string) => request<EstadoPartida>(NARRATIVE_GAME_PATHS.avanzarMes, {
   method: 'POST', body: JSON.stringify({ date }),
-});
+}, esPartidaNarrativaLocal(date));
+
+const continuaciones = new Map<string, Promise<EstadoPartida>>();
+
+/** Continuar confirma la fase real: una conversación pendiente nunca cierra el mes. */
+export function continuarTurno(date: string): Promise<EstadoPartida> {
+  const pendiente = continuaciones.get(date);
+  if (pendiente) return pendiente;
+  const leerEstado = () => request<EstadoPartida>(`${NARRATIVE_GAME_PATHS.estado}?date=${encodeURIComponent(date)}`, undefined, false).then(adaptarEstadoGrafo);
+  const continuar = async () => {
+    if (esPartidaNarrativaLocal(date)) return avanzarMes(date);
+    const estado = await leerEstado();
+    if (estado.finalizacion) return estado;
+    if (estado.fase_actual?.toUpperCase() !== 'BALANCE_MES') return { ...estado, resultado_actual: null };
+    try { return await avanzarMes(date); }
+    catch (error) {
+      // Si el servidor confirmó antes del timeout, recuperar sin repetir pasivos ni el POST.
+      try {
+        const actual = await leerEstado();
+        if (actual.mes_actual !== estado.mes_actual || actual.fase_actual !== estado.fase_actual || actual.finalizacion) {
+          return actual.fase_actual?.toUpperCase() === 'BALANCE_MES' ? actual : { ...actual, resultado_actual: null };
+        }
+      } catch { /* Conserva el rechazo original si tampoco se puede recuperar el estado. */ }
+      throw error;
+    }
+  };
+  const tarea = continuar().finally(() => continuaciones.delete(date));
+  continuaciones.set(date, tarea);
+  return tarea;
+}
