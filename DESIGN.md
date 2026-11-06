@@ -20,7 +20,7 @@ Fondo oscuro neutro, superficies diferenciadas y textos claros. Menta para palab
 ## Typography
 Nunito Sans local. Título principal 2.125rem (1.75rem móvil), títulos de juego 1.5rem, habilidades y cuerpo 1rem. Interlineado de cuerpo 1.55.
 ## Layout
-Contenedor de 1180px. Dos columnas en escritorio; una debajo de 768px. Encabezado compacto, filtros, clásicos y narrativa. No banner duplicado, contador de catálogo, sección vacía ni pie promocional.
+Contenedor de 1180px. Dos columnas en escritorio; una debajo de 768px. Encabezado compacto, clásicos y narrativa, sin filtros para un catálogo de cinco juegos. No banner duplicado, contador de catálogo, sección vacía ni pie promocional.
 ## Elevation & Depth
 Superficies planas con borde tenue de 1px; sin sombras decorativas.
 ## Shapes
@@ -29,3 +29,6 @@ Paneles de 16px y botones de 9px. Filtros redondeados, estado seleccionado en me
 Acciones Jugar de al menos 48px. Navbar con acceso visible y puntos solo para usuarios con sesión; racha real conservada. Indicador de foco dorado. Las pantallas de juego mantienen sus estilos.
 ## Do's and Don'ts
 Mantener contraste, etiquetas claras y contenido útil. Evitar teñir todo de azul, mensajes médicos, niveles ficticios y contenido repetido.
+
+## Motion
+Cada miniatura demuestra su juego una sola vez al entrar al 35% en pantalla: letras que se comprueban, palabra resaltada, números que completan casillas, palabras cruzadas y elección de personaje. Secuencias de menos de 1.2 segundos; sin movimiento de tarjetas ni controles. Con reduced-motion, muestras estáticas completas. En móvil: descripción a todo el ancho y botón Jugar de ancho completo.

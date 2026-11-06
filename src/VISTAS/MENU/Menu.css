@@ -28,10 +28,6 @@
 .menu-nav__points ion-icon { font-size: 20px; }
 .menu-nav__session { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; padding: 10px 16px; border: 1px solid #526176; border-radius: 10px; background: #263548; font: inherit; font-size: 15px; color: #f3f6fa; cursor: pointer; }
 .menu-nav__session:hover { background: #28384b; }
-.menu-filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 32px; }
-.menu-filters button { min-height: 44px; border: 1px solid #526176; border-radius: 24px; padding: 9px 20px; background: transparent; color: #dce5ef; font: inherit; font-size: 1rem; cursor: pointer; }
-.menu-filters button:hover { background: #304359; }
-.menu-filters button[aria-pressed='true'] { background: #83d4ca; color: #142b2c; border-color: #83d4ca; }
 .menu-section + .menu-section { margin-top: 34px; }
 .menu-section > h2 { margin: 0; font-size: 1.25rem; line-height: 1.3; font-weight: 700; }
 .menu-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
@@ -81,8 +77,6 @@
   .menu-brand { font-size: 15px; gap: 8px; }
   .menu-brand img { width: 34px; height: 34px; }
   .menu-brand__sub { font-size: 12px; }
-  .menu-filters { gap: 8px; margin-bottom: 28px; }
-  .menu-filters button { padding-inline: 16px; }
   .menu-grid { grid-template-columns: minmax(0,1fr); gap: 16px; }
 }
 @media (max-width: 359px) {
@@ -114,7 +108,6 @@
 .menu-mini-board span, .menu-mini-board--wordle span, .menu-mini-board--sopa-letras span:nth-child(-n+3), .menu-mini-board--sudoku span:nth-child(2n) { background: var(--game-color); color: #172433; }
 .menu-mini-board--wordle span:nth-child(3) { background: #418478; color: white; }
 .menu-mini-board--crucigrama span:empty { background: #40556e; }
-.menu-filters button[aria-pressed='true'] { color: #132b2c; }
 .menu-nav__streak { color: #edd499; }
 .menu-shell :is(button,a):focus-visible, .menu-nav :is(button,a):focus-visible { outline-color: #f3d894; }
 @media (max-width: 767px) {
@@ -122,4 +115,46 @@
   .menu-heading h1 { font-size: 1.75rem; }
   .menu-heading__brain svg { width: 36px; height: 36px; }
   .menu-nav__session span { display: inline; }
+}
+
+/* One short game demonstration per visit; content and controls never wait for motion. */
+.menu-mini-board span { position: relative; }
+.menu-mini-board--sudoku span:empty::after { content: attr(data-fill); opacity: 1; }
+.menu-court-preview { display: flex; align-items: center; gap: 5px; }
+.menu-court-preview span { display: grid; place-items: center; width: 30px; height: 48px; border: 1px solid #786f56; border-radius: 6px; }
+.menu-court-preview ion-icon { font-size: 24px !important; }
+@media (prefers-reduced-motion: no-preference) {
+  .menu-card--preview .menu-mini-board--wordle span { animation: menu-letter-check 640ms ease-out both; }
+  .menu-card--preview .menu-mini-board--wordle span:nth-child(2) { animation-delay: 80ms; }
+  .menu-card--preview .menu-mini-board--wordle span:nth-child(3) { animation-delay: 160ms; }
+  .menu-card--preview .menu-mini-board--wordle span:nth-child(4) { animation-delay: 240ms; }
+  .menu-card--preview .menu-mini-board--wordle span:nth-child(5) { animation-delay: 320ms; }
+  .menu-card--preview .menu-mini-board--sopa-letras span:nth-child(-n+3) { animation: menu-word-found 900ms ease-out both; }
+  .menu-card--preview .menu-mini-board--sopa-letras span:nth-child(2) { animation-delay: 120ms; }
+  .menu-card--preview .menu-mini-board--sopa-letras span:nth-child(3) { animation-delay: 240ms; }
+  .menu-card--preview .menu-mini-board--sudoku span:empty::after { animation: menu-number-fill 800ms ease-out both; }
+  .menu-card--preview .menu-mini-board--sudoku span:nth-child(4)::after { animation-delay: 120ms; }
+  .menu-card--preview .menu-mini-board--sudoku span:nth-child(6)::after { animation-delay: 240ms; }
+  .menu-card--preview .menu-mini-board--sudoku span:nth-child(8)::after { animation-delay: 360ms; }
+  .menu-card--preview .menu-mini-board--crucigrama span:not(:empty) { animation: menu-word-found 900ms ease-out both; }
+  .menu-card--preview .menu-mini-board--crucigrama span:nth-child(2),
+  .menu-card--preview .menu-mini-board--crucigrama span:nth-child(8) { animation-delay: 300ms; }
+  .menu-card--preview .menu-court-preview span:nth-child(2) { animation: menu-court-choice 1100ms ease-out both; }
+}
+@keyframes menu-letter-check { 0% { rotate: x 0deg; } 40% { rotate: x 55deg; } 100% { rotate: x 0deg; } }
+@keyframes menu-word-found { 0% { background: #40556e; color: #f3f6fa; } 100% { background: var(--game-color); color: #172433; } }
+@keyframes menu-number-fill { 0% { opacity: 0; transform: translateY(3px); } 100% { opacity: 1; transform: translateY(0); } }
+@keyframes menu-court-choice { 0% { transform: translateY(0); background: transparent; } 65%,100% { transform: translateY(-6px); background: #665531; border-color: #ecd098; } }
+@media (max-width: 767px) {
+  .menu-card { grid-template-columns: 80px minmax(0, 1fr); gap: 10px 18px; }
+  .menu-card__copy { display: contents; }
+  .menu-card__visual { grid-column: 1; grid-row: 1 / 3; align-self: center; }
+  .menu-card__title { grid-column: 2; align-self: end; }
+  .menu-card__skill { grid-column: 2; margin: 0; }
+  .menu-card__description { grid-column: 1 / -1; margin: 8px 0; }
+  .menu-card__play { grid-column: 1 / -1; width: 100%; }
+  .menu-mini-board--wordle { padding-top: 0; }
+  .menu-card--narrative { grid-template-columns: 80px minmax(0, 1fr); }
+  .menu-court-preview { gap: 3px; }
+  .menu-court-preview span { width: 24px; }
 }

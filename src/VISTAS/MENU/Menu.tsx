@@ -56,9 +56,6 @@ const groups: { title: GameGroup; description: string }[] = [
 // Muestra los juegos y permite abrir sus calendarios.
 const Menu: React.FC = () => {
   const navigate = useNavigate();
-  const [skill, setSkill] = useState('Todos');
-  const skills = ['Todos', 'Memoria', 'Lenguaje', 'Atención', 'Lógica'];
-  const matchesSkill = (game: MenuCardGame) => skill === 'Todos' || (skill === 'Lenguaje' ? /vocabulario|Lenguaje/.test(game.skill) : game.skill.toLocaleLowerCase('es').includes(skill.toLocaleLowerCase('es')));
   const [esAdmin, setEsAdmin] = useState<boolean>(esUsuarioAdmin);
 
   useEffect(() => {
@@ -92,11 +89,6 @@ const Menu: React.FC = () => {
             <div className="menu-heading__brain" aria-hidden="true"><BrainIcon className="" size={48} /></div>
             <div><h1>Un momento para tu mente</h1><p>Elegí un juego. Disfrutá el desafío, a tu ritmo.</p></div>
           </header>
-          <div className="menu-filters" role="group" aria-label="Filtrar juegos por habilidad">
-            {skills.map(item => <button key={item} type="button" aria-pressed={skill === item} onClick={() => setSkill(item)}>{item}</button>)}
-          </div>
-          <p className="menu-sr-only" aria-live="polite">{games.filter(matchesSkill).length} juegos disponibles para {skill.toLocaleLowerCase('es')}</p>
-
           {esAdmin && (
             <aside className="menu-admin" aria-labelledby="menu-admin-title">
               <div className="menu-admin__copy">
@@ -114,12 +106,12 @@ const Menu: React.FC = () => {
             </aside>
           )}
 
-          {groups.filter(group => games.some(game => game.group === group.title && matchesSkill(game))).map((group) => (
+          {groups.filter(group => games.some(game => game.group === group.title)).map((group) => (
             <section key={group.title} className="menu-section" aria-labelledby={`group-${group.title}`}>
               <h2 id={`group-${group.title}`}>{group.title}</h2>
               {games.some((game) => game.group === group.title) && (
                 <div className="menu-grid">
-                  {games.filter((game) => game.group === group.title && matchesSkill(game)).map((game) => (
+                  {games.filter((game) => game.group === group.title).map((game) => (
                     <MenuCard game={game} key={game.id} onStart={startGame} />
                   ))}
                 </div>

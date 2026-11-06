@@ -1,6 +1,7 @@
 /* Presenta un juego con su ilustración y su botón para empezar. */
+import { useEffect, useRef, useState } from 'react';
 import { IonIcon } from '@ionic/react';
-import { arrowForwardOutline } from 'ionicons/icons';
+import { arrowForwardOutline, personOutline } from 'ionicons/icons';
 import './Menu.css';
 
 export type GameGroup = 'Clásicos' | 'Narrativos' | 'Puzzles';
@@ -22,14 +23,33 @@ interface MenuCardProps {
 }
 
 // Presenta un juego con su ilustración y su botón para empezar.
-const MenuCard: React.FC<MenuCardProps> = ({ game, onStart }) => (
+const MenuCard: React.FC<MenuCardProps> = ({ game, onStart }) => {
+  const cardRef = useRef<HTMLElement>(null);
+  const [previewStarted, setPreviewStarted] = useState(false);
+
+  useEffect(() => {
+    const card = cardRef.current;
+    // The viewport observer also respects Ionic's nested scroll container.
+    if (!card || !('IntersectionObserver' in window)) return;
+    const observer = new IntersectionObserver(entries => {
+      if (entries.some(entry => entry.isIntersecting)) {
+        setPreviewStarted(true);
+        observer.disconnect();
+      }
+    }, { threshold: 0.35 });
+    observer.observe(card);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
   <article
-    className={`menu-card menu-card--${game.id}${game.group === 'Narrativos' ? ' menu-card--narrative' : ''}`}
+    ref={cardRef}
+    className={`menu-card menu-card--${game.id}${previewStarted ? ' menu-card--preview' : ''}${game.group === 'Narrativos' ? ' menu-card--narrative' : ''}`}
     aria-labelledby={`game-${game.id}`}
   >
     <div aria-hidden="true" className={`menu-card__visual menu-card__visual--${game.id}`}>
-      {game.id === 'kings-court' ? <IonIcon icon={game.icon} /> : <div className={`menu-mini-board menu-mini-board--${game.id}`}>
-        {(game.id === 'wordle' ? ['M','E','N','T','E'] : game.id === 'sudoku' ? ['1','','3','','2','','3','','1'] : game.id === 'sopa-letras' ? ['S','O','L','A','M','R','P','A','Z'] : ['','P','','S','O','L','','Z','']).map((cell,i) => <span key={i}>{cell}</span>)}
+      {game.id === 'kings-court' ? <div className="menu-court-preview">{[0,1,2].map(index => <span key={index}><IonIcon icon={personOutline} /></span>)}</div> : <div className={`menu-mini-board menu-mini-board--${game.id}`}>
+        {(game.id === 'wordle' ? ['M','E','N','T','E'] : game.id === 'sudoku' ? ['1','','3','','3','','3','','2'] : game.id === 'sopa-letras' ? ['S','O','L','A','M','R','P','A','Z'] : ['','S','','S','O','L','','L','']).map((cell,i) => <span key={i} data-fill={game.id === 'sudoku' ? ['1','2','3','2','3','1','3','1','2'][i] : undefined}>{cell}</span>)}
       </div>}
     </div>
     <div className="menu-card__copy">
@@ -48,6 +68,7 @@ const MenuCard: React.FC<MenuCardProps> = ({ game, onStart }) => (
       </button>
     </div>
   </article>
-);
+  );
+};
 
 export default MenuCard;
