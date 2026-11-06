@@ -2,11 +2,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { IonIcon } from '@ionic/react';
 import { arrowForwardOutline } from 'ionicons/icons';
-import shuffleCartas from '../JUEGOS/NARRATIVO/ETAPA_0_1_SELECCIONAR_CARTAS/shuffleCartas';
+import CourtPreview from './CourtPreview';
 import './Menu.css';
-
-const courtArtwork = new URL('../../../public/assets/narrative/guardia.png', import.meta.url).href;
-const courtFrame = new URL('../../../public/assets/narrative/card-frame.png', import.meta.url).href;
 
 export type GameGroup = 'Clásicos' | 'Narrativos' | 'Puzzles';
 
@@ -29,7 +26,6 @@ interface MenuCardProps {
 // Presenta un juego con su ilustración y su botón para empezar.
 const MenuCard: React.FC<MenuCardProps> = ({ game, onStart }) => {
   const cardRef = useRef<HTMLElement>(null);
-  const courtRef = useRef<HTMLDivElement>(null);
   const [previewStarted, setPreviewStarted] = useState(false);
 
   useEffect(() => {
@@ -46,11 +42,6 @@ const MenuCard: React.FC<MenuCardProps> = ({ game, onStart }) => {
     return () => observer.disconnect();
   }, []);
 
-  useEffect(() => {
-    if (game.id === 'kings-court' && previewStarted) {
-      return shuffleCartas(courtRef.current, '[data-court-card]');
-    }
-  }, [game.id, previewStarted]);
 
   return (
   <article
@@ -59,12 +50,7 @@ const MenuCard: React.FC<MenuCardProps> = ({ game, onStart }) => {
     aria-labelledby={`game-${game.id}`}
   >
     <div aria-hidden="true" className={`menu-card__visual menu-card__visual--${game.id}`}>
-      {game.id === 'kings-court' ? <div ref={courtRef} className="menu-court-preview">
-        {[0,1,2].map(index => <span key={index} data-court-card="">
-          <img className="menu-court-preview__art" src={courtArtwork} alt="" loading="lazy" width="50" height="75" />
-          <img className="menu-court-preview__frame" src={courtFrame} alt="" loading="lazy" width="50" height="75" />
-        </span>)}
-      </div> : <div className={`menu-mini-board menu-mini-board--${game.id}`}>
+      {game.id === 'kings-court' ? <CourtPreview active={previewStarted} /> : <div className={`menu-mini-board menu-mini-board--${game.id}`}>
         {(game.id === 'wordle' ? ['M','E','N','T','E'] : game.id === 'sudoku' ? ['1','','3','','3','','3','','2'] : game.id === 'sopa-letras' ? ['S','O','L','A','M','R','P','A','Z'] : ['','S','','S','O','L','','L','']).map((cell,i) => <span key={i} data-fill={game.id === 'sudoku' ? ['1','2','3','2','3','1','3','1','2'][i] : undefined}>{cell}</span>)}
       </div>}
     </div>

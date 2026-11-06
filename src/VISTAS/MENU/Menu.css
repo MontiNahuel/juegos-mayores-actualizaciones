@@ -120,7 +120,7 @@
 /* One short game demonstration per viewport entry; content and controls never wait for motion. */
 .menu-mini-board span { position: relative; }
 .menu-mini-board--sudoku span:empty::after { content: attr(data-fill); opacity: 1; }
-.menu-court-preview { display: flex; align-items: center; justify-content: center; width: 104px; min-height: 90px; gap: 0; }
+.menu-court-preview { position: relative; display: flex; align-items: center; justify-content: center; width: 104px; min-height: 90px; gap: 0; }
 .menu-court-preview span { display: block; position: relative; flex: 0 0 44px; height: 66px; background: #172433; border-radius: 5px; overflow: hidden; }
 .menu-court-preview span + span { margin-left: -16px; }
 .menu-court-preview span:nth-child(1) { rotate: -12deg; }
