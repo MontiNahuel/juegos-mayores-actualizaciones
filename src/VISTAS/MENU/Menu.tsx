@@ -57,10 +57,12 @@ const Menu: React.FC = () => {
               </div>
               <button
                 type="button"
-                onClick={() => navigate("/editor-narrativo")}
+                onClick={() => {
+                  window.location.href = '/admin/juegos';
+                }}
                 className="min-h-12 cursor-pointer rounded-[10px] border-0 bg-[#62480e] px-[18px] py-3 font-[inherit] text-white"
               >
-                Abrir Editor Narrativo
+                Abrir Editor
               </button>
             </aside>
           )}

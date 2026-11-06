@@ -86,6 +86,14 @@ const AppRoutes = () => (
         }
       />
       <Route
+        path="/admin/juegos"
+        element={
+          <Suspense fallback={<FallbackLoader />}>
+            <NarrativoAdminPage />
+          </Suspense>
+        }
+      />
+      <Route
         path="/torre"
         element={
           <Suspense fallback={<FallbackLoader />}>
