@@ -1,5 +1,5 @@
 /* Resuelve la historia con datos locales cuando no está disponible el servidor. */
-import type { CartaApi, ConversacionApi, EstadoPartida, EventoApi, FinalizacionApi, PersonajeApi, ResultadoApi, SetupPartida } from './narrativeService';
+import type { CartaApi, ConversacionApi, EstadoPartida, EventoApi, FinalizacionApi, PersonajeApi, ResultadoApi, SetupPartida, EstadoGrafoApi } from './narrativeService';
 import { configuracionPorEdad } from '../../../config/adaptacionEdad';
 
 // Partida de demostracion corta: seis meses, con recursos y afinidad reales en Redux.
@@ -139,36 +139,62 @@ export function resolverRespaldoNarrativo(path: string, options: RequestInit | u
     case '/v2/partida/elegir-carta-mes': {
       const [titulo, descripcion] = situaciones[(mes - 1) % situaciones.length];
       const carta = estado.cartasDraft.find(/* Busca el primer elemento que cumple esta condición. */ c => (c.id || c._id) === body.carta_id);
-      const evento: EventoApi = {
-        id: `local-evento-${mes}`, titulo, imagen: '',
-        descripcion: `${jugador.modo_mayor ? '' : carta ? `${carta.nombre}: ` : ''}${descripcion}`,
-        opciones: [
-          { id: 'local-ayudar', texto: 'Destinar reservas a la comunidad (−12 oro, +8 pueblo, +4 fe).', bloqueada: false },
-          { id: 'local-organizar', texto: 'Organizar un esfuerzo compartido (+6 oro, −4 pueblo, +3 ejército).', bloqueada: false },
-        ],
+      const grafo: EstadoGrafoApi = {
+        fase_actual: 'TOMA_DECISION_EVENTO',
+        grafo_id: `local-evento-${mes}`,
+        tipo: 'evento',
+        titulo,
+        imagen: '',
+        nodo_actual: {
+          id: `local-nodo-${mes}`,
+          hablante_id: 'narrador',
+          texto: `${jugador.modo_mayor ? '' : carta ? `${carta.nombre}: ` : ''}${descripcion}`,
+          es_final: false,
+          opciones: [
+            { id: 'local-ayudar', texto: 'Destinar reservas a la comunidad (−12 oro, +8 pueblo, +4 fe).', disponible: true },
+            { id: 'local-organizar', texto: 'Organizar un esfuerzo compartido (+6 oro, −4 pueblo, +3 ejército).', disponible: true },
+          ],
+          resultado_texto: '',
+          impactos_recursos: [],
+          impactos_afinidad: [],
+          impactos_tags: [],
+        },
+        recursos: jugador.recursos,
+        afinidad: jugador.afinidad,
+        finalizacion: null,
+        status: 'in_progress',
       };
-      return { evento_actual: evento };
+      return { grafo_actual: grafo };
     }
-    case '/v2/partida/decidir-evento': {
-      const ayudar = body.opcion_id === 'local-ayudar' || estado.eventoActual?.opciones[0]?.id === body.opcion_id;
-      const cambios: [string, number][] = ayudar ? [['oro', -12], ['pueblo', 8], ['fe', 4]] : [['oro', 6], ['pueblo', -4], ['ejercito', 3]];
-      const resultado: ResultadoApi = {
+    case '/v2/partida/avanzar-nodo': {
+      const ayudar = body.opcion_id === 'local-ayudar';
+      const cambios = ayudar
+        ? [{ recurso: 'oro', delta: -12 }, { recurso: 'pueblo', delta: 8 }, { recurso: 'fe', delta: 4 }]
+        : [{ recurso: 'oro', delta: 6 }, { recurso: 'pueblo', delta: -4 }, { recurso: 'ejercito', delta: 3 }];
+      const grafo: EstadoGrafoApi = {
+        fase_actual: 'BALANCE_MES',
+        grafo_id: `local-evento-${mes}`,
+        tipo: 'evento',
         titulo: ayudar ? 'Ayuda a las aldeas' : 'Un esfuerzo compartido',
-        texto: ayudar ? 'Las reservas llegaron a las aldeas. El pueblo agradece tu apoyo.' : 'La corte coordinó una jornada de trabajo. Las reservas y las defensas mejoraron.',
-        imagen: '', tipo_resultado: 'neutro',
-        efectos: cambios.map(/* Prepara el resultado de cada elemento. */ ([clave, valor]) => ({ accion: { clave, valor } })),
+        imagen: '',
+        nodo_actual: {
+          id: `local-nodo-final-${mes}`,
+          hablante_id: 'narrador',
+          texto: ayudar ? 'Las reservas llegaron a las aldeas. El pueblo agradece tu apoyo.' : 'La corte coordinó una jornada de trabajo. Las reservas y las defensas mejoraron.',
+          es_final: true,
+          opciones: [],
+          resultado_texto: ayudar ? 'Las reservas llegaron a las aldeas. El pueblo agradece tu apoyo.' : 'La corte coordinó una jornada de trabajo. Las reservas y las defensas mejoraron.',
+          impactos_recursos: cambios,
+          impactos_afinidad: [],
+          impactos_tags: [],
+        },
+        recursos: jugador.recursos,
+        afinidad: jugador.afinidad,
+        finalizacion: finalDe(estado),
+        status: 'in_progress',
       };
-      const perfilEdad = configuracionPorEdad(jugador.edad ?? null);
-      // El hint opcional usa la misma forma que el servicio real; sin hint manda la regla central por edad.
-      const probabilidad = body.preferencia_conversacion?.probabilidad_no_repetida
-        ?? perfilEdad.probabilidadConversacionNoRepetida;
-      return {
-        resultado_actual: resultado,
-        ...(debeOfrecerConversacion(estado, probabilidad) ? { conversacion_actual: conversacionDe(estado) } : {}),
-      };
+      return grafo;
     }
-    case '/v2/partida/responder-conversacion':
-      return foto;
     case '/v2/partida/avanzar-mes': {
       const finalizacion = finalDe(estado);
       return finalizacion ? { finalizacion } : { cartas_draft_actual: draft(mes) };

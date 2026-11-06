@@ -5,9 +5,6 @@ import {
   CrownIcon,
   UsersIcon,
   LayersIcon,
-  SparklesIcon,
-  FileTextIcon,
-  MessageSquareIcon,
   CalendarIcon,
   SkullIcon,
   XIcon,
@@ -16,9 +13,6 @@ import {
 import UniversosTab from './UniversosTab';
 import PersonajesTab from './PersonajesTab';
 import CartasTab from './CartasTab';
-import ResultadosTab from './ResultadosTab';
-import EventosTab from './EventosTab';
-import ConversacionesTab from './ConversacionesTab';
 import FinalizacionesTab from './FinalizacionesTab';
 import CalendarioTab from './CalendarioTab';
 import GrafosV2Tab from './GrafosV2Tab';
@@ -68,12 +62,9 @@ export default function NarrativeAdminModal({ abierto, onCerrar }) {
     { id: 'universos', label: '1. Universos', Icon: CrownIcon, count: universos.length },
     { id: 'personajes', label: '2. Personajes', Icon: UsersIcon, count: personajes.length },
     { id: 'cartas', label: '3. Cartas', Icon: LayersIcon },
-    { id: 'resultados', label: '4. Desenlaces', Icon: SparklesIcon },
-    { id: 'eventos', label: '5. Eventos', Icon: FileTextIcon },
-    { id: 'conversaciones', label: '6. Diálogos', Icon: MessageSquareIcon },
-    { id: 'finalizaciones', label: '7. Finalizaciones', Icon: SkullIcon },
-    { id: 'calendario', label: '8. Calendario', Icon: CalendarIcon },
-    { id: 'grafos_v2', label: '9. Grafos V2 (Nodos)', Icon: GitBranchIcon },
+    { id: 'grafos_v2', label: '4. Grafos V2 (Eventos y Diálogos)', Icon: GitBranchIcon },
+    { id: 'finalizaciones', label: '5. Finalizaciones', Icon: SkullIcon },
+    { id: 'calendario', label: '6. Calendario', Icon: CalendarIcon },
   ];
 
   return (
@@ -91,11 +82,11 @@ export default function NarrativeAdminModal({ abierto, onCerrar }) {
                   Torre de Control · Crónicas de la Corte Real
                 </h2>
                 <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-50 text-amber-800 border border-amber-200/60 px-2 py-0.5 rounded-full">
-                  Juego Narrativo
+                  Juego Narrativo V2
                 </span>
               </div>
               <p className="text-[11px] text-slate-500 font-medium">
-                Suite completa de administración: arquetipos, cartas, eventos, diálogos y generación de desafíos diarios
+                Suite completa de administración: arquetipos, cartas, grafos interactivos y generación de desafíos diarios
               </p>
             </div>
           </div>
@@ -110,7 +101,7 @@ export default function NarrativeAdminModal({ abierto, onCerrar }) {
           </button>
         </header>
 
-        {/* Barra de Pestañas de Navegación (7 Pestañas ABM) */}
+        {/* Barra de Pestañas de Navegación */}
         <div className="bg-white px-6 border-b border-slate-200/80 flex items-center justify-between gap-4 overflow-x-auto flex-shrink-0">
           <div className="flex items-center gap-1.5 py-2.5">
             {tabsConfig.map(/* Prepara el resultado de cada elemento. */ (tab) => {
@@ -165,16 +156,8 @@ export default function NarrativeAdminModal({ abierto, onCerrar }) {
             <CartasTab universos={universos} />
           )}
 
-          {tabActiva === 'resultados' && (
-            <ResultadosTab universos={universos} personajes={personajes} />
-          )}
-
-          {tabActiva === 'eventos' && (
-            <EventosTab universos={universos} personajes={personajes} />
-          )}
-
-          {tabActiva === 'conversaciones' && (
-            <ConversacionesTab universos={universos} personajes={personajes} />
+          {tabActiva === 'grafos_v2' && (
+            <GrafosV2Tab universos={universos} personajes={personajes} />
           )}
 
           {tabActiva === 'finalizaciones' && (
@@ -184,16 +167,12 @@ export default function NarrativeAdminModal({ abierto, onCerrar }) {
           {tabActiva === 'calendario' && (
             <CalendarioTab universos={universos} />
           )}
-
-          {tabActiva === 'grafos_v2' && (
-            <GrafosV2Tab universos={universos} personajes={personajes} />
-          )}
         </div>
 
         {/* Pie de Panel */}
         <footer className="bg-white px-6 py-3 border-t border-slate-200/80 flex items-center justify-between text-xs text-slate-500 flex-shrink-0">
           <span className="text-[11px]">
-            Sincronización en tiempo real con MongoDB y el motor roguelite de partidas.
+            Sincronización en tiempo real con MongoDB y el motor narrativo V2 de grafos.
           </span>
           <button
             type="button"

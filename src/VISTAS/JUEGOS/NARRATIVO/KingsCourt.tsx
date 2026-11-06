@@ -12,9 +12,9 @@ import {
   registrarDecisionEvento, reiniciarSeleccionNarrativa, resolverConversacion, sincronizarPartida,
 } from '../../../store/narrativoSelectionSlice';
 import {
-  agregarCondicionesSecretas, avanzarNodo, avanzarMes as avisarAvanceMes, decidirEvento, elegirCartaMensual, esPartidaNarrativaLocal,
+  agregarCondicionesSecretas, avanzarNodo, avanzarMes as avisarAvanceMes, elegirCartaMensual, esPartidaNarrativaLocal,
   iniciarPartida, obtenerCatalogosCronica, obtenerCortePartida, obtenerEstadoPartida, obtenerHistorialPartida,
-  reiniciarPartida, responderConversacion,
+  reiniciarPartida,
 } from './narrativeService';
 import SeleccionarCartasEtapa0y1 from './ETAPA_0_1_SELECCIONAR_CARTAS/SeleccionarCartasEtapa0y1';
 import MuestraEventoEtapa0 from './ETAPA_0_MUESTRA_EVENTO/MuestraEventoEtapa0';
@@ -275,27 +275,12 @@ export default function KingsCourt() {
     await mostrarEstado(data);
   };
 
-  // Guarda la decisión y procesa resultado, conversación y posible final.
+  // Guarda la decisión en el motor V2 de grafos y procesa el siguiente paso o desenlace.
   const decidirEventoActual = async (opcionId: string) => {
     const evento = juego.eventoActual;
-    if (evento.nodo_id) {
-      const data = await pedir(/* Completa este paso con los datos recibidos por la operación. */ () => avanzarNodo(date, opcionId, evento.id), 'No se pudo guardar la decisión.');
-      if (data) await mostrarEstado(data);
-      return;
-    }
-    dispatch(registrarDecisionEvento({
-      evento_id: evento?.id || evento?._id, opcion_id: opcionId,
-      evento_titulo: evento?.titulo,
-      opcion_texto: evento?.opciones?.find(/* Busca el primer elemento que cumple esta condición. */ (opcion: { id: string; texto: string }) => opcion.id === opcionId)?.texto,
-    }));
-    const preferencia = modoMayor ? {
-      probabilidad_no_repetida: config.probabilidadConversacionNoRepetida,
-      excluir_ids: jugadorActual().conversaciones_jugadas,
-    } : undefined;
     const data = await pedir(
-      // Completa este paso con los datos recibidos por la operación.
-      () => decidirEvento(date, opcionId, preferencia),
-      'La decision fue guardada, pero no se pudo cargar su resultado.'
+      () => avanzarNodo(date, opcionId, evento?.id || evento?.nodo_id || ''),
+      'No se pudo guardar la decisión.'
     );
     if (data) await mostrarEstado(data);
     const final = data?.finalizacion || finalPorRecurso(jugadorActual().recursos);
@@ -357,16 +342,13 @@ export default function KingsCourt() {
       });
   };
 
-  // Aplica la respuesta a la conversación y la registra en el servidor.
+  // Aplica la respuesta a la conversación en el motor V2 de grafos.
   const responderActual = async (decision: any) => {
-    if (juego.conversacionActual.nodo_id) {
-      const data = await pedir(/* Completa este paso con los datos recibidos por la operación. */ () => avanzarNodo(date, String(decision.opcion), juego.conversacionActual._id), 'No se pudo guardar la respuesta.');
-      if (data) await mostrarEstado(data);
-      return;
-    }
-    dispatch(resolverConversacion({ conversacionId: juego.conversacionActual._id, decision }));
-    setDecisionConversacion(decision);
-    await pedir(/* Completa este paso con los datos recibidos por la operación. */ () => responderConversacion(date, decision.opcion), 'La respuesta quedo aplicada localmente, pero no se pudo guardar en el historial.');
+    const data = await pedir(
+      () => avanzarNodo(date, String(decision.opcion), juego.conversacionActual?._id || juego.conversacionActual?.nodo_id || ''),
+      'No se pudo guardar la respuesta.'
+    );
+    if (data) await mostrarEstado(data);
   };
 
   // Guarda la nueva edad y adapta el draft que esté abierto.

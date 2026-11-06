@@ -1,4 +1,4 @@
-/* Habla con el servidor para iniciar la historia, decidir y recuperar la partida. */
+/* Habla con el servidor para iniciar la historia, avanzar en grafos V2 y recuperar la partida. */
 import { store } from '../../../store/store';
 import { resolverRespaldoNarrativo } from './narrativeFallback';
 import { API_URL } from '../../../config/api';
@@ -48,39 +48,9 @@ export interface EventoApi {
   opciones: { id: string; texto: string; bloqueada: boolean; es_secreta?: boolean; secreto?: string; condiciones?: any[] }[];
 }
 
-// El endpoint de turno omite las condiciones; se consultan en la definición del evento.
-let catalogoEventos: Promise<any[]> | null = null;
-// Busca definicion evento con los datos de este paso.
-export const obtenerDefinicionEvento = async (id: string) => {
-  catalogoEventos ||= (/* Completa este paso con los datos recibidos por la operación. */ async () => {
-    const token = localStorage.getItem('token');
-    const response = await fetch(`${API}/admin/eventos?limit=500`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
-    if (!response.ok) throw new Error(`No se pudieron cargar las condiciones del evento (${response.status}).`);
-    return response.json();
-  })();
-  const eventos = await catalogoEventos;
-  return eventos.find(/* Busca el primer elemento que cumple esta condición. */ (evento: any) => evento._id === id || evento.id === id) || null;
-};
-
-// Guarda en el evento local las condiciones de su opcion secreta.
+// En el motor de grafos V2 las opciones ya vienen sanitizadas directamente desde el nodo activo.
 export const agregarCondicionesSecretas = async (evento: EventoApi): Promise<EventoApi> => {
-  // Los grafos ya entregan opciones sanitizadas; no consultar su definición interna.
-  if (evento.nodo_id) return evento;
-  try {
-    const definicion = await obtenerDefinicionEvento(evento.id);
-    return {
-      ...evento,
-      opciones: evento.opciones.map(/* Prepara el resultado de cada elemento. */ opcion => ({
-        ...opcion,
-        es_secreta: opcion.es_secreta ?? definicion?.opciones?.find(/* Busca el primer elemento que cumple esta condición. */ (x: any) => x.id === opcion.id)?.es_secreta,
-        condiciones: definicion?.opciones?.find(/* Busca el primer elemento que cumple esta condición. */ (x: any) => x.id === opcion.id)?.condiciones || [],
-      })),
-    };
-  } catch {
-    return evento;
-  }
+  return evento;
 };
 
 export interface ResultadoApi {
@@ -252,7 +222,6 @@ export interface SetupPartida {
   tiene_partida_activa: boolean;
 }
 
-// Hint opcional para el motor: la ruta actual sigue funcionando si el backend aun no lo consume.
 export interface PreferenciaConversacion {
   probabilidad_no_repetida: number;
   excluir_ids: string[];
@@ -315,30 +284,41 @@ export const obtenerEstadoPartida = (date: string) => request<EstadoPartida>(`/v
 // Lee el historial mensual solo al abrir las estadisticas finales.
 export const obtenerHistorialPartida = (date: string) => request<HistorialPartidaApi>(`/partida/historial?date=${date}`);
 
-// Resuelve los IDs de la bitácora con los catálogos del mismo universo. Si un
-// catálogo no está disponible, los balances y las demás entradas siguen visibles.
+// Resuelve los IDs de la bitácora con los catálogos del mismo universo.
 export const obtenerCatalogosCronica = async (date: string, universoId?: string): Promise<CatalogosCronica> => {
   const vacios: CatalogosCronica = { cartas: [], eventos: [], resultados: [], conversaciones: [] };
   if (esPartidaNarrativaLocal(date)) return vacios;
   const token = localStorage.getItem('token');
   const controller = new AbortController();
   const timeout = setTimeout(/* Ejecuta este paso cuando se cumple la espera. */ () => controller.abort(), ESPERA_SERVIDOR_MS);
-  const nombres = Object.keys(vacios) as (keyof CatalogosCronica)[];
-  const consultas = nombres.map(/* Prepara el resultado de cada elemento. */ async nombre => {
+
+  const endpointMap: Record<string, string> = {
+    cartas: 'cartas',
+    eventos: 'v2/eventos',
+    conversaciones: 'v2/conversaciones',
+  };
+
+  const consultas = (['cartas', 'eventos', 'conversaciones'] as const).map(async nombre => {
     const parametros = new URLSearchParams({ limit: '500' });
     if (universoId) parametros.set('universo_id', universoId);
-    const respuesta = await fetch(`${API}/admin/${nombre}?${parametros}`, {
+    const respuesta = await fetch(`${API}/admin/${endpointMap[nombre]}?${parametros}`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
       signal: controller.signal,
     });
-    if (!respuesta.ok) throw new Error(`No se pudo consultar ${nombre}.`);
-    return respuesta.json() as Promise<EntradaCatalogoCronica[]>;
+    if (!respuesta.ok) return [];
+    return (await respuesta.json()) as EntradaCatalogoCronica[];
   });
+
   try {
-    const resultados = await Promise.allSettled(consultas);
-    return Object.fromEntries(nombres.map(/* Prepara el resultado de cada elemento. */ (nombre, indice) => [
-      nombre, resultados[indice].status === 'fulfilled' ? resultados[indice].value : [],
-    ])) as unknown as CatalogosCronica;
+    const [cartas, eventos, conversaciones] = await Promise.all(consultas);
+    return {
+      cartas: cartas || [],
+      eventos: eventos || [],
+      resultados: [],
+      conversaciones: conversaciones || [],
+    };
+  } catch {
+    return vacios;
   } finally {
     clearTimeout(timeout);
   }
@@ -363,38 +343,22 @@ export const iniciarPartida = (date: string, corte: string[], cartas: string[]) 
   method: 'POST', body: JSON.stringify({ date, corte_elegida_ids: corte, cartas_iniciales_ids: cartas }),
 });
 
-// Pide el evento generado por la carta mensual elegida.
+// Pide el evento generado por la carta mensual elegida (motor de grafos V2).
 export const elegirCartaMensual = (date: string, cartaId: string) => request<EstadoPartida>('/v2/partida/elegir-carta-mes', {
   method: 'POST', body: JSON.stringify({ date, carta_id: cartaId }),
 }).then(adaptarEstadoGrafo);
 
-// Eventos y conversaciones del motor de grafos usan el mismo endpoint e IDs de opción.
+// Eventos y conversaciones del motor de grafos V2 usan el mismo endpoint interactivo e IDs de opción.
 export const avanzarNodo = async (date: string, opcionId: string, grafoAnteriorId: string): Promise<EstadoPartida> => {
   const grafo = await request<EstadoGrafoApi>('/v2/partida/avanzar-nodo', {
     method: 'POST', body: JSON.stringify({ date, opcion_id: opcionId }),
-  }, false);
+  });
   // Al encadenar otro grafo la respuesta omite los impactos del anterior.
   if (grafo.grafo_id !== grafoAnteriorId) {
-    return adaptarEstadoGrafo(await request<EstadoPartida>(`/v2/partida/estado?date=${date}`, undefined, false));
+    return adaptarEstadoGrafo(await request<EstadoPartida>(`/v2/partida/estado?date=${date}`));
   }
   return adaptarEstadoGrafo({ grafo_actual: grafo, fase_actual: grafo.fase_actual });
 };
-
-// Pide el resultado, la conversacion o la finalizacion del evento.
-export const decidirEvento = (date: string, opcionId: string, preferenciaConversacion?: PreferenciaConversacion) => request<EstadoPartida>('/v2/partida/decidir-evento', {
-  method: 'POST',
-  body: JSON.stringify({
-    date,
-    opcion_id: opcionId,
-    // Solo se agrega cuando el llamador lo pide; asi se mantiene el contrato anterior por defecto.
-    ...(preferenciaConversacion ? { preferencia_conversacion: preferenciaConversacion } : {}),
-  }),
-});
-
-// Registra la mediacion elegida y cierra la conversacion.
-export const responderConversacion = (date: string, opcionNumero: number | string) => request<EstadoPartida>('/v2/partida/responder-conversacion', {
-  method: 'POST', body: JSON.stringify({ date, opcion_numero: opcionNumero }),
-});
 
 // Cierra el balance y recibe el nuevo draft o la finalizacion.
 export const avanzarMes = (date: string) => request<EstadoPartida>('/v2/partida/avanzar-mes', {
