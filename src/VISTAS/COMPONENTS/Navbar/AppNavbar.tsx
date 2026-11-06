@@ -53,7 +53,7 @@ function NavbarIdentity({
     <button
       type="button"
       onClick={view.onBack}
-      className={`flex shrink-0 cursor-pointer items-center justify-center rounded-[10px] border-0 bg-transparent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#294c6b] size-10 max-md:size-[34px]`}
+      className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-[10px] border-0 bg-transparent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#294c6b]"
       aria-label="Volver al menú principal"
       title="Volver al menú principal"
     >
@@ -146,7 +146,7 @@ export default function AppNavbar({ view, onUsuarioChange }: AppNavbarProps) {
   // El menú permite saludo y cuenta; calendario/juego reservan un centro flexible para el título.
   const layoutClass = menu
     ? "menu-nav mx-auto flex min-h-[88px] max-w-[1180px] flex-wrap items-center gap-6 px-9 py-4 text-menu-ink max-md:min-h-[78px] max-md:gap-3.5 max-md:px-5 max-md:py-3 max-[360px]:gap-1.5 max-[360px]:px-3"
-    : "menu-nav mx-auto grid min-h-[88px] w-full max-w-[1180px] grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-3 px-9 py-4 text-menu-ink max-md:min-h-[78px] max-md:grid-cols-[34px_minmax(0,1fr)_auto] max-md:px-5 max-md:py-3 max-md:[&_.navbar-account]:col-span-full max-md:[&_.navbar-account]:justify-self-end max-[360px]:px-3";
+    : "menu-nav mx-auto grid min-h-[88px] w-full max-w-[1180px] grid-cols-[44px_minmax(0,1fr)_auto] items-center gap-3 px-9 py-4 text-menu-ink max-md:min-h-[78px] max-md:gap-2 max-md:px-3 max-md:py-3";
 
   return (
     <>
@@ -161,7 +161,7 @@ export default function AppNavbar({ view, onUsuarioChange }: AppNavbarProps) {
             <NavbarIdentity view={view} user={session.user} />
             {/* Los puntos animados pertenecen al juego/resultado; el calendario solo necesita el título. */}
             {view.kind !== "menu" && (
-              <div className="min-w-0 text-center">
+              <div className="min-w-0 text-center [overflow-wrap:anywhere]">
                 <h1 className="m-0! text-[1.375rem]! leading-tight! font-bold! text-menu-ink max-md:text-lg!">
                   {view.title}
                 </h1>
