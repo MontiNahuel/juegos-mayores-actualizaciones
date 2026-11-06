@@ -1,3 +1,4 @@
+import { fetchNarrativeAdmin } from './api';
 /* Permite crear, buscar y editar cartas narrativas. */
 import { useState, useEffect } from 'react';
 import {
@@ -49,7 +50,7 @@ export default function CartasTab({ universos = [] }) {
       const url = uId
         ? `/api/narrative/admin/cartas?universo_id=${encodeURIComponent(uId)}`
         : '/api/narrative/admin/cartas';
-      const res = await fetch(url);
+      const res = await fetchNarrativeAdmin(url);
       if (res.ok) {
         const data = await res.json();
         setCartas(data);
@@ -167,7 +168,7 @@ export default function CartasTab({ universos = [] }) {
     };
 
     try {
-      const res = await fetch('/api/narrative/admin/cartas', {
+      const res = await fetchNarrativeAdmin('/api/narrative/admin/cartas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -195,7 +196,7 @@ export default function CartasTab({ universos = [] }) {
   const handleEliminar = async (cId) => {
     if (!confirm(`¿Estás seguro de eliminar la carta "${cId}"?`)) return;
     try {
-      const res = await fetch(`/api/narrative/admin/cartas/${cId}`, {
+      const res = await fetchNarrativeAdmin(`/api/narrative/admin/cartas/${cId}`, {
         method: 'DELETE',
       });
       if (res.ok) {

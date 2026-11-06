@@ -1,3 +1,4 @@
+import { fetchNarrativeAdmin } from './api';
 /* Permite elegir, arrastrar, subir o quitar una imagen. */
 import { useState, useRef } from 'react';
 import {
@@ -55,7 +56,7 @@ export default function ImageUploadField({
       const formData = new FormData();
       formData.append('file', file);
 
-      const res = await fetch(`/api/narrative/admin/upload-imagen?categoria=${encodeURIComponent(categoria)}`, {
+      const res = await fetchNarrativeAdmin(`/api/narrative/admin/upload-imagen?categoria=${encodeURIComponent(categoria)}`, {
         method: 'POST',
         body: formData,
       });

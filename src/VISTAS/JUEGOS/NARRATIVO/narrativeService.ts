@@ -2,8 +2,10 @@
 import { store } from '../../../store/store';
 import { resolverRespaldoNarrativo } from './narrativeFallback';
 import { API_URL } from '../../../config/api';
+import { ErrorServidorNarrativo, narrativeAdminHeaders, narrativeGameHeaders } from './narrativeAuth';
+import { NARRATIVE_API_PATH, NARRATIVE_CATALOG_PATHS, NARRATIVE_GAME_PATHS } from './narrativeEndpoints';
 
-const API = `${API_URL}/api/narrative`;
+const API = `${API_URL}${NARRATIVE_API_PATH}`;
 
 // Respaldo temporal para jugar sin servidor. Poner VITE_NARRATIVE_FALLBACK=false
 // en .env.local y reiniciar Vite (o recompilar) para deshabilitar TODOS estos fallbacks.
@@ -14,11 +16,6 @@ const fechasLocales = new Set<string>();
 
 // Comprueba si la partida usa el respaldo local.
 export const esPartidaNarrativaLocal = (date: string) => HABILITAR_FALLBACK_NARRATIVO && fechasLocales.has(date);
-
-class ErrorServidorNarrativo extends Error {
-  // Completa este paso con los datos recibidos por la operación.
-  constructor(public status: number, mensaje: string) { super(mensaje); }
-}
 
 export interface PersonajeApi {
   _id: string;
@@ -244,19 +241,22 @@ async function request<T>(path: string, options?: RequestInit, permitirRespaldo 
   const respaldo = () => resolverRespaldoNarrativo(path, options, store.getState().narrativoSelection) as T;
   // Completa la respuesta con los datos de la siguiente etapa.
   const completar = (data: T) => {
-    if (path === '/partida/reiniciar') fechasLocales.delete(date);
+    if (path === NARRATIVE_GAME_PATHS.reiniciar) fechasLocales.delete(date);
     return data;
   };
   if (permitirRespaldo && esPartidaNarrativaLocal(date)) return completar(respaldo());
 
   const controller = new AbortController();
-  const timeout = HABILITAR_FALLBACK_NARRATIVO && permitirRespaldo ? setTimeout(/* Ejecuta este paso cuando se cumple la espera. */ () => controller.abort(), ESPERA_SERVIDOR_MS) : undefined;
+  let timeout: ReturnType<typeof setTimeout> | undefined;
   try {
-    const token = localStorage.getItem('token');
+    const authHeaders = await narrativeGameHeaders();
+    // La emisión inicial de la credencial tiene su propia espera; no consume la del juego.
+    if (HABILITAR_FALLBACK_NARRATIVO && permitirRespaldo) timeout = setTimeout(() => controller.abort(), ESPERA_SERVIDOR_MS);
     const response = await fetch(`${API}${path}`, {
       ...options,
+      credentials: 'same-origin',
       signal: controller.signal,
-      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
     });
 
     if (!response.ok) {
@@ -276,33 +276,28 @@ async function request<T>(path: string, options?: RequestInit, permitirRespaldo 
 }
 
 // Carga las opciones de preparacion de la etapa 0.
-export const obtenerSetup = (date: string) => request<SetupPartida>(`/partida/setup?date=${date}`);
+export const obtenerSetup = (date: string) => request<SetupPartida>(`${NARRATIVE_GAME_PATHS.setup}?date=${encodeURIComponent(date)}`);
 
 // Lee solo el contenido de la fase activa para reanudar una partida existente.
-export const obtenerEstadoPartida = (date: string) => request<EstadoPartida>(`/v2/partida/estado?date=${date}`).then(adaptarEstadoGrafo);
+export const obtenerEstadoPartida = (date: string) => request<EstadoPartida>(`${NARRATIVE_GAME_PATHS.estado}?date=${encodeURIComponent(date)}`).then(adaptarEstadoGrafo);
 
 // Lee el historial mensual solo al abrir las estadisticas finales.
-export const obtenerHistorialPartida = (date: string) => request<HistorialPartidaApi>(`/partida/historial?date=${date}`);
+export const obtenerHistorialPartida = (date: string) => request<HistorialPartidaApi>(`${NARRATIVE_GAME_PATHS.historial}?date=${encodeURIComponent(date)}`);
 
 // Resuelve los IDs de la bitácora con los catálogos del mismo universo.
 export const obtenerCatalogosCronica = async (date: string, universoId?: string): Promise<CatalogosCronica> => {
   const vacios: CatalogosCronica = { cartas: [], eventos: [], resultados: [], conversaciones: [] };
   if (esPartidaNarrativaLocal(date)) return vacios;
-  const token = localStorage.getItem('token');
+  const authHeaders = narrativeAdminHeaders();
   const controller = new AbortController();
   const timeout = setTimeout(/* Ejecuta este paso cuando se cumple la espera. */ () => controller.abort(), ESPERA_SERVIDOR_MS);
-
-  const endpointMap: Record<string, string> = {
-    cartas: 'cartas',
-    eventos: 'v2/eventos',
-    conversaciones: 'v2/conversaciones',
-  };
 
   const consultas = (['cartas', 'eventos', 'conversaciones'] as const).map(async nombre => {
     const parametros = new URLSearchParams({ limit: '500' });
     if (universoId) parametros.set('universo_id', universoId);
-    const respuesta = await fetch(`${API}/admin/${endpointMap[nombre]}?${parametros}`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    const respuesta = await fetch(`${API}${NARRATIVE_CATALOG_PATHS[nombre]}?${parametros}`, {
+      headers: authHeaders,
+      credentials: 'same-origin',
       signal: controller.signal,
     });
     if (!respuesta.ok) return [];
@@ -325,42 +320,43 @@ export const obtenerCatalogosCronica = async (date: string, universoId?: string)
 };
 
 // Lee las cartas y tags que quedaron en la partida terminada.
-export const obtenerInventarioPartida = (date: string) => request<any>(`/partida/inventario?date=${date}`);
+export const obtenerInventarioPartida = (date: string) => request<any>(`${NARRATIVE_GAME_PATHS.inventario}?date=${encodeURIComponent(date)}`);
 
 // Lee los personajes de corte y sus afinidades finales.
-export const obtenerCortePartida = (date: string) => request<any>(`/partida/corte?date=${date}`);
+export const obtenerCortePartida = (date: string) => request<any>(`${NARRATIVE_GAME_PATHS.corte}?date=${encodeURIComponent(date)}`);
 
 // Lee el rango y epilogo final guardados por el servidor.
-export const obtenerFinalizacionPartida = (date: string) => request<any>(`/partida/finalizacion?date=${date}`);
+export const obtenerFinalizacionPartida = (date: string) => request<any>(`${NARRATIVE_GAME_PATHS.finalizacion}?date=${encodeURIComponent(date)}`);
 
 // Elimina el avance de prueba para volver a la seleccion inicial.
-export const reiniciarPartida = (date: string) => request<any>('/partida/reiniciar', {
+export const reiniciarPartida = (date: string) => request<any>(NARRATIVE_GAME_PATHS.reiniciar, {
   method: 'POST', body: JSON.stringify({ date }),
 });
 
 // Inicia el ciclo v2 y recibe solo el draft mensual.
-export const iniciarPartida = (date: string, corte: string[], cartas: string[]) => request<EstadoPartida>('/v2/partida/iniciar', {
+export const iniciarPartida = (date: string, corte: string[], cartas: string[]) => request<EstadoPartida>(NARRATIVE_GAME_PATHS.iniciar, {
   method: 'POST', body: JSON.stringify({ date, corte_elegida_ids: corte, cartas_iniciales_ids: cartas }),
 });
 
 // Pide el evento generado por la carta mensual elegida (motor de grafos V2).
-export const elegirCartaMensual = (date: string, cartaId: string) => request<EstadoPartida>('/v2/partida/elegir-carta-mes', {
+export const elegirCartaMensual = (date: string, cartaId: string) => request<EstadoPartida>(NARRATIVE_GAME_PATHS.elegirCarta, {
   method: 'POST', body: JSON.stringify({ date, carta_id: cartaId }),
 }).then(adaptarEstadoGrafo);
 
 // Eventos y conversaciones del motor de grafos V2 usan el mismo endpoint interactivo e IDs de opción.
 export const avanzarNodo = async (date: string, opcionId: string, grafoAnteriorId: string): Promise<EstadoPartida> => {
-  const grafo = await request<EstadoGrafoApi>('/v2/partida/avanzar-nodo', {
+  // Una partida de servidor no puede cambiar de motor al fallar una decisión.
+  const grafo = await request<EstadoGrafoApi>(NARRATIVE_GAME_PATHS.avanzarNodo, {
     method: 'POST', body: JSON.stringify({ date, opcion_id: opcionId }),
-  });
+  }, esPartidaNarrativaLocal(date));
   // Al encadenar otro grafo la respuesta omite los impactos del anterior.
   if (grafo.grafo_id !== grafoAnteriorId) {
-    return adaptarEstadoGrafo(await request<EstadoPartida>(`/v2/partida/estado?date=${date}`));
+    return adaptarEstadoGrafo(await request<EstadoPartida>(`${NARRATIVE_GAME_PATHS.estado}?date=${encodeURIComponent(date)}`, undefined, esPartidaNarrativaLocal(date)));
   }
   return adaptarEstadoGrafo({ grafo_actual: grafo, fase_actual: grafo.fase_actual });
 };
 
 // Cierra el balance y recibe el nuevo draft o la finalizacion.
-export const avanzarMes = (date: string) => request<EstadoPartida>('/v2/partida/avanzar-mes', {
+export const avanzarMes = (date: string) => request<EstadoPartida>(NARRATIVE_GAME_PATHS.avanzarMes, {
   method: 'POST', body: JSON.stringify({ date }),
 });

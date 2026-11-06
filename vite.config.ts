@@ -27,6 +27,7 @@ incluirAssets('src/assets')
 export default defineConfig(/* Completa este paso con los datos recibidos por la operación. */ ({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   const backendUrl = env.VITE_BACKEND_URL || env.VITE_API_URL || 'http://localhost:8080'
+  const narrativeBackendUrl = env.VITE_NARRATIVE_BACKEND_URL || backendUrl
 
   return {
     define: {
@@ -43,6 +44,14 @@ export default defineConfig(/* Completa este paso con los datos recibidos por la
       host: true,
       allowedHosts: true,
       proxy: {
+        '/api/narrative': {
+          target: narrativeBackendUrl,
+          changeOrigin: true,
+        },
+        '/api/auth/guest-credential': {
+          target: narrativeBackendUrl,
+          changeOrigin: true,
+        },
         '/api': {
           target: backendUrl,
           changeOrigin: true,
@@ -70,7 +79,7 @@ export default defineConfig(/* Completa este paso con los datos recibidos por la
           changeOrigin: true,
         },
         '/assets/narrative': {
-          target: backendUrl,
+          target: narrativeBackendUrl,
           changeOrigin: true,
           // Shared local artwork also serves menu previews without a running backend.
           bypass: (req) => {

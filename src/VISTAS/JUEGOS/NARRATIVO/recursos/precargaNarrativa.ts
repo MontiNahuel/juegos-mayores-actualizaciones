@@ -6,6 +6,8 @@ import marcoEvento from '../../../../assets/narrative/event-title.png';
 import caballoCarga from '../../../../assets/narrative/loading-horse.png';
 import { esPartidaNarrativaLocal, obtenerSetup, type SetupPartida } from '../narrativeService';
 import { ahorraDatos, guardarImagenesEnSegundoPlano, precargarImagenes } from '../../../../services/assetPreloader';
+import { narrativeAdminHeaders, narrativeSessionToken } from '../narrativeAuth';
+import { NARRATIVE_API_PATH, NARRATIVE_CATALOG_PATHS } from '../narrativeEndpoints';
 
 export const CABALLO_CARGA = caballoCarga;
 const RECURSOS_INICIALES = [
@@ -34,9 +36,9 @@ export function imagenesDelContenido(contenido: unknown): string[] {
 }
 
 // Busca las imágenes del universo que pueden aparecer más adelante.
-async function imagenesDelUniverso(setup: SetupPartida, date: string) {
+export async function imagenesDelUniverso(setup: SetupPartida, date: string) {
   if (esPartidaNarrativaLocal(date)) return [];
-  const token = localStorage.getItem('token');
+  const token = narrativeSessionToken();
   if (!token) return [];
   try {
     const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
@@ -50,10 +52,12 @@ async function imagenesDelUniverso(setup: SetupPartida, date: string) {
   const timeout = window.setTimeout(/* Ejecuta este paso cuando se cumple la espera. */ () => controller.abort(), 10_000);
   try {
     // Los catálogos administrativos solo se consultan para pre-cache si la sesión es de operador
-    const catalogos = await Promise.allSettled(['personajes', 'cartas', 'eventos', 'resultados', 'conversaciones', 'finalizaciones'].map(/* Prepara el resultado de cada elemento. */ async nombre => {
+    const nombres = ['personajes', 'cartas', 'eventos', 'conversaciones', 'eventosEspeciales', 'finalizaciones'] as const;
+    const catalogos = await Promise.allSettled(nombres.map(/* Prepara el resultado de cada elemento. */ async nombre => {
       const parametros = new URLSearchParams({ limit: '500', universo_id: setup.universo_id });
-      const respuesta = await fetch(`${API_URL}/api/narrative/admin/${nombre}?${parametros}`, {
-        signal: controller.signal, headers: { Authorization: `Bearer ${token}` },
+      const respuesta = await fetch(`${API_URL}${NARRATIVE_API_PATH}${NARRATIVE_CATALOG_PATHS[nombre]}?${parametros}`, {
+        credentials: 'same-origin',
+        signal: controller.signal, headers: narrativeAdminHeaders(),
       });
       if (!respuesta.ok) return [];
       return respuesta.json();

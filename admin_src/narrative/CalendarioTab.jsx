@@ -1,3 +1,4 @@
+import { fetchNarrativeAdmin } from './api';
 /* Permite revisar y generar desafíos narrativos por mes o año. */
 import { useState, useEffect } from 'react';
 import {
@@ -35,7 +36,7 @@ export default function CalendarioTab({ universos = [] }) {
     setCargando(true);
     setError('');
     try {
-      const res = await fetch(`/api/challenges/admin/status?year=${targetAnio}&game_id=narrativo`);
+      const res = await fetchNarrativeAdmin(`/api/challenges/admin/status?year=${targetAnio}&game_id=narrativo`);
       if (res.ok) {
         const data = await res.json();
         setMeses(data.months || []);
@@ -60,7 +61,7 @@ export default function CalendarioTab({ universos = [] }) {
     setError('');
     setExito('');
     try {
-      const res = await fetch(
+      const res = await fetchNarrativeAdmin(
         `/api/narrative/admin/generar-mes?year=${anio}&month=${numMes}&universo_id=${encodeURIComponent(
           universoId
         )}`,
@@ -107,7 +108,7 @@ export default function CalendarioTab({ universos = [] }) {
     try {
       for (let m = 1; m <= 12; m++) {
         setGenerandoMes(m);
-        const res = await fetch(
+        const res = await fetchNarrativeAdmin(
           `/api/narrative/admin/generar-mes?year=${anio}&month=${m}&universo_id=${encodeURIComponent(
             universoId
           )}`,

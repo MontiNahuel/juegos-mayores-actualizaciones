@@ -14,7 +14,7 @@ async function cargarServicio(habilitado = true) {
 
 beforeEach(/* Prepara un entorno limpio antes de cada prueba. */ () => {
   vi.resetModules();
-  vi.stubGlobal('localStorage', { getItem: vi.fn().mockReturnValue(null) });
+  vi.stubGlobal('localStorage', { getItem: vi.fn((key: string) => key === 'token' ? 'sesion-prueba' : null) });
   vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Servidor desconectado')));
 });
 afterEach(/* Limpia el entorno al terminar cada prueba. */ () => {

@@ -1,3 +1,4 @@
+import { fetchNarrativeAdmin } from './api';
 /* Organiza las pestañas para administrar el contenido narrativo. */
 import { useState, useEffect } from 'react';
 import {
@@ -26,7 +27,7 @@ export default function NarrativeAdminModal({ abierto, onCerrar }) {
   // Cargar lista de universos
   const cargarUniversos = async () => {
     try {
-      const res = await fetch('/api/narrative/admin/universos');
+      const res = await fetchNarrativeAdmin('/api/narrative/admin/universos');
       if (res.ok) {
         const data = await res.json();
         setUniversos(data);
@@ -39,7 +40,7 @@ export default function NarrativeAdminModal({ abierto, onCerrar }) {
   // Cargar lista de personajes para referencias cruzadas
   const cargarPersonajes = async () => {
     try {
-      const res = await fetch('/api/narrative/admin/personajes');
+      const res = await fetchNarrativeAdmin('/api/narrative/admin/personajes');
       if (res.ok) {
         const data = await res.json();
         setPersonajes(data);

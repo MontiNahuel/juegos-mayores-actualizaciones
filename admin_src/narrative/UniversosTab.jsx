@@ -1,3 +1,4 @@
+import { fetchNarrativeAdmin } from './api';
 /* Permite editar universos con sus recursos y reglas iniciales. */
 import { useState, useEffect } from 'react';
 import {
@@ -43,7 +44,7 @@ export default function UniversosTab({ onUniversosChange }) {
     setCargando(true);
     setError('');
     try {
-      const res = await fetch('/api/narrative/admin/universos');
+      const res = await fetchNarrativeAdmin('/api/narrative/admin/universos');
       if (res.ok) {
         const data = await res.json();
         setUniversos(data);
@@ -149,7 +150,7 @@ export default function UniversosTab({ onUniversosChange }) {
     };
 
     try {
-      const res = await fetch('/api/narrative/admin/universos', {
+      const res = await fetchNarrativeAdmin('/api/narrative/admin/universos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -179,7 +180,7 @@ export default function UniversosTab({ onUniversosChange }) {
       return;
     }
     try {
-      const res = await fetch(`/api/narrative/admin/universos/${uId}`, {
+      const res = await fetchNarrativeAdmin(`/api/narrative/admin/universos/${uId}`, {
         method: 'DELETE',
       });
       if (res.ok) {

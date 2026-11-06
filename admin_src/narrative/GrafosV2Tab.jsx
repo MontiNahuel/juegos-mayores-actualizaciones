@@ -1,3 +1,4 @@
+import { fetchNarrativeAdmin } from './api';
 /* Permite armar y probar historias con nodos, condiciones y desenlaces. */
 import { useState, useEffect } from 'react';
 import {
@@ -60,9 +61,9 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
     setErrorMsg('');
     try {
       const [resEvts, resConvs, resEsps] = await Promise.all([
-        fetch('/api/narrative/admin/v2/eventos'),
-        fetch('/api/narrative/admin/v2/conversaciones'),
-        fetch('/api/narrative/admin/v2/eventos-especiales')
+        fetchNarrativeAdmin('/api/narrative/admin/v2/eventos'),
+        fetchNarrativeAdmin('/api/narrative/admin/v2/conversaciones'),
+        fetchNarrativeAdmin('/api/narrative/admin/v2/eventos-especiales')
       ]);
 
       if (resEvts.ok) {
@@ -174,7 +175,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
           ? `/api/narrative/admin/v2/eventos-especiales/${id}`
           : `/api/narrative/admin/v2/conversaciones/${id}`;
 
-      const res = await fetch(url, { method: 'DELETE' });
+      const res = await fetchNarrativeAdmin(url, { method: 'DELETE' });
       if (res.ok) {
         setExitoMsg('Grafo eliminado correctamente.');
         setTimeout(/* Ejecuta este paso cuando se cumple la espera. */ () => setExitoMsg(''), 3000);
@@ -250,7 +251,7 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
           : '/api/narrative/admin/v2/conversaciones';
 
       const payload = { ...itemEnEdicion, _id: id, id: id };
-      const res = await fetch(url, {
+      const res = await fetchNarrativeAdmin(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
