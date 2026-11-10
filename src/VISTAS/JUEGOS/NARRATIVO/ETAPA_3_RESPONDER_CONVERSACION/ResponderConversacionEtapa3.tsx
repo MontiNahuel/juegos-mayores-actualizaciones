@@ -45,7 +45,7 @@ function Retrato({ personaje, activo, lado, solo }: {
     : 'relative w-1/2';
   const alineacion = derecha ? 'ml-auto mr-0 items-end' : 'ml-0 mr-auto items-start';
   const encuadre = solo
-    ? derecha ? 'translate-x-[2%] justify-end' : '-translate-x-[2%] justify-center'
+    ? 'justify-center'
     : 'justify-center';
 
   return (
