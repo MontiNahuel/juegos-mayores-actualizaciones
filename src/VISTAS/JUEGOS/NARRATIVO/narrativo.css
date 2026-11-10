@@ -75,6 +75,22 @@
   visibility: hidden;
   min-height: 1lh;
 }
+.dialogo-narrativo__glifo {
+  position: relative;
+}
+.dialogo-narrativo__glifo > span {
+  opacity: var(--glifo-real, 1);
+}
+.dialogo-narrativo__glifo::before {
+  position: absolute;
+  inset: 0;
+  content: attr(data-arcano);
+  color: #e6bd77;
+  opacity: var(--glifo-arcano, 0);
+  pointer-events: none;
+  transform: translateX(var(--glifo-recorrido, 0)) rotateY(var(--glifo-giro, 0deg));
+  transform-origin: center;
+}
 /* Cubre el padding superior del panel para que el texto no pase por encima de la guía fija. */
 .dialogo-narrativo__guia::before {
   content: '';

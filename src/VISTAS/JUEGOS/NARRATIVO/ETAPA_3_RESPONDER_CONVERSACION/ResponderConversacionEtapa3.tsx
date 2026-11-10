@@ -169,7 +169,7 @@ export default function ResponderConversacionEtapa3({
           opcionesVisibles={lecturaCompleta}
           titulo={quienHabla?.nombre || (frase?.personajeId === 'narrador' ? 'Crónicas del Reino' : 'Consejero')}
           texto={texto(frase?.texto)}
-          indicacion={!lecturaCompleta ? 'Tocá el texto para acelerar 4×' : ultimoDialogo ? 'Elegí cómo responder.' : 'Tocá para continuar ›'}
+          indicacion={lecturaCompleta ? ultimoDialogo ? 'Elegí cómo responder.' : 'Tocá para continuar ›' : undefined}
           onContinuar={!lecturaCompleta ? acelerarTexto : !ultimoDialogo ? () => setLectura({ nodo, paso: paso + 1 }) : undefined}
           opciones={ultimoDialogo ? conversacion.decisiones.map((decision) => ({
             id: decision.opcion,

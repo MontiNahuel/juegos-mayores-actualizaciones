@@ -10,8 +10,11 @@ const RITMO = {
   titulo: { entrada: .08, duracion: .42, salida: 2.24, retirada: .36 },
   personajes: { entrada: .32, duracion: .48, alternancia: .32 },
   dialogo: { entrada: .62, duracion: .36 },
-  texto: { caracteresPorSegundo: 28, aceleracion: 4, fundido: .24, desplazamiento: 4, scroll: .22, margenScroll: 20 },
+  texto: { caracteresPorSegundo: 28, aceleracion: 4, morfema: .13, fundido: .24, desplazamiento: 4, scroll: .22, margenScroll: 20 },
 };
+
+// Glifos ficticios, sin correspondencia con el alfabeto del texto.
+const GLIFOS_ARCANOS = ['ᛯ', '⟁', 'ᚸ', '᛭', '⟊', 'ᛝ', '⟐', 'ᚥ', 'ᛨ', 'ᛦ'];
 
 interface EstadoVisual {
   listo: boolean;
@@ -30,6 +33,7 @@ export class CoordinadorAnimacionConversacion {
   private fondo?: gsap.core.Tween;
   private escritura?: gsap.core.Timeline;
   private scroll?: gsap.core.Tween;
+  private transformaciones = new Set<gsap.core.Tween>();
   private seguimiento = true;
   private presentada = false;
   private reducido = false;
@@ -48,6 +52,7 @@ export class CoordinadorAnimacionConversacion {
         this.entrada?.progress(1);
         this.intervencion?.progress(1);
         this.escritura?.progress(1);
+        this.transformaciones.forEach(transformacion => transformacion.progress(1));
       }
       if (this.reducido) this.fondo?.progress(1);
       if (this.reducido) this.scroll?.kill();
@@ -110,6 +115,8 @@ export class CoordinadorAnimacionConversacion {
   private escribirTexto(intervencion: string) {
     this.escritura?.kill();
     this.scroll?.kill();
+    this.transformaciones.forEach(transformacion => transformacion.kill());
+    this.transformaciones.clear();
     this.seguimiento = true;
     const bloque = this.raiz.querySelector<HTMLElement>('.dialogo-narrativo__revelado');
     const destino = bloque?.querySelector<HTMLElement>('.dialogo-narrativo__caracteres');
@@ -129,9 +136,10 @@ export class CoordinadorAnimacionConversacion {
       : Array.from(texto);
     destino.textContent = '';
     const cursor = { caracteres: 0 };
-    let ultimo = -1;
+    let ultimo = 0;
     let ultimaLinea = -Infinity;
     const demora = Math.max(0, RITMO.dialogo.entrada + RITMO.dialogo.duracion - (this.entrada?.time() || 0));
+    const duracionEscritura = caracteres.length / RITMO.texto.caracteresPorSegundo;
     this.escritura = gsap.timeline({
       data: 'conversacion:escritura',
       delay: demora,
@@ -146,11 +154,33 @@ export class CoordinadorAnimacionConversacion {
       opacity: 1, y: 0, duration: RITMO.texto.fundido, ease: 'power2.out',
     }, 0).to(cursor, {
       caracteres: caracteres.length, snap: 'caracteres', ease: 'none',
-      duration: caracteres.length / RITMO.texto.caracteresPorSegundo,
+      duration: duracionEscritura,
       onUpdate: () => {
         if (ultimo === cursor.caracteres) return;
+        const fragmento = document.createDocumentFragment();
+        const glifosNuevos: HTMLElement[] = [];
+        for (let indice = ultimo; indice < cursor.caracteres; indice += 1) {
+          const caracter = caracteres[indice];
+          if (/\p{L}/u.test(caracter)) {
+            const glifo = document.createElement('span');
+            glifo.className = 'dialogo-narrativo__glifo';
+            glifo.dataset.arcano = GLIFOS_ARCANOS[(indice + intervencion.length) % GLIFOS_ARCANOS.length];
+            glifo.style.setProperty('--glifo-real', '0');
+            glifo.style.setProperty('--glifo-arcano', '1');
+            glifo.style.setProperty('--glifo-recorrido', '-0.14em');
+            glifo.style.setProperty('--glifo-giro', '-65deg');
+            const textoLegible = document.createElement('span');
+            textoLegible.textContent = caracter;
+            glifo.append(textoLegible);
+            fragmento.append(glifo);
+            glifosNuevos.push(glifo);
+          } else {
+            fragmento.append(document.createTextNode(caracter));
+          }
+        }
+        destino.append(fragmento);
         ultimo = cursor.caracteres;
-        destino.textContent = caracteres.slice(0, ultimo).join('');
+        glifosNuevos.forEach(glifo => this.animarGlifo(glifo));
         if (!panel || !marcador || panel.scrollHeight <= panel.clientHeight) return;
         const linea = marcador.getBoundingClientRect().bottom + panel.scrollTop;
         if (Math.abs(linea - ultimaLinea) < 1) return;
@@ -158,7 +188,25 @@ export class CoordinadorAnimacionConversacion {
         const exceso = marcador.getBoundingClientRect().bottom - panel.getBoundingClientRect().bottom + RITMO.texto.margenScroll;
         if (exceso > 0) this.desplazarLectura(panel, panel.scrollTop + exceso);
       },
-    }, 0);
+    }, 0).call(() => {}, undefined, duracionEscritura + RITMO.texto.morfema);
+  }
+
+  // El glifo arcano se desplaza y se desvanece mientras aparece la letra legible.
+  private animarGlifo(glifo: HTMLElement) {
+    this.contexto.add(() => {
+      let transformacion: gsap.core.Tween;
+      transformacion = gsap.to(glifo, {
+        '--glifo-real': 1,
+        '--glifo-arcano': 0,
+        '--glifo-recorrido': '0.14em',
+        '--glifo-giro': '55deg',
+        duration: RITMO.texto.morfema,
+        ease: 'power2.out',
+        onComplete: () => this.transformaciones.delete(transformacion),
+      });
+      transformacion.timeScale(this.escritura?.timeScale() || 1);
+      this.transformaciones.add(transformacion);
+    });
   }
 
   // Sigue cada línea con un tween reemplazable; nunca combate el scroll manual del jugador.

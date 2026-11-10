@@ -43,6 +43,7 @@ export default function DialogoNarrativo({
 
   const nombreHablante = titulo ? <h2 className="dialogo-narrativo__titulo m-0 text-lg font-bold leading-tight text-[#e6bd77]">{titulo}</h2> : null;
   const ayudaLectura = indicacion ? <span className="dialogo-narrativo__indicacion mt-2 block text-sm text-[#bc965d]">{indicacion}</span> : null;
+  const aceleracionAccesible = textoProgresivo && !opcionesVisibles && Boolean(onContinuar);
   const estiloContinuar = 'dialogo-narrativo__continuar block w-full cursor-pointer border-0 bg-transparent p-0 text-left text-inherit focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400';
 
   // Este párrafo no cambia de contenedor al habilitar las opciones: conserva lo escrito por GSAP.
@@ -80,7 +81,11 @@ export default function DialogoNarrativo({
               <div className="dialogo-narrativo__guia sticky top-0 z-10 bg-[#080910] pb-2">
                 {nombreHablante}
                 <div className="min-h-11">
-                  {onContinuar ? <button type="button" className={`${estiloContinuar} min-h-11`} onClick={evento => {
+                  {onContinuar ? <button
+                    type="button"
+                    aria-label={aceleracionAccesible ? 'Acelerar lectura' : undefined}
+                    className={`${estiloContinuar} min-h-11 ${aceleracionAccesible ? 'sr-only focus:not-sr-only focus:absolute focus:left-4 focus:z-20 focus:rounded focus:bg-[#080910] focus:px-3 focus:py-2' : ''}`}
+                    onClick={evento => {
                     evento.stopPropagation();
                     onContinuar();
                   }}>{ayudaLectura}</button> : ayudaLectura}
