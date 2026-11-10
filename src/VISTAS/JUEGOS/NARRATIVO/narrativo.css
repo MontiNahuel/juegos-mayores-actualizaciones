@@ -20,6 +20,7 @@
 }
 
 /* Título: una única secuencia compartida; el layout vive en el componente. */
+.titulo-narrativo[data-animacion='externa'] .titulo-narrativo__arte { opacity: 0; visibility: hidden; }
 .titulo-narrativo[data-variante='evento'] .titulo-narrativo__espacio { isolation: isolate; }
 .titulo-narrativo[data-variante='evento'] .titulo-narrativo__espacio::before {
   content: '';

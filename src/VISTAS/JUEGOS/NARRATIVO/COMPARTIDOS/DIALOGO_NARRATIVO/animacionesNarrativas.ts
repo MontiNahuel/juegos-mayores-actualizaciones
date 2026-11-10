@@ -8,8 +8,8 @@ gsap.registerPlugin(useGSAP);
 const RITMO = {
   fondo: .42,
   titulo: { entrada: .08, duracion: .42, salida: 1.35, retirada: .55 },
-  personajes: { entrada: 1.48, duracion: .65, alternancia: .65 },
-  dialogo: { entrada: 1.68, duracion: .48 },
+  personajes: { entrada: 2.05, duracion: .65, alternancia: .65 },
+  dialogo: { entrada: 1.48, duracion: .48 },
   texto: { caracteresPorSegundo: 28, aceleracion: 4, morfema: .13, fundido: .24, desplazamiento: 4, scroll: .22, margenScroll: 20 },
 };
 
@@ -90,7 +90,7 @@ export class CoordinadorAnimacionConversacion {
             .to(titulo, { autoAlpha: 0, duration: RITMO.titulo.retirada }, RITMO.titulo.salida)
             .fromTo(personajes, { autoAlpha: 0 }, { autoAlpha: 1, duration: RITMO.personajes.duracion }, 'personajes')
             .fromTo(dialogo, { autoAlpha: 0, y: 6 }, { autoAlpha: 1, y: 0, duration: RITMO.dialogo.duracion }, 'lectura')
-            .call(() => { this.raiz.dataset.animacion = 'lista'; }, undefined, `lectura+=${RITMO.dialogo.duracion}`);
+            .call(() => { this.raiz.dataset.animacion = 'lista'; }, undefined, `personajes+=${RITMO.personajes.duracion}`);
         }
       }
 
@@ -147,7 +147,7 @@ export class CoordinadorAnimacionConversacion {
     const cursor = { caracteres: 0 };
     let ultimo = 0;
     let ultimaLinea = -Infinity;
-    const demora = demoraInicial ?? Math.max(0, RITMO.dialogo.entrada + RITMO.dialogo.duracion - (this.entrada?.time() || 0));
+    const demora = demoraInicial ?? Math.max(0, RITMO.personajes.entrada + RITMO.personajes.duracion - (this.entrada?.time() || 0));
     const duracionEscritura = caracteres.length / RITMO.texto.caracteresPorSegundo;
     this.escritura = gsap.timeline({
       data: 'conversacion:escritura',

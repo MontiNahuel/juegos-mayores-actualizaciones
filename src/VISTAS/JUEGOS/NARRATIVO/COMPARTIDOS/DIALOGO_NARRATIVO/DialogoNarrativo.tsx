@@ -80,7 +80,7 @@ export default function DialogoNarrativo({
               {/* El control es pequeño y fijo: tabular no desplaza un botón del alto de toda la frase. */}
               <div className="dialogo-narrativo__guia sticky top-0 z-10 bg-[#080910] pb-2">
                 {nombreHablante}
-                <div className="min-h-11">
+                <div className={indicacion ? 'min-h-11' : ''}>
                   {onContinuar ? <button
                     type="button"
                     aria-label={aceleracionAccesible ? 'Acelerar lectura' : undefined}
