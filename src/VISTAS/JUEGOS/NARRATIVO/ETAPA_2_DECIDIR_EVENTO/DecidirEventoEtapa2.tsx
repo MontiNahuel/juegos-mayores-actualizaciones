@@ -1,6 +1,6 @@
 /* Muestra el evento actual y las opciones que permiten sus condiciones. */
 // Presenta el evento como una escena: ilustracion, titulo y decisiones al pie.
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import type { EventoApi } from '../narrativeService';
 import TituloNarrativo from '../COMPARTIDOS/TITULO_NARRATIVO/TituloNarrativo';
 import { API_URL } from '../../../../config/api';
@@ -9,6 +9,7 @@ import DialogoNarrativo from '../COMPARTIDOS/DIALOGO_NARRATIVO/DialogoNarrativo'
 import FondoCorte from '../COMPARTIDOS/FONDO_CORTE/FondoCorte';
 import type { EstadoFondoCorte } from '../../../../config/fondoCorte';
 import { imagenPrecargada } from '../../../../services/assetPreloader';
+import { CoordinadorAnimacionConversacion } from '../COMPARTIDOS/DIALOGO_NARRATIVO/animacionesNarrativas';
 
 // Busca la imagen del elemento para mostrarla en la historia.
 const imagenDe = (imagen: string) => imagenPrecargada(imagen.startsWith('/') && !imagen.startsWith('//')
@@ -44,12 +45,13 @@ const textoOpcion = (opcion: EventoApi['opciones'][number], indice: number, modo
 };
 
 // Muestra resolver evento etapa2 y conecta sus controles con la pantalla.
-export default function ResolverEventoEtapa2({ evento, atributos, fondoBase, modoSimple = false, demorarDialogoPorFondo = false, personajes = [], afinidad = {}, tags = [], cartas = [], onElegir }: {
+export default function ResolverEventoEtapa2({ evento, atributos, fondoBase, modoSimple = false, demorarDialogoPorFondo = false, enviando = false, personajes = [], afinidad = {}, tags = [], cartas = [], onElegir }: {
   evento: EventoApi;
   atributos: Record<string, number>;
   fondoBase: EstadoFondoCorte;
   modoSimple?: boolean;
   demorarDialogoPorFondo?: boolean;
+  enviando?: boolean;
   personajes?: any[];
   afinidad?: Record<string, number>;
   tags?: string[];
@@ -63,9 +65,34 @@ export default function ResolverEventoEtapa2({ evento, atributos, fondoBase, mod
   const usaFondoBase = fondo === fondoBase.src;
   const fondoEscena = { src: fondo, personajes: [], oro: [], manos: [] };
   const escenaLista = usaFondoBase || fondoListo === fondo;
+  const escena = useRef<HTMLElement>(null);
+  const animacion = useRef<CoordinadorAnimacionConversacion | null>(null);
+  const lecturaId = JSON.stringify([evento.id, evento.nodo_id, evento.descripcion]);
+  const [lecturaCompleta, setLecturaCompleta] = useState('');
+  const [escenaPresentada, setEscenaPresentada] = useState(false);
+  const primeraLectura = useRef(true);
+  const terminada = lecturaCompleta === lecturaId;
+
+  useLayoutEffect(() => {
+    if (escenaLista) setEscenaPresentada(true);
+  }, [escenaLista]);
+
+  useLayoutEffect(() => {
+    if (!escena.current) return;
+    const coordinador = new CoordinadorAnimacionConversacion(escena.current, setLecturaCompleta);
+    animacion.current = coordinador;
+    return () => { coordinador.destruir(); animacion.current = null; };
+  }, [lecturaId]);
+
+  useLayoutEffect(() => {
+    if (!escenaLista || !animacion.current) return;
+    const demora = primeraLectura.current ? (demorarDialogoPorFondo ? 2.4 : .6) : 0;
+    primeraLectura.current = false;
+    animacion.current.escribirTexto(lecturaId, demora);
+  }, [escenaLista, lecturaId, demorarDialogoPorFondo]);
 
   return (
-    <section className="evento-escena relative isolate flex min-h-[100svh] flex-col text-slate-100 [&>.titulo-narrativo]:pt-[max(48px,calc(env(safe-area-inset-top)+40px))]" aria-label="Evento del reino">
+    <section ref={escena} className="evento-escena relative isolate flex min-h-[100svh] flex-col text-slate-100 [&>.titulo-narrativo]:pt-[max(48px,calc(env(safe-area-inset-top)+40px))]" aria-label="Evento del reino">
       {!usaFondoBase && <FondoCorte
         key={fondo}
         fondo={fondoEscena}
@@ -77,15 +104,20 @@ export default function ResolverEventoEtapa2({ evento, atributos, fondoBase, mod
       />}
       {/* Al usar la corte, sólo queda un degradado neutro y casi imperceptible. */}
       <div className={`pointer-events-none absolute inset-0 -z-10 ${usaFondoBase ? 'bg-[linear-gradient(#0001,transparent_45%,transparent)]' : 'bg-[linear-gradient(#0004,transparent_35%,#02061744)]'}`} />
-      <TituloNarrativo key={evento.id} titulo={evento.titulo} listo={escenaLista} variante="evento" permanente />
+      <TituloNarrativo key={evento.id} titulo={evento.titulo} listo={escenaPresentada || escenaLista} variante="evento" permanente />
       <div className="evento-ilustracion min-h-[clamp(96px,22svh,300px)] flex-1" aria-hidden="true" />
       <DialogoNarrativo
         className={`evento-dialogo${demorarDialogoPorFondo ? ' evento-dialogo--espera-fondo' : ''}`}
-        listo={escenaLista}
+        listo={escenaPresentada || escenaLista}
+        intervencion={lecturaId}
+        textoProgresivo
+        opcionesVisibles={terminada}
+        onContinuar={!terminada ? () => animacion.current?.acelerarTexto() : undefined}
         texto={evento.descripcion}
         opciones={evento.opciones.map(/* Prepara el resultado de cada elemento. */ (opcion, indice) => ({
           id: opcion.id,
           texto: textoOpcion(opcion, indice, modoSimple, opcion.condiciones || [], contexto),
+          disabled: enviando,
           // Registra la opción elegida y avanza la historia.
           onElegir: () => onElegir(opcion.id),
         })).filter(/* Conserva los elementos que cumplen esta condición. */ (_, indice) => !evento.opciones[indice].bloqueada)}

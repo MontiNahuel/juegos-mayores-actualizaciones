@@ -96,7 +96,7 @@ export default function DialogoNarrativo({
           ) : onContinuar ? (
             <button type="button" className={estiloContinuar} onClick={onContinuar}>{contenido}</button>
           ) : <div>{contenido}</div>}
-          {complemento ? <div className="dialogo-narrativo__complemento order-first self-end">{complemento}</div> : null}
+          {complemento ? <div className="dialogo-narrativo__complemento relative z-20 order-first self-end">{complemento}</div> : null}
         </div>
 
         {opciones.length ? <div

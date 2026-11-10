@@ -130,7 +130,7 @@ it('al cambiar de hablante conserva el fondo, título y retrato y sólo renueva 
   expect(container.querySelector('.conversacion-escena')).toHaveAttribute('data-intro', 'listo');
   expect(screen.getByAltText('Vera').closest('.conversacion-retrato')).toHaveAttribute('data-visible', 'true');
   expect(retrato.closest('.conversacion-retrato')).toHaveAttribute('data-visible', 'false');
-  fireEvent.click(screen.getByRole('button', { name: /acelerar lectura/ }));
+  fireEvent.click(screen.getByRole('button', { name: /acelerar lectura/i }));
   act(() => { gsap.globalTimeline.getChildren().find(t => t.data === 'conversacion:escritura')!.progress(1); });
   fireEvent.click(screen.getByRole('button', { name: 'Escuchar' }));
   expect(onElegir).not.toHaveBeenCalled();
@@ -159,7 +159,7 @@ it('tocar cualquier parte del texto acelera sin avanzar ni habilitar las opcione
   fireEvent.click(screen.getByRole('button', { name: /Tocá para continuar/ }));
   expect(container.querySelector('.dialogo-narrativo__caracteres')).toHaveTextContent('');
   expect(screen.queryByRole('button', { name: 'Escuchar' })).not.toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button', { name: /acelerar lectura/ }));
+  fireEvent.click(screen.getByRole('button', { name: /acelerar lectura/i }));
   act(() => { gsap.globalTimeline.getChildren().find(t => t.data === 'conversacion:escritura')!.progress(1); });
   fireEvent.click(screen.getByRole('button', { name: 'Escuchar' }));
   expect(onElegir).toHaveBeenCalledTimes(1);

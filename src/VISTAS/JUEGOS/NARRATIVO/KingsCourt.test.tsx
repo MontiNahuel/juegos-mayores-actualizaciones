@@ -2,6 +2,7 @@ import { prepararLectura, simularMovimiento } from '../../../../tests/helpers/mo
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { Provider } from 'react-redux';
+import gsap from 'gsap';
 import { MemoryRouter } from 'react-router-dom';
 import { store } from '../../../store/store';
 import { iniciarJugador } from '../../../store/narrativoSelectionSlice';
@@ -21,7 +22,7 @@ vi.mock('./recursos/precargaNarrativa', () => ({ CABALLO_CARGA: '', imagenesDelC
 vi.mock('../../../services/assetPreloader', () => ({ imagenPrecargada: (src: string) => src, precargarImagenes: async () => {} }));
 vi.mock('./COMPARTIDOS/CARGA_NARRATIVA/CargaNarrativa', () => ({ default: ({ onEntrar }: any) => <button onClick={onEntrar}>Entrar</button> }));
 vi.mock('./COMPARTIDOS/FONDO_CORTE/FondoCorte', () => ({ default: () => null }));
-vi.mock('./COMPARTIDOS/TRANSICION_NARRATIVA/TransicionNarrativa', () => ({ default: ({ children }: any) => children }));
+vi.mock('./COMPARTIDOS/TRANSICION_NARRATIVA/TransicionNarrativa', () => ({ default: ({ children, etapa }: any) => <div data-testid="transicion" data-etapa={etapa}>{children}</div> }));
 vi.mock('./COMPARTIDOS/MAZO_UI/MazoUi', () => ({ default: () => null }));
 vi.mock('./COMPARTIDOS/CONFIGURACION_EDAD/ConfiguracionEdad', () => ({ default: () => null }));
 vi.mock('./ETAPA_4_MOSTRAR_RESULTADO/MostrarResultadoEtapa4', () => ({ default: ({ resultado, onContinuar, continuando }: any) => <div>{resultado?.titulo}<button disabled={continuando} onClick={onContinuar}>{continuando ? 'Continuando...' : 'Continuar'}</button></div> }));
@@ -65,6 +66,35 @@ it('un doble toque responde una vez; un rechazo permite reintentar y el siguient
   expect(screen.queryByRole('alert')).not.toBeInTheDocument();
 });
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); localStorage.clear(); sessionStorage.clear(); });
+
+it('mantiene la escena del evento al recibir un nodo anidado y envía una sola decisión', async () => {
+  const evento = {
+    id: 'consejo', nodo_id: 'inicio', titulo: 'Consejo', descripcion: 'Primera decisión.', imagen: '',
+    opciones: [{ id: 'seguir', texto: 'Seguir', bloqueada: false }],
+  };
+  estadoInicial.mockResolvedValue({ evento_actual: evento });
+  let resolver!: (valor: unknown) => void;
+  avanzar.mockImplementationOnce(() => new Promise(resolve => { resolver = resolve; }));
+  const { container } = render(<Provider store={store}><MemoryRouter><KingsCourt /></MemoryRouter></Provider>);
+  fireEvent.click(await screen.findByRole('button', { name: 'Entrar' }));
+  await screen.findByText('Primera decisión.');
+  act(() => { gsap.globalTimeline.getChildren().find(t => t.data === 'conversacion:escritura')!.progress(1); });
+  const escena = container.querySelector('.evento-escena');
+  const titulo = container.querySelector('.titulo-narrativo');
+  const etapa = screen.getByTestId('transicion').getAttribute('data-etapa');
+  const boton = screen.getByRole('button', { name: 'Seguir' });
+  fireEvent.click(boton); fireEvent.click(boton);
+  expect(avanzar).toHaveBeenCalledTimes(1);
+  expect(boton).toBeDisabled();
+  await act(async () => resolver({ evento_actual: { ...evento, nodo_id: 'anidado', descripcion: 'Segunda decisión.', opciones: [{ id: 'resolver', texto: 'Resolver', bloqueada: false }] } }));
+  await screen.findByText('Segunda decisión.');
+  expect(container.querySelector('.evento-escena')).toBe(escena);
+  expect(container.querySelector('.titulo-narrativo')).toBe(titulo);
+  expect(screen.getByTestId('transicion')).toHaveAttribute('data-etapa', etapa);
+  expect(screen.queryByRole('button', { name: 'Resolver' })).not.toBeInTheDocument();
+  act(() => { gsap.globalTimeline.getChildren().find(t => t.data === 'conversacion:escritura')!.progress(1); });
+  expect(screen.getByRole('button', { name: 'Resolver' })).toBeEnabled();
+});
 
 it('un rechazo al continuar conserva el resultado y el mes; reintentar aplica solo el mes confirmado', async () => {
   let rechazar!: (error: Error) => void;

@@ -277,14 +277,22 @@ export default function KingsCourt() {
 
   // Guarda la decisión en el motor V2 de grafos y procesa el siguiente paso o desenlace.
   const decidirEventoActual = async (opcionId: string) => {
+    if (respuestaEnCurso.current) return;
+    respuestaEnCurso.current = true;
+    setRespondiendo(true);
     const evento = juego.eventoActual;
-    const data = await pedir(
-      () => avanzarNodo(date, opcionId, evento?.id || evento?.nodo_id || ''),
-      'No se pudo guardar la decisión.'
-    );
-    if (data) await mostrarEstado(data);
-    const final = data?.finalizacion || finalPorRecurso(jugadorActual().recursos);
-    if (final) dispatch(finalizarPartida(final));
+    try {
+      const data = await pedir(
+        () => avanzarNodo(date, opcionId, evento?.id || evento?.nodo_id || ''),
+        'No se pudo guardar la decisión.'
+      );
+      if (data) await mostrarEstado(data);
+      const final = data?.finalizacion || finalPorRecurso(jugadorActual().recursos);
+      if (final) dispatch(finalizarPartida(final));
+    } finally {
+      respuestaEnCurso.current = false;
+      setRespondiendo(false);
+    }
   };
 
   // Sólo intercala la corte si un recurso cruzó un umbral y agregó un asset visible.
@@ -398,7 +406,7 @@ export default function KingsCourt() {
     estadisticas: 'estadisticas', final: `final:${finalizacion?._id}`,
     resultado: `resultado:${jugador.mes_actual}`,
     conversacion: `conversacion:${juego.conversacionActual?._id}:${juego.conversacionActual?.nodo_id || ''}`,
-    evento: `evento:${juego.eventoActual?.id || juego.eventoActual?._id}:${juego.eventoActual?.nodo_id || ''}`,
+    evento: `evento:${juego.eventoActual?.id || juego.eventoActual?._id}`,
   } as Record<string, string>)[etapa] || `${etapa}:${jugador.mes_actual}`;
 
   // Reutiliza la misma pantalla para las tres selecciones de cartas.
@@ -437,7 +445,7 @@ export default function KingsCourt() {
       pantalla = <ResponderConversacionEtapa3 key={juego.conversacionActual._id} conversacion={juego.conversacionActual} personajes={personajes} modoSimple={!config.mostrarNumeros} enviando={respondiendo} onElegir={responderActual} />;
       break;
     case 'evento':
-      pantalla = <DecidirEventoEtapa2 key={etapaVisible} evento={juego.eventoActual} atributos={jugador.recursos} fondoBase={juego.fondoBase} personajes={personajes} afinidad={jugador.afinidad} tags={jugador.tags_activos} cartas={jugador.cartas_en_mano} modoSimple={!config.mostrarNumeros} demorarDialogoPorFondo={demorarDialogoPorFondo} onElegir={decidirEventoActual} />;
+      pantalla = <DecidirEventoEtapa2 key={etapaVisible} evento={juego.eventoActual} atributos={jugador.recursos} fondoBase={juego.fondoBase} personajes={personajes} afinidad={jugador.afinidad} tags={jugador.tags_activos} cartas={jugador.cartas_en_mano} modoSimple={!config.mostrarNumeros} demorarDialogoPorFondo={demorarDialogoPorFondo} enviando={respondiendo} onElegir={decidirEventoActual} />;
       break;
     case 'seleccionar_corte':
       pantalla = seleccionar('Forma tu corte', 'Elegí tres personajes para comenzar el desafio.', personajesDisponibles, 3, (cartas: any[]) => dispatch(guardarCorte(cartas)));
