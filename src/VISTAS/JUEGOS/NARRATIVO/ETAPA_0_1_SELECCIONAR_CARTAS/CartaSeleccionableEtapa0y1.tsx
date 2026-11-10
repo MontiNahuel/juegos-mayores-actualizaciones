@@ -19,11 +19,12 @@ interface Props {
   selected?: boolean;
   disabled?: boolean;
   onSelect?: () => void;
+  bloqueada?: boolean;
   soloLectura?: boolean;
 }
 
 // El marco transparente deja la ilustracion y el texto dentro del ornamento.
-export default function CartaSeleccionableEtapa0y1({ carta, selected = false, disabled = false, onSelect, soloLectura = false }: Props) {
+export default function CartaSeleccionableEtapa0y1({ carta, selected = false, disabled = false, bloqueada = false, onSelect, soloLectura = false }: Props) {
   const [imagenFallida, setImagenFallida] = useState<string | null>(null);
   const mostrarImagen = Boolean(carta.imagen && carta.imagen !== imagenFallida);
   const esItem = Boolean(carta.categoria);
@@ -46,7 +47,7 @@ export default function CartaSeleccionableEtapa0y1({ carta, selected = false, di
   if (soloLectura) return <article className="carta-narrativa carta-narrativa--lectura">{contenido}</article>;
 
   return (
-    <button aria-pressed={selected} className="carta-narrativa" data-selected={selected} data-personaje={!esItem} disabled={disabled} onClick={onSelect} type="button">
+    <button aria-pressed={selected} className="carta-narrativa" data-selected={selected} data-bloqueada={bloqueada} data-personaje={!esItem} disabled={disabled} onClick={onSelect} type="button">
       {contenido}
     </button>
   );

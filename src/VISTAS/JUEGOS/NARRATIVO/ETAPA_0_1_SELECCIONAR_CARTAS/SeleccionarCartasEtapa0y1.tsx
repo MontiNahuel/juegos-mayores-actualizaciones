@@ -66,6 +66,7 @@ export default function SeleccionarCartasEtapa0y1({ titulo, descripcion, cartas,
               key={carta.id}
               carta={carta}
               selected={selected}
+              bloqueada={!selected && seleccion.length === cantidad}
               disabled={confirmando || (!selected && seleccion.length === cantidad)}
               onSelect={/* Responde a select desde este control. */ () => seleccionar(carta)}
             />

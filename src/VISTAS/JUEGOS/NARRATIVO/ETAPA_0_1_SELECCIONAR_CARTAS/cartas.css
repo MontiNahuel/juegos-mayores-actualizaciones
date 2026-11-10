@@ -32,8 +32,8 @@
   background: transparent;
   color: #fff;
   cursor: pointer;
-  filter: drop-shadow(0 6px 8px #0008);
-  transition: translate 180ms, filter 180ms;
+  filter: drop-shadow(0 0 5px transparent) drop-shadow(0 6px 8px #0008) brightness(1);
+  transition: translate 180ms, filter 180ms, opacity 180ms;
   font-family: Georgia, 'Times New Roman', serif;
   text-align: center;
 }
@@ -118,7 +118,7 @@
 
 .carta-narrativa[data-selected='true'] {
   translate: 0 -6px;
-  filter: drop-shadow(0 0 5px #f3d78a) drop-shadow(0 6px 8px #0008);
+  filter: drop-shadow(0 0 5px #f3d78a) drop-shadow(0 6px 8px #0008) brightness(1);
 }
 
 /* Al elegir un personaje, la estrella del marco despierta y la luz recorre
@@ -200,11 +200,14 @@
 }
 
 .carta-narrativa:focus-visible { outline: 3px solid #f3d78a; outline-offset: 4px; border-radius: 8px; }
-.carta-narrativa:disabled { opacity: .55; cursor: default; }
+.carta-narrativa:disabled { cursor: default; }
+.carta-narrativa[data-bloqueada="true"] { opacity: .55; }
 .carta-narrativa--lectura { cursor: default; }
 
 @media (hover: hover) {
-  .carta-narrativa:not(:disabled):hover { translate: 0 -6px; }
+  .carta-narrativa:not(:disabled):not([data-selected='true']):hover {
+    filter: drop-shadow(0 0 5px transparent) drop-shadow(0 8px 11px #000b) brightness(1.08);
+  }
   .carta-narrativa--lectura:hover { translate: 0; }
 }
 

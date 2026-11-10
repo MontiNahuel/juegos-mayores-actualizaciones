@@ -142,7 +142,7 @@ function adaptarEstadoGrafo(estado: EstadoPartida): EstadoPartida {
     ...base,
     conversacion_actual: grafo.conversacion_actual ?? estado.conversacion_actual ?? null,
     resultado_actual: {
-      titulo: grafo.titulo, texto: [nodo.texto, nodo.resultado_texto].filter(Boolean).join('\n\n'),
+      titulo: grafo.titulo, texto: [...new Set([nodo.texto, nodo.resultado_texto].map(texto => texto?.trim()).filter(Boolean))].join('\n\n'),
       imagen, tipo_resultado: 'neutro',
       efectos: nodo.impactos_recursos.map(/* Prepara el resultado de cada elemento. */ ({ recurso, delta }) => ({ accion: { clave: recurso, valor: delta } })),
     },

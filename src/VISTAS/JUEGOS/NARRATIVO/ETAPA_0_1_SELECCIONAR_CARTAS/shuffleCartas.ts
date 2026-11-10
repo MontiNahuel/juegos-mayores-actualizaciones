@@ -1,29 +1,25 @@
-/* Anima el reparto y la mezcla de las cartas disponibles. */
-// Reparte desde una pila central, escalonando cada carta como en el shuffle original.
+import gsap from 'gsap';
+
+/** Reparte desde una pila central; cada carta conserva su posición hasta su turno. */
 export default function shuffleCartas(contenedor: HTMLDivElement | null, selector = 'button') {
   if (!contenedor || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
   const cartas = [...contenedor.querySelectorAll<HTMLElement>(selector)];
   const pila = contenedor.getBoundingClientRect();
-  const posiciones = cartas.map(/* Prepara el resultado de cada elemento. */ (carta) => carta.getBoundingClientRect());
+  const posiciones = cartas.map(carta => carta.getBoundingClientRect());
 
-  const animaciones = cartas.map(/* Prepara el resultado de cada elemento. */ (carta, indice) => {
-    const posicion = posiciones[indice];
-    const x = pila.left + (pila.width - posicion.width) / 2 - posicion.left;
-    const y = pila.top - posicion.top;
-
-    return carta.animate([
-      { transform: `translate(${x}px, ${y}px) rotate(${indice % 2 ? -6 : 6}deg) scale(0.92)`, opacity: 0 },
-      { opacity: 1, offset: 0.2 },
-      { transform: 'none', opacity: 1 },
-    ], {
-      duration: 600, // Duracion del movimiento de cada carta.
-      delay: indice * 150, // Separacion entre cartas; subir 150 hace el reparto mas lento.
-      easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
-      fill: 'backwards', // Conserva la posicion de la pila mientras espera su turno.
+  // El contexto revierte estilos y cancela tweens si cambia la tanda o se desmonta.
+  const contexto = gsap.context(() => {
+    cartas.forEach((carta, indice) => {
+      const posicion = posiciones[indice];
+      const x = pila.left + (pila.width - posicion.width) / 2 - posicion.left;
+      const y = pila.top - posicion.top;
+      const demora = indice * .15;
+      gsap.set(carta, { x, y, rotation: indice % 2 ? -6 : 6, scale: .92, opacity: 0 });
+      gsap.to(carta, { x: 0, y: 0, rotation: 0, scale: 1, duration: .6, delay: demora, ease: 'power3.out',
+        onComplete: () => gsap.set(carta, { clearProps: 'transform,opacity' }) });
+      gsap.to(carta, { opacity: 1, duration: .12, delay: demora, ease: 'none' });
     });
-  });
-
-  // Cancela el reparto anterior si llega otra tanda o se abandona la seleccion.
-  return /* Libera los recursos de este efecto cuando deja de usarse. */ () => animaciones.forEach(/* Aplica este paso a cada elemento. */ (animacion) => animacion.cancel());
+  }, contenedor);
+  return () => contexto.revert();
 }
