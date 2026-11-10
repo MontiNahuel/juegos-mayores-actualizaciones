@@ -1,3 +1,4 @@
+import gsap from 'gsap';
 /* Presenta los textos y las intervenciones de los personajes. */
 import { useLayoutEffect, useRef, type ReactNode } from 'react';
 import BotonNarrativo from '../BOTON_NARRATIVO/BotonNarrativo';
@@ -32,6 +33,35 @@ export default function DialogoNarrativo({
 }: Props) {
   const panel = useRef<HTMLDivElement>(null);
   const intervencionAnterior = useRef(intervencion);
+  // Un panel externo pertenece al coordinador; los demás ejecutan aquí su entrada.
+  useLayoutEffect(() => {
+    if (animacionExterna || !panel.current) return;
+    const contexto = gsap.context(() => {
+      if (!listo) { gsap.set(panel.current, { autoAlpha: 0 }); return; }
+      const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const demora = className.includes('evento-dialogo--espera-fondo') ? 1.8 : 0;
+      gsap.fromTo(panel.current, { autoAlpha: 0 }, {
+        autoAlpha: 1, duration: reducido ? 0 : .6, delay: reducido ? 0 : demora,
+      });
+    });
+    return () => contexto.revert();
+  }, [listo, animacionExterna, className]);
+
+  // El bloque posee la entrada de sus opciones: la escritura sólo habilita su aparición.
+  useLayoutEffect(() => {
+    if (!opcionesVisibles || !textoProgresivo || !panel.current) return;
+    const contexto = gsap.context(() => {
+      const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const botones = panel.current!.querySelectorAll('.dialogo-narrativo__opciones > button');
+      if (!botones.length) return;
+      gsap.fromTo(botones, { opacity: 0, y: reducido ? 0 : 5 }, {
+        opacity: 1, y: 0, duration: reducido ? 0 : .28,
+        stagger: reducido ? 0 : .14, ease: 'power2.out',
+      });
+    }, panel);
+    return () => contexto.revert();
+  }, [intervencion, opcionesVisibles, textoProgresivo]);
+
   // Sincroniza foco y scroll antes de pintar la nueva intervención, sin repetir la introducción.
   useLayoutEffect(() => {
     if (intervencion && intervencionAnterior.current !== intervencion && panel.current) {
@@ -106,10 +136,9 @@ export default function DialogoNarrativo({
           inert={!opcionesVisibles}
           data-animar={textoProgresivo && opcionesVisibles ? 'true' : 'false'}
         >
-          {opciones.map((opcion, indice) => (
+          {opciones.map((opcion) => (
             <BotonNarrativo
               key={opcion.id}
-              style={{ animationDelay: `${indice * 140}ms` }}
               className="boton-narrativo--decision block w-full !min-h-0 !px-4 !py-2 text-left whitespace-normal"
               disabled={opcion.disabled}
               onClick={opcion.onElegir}

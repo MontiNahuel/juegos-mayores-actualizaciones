@@ -12,7 +12,6 @@
 .narrativo-modo-mayor .dialogo-narrativo__texto { font-size: var(--narrativo-texto-adaptado, 18px); line-height: 1.65; }
 .narrativo-modo-mayor .dialogo-narrativo__opciones { gap: 14px; }
 /* La conversación comparte su secuencia también con letra grande; Reduce Motion elimina la espera. */
-.narrativo-modo-mayor .narrativo-fade-dialogo:not(.conversacion-dialogo) { opacity: 1; visibility: visible; animation: none; }
 .narrativo-modo-mayor .titulo-narrativo__arte p { font-size: clamp(18px, 3vw, 24px); }
 .narrativo-modo-mayor .resultado-pergamino__relato { font-size: clamp(17px, 2.8vw, 21px); line-height: 1.6; }
 .narrativo-modo-mayor .conversacion-personajes {
@@ -40,34 +39,6 @@
   filter: drop-shadow(0 0 3px #110c06cc) drop-shadow(0 0 7px #100a064d);
   -webkit-filter: drop-shadow(0 0 3px #110c06cc) drop-shadow(0 0 7px #100a064d);
 }
-.titulo-narrativo[data-intro='listo']:not([data-animacion='externa']) .titulo-narrativo__arte {
-  animation: narrativo-presentar-titulo 3800ms ease-in-out 100ms both;
-}
-.titulo-narrativo[data-intro='listo']:not([data-animacion='externa'])[data-permanente='true'] .titulo-narrativo__arte {
-  animation: titulo-narrativo-entrar 760ms ease-in-out 100ms both;
-}
-@keyframes titulo-narrativo-entrar {
-  from { opacity: 0; visibility: hidden; }
-  to { opacity: 1; visibility: visible; }
-}
-@keyframes narrativo-presentar-titulo {
-  0%, 100% { opacity: 0; visibility: hidden; }
-  20%, 75% { opacity: 1; visibility: visible; }
-}
-@keyframes narrativo-retirar-titulo { to { opacity: 0; visibility: hidden; } }
-
-/* Entrada del diálogo compartida por eventos y conversaciones. */
-.narrativo-fade-dialogo { opacity: 0; visibility: hidden; }
-.narrativo-fade-dialogo[data-intro='listo'] {
-  animation: narrativo-aparecer 600ms ease-out both;
-}
-/* El texto del evento sólo espera cuando entró un elemento nuevo en la corte. */
-.evento-dialogo--espera-fondo[data-intro='listo'] { animation-delay: 1800ms; }
-@keyframes narrativo-aparecer {
-  from { opacity: 0; visibility: hidden; }
-  to { opacity: 1; visibility: visible; }
-}
-
 /* La conversación delega el movimiento en GSAP; el CSS conserva la composición. */
 /* El texto completo reserva su altura sin anunciar cada letra al lector de pantalla. */
 .dialogo-narrativo__revelado::before {
@@ -91,16 +62,6 @@
   pointer-events: none;
   transform: translateX(var(--glifo-recorrido, 0)) rotateY(var(--glifo-giro, 0deg));
   transform-origin: center;
-}
-/* Las opciones se presentan en orden una vez terminada la lectura. */
-@media (prefers-reduced-motion: no-preference) {
-  .dialogo-narrativo__opciones[data-animar='true'] > button {
-    animation: dialogo-opcion-entrar 280ms ease-out both;
-  }
-  @keyframes dialogo-opcion-entrar {
-    from { opacity: 0; visibility: hidden; transform: translateY(5px); }
-    to { opacity: 1; visibility: visible; transform: translateY(0); }
-  }
 }
 /* Cubre el padding superior del panel para que el texto no pase por encima de la guía fija. */
 .dialogo-narrativo__guia::before {
@@ -160,12 +121,6 @@
   .narrativo-conversacion.narrativo-modo-mayor .conversacion-personajes { min-height: 0; }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .titulo-narrativo[data-intro='listo']:not([data-animacion='externa']) .titulo-narrativo__arte {
-    animation: narrativo-retirar-titulo 1ms steps(1) 2500ms both;
-    opacity: 1;
-    visibility: visible;
-  }
-  .titulo-narrativo[data-intro='listo']:not([data-animacion='externa'])[data-permanente='true'] .titulo-narrativo__arte,
-  .narrativo-fade-dialogo[data-intro='listo'] { animation-delay: 0s; }
-}
+
+/* GSAP posee transform/opacity de las opciones; el hover sólo interpola su acabado. */
+.dialogo-narrativo__opciones > button { transition-property: border-color, background, box-shadow; }

@@ -1,3 +1,5 @@
+import { presentarResolucion } from './commanderNarrativo';
+import type { EstadoPartida } from './narrativeService';
 /* Coordina las etapas narrativas y sincroniza las decisiones de la partida. */
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { IonContent, IonPage } from '@ionic/react';
@@ -144,8 +146,8 @@ export default function KingsCourt() {
       // Si la API agregó una ilustración nueva, se prepara mientras sigue visible la escena anterior.
       await precargarImagenes(imagenesDelContenido(data));
       return data;
-    } catch (e: any) {
-      setError(`${mensaje}${e?.message ? ` ${e.message}` : ''}`);
+    } catch (e: unknown) {
+      setError(`${mensaje}${e instanceof Error ? ` ${e.message}` : ''}`);
       return null;
     }
   };
@@ -170,17 +172,16 @@ export default function KingsCourt() {
   };
 
   // Recupera la etapa pendiente del servidor sin reemplazar al jugador local.
-  const mostrarEstado = async (estado: any) => {
+  const mostrarEstado = async (estado: EstadoPartida) => {
     if (!estado) return;
-    // Sincroniza antes del draft: el modo adaptado puede pedir otro evento enseguida.
-    dispatch(sincronizarPartida(estado));
-    if (estado.finalizacion) dispatch(finalizarPartida(estado.finalizacion));
-    else if (estado.resultado_actual) {
-      dispatch(guardarResultado(estado.resultado_actual));
-      dispatch(sincronizarPartida(estado));
-    } else if (estado.conversacion_actual) dispatch(mostrarConversacion(estado.conversacion_actual));
-    else if (estado.evento_actual) await guardarEventoLocal(estado.evento_actual);
-    else if ((!estado.fase_actual || estado.fase_actual.toUpperCase() === 'DRAFT_MENSUAL') && estado.cartas_draft_actual?.length) await cargarDraft(estado.cartas_draft_actual, true);
+    await presentarResolucion(estado, {
+      sincronizar: datos => { dispatch(sincronizarPartida(datos)); },
+      finalizar: final => { dispatch(finalizarPartida(final)); },
+      resultado: resultado => { dispatch(guardarResultado(resultado)); },
+      conversar: conversacion => { dispatch(mostrarConversacion(conversacion)); },
+      evento: guardarEventoLocal,
+      draft: cartas => cargarDraft(cartas, true),
+    });
   };
 
   // Intenta restaurar la pantalla cuando falla la selección de carta.
@@ -405,7 +406,7 @@ export default function KingsCourt() {
   const etapaVisible = ({
     estadisticas: 'estadisticas', final: `final:${finalizacion?._id}`,
     resultado: `resultado:${jugador.mes_actual}`,
-    conversacion: `conversacion:${juego.conversacionActual?._id}:${juego.conversacionActual?.nodo_id || ''}`,
+    conversacion: `conversacion:${juego.conversacionActual?._id}`,
     evento: `evento:${juego.eventoActual?.id || juego.eventoActual?._id}`,
   } as Record<string, string>)[etapa] || `${etapa}:${jugador.mes_actual}`;
 

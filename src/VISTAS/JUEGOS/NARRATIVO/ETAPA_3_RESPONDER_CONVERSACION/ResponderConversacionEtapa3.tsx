@@ -1,3 +1,4 @@
+import ImagenRetrato from './ImagenRetrato';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import FondoConversacion from './FondoConversacion';
 import { useAnimacionesConversacion } from './animacionesConversacion';
@@ -55,13 +56,7 @@ function Retrato({ personaje, activo, lado, solo }: {
     >
       <div className={`relative flex h-[70svh] min-h-[32rem] w-full shrink-0 items-end drop-shadow-[0_6px_12px_rgba(0,0,0,0.35)] ${encuadre}`}>
         <span className="absolute inset-0 grid place-items-center text-4xl font-semibold text-amber-100/70">{iniciales(personaje.nombre)}</span>
-        {personaje.imagen && <img
-          key={personaje.imagen}
-          className="relative z-10 block h-full w-auto max-w-none object-contain object-bottom"
-          src={imagenDe(personaje.imagen)}
-          alt={personaje.nombre}
-          onError={(evento) => evento.currentTarget.classList.add('hidden')}
-        />}
+        {personaje.imagen && <ImagenRetrato src={imagenDe(personaje.imagen)} nombre={personaje.nombre} />}
       </div>
     </div>
   );
@@ -100,7 +95,7 @@ export default function ResponderConversacionEtapa3({
 
     // Compara el ancho natural de los retratos con el espacio disponible, sin escalarlos por el texto.
     const medir = () => {
-      const imagenes = [...elemento.querySelectorAll('img')];
+      const imagenes = [...elemento.querySelectorAll<HTMLImageElement>('img[data-retrato-actual="true"]')];
       if (imagenes.length < 2) {
         setSolo(true);
         return;
@@ -109,7 +104,7 @@ export default function ResponderConversacionEtapa3({
       const estilo = getComputedStyle(elemento);
       const ancho = elemento.clientWidth - parseFloat(estilo.paddingLeft) - parseFloat(estilo.paddingRight);
       const alto = Math.max(...imagenes.map((img) => img.clientHeight));
-      const maximo = parseFloat(getComputedStyle(imagenes[0].parentElement!.parentElement!).maxWidth);
+      const maximo = parseFloat(getComputedStyle(imagenes[0].closest('.conversacion-retrato')!).maxWidth);
       const separacion = ancho - Math.min(ancho / 2, maximo);
       const anchoRetratos = imagenes.reduce((total, img) => total + alto * img.naturalWidth / img.naturalHeight, 0);
       setSolo(anchoRetratos >= separacion * 2);

@@ -40,4 +40,13 @@ export function prepararLectura(contenedor: HTMLElement) {
     gsap.globalTimeline.getChildren().filter(animacion => String(animacion.data || '').startsWith('conversacion:'))
       .forEach(animacion => animacion.progress(1));
   });
+  terminarOpciones(contenedor);
+}
+
+// Las opciones se montan después del callback de lectura, en otro commit React.
+export function terminarOpciones(contenedor: HTMLElement) {
+  act(() => {
+    gsap.getTweensOf([...contenedor.querySelectorAll('.dialogo-narrativo__opciones > button')])
+      .forEach(tween => tween.progress(1));
+  });
 }

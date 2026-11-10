@@ -9,7 +9,7 @@ import DialogoNarrativo from '../COMPARTIDOS/DIALOGO_NARRATIVO/DialogoNarrativo'
 import FondoCorte from '../COMPARTIDOS/FONDO_CORTE/FondoCorte';
 import type { EstadoFondoCorte } from '../../../../config/fondoCorte';
 import { imagenPrecargada } from '../../../../services/assetPreloader';
-import { CoordinadorAnimacionConversacion } from '../COMPARTIDOS/DIALOGO_NARRATIVO/animacionesNarrativas';
+import { AnimacionTexto } from '../COMPARTIDOS/DIALOGO_NARRATIVO/AnimacionTexto';
 
 // Busca la imagen del elemento para mostrarla en la historia.
 const imagenDe = (imagen: string) => imagenPrecargada(imagen.startsWith('/') && !imagen.startsWith('//')
@@ -66,7 +66,7 @@ export default function ResolverEventoEtapa2({ evento, atributos, fondoBase, mod
   const fondoEscena = { src: fondo, personajes: [], oro: [], manos: [] };
   const escenaLista = usaFondoBase || fondoListo === fondo;
   const escena = useRef<HTMLElement>(null);
-  const animacion = useRef<CoordinadorAnimacionConversacion | null>(null);
+  const animacion = useRef<AnimacionTexto | null>(null);
   const lecturaId = JSON.stringify([evento.id, evento.nodo_id, evento.descripcion]);
   const [lecturaCompleta, setLecturaCompleta] = useState('');
   const [escenaPresentada, setEscenaPresentada] = useState(false);
@@ -79,7 +79,7 @@ export default function ResolverEventoEtapa2({ evento, atributos, fondoBase, mod
 
   useLayoutEffect(() => {
     if (!escena.current) return;
-    const coordinador = new CoordinadorAnimacionConversacion(escena.current, setLecturaCompleta);
+    const coordinador = new AnimacionTexto(escena.current, setLecturaCompleta);
     animacion.current = coordinador;
     return () => { coordinador.destruir(); animacion.current = null; };
   }, [lecturaId]);
