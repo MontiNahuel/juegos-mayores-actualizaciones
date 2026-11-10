@@ -26,7 +26,7 @@ export default function FondoConversacion({ imagen, respaldo, onListo, animar, c
   return <>{capas.map(src => (
     <img
       key={src}
-      className="conversacion-fondo absolute inset-0 -z-20 h-full w-full object-cover"
+      className="conversacion-fondo fixed inset-0 -z-20 h-screen w-full object-cover"
       src={src}
       alt=""
       decoding="sync"
