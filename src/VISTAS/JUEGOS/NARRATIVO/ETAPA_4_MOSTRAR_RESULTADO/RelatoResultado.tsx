@@ -58,8 +58,8 @@ export default function RelatoResultado({ texto, efectos, onEfectosCompletos }: 
         <span className="sr-only">{texto}</span>
       </span>
     </button>
-    <div className="mt-[clamp(16px,3vh,28px)] border-t border-[#6e442777] pt-3 text-[clamp(15px,2.6vw,20px)] font-bold whitespace-pre-line" aria-live="polite">
-      {lecturaCompleta && efectos.map((efecto, indice) => <div key={indice} className={`resultado-efecto resultado-efecto--${efecto.tipo}`}>{efecto.tipo === 'negativo' ? <>
+    <div className="mt-[clamp(16px,3vh,28px)] border-t border-[#6e442777] pt-3 text-[clamp(15px,2.6vw,20px)] font-bold whitespace-pre-line" aria-live="polite" aria-hidden={!lecturaCompleta} style={{ visibility: lecturaCompleta ? 'visible' : 'hidden' }}>
+      {efectos.map((efecto, indice) => <div key={indice} className={`resultado-efecto resultado-efecto--${efecto.tipo}`}>{efecto.tipo === 'negativo' ? <>
         <span className="sr-only">{efecto.texto}</span>
         <span className="resultado-efecto__fragmentos" aria-hidden="true">
           <span className="resultado-efecto__reserva">{efecto.texto}</span>

@@ -75,7 +75,7 @@
 .conversacion-fondo { opacity: 0; visibility: hidden; }
 .conversacion-fondo[data-visible='true'] { opacity: 1; visibility: visible; }
 /* El navegador no debe anclar el nodo nuevo a las opciones del diálogo anterior. */
-.conversacion-dialogo { overflow-anchor: none; max-height: 42dvh; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; }
+.conversacion-dialogo { overflow-anchor: none; max-height: min(60dvh, 36rem); overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; }
 .conversacion-dialogo:focus-visible { outline: 2px solid #e6c57e; outline-offset: -2px; }
 .conversacion-dialogo .dialogo-narrativo__interior { max-width: 1100px; margin-inline: auto; }
 .conversacion-dialogo .dialogo-narrativo__texto { max-width: 72ch; }
@@ -88,7 +88,7 @@
   /* El retrato depende del viewport, no del espacio que deja cada frase. El panel recorta el excedente. */
   .narrativo-conversacion .conversacion-retrato > div { height: 70svh; min-height: 0; }
   .narrativo-conversacion .conversacion-dialogo {
-    max-height: 42dvh;
+    max-height: 60dvh;
     overflow-y: auto;
     overscroll-behavior: contain;
     padding-bottom: max(8px, env(safe-area-inset-bottom));
@@ -150,3 +150,6 @@
 .resultado-efecto__mitad--inferior { clip-path: polygon(0 65%, 100% 35%, 100% 100%, 0 100%); }
 
 .dialogo-narrativo__revelado { overflow-x: clip; }
+
+.papel-ui__contenido { overflow-x: hidden; }
+.dialogo-narrativo__cursor { overflow: hidden; }

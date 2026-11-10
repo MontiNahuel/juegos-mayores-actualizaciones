@@ -2,7 +2,7 @@
 // Muestra el resultado de una decision o el cierre de la partida.
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
-import { imagenPrecargada } from '../../../../services/assetPreloader';
+import selloResultado from '../../../../assets/narrative/sello-resultado.png';
 import type { FinalizacionApi, ResultadoApi } from '../narrativeService';
 import TituloNarrativo from '../COMPARTIDOS/TITULO_NARRATIVO/TituloNarrativo';
 import BotonNarrativo from '../COMPARTIDOS/BOTON_NARRATIVO/BotonNarrativo';
@@ -86,7 +86,7 @@ export default function MostrarResultadoEtapa4({ resultado, finalizacion, efecto
     <section className={`flex min-h-full w-full flex-col items-center text-center text-[#25170d] motion-safe:transition-opacity motion-safe:duration-[650ms] [&>.titulo-narrativo]:w-full ${saliendo ? 'opacity-0' : ''}`}>
       <TituloNarrativo titulo="Resultado" permanente variante="evento" />
 
-      <PapelUi overlay={<img ref={sello} src={imagenPrecargada('/assets/narrative/sello-resultado.png')} alt="" aria-hidden="true" className="pointer-events-none absolute right-[9%] bottom-[6%] z-10 w-[22%] opacity-0" />} className="w-[min(88vw,44svh,29rem)] origin-center transition-[transform,filter] duration-280 hover:scale-[1.025] hover:drop-shadow-[0_16px_20px_#1a0d09a6]" contenidoClassName="font-[Palatino_Linotype,Book_Antiqua,Palatino,Georgia,serif] leading-[1.45] text-[#482b19] opacity-92 text-shadow-[.2px_0_currentColor]">
+      <PapelUi overlay={<img ref={sello} src={selloResultado} alt="" aria-hidden="true" className="pointer-events-none absolute right-[9%] bottom-[6%] z-10 w-[22%] opacity-0" />} className="w-[min(88vw,44svh,29rem)] origin-center transition-[transform,filter] duration-280 hover:scale-[1.025] hover:drop-shadow-[0_16px_20px_#1a0d09a6]" contenidoClassName="font-[Palatino_Linotype,Book_Antiqua,Palatino,Georgia,serif] leading-[1.45] text-[#482b19] opacity-92 text-shadow-[.2px_0_currentColor]">
           <article>
             <h3 className="mb-[clamp(12px,2.5vh,24px)] font-[Copperplate,Copperplate_Gothic_Light,Palatino_Linotype,Georgia,serif] text-[clamp(18px,3.6vw,28px)] leading-[1.15] tracking-[.035em] text-[#382011]">{contenido.titulo}</h3>
             <RelatoResultado key={`${contenido.titulo}:${contenido.texto}`} texto={contenido.texto} efectos={efectos} onEfectosCompletos={() => setSelloListo(true)} />
