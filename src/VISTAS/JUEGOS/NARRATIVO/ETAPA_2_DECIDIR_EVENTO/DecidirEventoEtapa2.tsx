@@ -1,6 +1,7 @@
 /* Muestra el evento actual y las opciones que permiten sus condiciones. */
 // Presenta el evento como una escena: ilustracion, titulo y decisiones al pie.
 import { useLayoutEffect, useRef, useState } from 'react';
+import gsap from 'gsap';
 import type { EventoApi } from '../narrativeService';
 import TituloNarrativo from '../COMPARTIDOS/TITULO_NARRATIVO/TituloNarrativo';
 import { API_URL } from '../../../../config/api';
@@ -71,10 +72,30 @@ export default function ResolverEventoEtapa2({ evento, atributos, fondoBase, mod
   const [lecturaCompleta, setLecturaCompleta] = useState('');
   const [escenaPresentada, setEscenaPresentada] = useState(false);
   const primeraLectura = useRef(true);
+  const entradaPresentada = useRef(false);
+  const contextoEntrada = useRef<gsap.Context | null>(null);
   const terminada = lecturaCompleta === lecturaId;
 
+  // La escena se revela una sola vez por grafo, cuando su fondo está disponible.
+  // El fondo de la corte permanece debajo mientras aparece el evento.
   useLayoutEffect(() => {
-    if (escenaLista) setEscenaPresentada(true);
+    if (!escena.current) return;
+    const elemento = escena.current;
+    const contexto = gsap.context(() => { gsap.set(elemento, { opacity: 0 }); }, elemento);
+    contextoEntrada.current = contexto;
+    entradaPresentada.current = false;
+    return () => { contextoEntrada.current = null; contexto.revert(); };
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!escenaLista || entradaPresentada.current || !escena.current) return;
+    entradaPresentada.current = true;
+    setEscenaPresentada(true);
+    const elemento = escena.current;
+    contextoEntrada.current?.add(() => {
+      const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      gsap.to(elemento, { opacity: 1, duration: reducido ? 0 : .8, ease: 'power2.out', data: 'evento:entrada' });
+    });
   }, [escenaLista]);
 
   useLayoutEffect(() => {
@@ -86,7 +107,7 @@ export default function ResolverEventoEtapa2({ evento, atributos, fondoBase, mod
 
   useLayoutEffect(() => {
     if (!escenaLista || !animacion.current) return;
-    const demora = primeraLectura.current ? (demorarDialogoPorFondo ? 2.4 : .6) : 0;
+    const demora = primeraLectura.current ? (demorarDialogoPorFondo ? 2.4 : .8) : 0;
     primeraLectura.current = false;
     animacion.current.escribirTexto(lecturaId, demora);
   }, [escenaLista, lecturaId, demorarDialogoPorFondo]);

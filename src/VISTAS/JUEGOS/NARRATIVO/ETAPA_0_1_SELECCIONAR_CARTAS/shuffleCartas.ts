@@ -15,8 +15,8 @@ export default function shuffleCartas(contenedor: HTMLDivElement | null, selecto
       const x = pila.left + (pila.width - posicion.width) / 2 - posicion.left;
       const y = pila.top - posicion.top;
       const demora = indice * .15;
-      gsap.set(carta, { x, y, rotation: indice % 2 ? -6 : 6, scale: .92, opacity: 0 });
-      gsap.to(carta, { x: 0, y: 0, rotation: 0, scale: 1, duration: .6, delay: demora, ease: 'power3.out',
+      gsap.set(carta, { x, y, opacity: 0 });
+      gsap.to(carta, { x: 0, y: 0, duration: .6, delay: demora, ease: 'power3.out',
         onComplete: () => gsap.set(carta, { clearProps: 'transform,opacity' }) });
       gsap.to(carta, { opacity: 1, duration: .12, delay: demora, ease: 'none' });
     });

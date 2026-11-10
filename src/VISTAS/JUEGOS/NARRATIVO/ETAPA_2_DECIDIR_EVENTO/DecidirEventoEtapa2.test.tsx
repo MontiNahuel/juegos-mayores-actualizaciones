@@ -25,3 +25,17 @@ it('revela el evento con la animación compartida y habilita la decisión al ter
   fireEvent.click(screen.getByRole('button', { name: 'Ayudar' }));
   expect(elegir).toHaveBeenCalledExactlyOnceWith('ayudar');
 });
+
+it('presenta la escena una vez y conserva la entrada al avanzar dentro del mismo evento', () => {
+  const { container, rerender } = render(<ResolverEventoEtapa2 evento={evento} atributos={{}} fondoBase={fondoBase} onElegir={vi.fn()} />);
+  const escena = container.querySelector<HTMLElement>('.evento-escena')!;
+  const entrada = gsap.getTweensOf(escena).find(t => t.data === 'evento:entrada')!;
+  expect(entrada).toBeTruthy();
+  act(() => { entrada.progress(.5); });
+  expect(Number(escena.style.opacity)).toBeGreaterThan(0);
+  expect(Number(escena.style.opacity)).toBeLessThan(1);
+  rerender(<ResolverEventoEtapa2 evento={{ ...evento, nodo_id: 'anidado', descripcion: 'Otra condición.' }} atributos={{}} fondoBase={fondoBase} onElegir={vi.fn()} />);
+  expect(gsap.getTweensOf(escena).find(t => t.data === 'evento:entrada')).toBe(entrada);
+  act(() => { entrada.progress(1); });
+  expect(Number(escena.style.opacity)).toBe(1);
+});

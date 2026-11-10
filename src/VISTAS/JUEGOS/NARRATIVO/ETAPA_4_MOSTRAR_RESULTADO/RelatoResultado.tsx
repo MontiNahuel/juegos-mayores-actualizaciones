@@ -14,7 +14,7 @@ export default function RelatoResultado({ texto, efectos, onEfectosCompletos }: 
 
   useLayoutEffect(() => {
     if (!raiz.current) return;
-    const escritura = new AnimacionTexto(raiz.current, () => setLecturaCompleta(true), 21);
+    const escritura = new AnimacionTexto(raiz.current, () => setLecturaCompleta(true));
     animacion.current = escritura;
     escritura.escribirTexto('resultado');
     return () => { animacion.current = null; escritura.destruir(); };
@@ -54,7 +54,7 @@ export default function RelatoResultado({ texto, efectos, onEfectosCompletos }: 
     <button type="button" className="resultado-pergamino__relato block w-full border-0 bg-transparent p-0 text-center text-[clamp(14px,2.5vw,19px)] text-inherit focus-visible:outline-2 focus-visible:outline-[#694529]"
       onClick={() => animacion.current?.acelerarTexto()} aria-label={lecturaCompleta ? undefined : 'Acelerar lectura del resultado'}>
       <span className="dialogo-narrativo__revelado relative block" data-texto={texto}>
-        <span className="absolute inset-0" aria-hidden="true"><span className="dialogo-narrativo__caracteres" /><span className="dialogo-narrativo__cursor inline-block h-[1em] w-0 align-text-bottom" /></span>
+        <span className="dialogo-narrativo__texto-visible absolute inset-0" aria-hidden="true"><span className="dialogo-narrativo__caracteres" /><span className="dialogo-narrativo__cursor inline-block h-[1em] w-0 align-text-bottom" /></span>
         <span className="sr-only">{texto}</span>
       </span>
     </button>

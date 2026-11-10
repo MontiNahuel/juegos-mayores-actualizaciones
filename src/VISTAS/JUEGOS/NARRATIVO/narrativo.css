@@ -75,7 +75,7 @@
 .conversacion-fondo { opacity: 0; visibility: hidden; }
 .conversacion-fondo[data-visible='true'] { opacity: 1; visibility: visible; }
 /* El navegador no debe anclar el nodo nuevo a las opciones del diálogo anterior. */
-.conversacion-dialogo { overflow-anchor: none; height: 42dvh; max-height: 42dvh; overflow-y: auto; overscroll-behavior: contain; }
+.conversacion-dialogo { overflow-anchor: none; max-height: 42dvh; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; }
 .conversacion-dialogo:focus-visible { outline: 2px solid #e6c57e; outline-offset: -2px; }
 .conversacion-dialogo .dialogo-narrativo__interior { max-width: 1100px; margin-inline: auto; }
 .conversacion-dialogo .dialogo-narrativo__texto { max-width: 72ch; }
@@ -148,3 +148,5 @@
 .resultado-efecto__mitad { position: absolute; inset: 0; }
 .resultado-efecto__mitad--superior { clip-path: polygon(0 0, 100% 0, 100% 35%, 0 65%); }
 .resultado-efecto__mitad--inferior { clip-path: polygon(0 65%, 100% 35%, 100% 100%, 0 100%); }
+
+.dialogo-narrativo__revelado { overflow-x: clip; }
