@@ -11,7 +11,7 @@ export class AnimacionTexto {
   private transformaciones = new Set<gsap.core.Tween>();
   private seguimiento = true;
 
-  constructor(private raiz: HTMLElement, private onLecturaCompleta?: (intervencion: string) => void) {
+  constructor(private raiz: HTMLElement, private onLecturaCompleta?: (intervencion: string) => void, private caracteresPorSegundo = RITMO.texto.caracteresPorSegundo) {
     this.contexto = gsap.context(() => {}, raiz);
     this.preferencias.add({ siempre: 'all', reducido: '(prefers-reduced-motion: reduce)' }, contexto => {
       this.reducir(Boolean(contexto.conditions?.reducido));
@@ -70,7 +70,7 @@ export class AnimacionTexto {
     let ultimo = 0;
     let ultimaLinea = -Infinity;
     const demora = demoraInicial ?? 0;
-    const duracionEscritura = caracteres.length / RITMO.texto.caracteresPorSegundo;
+    const duracionEscritura = caracteres.length / this.caracteresPorSegundo;
     this.escritura = gsap.timeline({
       data: 'conversacion:escritura',
       delay: demora,
