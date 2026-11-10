@@ -124,3 +124,27 @@
 
 /* GSAP posee transform/opacity de las opciones; el hover sólo interpola su acabado. */
 .dialogo-narrativo__opciones > button { transition-property: border-color, background, box-shadow; }
+
+/* Consecuencias legibles sobre papel, con luz verde o carmesí según su signo. */
+.resultado-efecto--positivo { color: #235b30; text-shadow: 0 0 8px #87c978, .2px 0 currentColor; }
+.resultado-efecto--negativo { color: #711b2b; text-shadow: 0 1px 3px #4b122333, .2px 0 currentColor; }
+.resultado-efecto--neutro { color: #53351f; }
+
+/* El trazo es una capa decorativa: no altera el texto ni su espacio. */
+.resultado-efecto--negativo { position: relative; }
+.resultado-efecto__corte {
+  position: absolute;
+  left: 8%; right: 8%; top: 50%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #8e1c32 18%, #ef8b89 50%, #8e1c32 82%, transparent);
+  box-shadow: 0 0 7px #9c183a;
+  transform: rotate(-9deg) scaleX(0);
+  transform-origin: left center;
+  pointer-events: none;
+}
+
+.resultado-efecto__fragmentos { position: relative; display: inline-block; }
+.resultado-efecto__reserva { visibility: hidden; }
+.resultado-efecto__mitad { position: absolute; inset: 0; }
+.resultado-efecto__mitad--superior { clip-path: polygon(0 0, 100% 0, 100% 35%, 0 65%); }
+.resultado-efecto__mitad--inferior { clip-path: polygon(0 65%, 100% 35%, 100% 100%, 0 100%); }

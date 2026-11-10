@@ -14,8 +14,9 @@ const FORMAS_RASGADO = [
 ];
 
 // Papel reutilizable: la imagen y el contenido llegan por props.
-export default function PapelUi({ children, className = '', contenidoClassName = '', imagen = '/assets/narrative/result-paper.png' }: {
+export default function PapelUi({ children, overlay, className = '', contenidoClassName = '', imagen = '/assets/narrative/result-paper.png' }: {
   children: ReactNode;
+  overlay?: ReactNode;
   className?: string;
   contenidoClassName?: string;
   imagen?: string;
@@ -42,6 +43,7 @@ export default function PapelUi({ children, className = '', contenidoClassName =
       <div className="papel-ui__entrada invisible absolute inset-0 opacity-0 [will-change:clip-path,transform,opacity]">
         <img className="pointer-events-none absolute inset-0 h-full w-full object-fill sepia-[.08] saturate-[.86] contrast-[.98]" src={imagenPrecargada(imagen)} alt="" aria-hidden="true" />
         <div className={`papel-ui__contenido absolute inset-[12%_13%_11%] overflow-y-auto [scrollbar-color:#7a4b27_transparent] [scrollbar-width:thin] ${contenidoClassName}`}>{children}</div>
+        {overlay}
       </div>
     </div>
   );
