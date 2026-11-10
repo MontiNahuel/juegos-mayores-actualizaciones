@@ -7,9 +7,9 @@ gsap.registerPlugin(useGSAP);
 // Tiempos en segundos, velocidad en grafemas/segundo y desplazamientos en píxeles.
 const RITMO = {
   fondo: .42,
-  titulo: { entrada: .08, duracion: .42, salida: 2.24, retirada: .36 },
-  personajes: { entrada: .32, duracion: .48, alternancia: .32 },
-  dialogo: { entrada: .62, duracion: .36 },
+  titulo: { entrada: .08, duracion: .42, salida: 1.35, retirada: .55 },
+  personajes: { entrada: 1.48, duracion: .65, alternancia: .65 },
+  dialogo: { entrada: 1.68, duracion: .48 },
   texto: { caracteresPorSegundo: 28, aceleracion: 4, morfema: .13, fundido: .24, desplazamiento: 4, scroll: .22, margenScroll: 20 },
 };
 
@@ -87,10 +87,10 @@ export class CoordinadorAnimacionConversacion {
             .set(titulo, { autoAlpha: 0 }, 2.5);
         } else {
           this.entrada.fromTo(titulo, { autoAlpha: 0 }, { autoAlpha: 1, duration: RITMO.titulo.duracion }, 'titulo')
+            .to(titulo, { autoAlpha: 0, duration: RITMO.titulo.retirada }, RITMO.titulo.salida)
             .fromTo(personajes, { autoAlpha: 0 }, { autoAlpha: 1, duration: RITMO.personajes.duracion }, 'personajes')
             .fromTo(dialogo, { autoAlpha: 0, y: 6 }, { autoAlpha: 1, y: 0, duration: RITMO.dialogo.duracion }, 'lectura')
-            .call(() => { this.raiz.dataset.animacion = 'lista'; }, undefined, `lectura+=${RITMO.dialogo.duracion}`)
-            .to(titulo, { autoAlpha: 0, duration: RITMO.titulo.retirada }, RITMO.titulo.salida);
+            .call(() => { this.raiz.dataset.animacion = 'lista'; }, undefined, `lectura+=${RITMO.dialogo.duracion}`);
         }
       }
 
@@ -101,6 +101,9 @@ export class CoordinadorAnimacionConversacion {
         this.intervencion?.kill();
         this.intervencion = gsap.timeline({ data: 'conversacion:intervencion', defaults: { ease: 'power2.out' } });
         const retratos = this.raiz.querySelectorAll<HTMLElement>('.conversacion-retrato');
+        if (!this.anterior) gsap.set(retratos, {
+          autoAlpha: (_indice, retrato: HTMLElement) => retrato.dataset.visible === 'false' ? 0 : retrato.dataset.activo === 'true' ? 1 : .45,
+        });
         this.intervencion.to(retratos, {
           autoAlpha: (_indice, retrato: HTMLElement) => retrato.dataset.visible === 'false' ? 0 : retrato.dataset.activo === 'true' ? 1 : .45,
           duration: this.reducido ? 0 : RITMO.personajes.alternancia,

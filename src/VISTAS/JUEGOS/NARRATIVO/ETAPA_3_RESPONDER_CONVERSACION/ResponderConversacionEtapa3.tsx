@@ -51,7 +51,7 @@ function Retrato({ personaje, activo, lado, solo }: {
     <div
       data-visible={visible}
       data-activo={activo}
-      className={`conversacion-retrato ${posicion} ${alineacion} ${activo ? 'z-20 scale-100 opacity-100' : 'z-10 opacity-45'} flex h-full max-w-2xl shrink-0 flex-col justify-start px-5 ${visible ? '' : 'pointer-events-none'}`}
+      className={`conversacion-retrato ${posicion} ${alineacion} z-10 flex h-full max-w-2xl shrink-0 flex-col justify-start px-5 ${visible ? '' : 'pointer-events-none'}`}
     >
       <div className={`relative flex h-[70svh] min-h-[32rem] w-full shrink-0 items-end drop-shadow-[0_6px_12px_rgba(0,0,0,0.35)] ${encuadre}`}>
         <span className="absolute inset-0 grid place-items-center text-4xl font-semibold text-amber-100/70">{iniciales(personaje.nombre)}</span>

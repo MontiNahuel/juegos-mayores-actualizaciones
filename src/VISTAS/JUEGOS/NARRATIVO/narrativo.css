@@ -91,6 +91,16 @@
   transform: translateX(var(--glifo-recorrido, 0)) rotateY(var(--glifo-giro, 0deg));
   transform-origin: center;
 }
+/* Las opciones se presentan en orden una vez terminada la lectura. */
+@media (prefers-reduced-motion: no-preference) {
+  .dialogo-narrativo__opciones[data-animar='true'] > button {
+    animation: dialogo-opcion-entrar 280ms ease-out both;
+  }
+  @keyframes dialogo-opcion-entrar {
+    from { opacity: 0; visibility: hidden; transform: translateY(5px); }
+    to { opacity: 1; visibility: visible; transform: translateY(0); }
+  }
+}
 /* Cubre el padding superior del panel para que el texto no pase por encima de la guía fija. */
 .dialogo-narrativo__guia::before {
   content: '';
@@ -107,7 +117,6 @@
 .conversacion-dialogo:focus-visible { outline: 2px solid #e6c57e; outline-offset: -2px; }
 .conversacion-dialogo .dialogo-narrativo__interior { max-width: 1100px; margin-inline: auto; }
 .conversacion-dialogo .dialogo-narrativo__texto { max-width: 72ch; }
-.conversacion-retrato[data-visible='false'] { opacity: 0; visibility: hidden; }
 
 @media (max-width: 767px) {
   /* En móvil, conversación ocupa el viewport visible; el diálogo no empuja la página. */

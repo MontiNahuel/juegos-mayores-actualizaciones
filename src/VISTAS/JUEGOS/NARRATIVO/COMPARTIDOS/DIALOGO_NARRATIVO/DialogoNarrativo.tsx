@@ -104,10 +104,12 @@ export default function DialogoNarrativo({
           style={{ visibility: opcionesVisibles ? 'visible' : 'hidden' }}
           aria-hidden={!opcionesVisibles}
           inert={!opcionesVisibles}
+          data-animar={textoProgresivo && opcionesVisibles ? 'true' : 'false'}
         >
-          {opciones.map((opcion) => (
+          {opciones.map((opcion, indice) => (
             <BotonNarrativo
               key={opcion.id}
+              style={{ animationDelay: `${indice * 140}ms` }}
               className="boton-narrativo--decision block w-full !min-h-0 !px-4 !py-2 text-left whitespace-normal"
               disabled={opcion.disabled}
               onClick={opcion.onElegir}
