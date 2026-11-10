@@ -9,12 +9,12 @@ import {
   actualizarFondoBase, configurarEdadNarrativa, elegirCarta, finalizarPartida,
   guardarCartasDraft, guardarCartasIniciales, guardarCorte, guardarPersonajesCorte,
   guardarResultado, iniciarJugador, limpiarResultado, mostrarConversacion, mostrarEvento,
-  registrarDecisionEvento, reiniciarSeleccionNarrativa, resolverConversacion, sincronizarPartida,
+  reiniciarSeleccionNarrativa, sincronizarPartida,
 } from '../../../store/narrativoSelectionSlice';
 import {
   agregarCondicionesSecretas, avanzarNodo, continuarTurno, elegirCartaMensual, esPartidaNarrativaLocal,
   iniciarPartida, obtenerCatalogosCronica, obtenerCortePartida, obtenerEstadoPartida, obtenerHistorialPartida,
-  reiniciarPartida,
+  reiniciarPartida, type ConversacionApi,
 } from './narrativeService';
 import SeleccionarCartasEtapa0y1 from './ETAPA_0_1_SELECCIONAR_CARTAS/SeleccionarCartasEtapa0y1';
 import MuestraEventoEtapa0 from './ETAPA_0_MUESTRA_EVENTO/MuestraEventoEtapa0';
@@ -48,7 +48,7 @@ const prepararCarta = (carta: any) => ({
 
 // Genera una derrota si alguno de los recursos llega a cero.
 const finalPorRecurso = (recursos: any) => {
-  const recurso = Object.keys(recursos).find(/* Busca el primer elemento que cumple esta condición. */ clave => Number(recursos[clave]) <= 0);
+  const recurso = Object.keys(recursos).find(clave => Number(recursos[clave]) <= 0);
   return recurso ? {
     _id: `fin_${recurso}_cero`, recurso_clave: recurso, tipo: 'derrota_recurso',
     titulo: `El reino perdio ${recurso}`,
@@ -66,7 +66,7 @@ const describirEfectos = (resultado: any) => {
     fe: ['La gente recuperó confianza.', 'La gente perdió confianza.'],
   };
 
-  return resultado?.efectos?.map(/* Prepara el resultado de cada elemento. */ ({ accion }: any) => {
+  return resultado?.efectos?.map(({ accion }: any) => {
     const valor = Number(accion?.valor || 0);
     return frases[accion?.clave]?.[valor > 0 ? 0 : 1];
   }).filter(Boolean).join(' ') || 'La decisión no produjo cambios importantes.';
@@ -78,16 +78,17 @@ export default function KingsCourt() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const store = useStore();
-  const juego = useSelector(/* Lee de Redux el dato compartido que necesita la pantalla. */ (state: any) => state.narrativoSelection);
-  const carga = useSelector(/* Lee de Redux el dato compartido que necesita la pantalla. */ (state: RootState) => state.narrativoCarga);
+  const juego = useSelector((state: any) => state.narrativoSelection);
+  const carga = useSelector((state: RootState) => state.narrativoCarga);
   const [mostrarBuffer, setMostrarBuffer] = useState(true);
   const [intentoCarga, setIntentoCarga] = useState(0);
   // Prepara la entrada a la partida cuando la carga está lista.
   const entrarAlJuego = useCallback(() => setMostrarBuffer(false), []);
   const [setup, setSetup] = useState<any>(null);
   const [personajesDisponibles, setPersonajesDisponibles] = useState<any[]>([]);
-  const [decisionConversacion, setDecisionConversacion] = useState<any>(null);
   const [continuando, setContinuando] = useState(false);
+  const [respondiendo, setRespondiendo] = useState(false);
+  const respuestaEnCurso = useRef(false);
   const continuacionEnCurso = useRef(false);
   const [estadisticas, setEstadisticas] = useState<any>(null);
   const [cargandoEstadisticas, setCargandoEstadisticas] = useState(false);
@@ -100,7 +101,7 @@ export default function KingsCourt() {
   const temporizadorCambio = useRef<number | null>(null);
   const secuenciaCambio = useRef(0);
 
-  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => /* Completa este paso con los datos recibidos por la operación. */ () => {
+  useEffect(() => () => {
     secuenciaCambio.current += 1;
     if (temporizadorCambio.current !== null) window.clearTimeout(temporizadorCambio.current);
   }, []);
@@ -125,12 +126,12 @@ export default function KingsCourt() {
   } as CSSProperties;
 
   // Sincroniza la edad y el modo de juego con Redux.
-  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
+  useEffect(() => {
     dispatch(configurarEdadNarrativa({ edad, modo_mayor: modoMayor }));
   }, [dispatch, edad, modoMayor]);
 
   // El resultado conserva la corte anterior; la nueva composición entra al mostrarla entre escenas.
-  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
+  useEffect(() => {
     if (juego.resultadoActual) return;
     dispatch(actualizarFondoBase({ ejercito: juego.jugador.recursos.ejercito, oro: juego.jugador.recursos.oro, pueblo: juego.jugador.recursos.pueblo }));
   }, [dispatch, juego.jugador.recursos.ejercito, juego.jugador.recursos.oro, juego.jugador.recursos.pueblo, juego.resultadoActual]);
@@ -155,7 +156,7 @@ export default function KingsCourt() {
   // En modo adaptado pide el evento sin agregar la carta al mazo.
   const abrirEventoSinCarta = async (cartas: any[]) => {
     if (!cartas[0]) return;
-    const data = await pedir(/* Completa este paso con los datos recibidos por la operación. */ () => elegirCartaMensual(date, cartas[0].id || cartas[0]._id), 'No se pudo preparar la siguiente decision.');
+    const data = await pedir(() => elegirCartaMensual(date, cartas[0].id || cartas[0]._id), 'No se pudo preparar la siguiente decision.');
     if (data) await mostrarEstado(data);
   };
 
@@ -189,11 +190,11 @@ export default function KingsCourt() {
   };
 
   // Carga el desafío y, si existe, restaura la partida activa.
-  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
+  useEffect(() => {
     let activo = true;
     setMostrarBuffer(true);
     dispatch(iniciarCargaNarrativa(date));
-    const trabajo = prepararCargaNarrativa(date, /* Completa este paso con los datos recibidos por la operación. */ progreso => {
+    const trabajo = prepararCargaNarrativa(date, progreso => {
       if (activo) dispatch(actualizarCargaNarrativa(progreso));
     });
     // Inicializa el jugador y recupera su corte y su etapa pendiente.
@@ -218,15 +219,15 @@ export default function KingsCourt() {
         }
         if (data.tiene_partida_activa && !esPartidaNarrativaLocal(date)) {
           const [estado, corte] = await Promise.all([
-            pedir(/* Completa este paso con los datos recibidos por la operación. */ () => obtenerEstadoPartida(date), 'No se pudo recuperar el contenido de la partida activa.'),
-            pedir(/* Completa este paso con los datos recibidos por la operación. */ () => obtenerCortePartida(date), 'No se pudo recuperar la corte de la partida activa.'),
+            pedir(() => obtenerEstadoPartida(date), 'No se pudo recuperar el contenido de la partida activa.'),
+            pedir(() => obtenerCortePartida(date), 'No se pudo recuperar la corte de la partida activa.'),
           ]);
           if (!activo) return;
           if (!estado) throw new Error('No se pudo recuperar la partida activa. Volvé a intentar.');
-          if (corte?.corte) dispatch(guardarPersonajesCorte(corte.corte.map(/* Prepara el resultado de cada elemento. */ ({ personaje }: any) => prepararCarta(personaje))));
+          if (corte?.corte) dispatch(guardarPersonajesCorte(corte.corte.map(({ personaje }: any) => prepararCarta(personaje))));
           await mostrarEstado(estado);
           const fondo = (store.getState() as RootState).narrativoSelection.fondoBase as EstadoFondoCorte;
-          await precargarImagenes([fondo.src, ...[...fondo.personajes, ...fondo.oro, ...fondo.manos].map(/* Prepara el resultado de cada elemento. */ x => x.src)]);
+          await precargarImagenes([fondo.src, ...[...fondo.personajes, ...fondo.oro, ...fondo.manos].map(x => x.src)]);
         }
         if (activo) {
           const progreso = (store.getState() as RootState).narrativoCarga;
@@ -237,14 +238,14 @@ export default function KingsCourt() {
       }
     };
     void cargar();
-    return /* Libera los recursos de este efecto cuando deja de usarse. */ () => { activo = false; trabajo.desconectar(); };
+    return () => { activo = false; trabajo.desconectar(); };
   }, [date, dispatch, intentoCarga]);
 
   // Reinicia la prueba en el servidor y vuelve al calendario.
   const salirDePrueba = async () => {
     if (reiniciando) return;
     setReiniciando(true);
-    const data = await pedir(/* Completa este paso con los datos recibidos por la operación. */ () => reiniciarPartida(date), 'No se pudo reiniciar la partida de prueba.');
+    const data = await pedir(() => reiniciarPartida(date), 'No se pudo reiniciar la partida de prueba.');
     if (data) {
       dispatch(reiniciarSeleccionNarrativa());
       navigate('/juegos/kings-court', { replace: true });
@@ -255,8 +256,7 @@ export default function KingsCourt() {
   // Envía la corte y las cartas iniciales; luego carga el primer mes.
   const comenzarPartida = async (cartas: any[]) => {
     const data = await pedir(
-      // Completa este paso con los datos recibidos por la operación.
-      () => iniciarPartida(date, jugadorActual().corte_activa, cartas.map(/* Prepara el resultado de cada elemento. */ carta => carta.id)),
+      () => iniciarPartida(date, jugadorActual().corte_activa, cartas.map(carta => carta.id)),
       'Las cartas quedaron elegidas, pero no se pudo pedir el siguiente draft.'
     );
     if (!data) return;
@@ -266,7 +266,7 @@ export default function KingsCourt() {
 
   // Selecciona una carta mensual y abre el evento siguiente.
   const elegirCartaDelMes = async ([carta]: any[]) => {
-    const data = await pedir(/* Completa este paso con los datos recibidos por la operación. */ () => elegirCartaMensual(date, carta.id), 'No se pudo seleccionar la carta.');
+    const data = await pedir(() => elegirCartaMensual(date, carta.id), 'No se pudo seleccionar la carta.');
     if (!data) {
       await recuperarFase();
       return;
@@ -337,13 +337,22 @@ export default function KingsCourt() {
     }
   };
 
-  // Aplica la respuesta a la conversación en el motor V2 de grafos.
-  const responderActual = async (decision: any) => {
-    const data = await pedir(
-      () => avanzarNodo(date, String(decision.opcion), juego.conversacionActual?._id || juego.conversacionActual?.nodo_id || ''),
-      'No se pudo guardar la respuesta.'
-    );
-    if (data) await mostrarEstado(data);
+  // Envía una única decisión y conserva la intervención hasta recibir la siguiente del servidor.
+  const responderActual = async (decision: ConversacionApi['decisiones'][number]) => {
+    // Un doble toque no debe consumir dos nodos del grafo en el servidor.
+    if (respuestaEnCurso.current) return;
+    respuestaEnCurso.current = true;
+    setRespondiendo(true);
+    try {
+      const data = await pedir(
+        () => avanzarNodo(date, String(decision.opcion), juego.conversacionActual?._id || juego.conversacionActual?.nodo_id || ''),
+        'No se pudo guardar la respuesta.'
+      );
+      if (data) await mostrarEstado(data);
+    } finally {
+      respuestaEnCurso.current = false;
+      setRespondiendo(false);
+    }
   };
 
   // Guarda la nueva edad y adapta el draft que esté abierto.
@@ -362,7 +371,7 @@ export default function KingsCourt() {
       setError('');
       const [estado, historial, corte, catalogos] = await Promise.all([
         obtenerEstadoPartida(date), obtenerHistorialPartida(date),
-        obtenerCortePartida(date).catch(/* Maneja el fallo de esta operación. */ () => null),
+        obtenerCortePartida(date).catch(() => null),
         obtenerCatalogosCronica(date, setup?.universo_id),
       ]);
       setEstadisticas({ estado, historial, corte, catalogos });
@@ -377,17 +386,17 @@ export default function KingsCourt() {
       <FondoCorte fondo={{ ...juego.fondoBase, personajes: [], oro: [], manos: [] }} atenuado fijo />
       <CargaNarrativa porcentaje={carga.porcentaje} listo={carga.fase === 'lista'} caballo={imagenPrecargada(CABALLO_CARGA)}
         mensaje={carga.fase === 'preparando' ? 'Reuniendo las historias del reino…' : 'Preparando personajes y escenarios…'}
-        error={carga.error} onReintentar={/* Responde a reintentar desde este control. */ () => setIntentoCarga(/* Actualiza intento carga a partir del valor anterior. */ intento => intento + 1)} onEntrar={entrarAlJuego} />
+        error={carga.error} onReintentar={() => setIntentoCarga(intento => intento + 1)} onEntrar={entrarAlJuego} />
     </IonContent></IonPage>
   );
 
   const { jugador, personajesCorte: personajes, finalizacion } = juego;
-  const etapa = estadisticas ? 'estadisticas' : finalizacion ? 'final' : cambioFondo ? 'cambio_fondo' : decisionConversacion ? 'consecuencia'
+  const etapa = estadisticas ? 'estadisticas' : finalizacion ? 'final' : cambioFondo ? 'cambio_fondo'
     : juego.resultadoActual ? 'resultado' : juego.conversacionActual ? 'conversacion'
     : juego.eventoActual ? 'evento' : mostrarMuestraEvento ? 'muestra_evento' : jugador.fase_actual;
   const etapaVisible = ({
     estadisticas: 'estadisticas', final: `final:${finalizacion?._id}`,
-    consecuencia: `consecuencia:${jugador.mes_actual}`, resultado: `resultado:${jugador.mes_actual}`,
+    resultado: `resultado:${jugador.mes_actual}`,
     conversacion: `conversacion:${juego.conversacionActual?._id}:${juego.conversacionActual?.nodo_id || ''}`,
     evento: `evento:${juego.eventoActual?.id || juego.eventoActual?._id}:${juego.eventoActual?.nodo_id || ''}`,
   } as Record<string, string>)[etapa] || `${etapa}:${jugador.mes_actual}`;
@@ -406,7 +415,7 @@ export default function KingsCourt() {
     case 'muestra_evento':
       pantalla = <MuestraEventoEtapa0
         eventos={setup.eventos_del_dia || setup.eventos_ofrecidos || setup.cartas_evento || []}
-        onContinuar={/* Responde a continuar desde este control. */ () => setMostrarMuestraEvento(false)}
+        onContinuar={() => setMostrarMuestraEvento(false)}
       />;
       break;
     case 'estadisticas':
@@ -414,40 +423,24 @@ export default function KingsCourt() {
         estado={estadisticas.estado} historial={estadisticas.historial} corte={estadisticas.corte}
         catalogos={estadisticas.catalogos} recursosIniciales={setup.atributos_iniciales}
         personajes={personajes} finalizacion={finalizacion} modoSimple={!config.mostrarNumeros}
-        onVolver={/* Responde a volver desde este control. */ () => setEstadisticas(null)}
+        onVolver={() => setEstadisticas(null)}
       />;
       break;
     case 'final':
       pantalla = <MostrarResultadoEtapa4 finalizacion={finalizacion} onVerEstadisticas={verEstadisticas} cargandoEstadisticas={cargandoEstadisticas} onTerminar={salirDePrueba} reiniciando={reiniciando} />;
       break;
-    case 'consecuencia': {
-      // Traduce los cambios de afinidad a texto simple o numérico.
-      const efectoTexto = decisionConversacion.impacto_afinidad?.map(/* Prepara el resultado de cada elemento. */ (impacto: any) => {
-        const personaje = personajes.find(/* Busca el primer elemento que cumple esta condición. */ (p: any) => p.id === impacto.personaje_id || p._id === impacto.personaje_id);
-        const nombre = impacto.personaje_nombre || impacto.nombre || personaje?.nombre || 'Personaje';
-        return config.mostrarNumeros
-          ? `${nombre}: ${impacto.delta > 0 ? '+' : ''}${impacto.delta} afinidad`
-          : `${nombre}: ${impacto.delta < 0 ? 'La relacion necesita cuidado' : 'La relacion se fortalecio'}`;
-      }).join('\n');
-      pantalla = <MostrarResultadoEtapa4
-        resultado={{ titulo: 'Consecuencia', texto: decisionConversacion.resultado_texto || 'La corte escucho tu decision.', imagen: '', tipo_resultado: 'neutro' as const, efectos: [] }}
-        efectoTexto={efectoTexto}
-        continuando={continuando}
-        onContinuar={() => { setDecisionConversacion(null); void continuarResultado(); }}
-      />;
-      break;
-    }
     case 'resultado':
       pantalla = <MostrarResultadoEtapa4 resultado={juego.resultadoActual} efectoTexto={!config.mostrarNumeros ? describirEfectos(juego.resultadoActual) : undefined} continuando={continuando} onContinuar={continuarResultado} />;
       break;
     case 'conversacion':
-      pantalla = <ResponderConversacionEtapa3 key={etapaVisible} conversacion={juego.conversacionActual} personajes={personajes} modoSimple={!config.mostrarNumeros} onElegir={responderActual} />;
+      // El grafo identifica la escena; el nodo sólo cambia la intervención dentro de ella.
+      pantalla = <ResponderConversacionEtapa3 key={juego.conversacionActual._id} conversacion={juego.conversacionActual} personajes={personajes} modoSimple={!config.mostrarNumeros} enviando={respondiendo} onElegir={responderActual} />;
       break;
     case 'evento':
       pantalla = <DecidirEventoEtapa2 key={etapaVisible} evento={juego.eventoActual} atributos={jugador.recursos} fondoBase={juego.fondoBase} personajes={personajes} afinidad={jugador.afinidad} tags={jugador.tags_activos} cartas={jugador.cartas_en_mano} modoSimple={!config.mostrarNumeros} demorarDialogoPorFondo={demorarDialogoPorFondo} onElegir={decidirEventoActual} />;
       break;
     case 'seleccionar_corte':
-      pantalla = seleccionar('Forma tu corte', 'Elegí tres personajes para comenzar el desafio.', personajesDisponibles, 3, /* Completa este paso con los datos recibidos por la operación. */ (cartas: any[]) => dispatch(guardarCorte(cartas)));
+      pantalla = seleccionar('Forma tu corte', 'Elegí tres personajes para comenzar el desafio.', personajesDisponibles, 3, (cartas: any[]) => dispatch(guardarCorte(cartas)));
       break;
     case 'seleccionar_cartas':
       pantalla = seleccionar('Prepara el reino', 'Elegí tres cartas para comenzar la partida.', setup.cartas_ofrecidas.map(prepararCarta), 3, comenzarPartida);

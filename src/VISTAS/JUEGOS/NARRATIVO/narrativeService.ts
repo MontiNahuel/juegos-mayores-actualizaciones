@@ -103,6 +103,7 @@ export interface EstadoGrafoApi {
   tipo: 'evento' | 'conversacion' | 'evento_especial';
   titulo: string;
   imagen: string;
+  requisitos?: string[];
   nodo_actual: {
     id: string;
     hablante_id: string;
@@ -150,7 +151,7 @@ function adaptarEstadoGrafo(estado: EstadoPartida): EstadoPartida {
     ...base,
     conversacion_actual: {
       _id: grafo.grafo_id, nodo_id: nodo.id, titulo: grafo.titulo, imagen,
-      requisitos: [{ personajeId: nodo.hablante_id }],
+      requisitos: [...new Set([...(grafo.requisitos || []), nodo.hablante_id])].filter(Boolean).map(personajeId => ({ personajeId })),
       frases: [{ personajeId: nodo.hablante_id, texto: nodo.texto }],
       decisiones: opciones.map(/* Prepara el resultado de cada elemento. */ opcion => ({ opcion: opcion.id, texto: opcion.texto, resultado_texto: '', impacto_afinidad: [] })),
     },

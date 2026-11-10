@@ -30,6 +30,15 @@ beforeEach(/* Prepara un entorno limpio antes de cada prueba. */ () => {
 afterEach(/* Limpia el entorno al terminar cada prueba. */ () => vi.unstubAllGlobals());
 
 describe('contrato de grafos narrativos V2', /* Agrupa las pruebas de este comportamiento. */ () => {
+  it('conserva el reparto entregado por el servidor además del hablante actual', async () => {
+    const dialogo = grafo({ tipo: 'conversacion', requisitos: ['elena', 'vera'] });
+    dialogo.nodo_actual.hablante_id = 'vera';
+    vi.mocked(fetch).mockResolvedValue(responder({ grafo_actual: dialogo }));
+    const api = await import('./narrativeService');
+    const estado = await api.obtenerEstadoPartida(date);
+    expect(estado.conversacion_actual?.requisitos).toEqual([{ personajeId: 'elena' }, { personajeId: 'vera' }]);
+    expect(estado.conversacion_actual?.frases[0].personajeId).toBe('vera');
+  });
   it('conserva el diálogo encadenado que acompaña al resultado terminal', async () => {
     const conversacion = { _id: 'charla_pendiente', titulo: 'Audiencia', frases: [], decisiones: [], requisitos: [], imagen: '' };
     const final = grafo({ fase_actual: 'TOMA_DECISION_CONVERSACION', conversacion_actual: conversacion });

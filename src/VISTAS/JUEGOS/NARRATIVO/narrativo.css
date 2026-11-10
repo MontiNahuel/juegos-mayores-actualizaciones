@@ -71,7 +71,12 @@
 .conversacion-escena[data-intro='listo'] .conversacion-fondo { animation: conversacion-aparecer 100ms ease-out both; }
 .conversacion-escena[data-intro='listo'] .conversacion-personajes { animation: conversacion-aparecer 700ms ease-out 1900ms both; }
 .conversacion-dialogo[data-intro='listo'] { animation-delay: 1250ms; }
+/* El navegador no debe anclar el nodo nuevo a las opciones del diálogo anterior. */
+.conversacion-dialogo { overflow-anchor: none; }
+.conversacion-dialogo:focus-visible { outline: 2px solid #e6c57e; outline-offset: -2px; }
 .conversacion-retrato { transition: opacity 700ms ease-in-out, transform 700ms ease-in-out, filter 700ms ease-in-out; }
+/* Cada nodo renueva sólo el texto: fondo, título y reparto conservan su entrada. */
+.dialogo-narrativo__intervencion { animation: narrativo-aparecer 240ms ease-out both; }
 .conversacion-retrato[data-visible='false'] {
   opacity: 0;
   visibility: hidden;
@@ -133,6 +138,7 @@
   .narrativo-fade-dialogo[data-intro='listo'],
   .conversacion-escena[data-intro='listo'] :is(.conversacion-fondo, .conversacion-personajes),
   .conversacion-dialogo[data-intro='listo'] { animation-delay: 0s; }
+  .dialogo-narrativo__intervencion { animation-duration: 1ms; }
   .conversacion-retrato,
   .conversacion-retrato[data-visible='false'] { transition: none; }
 }

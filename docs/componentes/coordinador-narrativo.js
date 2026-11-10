@@ -47,7 +47,7 @@
     conversation: { label: 'Conversación: mismos retratos y diálogo', endpoint: 'POST /api/narrative/v2/partida/avanzar-nodo', kind: 'grafo',
       request: { date: '2026-11-06', opcion_id: 'continuar' },
       response: graph({ grafo_id: 'conversacion_demo', tipo: 'conversacion', fase_actual: 'RESOLVER_CONVERSACION', titulo: 'Una audiencia con tu consejera', nodo_actual: node({ texto: '¿Qué prioridad tendrá el reino?' }) }),
-      note: 'El tipo y hablante_id preparan ResponderConversacionEtapa3 con retratos del catálogo ya cargado. Un cambio de grafo exige reconciliar el estado y conservar cualquier resultado pendiente antes de mostrar la conversación.' },
+      note: 'El tipo y hablante_id preparan ResponderConversacionEtapa3 con los personajes ya cargados. La reparación del 9/11 conserva la escena por grafo_id, el reparto recibido y un panel que renueva sólo la intervención. Un cambio de grafo exige reconciliar el estado y conservar cualquier resultado pendiente antes de mostrar la conversación.' },
     final: { label: 'Finalización: manda la respuesta', endpoint: 'GET /api/narrative/v2/partida/estado?date=2026-11-06', kind: 'estado', request: null,
       response: { ...initial, fase_actual: 'FINALIZADA', status: 'DERROTA',
         finalizacion: { _id: 'fin_demo', universo_id: 'universo_demo', titulo: 'Fin del reinado', texto: 'El servidor confirmó el desenlace.', tipo: 'derrota_recurso', imagen: '/assets/narrative/finalizaciones/default.webp' } },
@@ -58,6 +58,7 @@
       note: 'El schema permite recursos=null. Con un desenlace que cambia recursos, falta confirmar el saldo: el coordinador consulta GET estado. No lo reconstruye sumando deltas ni sigue al próximo mes a ciegas.' },
   };
 
+  // Simula la normalización del contrato; no modifica una partida ni ejecuta efectos.
   function adapt(previous, payload, kind) {
     const confirmed = clone(previous);
     const incoming = kind === 'grafo' ? { grafo_actual: payload, fase_actual: payload.fase_actual, status: payload.status } : payload;
@@ -77,6 +78,7 @@
     const changedGraph = previous.grafo_actual && currentGraph && previous.grafo_actual.grafo_id !== currentGraph.grafo_id;
     return { confirmed, needsSync: Boolean(missingFinalResources || missingFinalAffinity || changedGraph), reason: changedGraph ? 'Cambió el grafo: reconciliar sin perder el resultado previo.' : 'Faltan valores confirmados del desenlace.' };
   }
+  // Proyecta una pantalla documental a partir de la fase y el nodo confirmados.
   function project(state) {
     if (state.finalizacion || ['VICTORIA', 'DERROTA', 'completed', 'failed'].includes(state.status)) return { screen: 'MostrarResultadoEtapa4 · finalización', options: [], title: state.finalizacion?.titulo || 'Final confirmado', background: state.finalizacion?.imagen || null };
     const g = state.grafo_actual, n = g?.nodo_actual;
@@ -92,12 +94,13 @@
   globalThis.CogniCoordinatorDemo = Object.freeze({ adapt, project, initial, examples });
   if (typeof customElements === 'undefined') return;
   class CoordinadorNarrativo extends HTMLElement {
+    // Construye el laboratorio una sola vez al insertar el componente en la guía.
     connectedCallback() {
       if (this.dataset.ready) return;
       this.dataset.ready='true';
       this.innerHTML = `
         <style>coordinador-narrativo{display:block;min-width:0}.cc-columns{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}.cc-columns>div{min-width:0}.cc-columns pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}.cc-flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:20px 0}.cc-flow span{padding:9px;border:1px solid var(--line);border-radius:6px;font-size:13px}.cc-flow [data-active=true]{background:var(--soft);border-color:var(--accent);font-weight:650}.cc-preview{overflow-wrap:anywhere;padding:20px;border:1px solid var(--line);border-radius:12px;background:var(--card)}.cc-preview h4{margin-top:0}.cc-preview button{display:block;width:100%;text-align:left;margin:10px 0}.cc-controls label{display:block}.cc-controls select{max-width:100%;color:var(--ink);background:var(--card);padding:10px;border:1px solid var(--line);border-radius:7px}.cc-check{font-size:14px;line-height:1.65}.cc-check strong{color:var(--accent)}@media(max-width:850px){.cc-columns{grid-template-columns:1fr}.cc-columns>div:first-child{order:2}.cc-columns>div:last-child{order:1}}@media print{.cc-controls{display:none}}</style>
-        <h3>Actualización del 6 de noviembre: Application Controller + Adapter</h3>
+        <h3>Propuesta del 6 de noviembre: Application Controller + Adapter</h3>
         <p>El backend administra acciones reutilizables y resuelve la partida. El front conserva la puesta en escena: fondos, retratos, diálogos, resultado y transiciones. La migración propuesta cambia quién prepara los datos y decide la siguiente vista; reutiliza los componentes actuales.</p>
         <p><a class="secondary" href="docs/arquitectura/coordinador-frontend-contrato-v2.md" target="_blank" rel="noopener noreferrer">Abrir especificación actualizada para implementar</a></p>
         <div class="tablewrap"><table><thead><tr><th>Patrón</th><th>Responsabilidad concreta</th></tr></thead><tbody>
@@ -166,6 +169,7 @@ async function elegirOpcion(opcionId) {
       field.addEventListener('change',()=>this.renderExample(false));
       this.renderExample(false);
     }
+    // Actualiza datos y vista de la fixture elegida, sin realizar peticiones.
     renderExample(applied) {
       const example=examples[this.querySelector('[data-cc="case"]').value];
       const result=applied?adapt(initial,example.response,example.kind):{confirmed:clone(initial),needsSync:false};

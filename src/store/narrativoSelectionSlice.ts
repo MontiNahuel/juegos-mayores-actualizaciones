@@ -230,8 +230,18 @@ const narrativoSelectionSlice = createSlice({
 
     // Guarda una conversacion posible elegida para este mes.
     mostrarConversacion: (state, action: { payload: any }) => {
-      state.conversacionActual = action.payload;
+      const anterior = state.conversacionActual;
+      const actual = action.payload;
+      // V2 puede entregar sólo el hablante. Conserva el reparto en orden de entrada
+      // mientras dure el grafo, sin anticipar nodos ni decidir el recorrido.
+      const ids = new Set<string>([
+        ...(anterior?._id === actual._id ? anterior.requisitos || [] : []),
+        ...(actual.requisitos || []),
+        ...(actual.frases || []),
+      ].map(({ personajeId }: { personajeId: string }) => personajeId).filter(Boolean));
+      state.conversacionActual = { ...actual, requisitos: [...ids].map(personajeId => ({ personajeId })) };
       state.eventoActual = null;
+      state.resultadoActual = null;
       state.jugador.fase_actual = 'responder_conversacion';
     },
 
