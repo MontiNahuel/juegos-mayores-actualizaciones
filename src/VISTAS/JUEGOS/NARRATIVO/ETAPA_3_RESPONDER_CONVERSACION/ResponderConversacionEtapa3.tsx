@@ -1,12 +1,13 @@
-import { useEffect, useRef, useState, type SyntheticEvent } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import FondoConversacion from './FondoConversacion';
+import { useAnimacionesConversacion } from './animacionesConversacion';
 import type { ConversacionApi, PersonajeApi } from '../narrativeService';
 import TituloConversacion from '../COMPARTIDOS/TITULO_NARRATIVO/TituloConversacion';
 import DialogoNarrativo from '../COMPARTIDOS/DIALOGO_NARRATIVO/DialogoNarrativo';
 import { API_URL } from '../../../../config/api';
+import { FONDO_CONVERSACION } from '../../../../config/fondoCorte';
 import { ocultarCambiosNumericos } from '../../../../config/adaptacionEdad';
 import { imagenPrecargada } from '../../../../services/assetPreloader';
-
-const FONDO_DE_CORTE = '/assets/narrative/conversation-hall.png';
 
 type PersonajeConversacion = PersonajeApi & { id?: string };
 type DecisionConversacion = ConversacionApi['decisiones'][number];
@@ -20,9 +21,9 @@ interface Props {
 }
 
 // Mantiene URLs absolutas y completa las imágenes del backend.
-const imagenDe = (imagen: string) => {
+const imagenDe = (imagen: string, respaldo?: string) => {
   const absoluta = /^(https?:|blob:|data:)/.test(imagen);
-  return imagenPrecargada(absoluta ? imagen : `${API_URL}${imagen}`);
+  return imagenPrecargada(absoluta ? imagen : `${API_URL}${imagen}`, respaldo);
 };
 
 // Genera iniciales si no existe el retrato.
@@ -49,9 +50,10 @@ function Retrato({ personaje, activo, lado, solo }: {
   return (
     <div
       data-visible={visible}
-      className={`conversacion-retrato ${posicion} ${alineacion} ${activo ? 'z-20 scale-100 opacity-100' : 'z-10 opacity-45 grayscale'} flex h-full max-w-2xl shrink-0 flex-col justify-start px-5 ${visible ? '' : 'pointer-events-none'}`}
+      data-activo={activo}
+      className={`conversacion-retrato ${posicion} ${alineacion} ${activo ? 'z-20 scale-100 opacity-100' : 'z-10 opacity-45'} flex h-full max-w-2xl shrink-0 flex-col justify-start px-5 ${visible ? '' : 'pointer-events-none'}`}
     >
-      <div className={`relative flex h-[70svh] min-h-[32rem] w-full shrink-0 items-end drop-shadow-[0_6px_12px_rgba(0,0,0,0.35)] transition duration-700 ease-out ${encuadre}`}>
+      <div className={`relative flex h-[70svh] min-h-[32rem] w-full shrink-0 items-end drop-shadow-[0_6px_12px_rgba(0,0,0,0.35)] ${encuadre}`}>
         <span className="absolute inset-0 grid place-items-center text-4xl font-semibold text-amber-100/70">{iniciales(personaje.nombre)}</span>
         {personaje.imagen && <img
           key={personaje.imagen}
@@ -75,8 +77,20 @@ export default function ResponderConversacionEtapa3({
   // Ajusta la lectura antes del siguiente render, también si el grafo vuelve a un nodo visitado.
   if (lectura.nodo !== nodo) setLectura({ nodo, paso: 0 });
   const paso = lectura.nodo === nodo ? lectura.paso : 0;
+  const intervencion = `${nodo}:${paso}`;
+  const [escritura, setEscritura] = useState({ intervencion, completa: false });
+  if (escritura.intervencion !== intervencion) setEscritura({ intervencion, completa: false });
+  const lecturaCompleta = escritura.intervencion === intervencion && escritura.completa;
+  const terminarLectura = useCallback((id: string) => {
+    setEscritura(actual => actual.intervencion === id ? { ...actual, completa: true } : actual);
+  }, []);
   const [solo, setSolo] = useState(true);
   const [fondoListo, setFondoListo] = useState(false);
+  const [tituloListo, setTituloListo] = useState(false);
+  const raiz = useRef<HTMLDivElement>(null);
+  // Confirmar otra imagen no vuelve a disparar la introducción de la conversación.
+  const mostrarEscena = useCallback(() => setFondoListo(true), []);
+  const prepararTitulo = useCallback(() => setTituloListo(true), []);
   const escena = useRef<HTMLDivElement>(null);
 
   // Detecta cuándo se superponen los retratos y deja visible uno solo.
@@ -123,29 +137,22 @@ export default function ResponderConversacionEtapa3({
   const ultimoDialogo = paso >= conversacion.frases.length - 1;
   // Devuelve el texto visible del nodo actual de la conversación.
   const texto = (valor = '') => modoSimple ? ocultarCambiosNumericos(valor) : valor;
-  const fondo = conversacion.imagen ? imagenDe(conversacion.imagen) : imagenPrecargada(FONDO_DE_CORTE);
-
-  // Usa el salón local ante una imagen fallida; si también falla, permite leer igual.
-  const recuperarFondo = (evento: SyntheticEvent<HTMLImageElement>) => {
-    const imagen = evento.currentTarget;
-    const respaldo = imagenPrecargada(FONDO_DE_CORTE);
-    if (imagen.getAttribute('src') !== respaldo) imagen.src = respaldo;
-    else setFondoListo(true);
-  };
+  // El adapter prioriza nodo.imagen; el salón sólo cubre una imagen ausente o fallida.
+  const respaldo = imagenPrecargada(FONDO_CONVERSACION);
+  const fondo = conversacion.imagen ? imagenDe(conversacion.imagen, respaldo) : '';
+  const { animarFondo, cancelarFondo, acelerarTexto } = useAnimacionesConversacion(raiz, {
+    listo: fondoListo && tituloListo,
+    intervencion,
+    solo,
+    hablante: quienHabla?._id || quienHabla?.id || '',
+  }, terminarLectura);
 
   return (
     <section className="min-h-[100svh] p-0">
-      <div data-intro={fondoListo ? 'listo' : 'cargando'} className="conversacion-escena relative isolate flex min-h-[100svh] flex-col overflow-x-hidden pt-[58px] text-slate-100">
-        <img
-          className="conversacion-fondo absolute inset-0 -z-20 h-full w-full object-cover"
-          src={fondo}
-          alt=""
-          decoding="sync"
-          onLoad={() => setFondoListo(true)}
-          onError={recuperarFondo}
-        />
+      <div ref={raiz} data-intro={fondoListo ? 'listo' : 'cargando'} className="conversacion-escena relative isolate flex min-h-[100svh] flex-col overflow-x-hidden pt-[58px] text-slate-100">
+        <FondoConversacion imagen={fondo} respaldo={respaldo} onListo={mostrarEscena} animar={animarFondo} cancelar={cancelarFondo} />
         <div className="absolute inset-0 -z-10 bg-black/25" />
-        <TituloConversacion key={conversacion._id} titulo={conversacion.titulo} listo={fondoListo} />
+        <TituloConversacion key={conversacion._id} titulo={conversacion.titulo} listo={fondoListo} onListo={prepararTitulo} animacionExterna />
 
         <div ref={escena} className="conversacion-personajes relative z-10 flex min-h-[calc(max(45.5svh,20.8rem)+0.25rem)] basis-0 grow items-start justify-between overflow-hidden px-2 pt-1 2xl:px-20">
           <div className="absolute inset-x-0 bottom-0 z-0 h-64 bg-gradient-to-t from-slate-950/90 to-transparent" />
@@ -156,15 +163,18 @@ export default function ResponderConversacionEtapa3({
         <DialogoNarrativo
           className="conversacion-dialogo"
           listo={fondoListo}
-          intervencion={`${nodo}:${paso}`}
+          intervencion={intervencion}
+          animacionExterna
+          textoProgresivo
+          opcionesVisibles={lecturaCompleta}
           titulo={quienHabla?.nombre || (frase?.personajeId === 'narrador' ? 'Crónicas del Reino' : 'Consejero')}
           texto={texto(frase?.texto)}
-          indicacion={!ultimoDialogo ? 'Tocá para continuar ›' : undefined}
-          onContinuar={!ultimoDialogo ? () => setLectura({ nodo, paso: paso + 1 }) : undefined}
+          indicacion={!lecturaCompleta ? 'Tocá el texto para acelerar 4×' : ultimoDialogo ? 'Elegí cómo responder.' : 'Tocá para continuar ›'}
+          onContinuar={!lecturaCompleta ? acelerarTexto : !ultimoDialogo ? () => setLectura({ nodo, paso: paso + 1 }) : undefined}
           opciones={ultimoDialogo ? conversacion.decisiones.map((decision) => ({
             id: decision.opcion,
             texto: texto(decision.texto),
-            disabled: enviando,
+            disabled: enviando || !lecturaCompleta,
             // Registra la opción elegida y avanza la historia.
             onElegir: () => onElegir(decision),
           })) : []}

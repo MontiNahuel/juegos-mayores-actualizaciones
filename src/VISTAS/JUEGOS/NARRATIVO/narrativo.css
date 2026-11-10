@@ -11,7 +11,8 @@
 .narrativo-modo-mayor .boton-narrativo--decision { min-height: 64px; line-height: 1.45; }
 .narrativo-modo-mayor .dialogo-narrativo__texto { font-size: var(--narrativo-texto-adaptado, 18px); line-height: 1.65; }
 .narrativo-modo-mayor .dialogo-narrativo__opciones { gap: 14px; }
-.narrativo-modo-mayor .narrativo-fade-dialogo { opacity: 1; visibility: visible; animation: none; }
+/* La conversación comparte su secuencia también con letra grande; Reduce Motion elimina la espera. */
+.narrativo-modo-mayor .narrativo-fade-dialogo:not(.conversacion-dialogo) { opacity: 1; visibility: visible; animation: none; }
 .narrativo-modo-mayor .titulo-narrativo__arte p { font-size: clamp(18px, 3vw, 24px); }
 .narrativo-modo-mayor .resultado-pergamino__relato { font-size: clamp(17px, 2.8vw, 21px); line-height: 1.6; }
 .narrativo-modo-mayor .conversacion-personajes {
@@ -38,10 +39,10 @@
   filter: drop-shadow(0 0 3px #110c06cc) drop-shadow(0 0 7px #100a064d);
   -webkit-filter: drop-shadow(0 0 3px #110c06cc) drop-shadow(0 0 7px #100a064d);
 }
-.titulo-narrativo[data-intro='listo'] .titulo-narrativo__arte {
+.titulo-narrativo[data-intro='listo']:not([data-animacion='externa']) .titulo-narrativo__arte {
   animation: narrativo-presentar-titulo 3800ms ease-in-out 100ms both;
 }
-.titulo-narrativo[data-intro='listo'][data-permanente='true'] .titulo-narrativo__arte {
+.titulo-narrativo[data-intro='listo']:not([data-animacion='externa'])[data-permanente='true'] .titulo-narrativo__arte {
   animation: titulo-narrativo-entrar 760ms ease-in-out 100ms both;
 }
 @keyframes titulo-narrativo-entrar {
@@ -66,26 +67,31 @@
   to { opacity: 1; visibility: visible; }
 }
 
-/* Conversación: fondo, texto y retratos entran en ese orden. */
-.conversacion-escena :is(.conversacion-fondo, .conversacion-personajes) { opacity: 0; visibility: hidden; }
-.conversacion-escena[data-intro='listo'] .conversacion-fondo { animation: conversacion-aparecer 100ms ease-out both; }
-.conversacion-escena[data-intro='listo'] .conversacion-personajes { animation: conversacion-aparecer 700ms ease-out 1900ms both; }
-.conversacion-dialogo[data-intro='listo'] { animation-delay: 1250ms; }
+/* La conversación delega el movimiento en GSAP; el CSS conserva la composición. */
+/* El texto completo reserva su altura sin anunciar cada letra al lector de pantalla. */
+.dialogo-narrativo__revelado::before {
+  content: attr(data-texto);
+  display: block;
+  visibility: hidden;
+  min-height: 1lh;
+}
+/* Cubre el padding superior del panel para que el texto no pase por encima de la guía fija. */
+.dialogo-narrativo__guia::before {
+  content: '';
+  position: absolute;
+  inset: -12px -4px 0;
+  z-index: -1;
+  background: #080910;
+}
+/* Las imágenes sin cargar siguen ocultas; GSAP revela la capa lista. */
+.conversacion-fondo { opacity: 0; visibility: hidden; }
+.conversacion-fondo[data-visible='true'] { opacity: 1; visibility: visible; }
 /* El navegador no debe anclar el nodo nuevo a las opciones del diálogo anterior. */
 .conversacion-dialogo { overflow-anchor: none; }
 .conversacion-dialogo:focus-visible { outline: 2px solid #e6c57e; outline-offset: -2px; }
-.conversacion-retrato { transition: opacity 700ms ease-in-out, transform 700ms ease-in-out, filter 700ms ease-in-out; }
-/* Cada nodo renueva sólo el texto: fondo, título y reparto conservan su entrada. */
-.dialogo-narrativo__intervencion { animation: narrativo-aparecer 240ms ease-out both; }
-.conversacion-retrato[data-visible='false'] {
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 700ms ease-in-out, filter 700ms ease-in-out, visibility 0s linear 700ms;
-}
-@keyframes conversacion-aparecer {
-  from { opacity: 0; visibility: hidden; }
-  to { opacity: 1; visibility: visible; }
-}
+.conversacion-dialogo .dialogo-narrativo__interior { max-width: 1100px; margin-inline: auto; }
+.conversacion-dialogo .dialogo-narrativo__texto { max-width: 72ch; }
+.conversacion-retrato[data-visible='false'] { opacity: 0; visibility: hidden; }
 
 @media (max-width: 767px) {
   /* En móvil, conversación ocupa el viewport visible; el diálogo no empuja la página. */
@@ -129,16 +135,11 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .titulo-narrativo[data-intro='listo'] .titulo-narrativo__arte {
+  .titulo-narrativo[data-intro='listo']:not([data-animacion='externa']) .titulo-narrativo__arte {
     animation: narrativo-retirar-titulo 1ms steps(1) 2500ms both;
     opacity: 1;
     visibility: visible;
   }
-  .titulo-narrativo[data-intro='listo'][data-permanente='true'] .titulo-narrativo__arte,
-  .narrativo-fade-dialogo[data-intro='listo'],
-  .conversacion-escena[data-intro='listo'] :is(.conversacion-fondo, .conversacion-personajes),
-  .conversacion-dialogo[data-intro='listo'] { animation-delay: 0s; }
-  .dialogo-narrativo__intervencion { animation-duration: 1ms; }
-  .conversacion-retrato,
-  .conversacion-retrato[data-visible='false'] { transition: none; }
+  .titulo-narrativo[data-intro='listo']:not([data-animacion='externa'])[data-permanente='true'] .titulo-narrativo__arte,
+  .narrativo-fade-dialogo[data-intro='listo'] { animation-delay: 0s; }
 }

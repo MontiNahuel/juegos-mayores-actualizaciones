@@ -1,3 +1,4 @@
+import { prepararLectura, simularMovimiento } from '../../../../tests/helpers/movimiento';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { Provider } from 'react-redux';
@@ -28,6 +29,7 @@ vi.mock('./ETAPA_0_1_SELECCIONAR_CARTAS/SeleccionarCartasEtapa0y1', () => ({ def
 
 beforeEach(() => {
   vi.clearAllMocks(); localStorage.clear(); sessionStorage.clear();
+  simularMovimiento();
   estadoInicial.mockResolvedValue({ mes_actual: 2, fase_actual: 'BALANCE_MES', recursos: { oro: 50, ejercito: 50, pueblo: 50, fe: 50 }, resultado_actual: { titulo: 'Resultado mes 2', texto: 'La corte decidió.', efectos: [] } });
   store.dispatch(iniciarJugador({ date, mes_actual: 2, recursos: { oro: 50, ejercito: 50, pueblo: 50, fe: 50 } }));
 });
@@ -47,6 +49,7 @@ it('un doble toque responde una vez; un rechazo permite reintentar y el siguient
   await screen.findByText('La corte espera.');
   const fondo = container.querySelector('.conversacion-fondo');
   fireEvent.load(fondo!);
+  prepararLectura(container);
   const boton = screen.getByRole('button', { name: 'Escuchar' });
   fireEvent.click(boton); fireEvent.click(boton);
   expect(avanzar).toHaveBeenCalledTimes(1);

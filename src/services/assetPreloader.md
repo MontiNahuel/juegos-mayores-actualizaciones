@@ -17,6 +17,9 @@ guardarImagenesEnSegundoPlano(imagenesFuturas);
 await precargarImagenes(imagenesDeLaEscena);
 // Usar esta función tanto en <img src> como en los fondos CSS.
 const src = imagenPrecargada(urlOriginal);
+
+// Un 404 detectado durante la precarga puede usar un respaldo de la escena.
+const fondo = imagenPrecargada(urlOriginal, imagenPrecargada('/assets/narrative/conversation-hall.png'));
 ```
 
 - Tres trabajos como máximo; el segundo plano ocupa sólo uno y cede la prioridad a recursos visibles.

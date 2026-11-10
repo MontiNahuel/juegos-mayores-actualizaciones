@@ -42,6 +42,7 @@ describe('motor compartido de imágenes', /* Agrupa las pruebas de este comporta
     await api.precargarImagenes(['/ausente.webp']);
     expect(fetch).toHaveBeenCalledTimes(1);
     expect(api.imagenPrecargada('/ausente.webp')).toMatch(/^data:image\//);
+    expect(api.imagenPrecargada('/ausente.webp', '/salon.png')).toBe('/salon.png');
     expect(guardadas.size).toBe(0);
   });
 

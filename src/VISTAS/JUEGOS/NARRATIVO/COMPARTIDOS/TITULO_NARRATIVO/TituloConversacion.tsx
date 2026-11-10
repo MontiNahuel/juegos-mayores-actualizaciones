@@ -2,11 +2,13 @@
 import TituloNarrativo from './TituloNarrativo';
 
 // Marco propio de conversaciones; evita mezclarlo con el título de eventos.
-export default function TituloConversacion({ titulo, listo = true, permanente = false, onTerminar }: {
+export default function TituloConversacion({ titulo, listo = true, permanente = false, onTerminar, onListo, animacionExterna = false }: {
   titulo: string;
   listo?: boolean;
   permanente?: boolean;
   onTerminar?: () => void;
+  onListo?: () => void;
+  animacionExterna?: boolean;
 }) {
-  return <TituloNarrativo {...{ titulo, listo, permanente, onTerminar }} variante="conversacion" />;
+  return <TituloNarrativo {...{ titulo, listo, permanente, onTerminar, onListo, animacionExterna }} variante="conversacion" />;
 }

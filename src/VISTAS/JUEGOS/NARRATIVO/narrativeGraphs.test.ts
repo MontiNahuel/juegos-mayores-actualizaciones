@@ -30,6 +30,15 @@ beforeEach(/* Prepara un entorno limpio antes de cada prueba. */ () => {
 afterEach(/* Limpia el entorno al terminar cada prueba. */ () => vi.unstubAllGlobals());
 
 describe('contrato de grafos narrativos V2', /* Agrupa las pruebas de este comportamiento. */ () => {
+  it('prioriza la imagen del nodo de conversación y deja usar el salón si se omite', async () => {
+    const dialogo = grafo({ tipo: 'conversacion', imagen: '/portada-del-grafo.webp' });
+    vi.mocked(fetch).mockResolvedValueOnce(responder({ grafo_actual: dialogo }));
+    const api = await import('./narrativeService');
+    expect((await api.obtenerEstadoPartida(date)).conversacion_actual?.imagen).toBe('');
+    dialogo.nodo_actual.imagen = '/fondo-del-nodo.webp';
+    vi.mocked(fetch).mockResolvedValueOnce(responder({ grafo_actual: dialogo }));
+    expect((await api.obtenerEstadoPartida(date)).conversacion_actual?.imagen).toBe('/fondo-del-nodo.webp');
+  });
   it('conserva el reparto entregado por el servidor además del hablante actual', async () => {
     const dialogo = grafo({ tipo: 'conversacion', requisitos: ['elena', 'vera'] });
     dialogo.nodo_actual.hablante_id = 'vera';

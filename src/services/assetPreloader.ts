@@ -23,7 +23,9 @@ let escritura = Promise.resolve();
 const claveUrl = (src: string) => new URL(src, window.location.href).href;
 
 // Los componentes consumen la misma URL blob durante toda la sesión: no redescargan al cambiar de etapa.
-export const imagenPrecargada = (src: string) => src ? imagenes.get(claveUrl(src)) || (faltantes.has(claveUrl(src)) ? IMAGEN_VACIA : src) : src;
+// Una vista puede aportar un respaldo real para los 404 ya detectados en la precarga.
+export const imagenPrecargada = (src: string, respaldo = IMAGEN_VACIA) =>
+  src ? imagenes.get(claveUrl(src)) || (faltantes.has(claveUrl(src)) ? respaldo : src) : src;
 
 // Espera un turno libre para no lanzar demasiadas descargas a la vez.
 function enCola<T>(trabajo: () => Promise<T>, prioridad: boolean): Promise<T> {

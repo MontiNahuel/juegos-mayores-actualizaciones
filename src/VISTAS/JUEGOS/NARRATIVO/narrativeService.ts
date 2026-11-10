@@ -150,7 +150,8 @@ function adaptarEstadoGrafo(estado: EstadoPartida): EstadoPartida {
   if (grafo.tipo === 'conversacion') return {
     ...base,
     conversacion_actual: {
-      _id: grafo.grafo_id, nodo_id: nodo.id, titulo: grafo.titulo, imagen,
+      // La portada del grafo no sustituye el fondo ausente del nodo: la vista usa el salón.
+      _id: grafo.grafo_id, nodo_id: nodo.id, titulo: grafo.titulo, imagen: nodo.imagen || '',
       requisitos: [...new Set([...(grafo.requisitos || []), nodo.hablante_id])].filter(Boolean).map(personajeId => ({ personajeId })),
       frases: [{ personajeId: nodo.hablante_id, texto: nodo.texto }],
       decisiones: opciones.map(/* Prepara el resultado de cada elemento. */ opcion => ({ opcion: opcion.id, texto: opcion.texto, resultado_texto: '', impacto_afinidad: [] })),

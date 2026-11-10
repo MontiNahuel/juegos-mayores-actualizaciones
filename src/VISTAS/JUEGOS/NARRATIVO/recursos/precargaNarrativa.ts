@@ -1,6 +1,6 @@
 /* Prepara las imágenes de la historia y comparte el trabajo de carga. */
 import { API_URL } from '../../../../config/api';
-import { FONDO_CORTE_DEFAULT, GUARDIAS_CORTE, MANOS_CORTE, ORO_CORTE } from '../../../../config/fondoCorte';
+import { FONDO_CONVERSACION, FONDO_CORTE_DEFAULT, GUARDIAS_CORTE, MANOS_CORTE, ORO_CORTE } from '../../../../config/fondoCorte';
 import type { ProgresoCargaNarrativa } from '../../../../store/narrativoCargaSlice';
 import marcoEvento from '../../../../assets/narrative/event-title.png';
 import caballoCarga from '../../../../assets/narrative/loading-horse.png';
@@ -11,11 +11,11 @@ import { NARRATIVE_API_PATH, NARRATIVE_CATALOG_PATHS } from '../narrativeEndpoin
 
 export const CABALLO_CARGA = caballoCarga;
 const RECURSOS_INICIALES = [
-  FONDO_CORTE_DEFAULT, CABALLO_CARGA, marcoEvento,
+  FONDO_CORTE_DEFAULT, FONDO_CONVERSACION, CABALLO_CARGA, marcoEvento,
   '/assets/narrative/card-frame.png', '/assets/narrative/conversation-title.png',
 ];
 const RECURSOS_FUTUROS = [
-  '/assets/narrative/conversation-hall.png', '/assets/narrative/result-paper.png',
+  '/assets/narrative/result-paper.png',
   ...GUARDIAS_CORTE.map(/* Prepara el resultado de cada elemento. */ x => x.src), ...MANOS_CORTE.map(/* Prepara el resultado de cada elemento. */ x => x.src), ...ORO_CORTE.map(/* Prepara el resultado de cada elemento. */ x => x.src),
 ];
 
