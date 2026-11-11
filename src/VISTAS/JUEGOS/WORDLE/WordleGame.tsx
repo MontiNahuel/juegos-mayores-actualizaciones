@@ -2,7 +2,7 @@ import { useClassicChallenge } from '../useClassicChallenge';
 /* Maneja las palabras, colorea los aciertos y guarda el resultado de Wordle. */
 /* Acá maneja las palabras, colorea los aciertos y guarda el resultado de Wordle. */
 import { CompletedModal } from '../../COMPONENTS/MODALS/CompletedModal';
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   IonContent,
@@ -333,23 +333,28 @@ const WordleGame: React.FC = () => {
     }
   }, [currentInput, gameStatus, guesses, triggerHaptic, triggerInvalidShake, showFeedback, progressReady, activeSolution, dayNum, classic, pistaComprada, hintIndex]);
 
+  const handleKeyPressRef = useRef(handleKeyPress);
+  useLayoutEffect(() => {
+    handleKeyPressRef.current = handleKeyPress;
+  });
+
   // Teclado físico de PC
   useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
     // Traduce la tecla a una acción del juego o de la ventana.
     const handleKeyDown = (e: KeyboardEvent) => {
       const key = e.key.toUpperCase();
       if (key === 'ENTER') {
-        handleKeyPress('ENVIAR');
+        handleKeyPressRef.current('ENVIAR');
       } else if (key === 'BACKSPACE') {
-        handleKeyPress('BORRAR');
+        handleKeyPressRef.current('BORRAR');
       } else if (/^[A-ZÑ]$/.test(key)) {
-        handleKeyPress(key);
+        handleKeyPressRef.current(key);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return /* Libera los recursos de este efecto cuando deja de usarse. */ () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleKeyPress]);
+  }, []);
 
   // Reinicia el desafío para volver a jugarlo.
   const handleRestart = () => {

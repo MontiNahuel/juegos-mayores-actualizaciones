@@ -33,7 +33,22 @@ beforeEach(() => {
   setSessionUser(null);
   vi.stubGlobal(
     'fetch',
-    vi.fn(async () => new Response('{}', { status: 401 }))
+    vi.fn(async (url: string) => {
+      if (String(url).endsWith('/api/auth/session')) {
+        return new Response(
+          JSON.stringify({
+            success: true,
+            authenticated: false,
+            user: null,
+            racha: 0,
+            racha_ultima_fecha: null,
+            racha_hoy_ingresada: false,
+          }),
+          { status: 200 }
+        );
+      }
+      return new Response('{}', { status: 401 });
+    })
   );
 });
 
@@ -97,7 +112,7 @@ describe('economía y racha compartida en Redux con cookies HttpOnly', () => {
     expect(localStorage.getItem('user')).toBeNull();
   });
 
-  it('queda como invitado en 0 sin llamar a /api/economy/me cuando /api/auth/session devuelve 401', async () => {
+  it('queda como invitado en 0 sin llamar a /api/economy/me cuando /api/auth/session devuelve authenticated=false (200)', async () => {
     localStorage.setItem('token', 'token-viejo-en-storage');
     localStorage.setItem('usuario', JSON.stringify({ id: 99, name: 'Viejo' }));
 
@@ -114,6 +129,16 @@ describe('economía y racha compartida en Redux con cookies HttpOnly', () => {
       store.dispatch(actualizarEconomia({ puntos: 900, racha: 2 }));
     });
     expect(screen.getByTestId('saldo').textContent).toBe('900:2');
+  });
+
+  it('también limpia la sesión y queda en invitado si /api/auth/session responde 401', async () => {
+    setSessionUser({ id: 7, name: 'Dai' });
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('{}', { status: 401 })));
+
+    const store = await montarEconomia();
+    expect(economia.isAuthenticated).toBe(false);
+    expect(getSessionUser()).toBeNull();
+    expect(store.getState().playerEconomy).toMatchObject({ puntos: 0, racha: 0 });
   });
 
   it('compra una pista con cookie HttpOnly sin guardar el callback en Redux', async () => {
