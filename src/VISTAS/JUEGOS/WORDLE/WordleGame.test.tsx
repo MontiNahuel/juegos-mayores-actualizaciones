@@ -130,3 +130,51 @@ it('permite ganar en un intento menor o igual a 6 y registra la victoria', async
   expect(saved.status).toBe('won');
   expect(saved.attempts).toBe(2);
 });
+
+
+it('rechaza palabras inexistentes como AAAAA sin consumir intentos y conserva las letras para corregir', async () => {
+  const challenge = {
+    dateKey: '2026-11-08',
+    dateStr: 'Domingo 8 de noviembre',
+    day: 8,
+    word: 'CIELO',
+    hints: ['Arriba', 'Azul'],
+  };
+
+  render(
+    <MemoryRouter initialEntries={[{ pathname: '/juegos/wordle/jugar', state: { challenge } }]}>
+      <WordleGame />
+    </MemoryRouter>
+  );
+
+  await waitFor(() => {
+    const hintBtn = screen.getByLabelText('Pedir una pista');
+    expect(hintBtn.hasAttribute('disabled')).toBe(false);
+  });
+
+  // Escribir una palabra inexistente (AAAAA)
+  for (const char of 'AAAAA') fireEvent.keyDown(window, { key: char });
+
+  // Debe mostrar aviso en la cabecera y marcar el botón ENVIAR como deshabilitado visualmente
+  expect(screen.getByRole('alert').textContent).toContain('Esa palabra no existe. Intentá con otra.');
+  const enviarBtn = screen.getByRole('button', { name: 'ENVIAR' });
+  expect(enviarBtn.getAttribute('aria-disabled')).toBe('true');
+
+  // Intentar enviar con Enter o clic no debe sumar intentos
+  fireEvent.keyDown(window, { key: 'Enter' });
+  expect(screen.getByText((c) => c.includes('Intentos:') && c.includes('0 / 6'))).toBeTruthy();
+
+  // Conserva las 5 letras en pantalla para permitir corregir con Backspace
+  expect(screen.getAllByText('A').length).toBeGreaterThanOrEqual(5);
+
+  // Borrar las 5 letras e ingresar la solución válida
+  for (let i = 0; i < 5; i++) fireEvent.keyDown(window, { key: 'Backspace' });
+  expect(screen.queryByRole('alert')).toBeNull();
+
+  for (const char of 'CIELO') fireEvent.keyDown(window, { key: char });
+  fireEvent.keyDown(window, { key: 'Enter' });
+
+  await waitFor(() => {
+    expect(screen.getByText((c) => c.includes('Intentos:') && c.includes('1 / 6'))).toBeTruthy();
+  });
+});

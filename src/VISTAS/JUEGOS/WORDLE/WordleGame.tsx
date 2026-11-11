@@ -2,7 +2,7 @@ import { useClassicChallenge } from '../useClassicChallenge';
 /* Maneja las palabras, colorea los aciertos y guarda el resultado de Wordle. */
 /* Acá maneja las palabras, colorea los aciertos y guarda el resultado de Wordle. */
 import { CompletedModal } from '../../COMPONENTS/MODALS/CompletedModal';
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   IonContent,
@@ -27,6 +27,7 @@ import {
   saveActiveGameProgress,
   clearActiveGameProgress,
 } from '../attemptsService';
+import { isValidWordleWord } from './wordleDictionary';
 
 // Solución por defecto
 const DEFAULT_SOLUTION = 'HOGAR';
@@ -153,6 +154,14 @@ const WordleGame: React.FC = () => {
   const progressReady = loadedDate === dateStrKey;
   const classic = useClassicChallenge('wordle', dateStrKey, progressReady && gameStatus === 'playing', economy);
   const [message, setMessage] = useState<string | null>(null);
+  const [shakeRow, setShakeRow] = useState<boolean>(false);
+  const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const shakeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isCurrentWordInvalid =
+    progressReady &&
+    gameStatus === 'playing' &&
+    currentInput.length === WORD_LENGTH &&
+    !isValidWordleWord(currentInput, activeSolution);
   const [showHint, setShowHint] = useState<boolean>(false);
   const [hintIndex, setHintIndex] = useState<number>(0);
   const [pistaComprada, setPistaComprada] = useState('');
@@ -238,11 +247,26 @@ const WordleGame: React.FC = () => {
     }
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
+      if (shakeTimerRef.current) clearTimeout(shakeTimerRef.current);
+    };
+  }, []);
+
+  // Agita suavemente la fila activa cuando la palabra no es válida o está incompleta.
+  const triggerInvalidShake = useCallback(() => {
+    if (shakeTimerRef.current) clearTimeout(shakeTimerRef.current);
+    setShakeRow(true);
+    shakeTimerRef.current = setTimeout(() => setShakeRow(false), 450);
+  }, []);
+
   // Muestra un aviso breve sobre la jugada.
-  const showFeedback = (text: string) => {
+  const showFeedback = useCallback((text: string) => {
+    if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
     setMessage(text);
-    setTimeout(/* Ejecuta este paso cuando se cumple la espera. */ () => setMessage(null), 2200);
-  };
+    feedbackTimerRef.current = setTimeout(/* Ejecuta este paso cuando se cumple la espera. */ () => setMessage(null), 2200);
+  }, []);
 
   // Manejador central de teclas
   const handleKeyPress = useCallback((char: string) => {
@@ -258,7 +282,14 @@ const WordleGame: React.FC = () => {
 
     if (char === 'ENVIAR' || char === 'ENTER') {
       if (currentInput.length < WORD_LENGTH) {
+        triggerInvalidShake();
         showFeedback(`Escribí ${WORD_LENGTH} letras`);
+        return;
+      }
+
+      if (!isValidWordleWord(currentInput, activeSolution)) {
+        triggerInvalidShake();
+        showFeedback('Esa palabra no existe. Intentá con otra.');
         return;
       }
 
@@ -300,7 +331,7 @@ const WordleGame: React.FC = () => {
     if (/^[A-ZÑ]$/.test(char) && currentInput.length < WORD_LENGTH) {
       setCurrentInput(/* Actualiza current input a partir del valor anterior. */ (prev) => prev + char);
     }
-  }, [currentInput, gameStatus, guesses, showHint, triggerHaptic, progressReady, activeSolution, dateStrKey, dayNum, classic, pistaComprada, hintIndex]);
+  }, [currentInput, gameStatus, guesses, triggerHaptic, triggerInvalidShake, showFeedback, progressReady, activeSolution, dayNum, classic, pistaComprada, hintIndex]);
 
   // Teclado físico de PC
   useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
@@ -388,6 +419,14 @@ const WordleGame: React.FC = () => {
           .wordle-modal-card {
             animation: wordleModalPop 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
           }
+          @keyframes wordleRowShake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-6px); }
+            40%, 80% { transform: translateX(6px); }
+          }
+          .wordle-row-shake {
+            animation: wordleRowShake 0.42s ease-in-out;
+          }
         `}</style>
         <AppNavbar view={{ kind: 'game',
 title: "Palabra del día",
@@ -438,7 +477,11 @@ hintDisabled: !progressReady || gameStatus !== 'playing' }} />
 
           {/* Mensaje flotante de feedback (sin alterar el layout) */}
           {message && (
-            <div className="fixed top-20 left-1/2 z-50 -translate-x-1/2 rounded-xl border border-[var(--app-border)] bg-[var(--app-panel)] px-4 py-2 text-sm font-bold text-[var(--app-text)] shadow-md pointer-events-none">
+            <div
+              role="status"
+              aria-live="polite"
+              className="fixed top-20 left-1/2 z-50 -translate-x-1/2 rounded-xl border border-[var(--app-border)] bg-[var(--app-panel)] px-4 py-2 text-sm font-bold text-[var(--app-text)] shadow-md pointer-events-none"
+            >
               {message}
             </div>
           )}
@@ -450,9 +493,15 @@ hintDisabled: !progressReady || gameStatus !== 'playing' }} />
                 <p className="text-sm leading-tight font-extrabold text-[var(--app-text)]">
                   Adiviná la palabra de 5 letras
                 </p>
-                <p className="mt-0.5 text-sm font-medium text-[var(--app-copy)]">
-                  {showHint ? pistaComprada : 'Tocá la bombilla para ver una pista'}
-                </p>
+                {isCurrentWordInvalid ? (
+                  <p className="mt-0.5 text-sm font-bold text-[#ffb4a2]" role="alert">
+                    Esa palabra no existe. Intentá con otra.
+                  </p>
+                ) : (
+                  <p className="mt-0.5 text-sm font-medium text-[var(--app-copy)]">
+                    {showHint ? pistaComprada : 'Tocá la bombilla para ver una pista'}
+                  </p>
+                )}
               </div>
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <div className="flex items-center gap-1 rounded-lg border border-[var(--app-border)] bg-[var(--app-panel-raised)] px-2 py-1">
@@ -472,7 +521,10 @@ hintDisabled: !progressReady || gameStatus !== 'playing' }} />
               const pastGuess = guesses[rowIndex];
 
               return (
-                <div key={rowIndex} className="flex gap-2 sm:gap-2.5 justify-center">
+                <div
+                  key={rowIndex}
+                  className={`flex gap-2 sm:gap-2.5 justify-center ${isCurrentRow && shakeRow ? 'wordle-row-shake' : ''}`}
+                >
                   {Array.from({ length: WORD_LENGTH }).map(/* Prepara el resultado de cada elemento. */ (_, colIndex) => {
                     let letter = '';
                     let statusClass = 'bg-[var(--app-text)] border-2 border-[#aeb9c8] text-[#172433]';
@@ -490,7 +542,9 @@ hintDisabled: !progressReady || gameStatus !== 'playing' }} />
                     } else if (isCurrentRow) {
                       letter = currentInput[colIndex] || '';
                       if (letter) {
-                        statusClass = 'bg-[var(--app-text)] border-2 border-[#99dcd1] text-[#315f59] font-extrabold scale-105';
+                        statusClass = isCurrentWordInvalid
+                          ? 'bg-[#fff2ef] border-2 border-[#e07a5f] text-[#a63424] font-extrabold'
+                          : 'bg-[var(--app-text)] border-2 border-[#99dcd1] text-[#315f59] font-extrabold scale-105';
                       } else {
                         statusClass = 'bg-[var(--app-text)] border-2 border-[#aeb9c8] text-[#718095]';
                       }
@@ -540,14 +594,23 @@ hintDisabled: !progressReady || gameStatus !== 'playing' }} />
                     keyColor = 'var(--app-text)';
                     keyBorder = '#526176';
                   } else if (isSpecial) {
-                    keyBg = '#40556e';
-                    keyColor = 'var(--app-text)';
-                    keyBorder = '#60738b';
+                    if (key === 'ENVIAR' && isCurrentWordInvalid) {
+                      keyBg = '#4b383c';
+                      keyColor = '#ffb4a2';
+                      keyBorder = '#a64d3d';
+                    } else {
+                      keyBg = '#40556e';
+                      keyColor = 'var(--app-text)';
+                      keyBorder = '#60738b';
+                    }
                   }
+
+                  const enviarBloqueado = key === 'ENVIAR' && isCurrentWordInvalid;
 
                   return (
                     <button
                       key={key}
+                      aria-disabled={enviarBloqueado || undefined}
                       onClick={/* Responde a click desde este control. */ () => handleKeyPress(key)}
                       style={{
                         borderRadius: 5,
@@ -556,7 +619,7 @@ hintDisabled: !progressReady || gameStatus !== 'playing' }} />
                         color: keyColor,
                         padding: "2px 5px"
                       }}
-                      className={`h-11 sm:h-12 transition-transform active:scale-95 shadow-xs flex items-center justify-center font-extrabold ${isSpecial
+                      className={`h-11 sm:h-12 transition-transform active:scale-95 shadow-xs flex items-center justify-center font-extrabold ${enviarBloqueado ? 'opacity-70 cursor-not-allowed' : ''} ${isSpecial
                         ? 'px-2 sm:px-3 text-[10px] sm:text-xs font-black tracking-tight shrink-0'
                         : 'flex-1 max-w-[34px] sm:max-w-[40px] text-sm sm:text-base'
                         }`}
