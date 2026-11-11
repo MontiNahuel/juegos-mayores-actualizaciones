@@ -180,6 +180,8 @@ export default function KingsCourt() {
     } else if (estado.conversacion_actual) dispatch(mostrarConversacion(estado.conversacion_actual));
     else if (estado.evento_actual) await guardarEventoLocal(estado.evento_actual);
     else if ((!estado.fase_actual || estado.fase_actual.toUpperCase() === 'DRAFT_MENSUAL') && estado.cartas_draft_actual?.length) await cargarDraft(estado.cartas_draft_actual, true);
+    // Una partida vieja o incompleta no tiene ninguna pantalla que mostrar: sin esto queda en blanco.
+    else setError(`La partida quedó guardada en la fase ${estado.fase_actual || 'desconocida'} sin contenido para mostrar. Usá "Salir de prueba" para comenzar de nuevo.`);
   };
 
   // Intenta restaurar la pantalla cuando falla la selección de carta.

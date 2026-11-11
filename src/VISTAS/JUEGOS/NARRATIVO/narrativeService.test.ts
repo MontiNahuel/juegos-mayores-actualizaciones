@@ -123,7 +123,18 @@ describe('respaldo del juego narrativo', /* Agrupa las pruebas de este comportam
     }));
     const { servicio } = await cargarServicio();
     const setup = servicio.obtenerSetup(date);
-    await vi.advanceTimersByTimeAsync(2500);
+    await vi.advanceTimersByTimeAsync(10_000);
     expect((await setup).personajes_ofrecidos).toHaveLength(4);
+    expect(servicio.esPartidaNarrativaLocal(date)).toBe(true);
+  });
+
+  it('no reemplaza por la demostración local una partida que el servidor ya confirmó', /* Comprueba el comportamiento indicado en este caso. */ async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(new Response(JSON.stringify({ tiene_partida_activa: true })));
+    const { servicio } = await cargarServicio();
+    await servicio.obtenerSetup(date);
+    vi.mocked(fetch).mockRejectedValueOnce(new TypeError('Servidor desconectado'));
+    await expect(servicio.obtenerEstadoPartida(date)).rejects.toThrow('Servidor desconectado');
+    expect(servicio.esPartidaNarrativaLocal(date)).toBe(false);
+    expect(fetch).toHaveBeenCalledTimes(2);
   });
 });
