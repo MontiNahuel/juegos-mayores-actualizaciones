@@ -58,7 +58,7 @@ async function guestCredential(): Promise<string> {
   if (previous?.credential && previous.expiresAt > Date.now() + 60_000) return previous.credential;
   if (pendingGuest) return pendingGuest;
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 2500);
+  const timeout = setTimeout(() => controller.abort(), 10_000);
   pendingGuest = (async () => {
     const response = await fetch(`${API_URL}${NARRATIVE_GUEST_CREDENTIAL_PATH}`, {
       method: 'POST',

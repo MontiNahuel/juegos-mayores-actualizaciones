@@ -20,3 +20,9 @@ it('sincroniza antes de ejecutar un draft que puede pedir otro nodo', async () =
   expect(vista.draft).toHaveBeenCalledOnce();
   expect(vista.sincronizar.mock.invocationCallOrder[0]).toBeLessThan(vista.draft.mock.invocationCallOrder[0]);
 });
+
+it('avisa cuando la fase guardada no tiene ninguna etapa para mostrar', async () => {
+  const sinEtapa = vi.fn();
+  await presentarResolucion({ fase_actual: 'RESOLVER_CONVERSACION' } as EstadoPartida, { ...puertos(), sinEtapa });
+  expect(sinEtapa).toHaveBeenCalledOnce();
+});

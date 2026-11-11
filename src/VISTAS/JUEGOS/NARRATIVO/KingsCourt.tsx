@@ -181,6 +181,8 @@ export default function KingsCourt() {
       conversar: conversacion => { dispatch(mostrarConversacion(conversacion)); },
       evento: guardarEventoLocal,
       draft: cartas => cargarDraft(cartas, true),
+      // Una partida vieja o incompleta no tiene pantalla: sin aviso quedaba en blanco.
+      sinEtapa: () => setError(`La partida quedó guardada en la fase ${estado.fase_actual || 'desconocida'} sin contenido para mostrar. Usá "Salir de prueba" para comenzar de nuevo.`),
     });
   };
 
