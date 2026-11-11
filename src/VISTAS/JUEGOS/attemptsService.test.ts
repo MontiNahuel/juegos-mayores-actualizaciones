@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import { getActiveProgressStorageKey, saveActiveGameProgress, saveFinalGameAttempt } from './attemptsService';
+import { flushPendingActiveProgress, getActiveProgressStorageKey, saveActiveGameProgress, saveFinalGameAttempt } from './attemptsService';
 
 const partida = { gameId: 'wordle', date: '2026-10-30', guesses: ['CASAS'], attempts: 1,
   status: 'in_progress' as const, gameData: { lives: 4 } };
@@ -62,4 +62,33 @@ it('si falla confirmar la victoria conserva el resultado pendiente sin acreditar
   await expect(saveFinalGameAttempt({ ...partida, status: 'won', grade: 'S', score: 100 })).rejects.toThrow('No se pudo confirmar');
   expect(JSON.parse(localStorage.getItem(getActiveProgressStorageKey(partida.gameId, partida.date))!)).toMatchObject({ status: 'won', grade: 'S', synced: false });
   expect(JSON.parse(localStorage.getItem('usuario')!).puntos).toBe(1000);
+});
+
+
+it('aplica debounce a guardados sucesivos y permite forzar el envío con flushPendingActiveProgress', async () => {
+  vi.useFakeTimers();
+  vi.mocked(fetch).mockResolvedValue(new Response('{}'));
+
+  await saveActiveGameProgress({ ...partida, currentInput: 'C' });
+  await saveActiveGameProgress({ ...partida, currentInput: 'CA' });
+  await saveActiveGameProgress({ ...partida, currentInput: 'CAS' });
+
+  // fetch no debe haber sido llamado de inmediato por el debounce
+  expect(fetch).toHaveBeenCalledTimes(0);
+
+  // Al avanzar el tiempo del debounce (1500ms) se realiza un único envío con el último estado
+  await vi.advanceTimersByTimeAsync(1500);
+  expect(fetch).toHaveBeenCalledTimes(1);
+  const body = JSON.parse(vi.mocked(fetch).mock.calls[0][1]!.body as string);
+  expect(body.game_data.currentInput).toBe('CAS');
+
+  // Si se vuelve a teclear y se fuerza flush inmediato, envía sin esperar el timer
+  await saveActiveGameProgress({ ...partida, currentInput: 'CASA' });
+  expect(fetch).toHaveBeenCalledTimes(1);
+  await flushPendingActiveProgress('wordle', partida.date);
+  expect(fetch).toHaveBeenCalledTimes(2);
+  const flushBody = JSON.parse(vi.mocked(fetch).mock.calls[1][1]!.body as string);
+  expect(flushBody.game_data.currentInput).toBe('CASA');
+
+  vi.useRealTimers();
 });
