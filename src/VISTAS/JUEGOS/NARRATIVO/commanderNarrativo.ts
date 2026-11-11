@@ -11,6 +11,8 @@ interface Presentacion {
   conversar: (conversacion: NonNullable<EstadoPartida['conversacion_actual']>) => void;
   evento: (evento: NonNullable<EstadoPartida['evento_actual']>) => Promise<unknown>;
   draft: (cartas: NonNullable<EstadoPartida['cartas_draft_actual']>) => Promise<unknown>;
+  // Fase guardada sin contenido presentable (partidas viejas o incompletas).
+  sinEtapa?: () => void;
 }
 
 // Prioridad explícita: una resolución terminal nunca queda detrás de un nodo pendiente.
@@ -24,4 +26,5 @@ export async function presentarResolucion(estado: EstadoPartida, vista: Presenta
   else if (estado.evento_actual) await vista.evento(estado.evento_actual);
   else if ((!estado.fase_actual || estado.fase_actual.toUpperCase() === 'DRAFT_MENSUAL') && estado.cartas_draft_actual?.length)
     await vista.draft(estado.cartas_draft_actual);
+  else vista.sinEtapa?.();
 }

@@ -11,8 +11,13 @@ const API = `${API_URL}${NARRATIVE_API_PATH}`;
 // en .env.local y reiniciar Vite (o recompilar) para deshabilitar TODOS estos fallbacks.
 // Activado por defecto: usa una partida local ante errores de red, timeout, HTTP 404 o 5xx.
 export const HABILITAR_FALLBACK_NARRATIVO = import.meta.env.VITE_NARRATIVE_FALLBACK !== 'false';
-const ESPERA_SERVIDOR_MS = 2500;
+// Los cierres mensuales aplican pasivos y sorteos en el servidor: 2,5 s abortaba
+// operaciones válidas y el juego quedaba sin avanzar.
+const ESPERA_SERVIDOR_MS = 10_000;
 const fechasLocales = new Set<string>();
+// Una vez que el servidor confirmó la partida, un fallo de red no debe reemplazarla
+// por la demostración local: se informa el error y se reintenta.
+const partidasServidor = new Set<string>();
 
 // Comprueba si la partida usa el respaldo local.
 export const esPartidaNarrativaLocal = (date: string) => HABILITAR_FALLBACK_NARRATIVO && fechasLocales.has(date);
@@ -248,10 +253,15 @@ async function request<T>(path: string, options?: RequestInit, permitirRespaldo 
   const respaldo = () => resolverRespaldoNarrativo(path, options, store.getState().narrativoSelection) as T;
   // Completa la respuesta con los datos de la siguiente etapa.
   const completar = (data: T) => {
-    if (path === NARRATIVE_GAME_PATHS.reiniciar) fechasLocales.delete(date);
+    if (path === NARRATIVE_GAME_PATHS.reiniciar) {
+      fechasLocales.delete(date);
+      partidasServidor.delete(date);
+    }
     return data;
   };
-  if (permitirRespaldo && esPartidaNarrativaLocal(date)) return completar(respaldo());
+  // Una partida que el servidor ya confirmó no se reemplaza por la demostración local.
+  const respaldoPermitido = permitirRespaldo && HABILITAR_FALLBACK_NARRATIVO && !partidasServidor.has(date);
+  if (respaldoPermitido && esPartidaNarrativaLocal(date)) return completar(respaldo());
 
   const controller = new AbortController();
   let timeout: ReturnType<typeof setTimeout> | undefined;
@@ -270,10 +280,11 @@ async function request<T>(path: string, options?: RequestInit, permitirRespaldo 
       const detalle = await response.json().catch(/* Maneja el fallo de esta operación. */ () => null);
       throw new ErrorServidorNarrativo(response.status, detalle?.detail || `Error ${response.status}.`);
     }
+    if (date) partidasServidor.add(date);
     return completar(await response.json() as T);
   } catch (error) {
     // Los errores de autenticacion, validacion o conflicto siguen visibles con su mensaje real.
-    if (!permitirRespaldo || !HABILITAR_FALLBACK_NARRATIVO || (error instanceof ErrorServidorNarrativo && error.status < 500 && error.status !== 404)) throw error;
+    if (!respaldoPermitido || (error instanceof ErrorServidorNarrativo && error.status < 500 && error.status !== 404)) throw error;
     const data = respaldo();
     fechasLocales.add(date);
     return completar(data);
