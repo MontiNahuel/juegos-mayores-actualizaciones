@@ -1,4 +1,5 @@
 import { API_URL } from '../../../config/api';
+import { getSessionUser } from '../../AUTH/sessionStore';
 import { NARRATIVE_GUEST_CREDENTIAL_PATH } from './narrativeEndpoints';
 
 const GUEST_KEY = 'cognijuegos_narrative_guest_v1';
@@ -15,34 +16,16 @@ function readStorage(storage: Storage, key: string): string | null {
   try { return storage.getItem(key); } catch { return null; }
 }
 
-/** Mantiene las sesiones actuales, incluido el token del panel y las cookies HttpOnly. */
-export function narrativeSessionToken(): string | null {
-  const token = readStorage(localStorage, 'token') || readStorage(sessionStorage, 'token');
-  if (token) return token;
+export function narrativeAdminHeaders(): Record<string, string> {
   for (const storage of [localStorage, sessionStorage]) {
     try {
       const session = JSON.parse(readStorage(storage, OPERATOR_KEY) || 'null');
-      if (typeof session?.token === 'string' && session.token) return session.token;
+      if (typeof session?.token === 'string' && session.token) {
+        return { Authorization: `Bearer ${session.token}` };
+      }
     } catch { /* Una sesión incompleta no constituye una credencial. */ }
   }
-  return null;
-}
-
-function hasCookieSessionHint(): boolean {
-  for (const key of ['usuario', 'user', OPERATOR_KEY]) {
-    for (const storage of [localStorage, sessionStorage]) {
-      try {
-        const value = JSON.parse(readStorage(storage, key) || 'null');
-        if (value && typeof value === 'object' && (value.id || value.email || value.user)) return true;
-      } catch { /* El servidor decide la identidad; no inferirla de JSON corrupto. */ }
-    }
-  }
-  return false;
-}
-
-export function narrativeAdminHeaders(): Record<string, string> {
-  const token = narrativeSessionToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
+  return {};
 }
 
 function savedGuest(): GuestSession | null {
@@ -80,9 +63,7 @@ async function guestCredential(): Promise<string> {
 }
 
 export async function narrativeGameHeaders(): Promise<Record<string, string>> {
-  const token = narrativeSessionToken();
-  if (token) return { Authorization: `Bearer ${token}` };
-  // No degradar silenciosamente una cuenta con cookie a una partida de invitado.
-  if (hasCookieSessionHint()) return {};
+  // Si hay sesión autenticada en memoria, la cookie HttpOnly viaja en las peticiones.
+  if (getSessionUser() !== null) return {};
   return { 'x-guest-credential': await guestCredential() };
 }

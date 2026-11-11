@@ -6,8 +6,8 @@ import { NARRATIVE_API_PATH, NARRATIVE_CATALOG_PATHS, NARRATIVE_GAME_PATHS, NARR
 
 const operation = (method:string,path:string) => contract.operations.find(x=>x.method===method && x.path===path);
 const date = '2026-11-06';
-beforeEach(() => { vi.resetModules();localStorage.clear();sessionStorage.clear();localStorage.setItem('token','cuenta-prueba');vi.stubGlobal('fetch',vi.fn().mockImplementation(async()=>new Response('{}'))); });
-afterEach(() => { vi.unstubAllGlobals();vi.unstubAllEnvs();localStorage.clear();sessionStorage.clear(); });
+beforeEach(async () => { vi.resetModules();localStorage.clear();sessionStorage.clear();const { setSessionUser } = await import('../../AUTH/sessionStore');setSessionUser({ id: 1, name: 'Cuenta Prueba' });vi.stubGlobal('fetch',vi.fn().mockImplementation(async()=>new Response('{}'))); });
+afterEach(async () => { const { setSessionUser } = await import('../../AUTH/sessionStore');setSessionUser(null);vi.unstubAllGlobals();vi.unstubAllEnvs();localStorage.clear();sessionStorage.clear(); });
 
 describe('rutas de King’s Court contra OpenAPI', () => {
   it('todas las rutas de partida y catálogos están publicadas con el método esperado', () => {
@@ -46,7 +46,8 @@ describe('rutas de King’s Court contra OpenAPI', () => {
       const url=new URL(String(input),'http://app');
       expect(url.pathname).toBe(NARRATIVE_API_PATH+path);
       for(const query of operation('GET',url.pathname)!.requiredQuery) expect(url.searchParams.get(query)).toBe(date);
-      expect(options).toMatchObject({credentials:'same-origin',headers:{Authorization:'Bearer cuenta-prueba'}});
+      expect(options).toMatchObject({ credentials: 'include' });
+      expect((options?.headers as Record<string, string>)?.Authorization).toBeUndefined();
     }
   });
 

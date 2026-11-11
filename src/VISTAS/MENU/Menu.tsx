@@ -7,6 +7,7 @@ import MenuCard from "./MenuCard";
 import { gameSections } from "./menuGames";
 import AppNavbar from "../COMPONENTS/Navbar/AppNavbar";
 import { esUsuarioAdmin } from "../AUTH/authUtils";
+import { StreakCelebrationModal } from "../COMPONENTS/MODALS/StreakCelebrationModal";
 import "./Menu.css";
 
 // Muestra los juegos y permite abrir sus calendarios.
@@ -92,6 +93,7 @@ const Menu: React.FC = () => {
           ))}
         </main>
       </IonContent>
+      <StreakCelebrationModal />
     </IonPage>
   );
 };

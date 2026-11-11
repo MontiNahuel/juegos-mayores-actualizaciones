@@ -1,5 +1,6 @@
 /* Pide pistas al servidor y comunica el resultado de la compra. */
 import { API_URL } from '../config/api';
+import { getSessionUser, setSessionUser } from '../VISTAS/AUTH/sessionStore';
 
 export interface SolicitudPista {
   game_id: 'wordle' | 'sudoku' | 'sopa_letras' | 'crucigrama';
@@ -25,13 +26,14 @@ export class ErrorPista extends Error {
 
 // Solicita una pista al servidor y devuelve el saldo de puntos confirmado.
 export async function pedirPistaConPuntos(solicitud: SolicitudPista): Promise<RespuestaPista> {
-  const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-  if (!token) throw new ErrorPista(401, 'Iniciá sesión para comprar una pista.');
+  if (!getSessionUser()) throw new ErrorPista(401, 'Iniciá sesión para comprar una pista.');
   const respuesta = await fetch(`${API_URL}/api/economy/use-hint`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(solicitud),
   });
+  if (respuesta.status === 401) setSessionUser(null);
   const datos = await respuesta.json().catch(/* Maneja el fallo de esta operación. */ () => null);
   if (!respuesta.ok) throw new ErrorPista(respuesta.status, datos?.detail || 'No se pudo solicitar la pista.');
   if (!datos?.success || !Number.isFinite(datos.puntos_restantes)) {

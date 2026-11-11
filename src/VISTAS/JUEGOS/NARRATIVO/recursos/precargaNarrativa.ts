@@ -6,7 +6,8 @@ import marcoEvento from '../../../../assets/narrative/event-title.png';
 import caballoCarga from '../../../../assets/narrative/loading-horse.png';
 import { esPartidaNarrativaLocal, obtenerSetup, type SetupPartida } from '../narrativeService';
 import { ahorraDatos, guardarImagenesEnSegundoPlano, precargarImagenes } from '../../../../services/assetPreloader';
-import { narrativeAdminHeaders, narrativeSessionToken } from '../narrativeAuth';
+import { getSessionUser } from '../../../AUTH/sessionStore';
+import { narrativeAdminHeaders } from '../narrativeAuth';
 import { NARRATIVE_API_PATH, NARRATIVE_CATALOG_PATHS } from '../narrativeEndpoints';
 
 export const CABALLO_CARGA = caballoCarga;
@@ -38,16 +39,10 @@ export function imagenesDelContenido(contenido: unknown): string[] {
 // Busca las imágenes del universo que pueden aparecer más adelante.
 export async function imagenesDelUniverso(setup: SetupPartida, date: string) {
   if (esPartidaNarrativaLocal(date)) return [];
-  const token = narrativeSessionToken();
-  if (!token) return [];
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
-    if (payload.tipoUsuario !== 2 && payload.rol !== 2 && payload.tipo_usuario !== 2) {
-      return [];
-    }
-  } catch {
-    return [];
-  }
+  const user = getSessionUser();
+  if (!user) return [];
+  const tipo = Number(user.tipoUsuario ?? user.rol ?? user.tipo_usuario ?? 1);
+  if (tipo !== 2) return [];
   const controller = new AbortController();
   const timeout = window.setTimeout(/* Ejecuta este paso cuando se cumple la espera. */ () => controller.abort(), 10_000);
   try {
@@ -56,7 +51,7 @@ export async function imagenesDelUniverso(setup: SetupPartida, date: string) {
     const catalogos = await Promise.allSettled(nombres.map(/* Prepara el resultado de cada elemento. */ async nombre => {
       const parametros = new URLSearchParams({ limit: '500', universo_id: setup.universo_id });
       const respuesta = await fetch(`${API_URL}${NARRATIVE_API_PATH}${NARRATIVE_CATALOG_PATHS[nombre]}?${parametros}`, {
-        credentials: 'same-origin',
+        credentials: 'include',
         signal: controller.signal, headers: narrativeAdminHeaders(),
       });
       if (!respuesta.ok) return [];

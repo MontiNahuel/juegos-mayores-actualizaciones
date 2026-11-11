@@ -72,6 +72,7 @@ function NavbarIdentity({
 function NavbarAccount({
   showSession,
   user,
+  racha,
   points,
   loading,
   onLogin,
@@ -81,6 +82,8 @@ function NavbarAccount({
   showSession: boolean;
   /** Usuario sincronizado; null representa al invitado. */
   user: Usuario | null;
+  /** Días de racha confirmados por el backend. */
+  racha: number;
   /** Saldo real y estado de carga del contexto de economía. */
   points: number;
   loading: boolean;
@@ -96,11 +99,12 @@ function NavbarAccount({
         <>
           <span
             title="Días de racha"
+            aria-label={`${racha} ${racha === 1 ? "día" : "días"} de racha`}
             className="flex items-center gap-[5px] text-[15px] whitespace-nowrap text-[#edd499] tabular-nums max-md:text-sm"
           >
             <IonIcon icon={flameOutline} aria-hidden="true" />
-            <span>{user.racha ?? 0}</span>
-            <span className="max-md:hidden"> días</span>
+            <span>{racha}</span>
+            <span className="max-md:hidden"> {racha === 1 ? "día" : "días"}</span>
           </span>
           <span
             title="Puntos acumulados"
@@ -195,6 +199,7 @@ export default function AppNavbar({ view, onUsuarioChange }: AppNavbarProps) {
               <NavbarAccount
                 showSession={menu}
                 user={session.user}
+                racha={economy.racha ?? 0}
                 points={economy.puntos}
                 loading={economy.isLoading}
                 onLogin={openAuth}

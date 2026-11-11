@@ -6,7 +6,8 @@ import { IonPage, IonContent, IonSpinner, IonIcon } from '@ionic/react';
 import { alertCircleOutline, checkmarkCircleOutline, arrowForwardOutline, keyOutline } from 'ionicons/icons';
 import { BrainIcon } from '../COMPONENTS/Icons/Icons';
 import { API_URL } from '../../config/api';
-import { guardarSesionAdmin, OPERADOR_STORAGE_KEY } from '../AUTH/authUtils';
+import { guardarSesionAdmin } from '../AUTH/authUtils';
+import { clearLegacyAuthStorage, setSessionUser } from '../AUTH/sessionStore';
 
 const color = {
   blue: '#294C6B',
@@ -44,6 +45,7 @@ export const AccesoToken: React.FC = () => {
       try {
         const response = await fetch(`${API_URL}/api/auth/verificar-token`, {
           method: 'POST',
+          credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ token: cleanToken }),
         });
@@ -54,20 +56,12 @@ export const AccesoToken: React.FC = () => {
 
         if (response.ok && (data.success || data.valid) && data.user) {
           const userObj = data.user;
-          const jwtToken = data.token || cleanToken;
-
           const tipo = Number(userObj.tipoUsuario ?? userObj.tipo_usuario ?? userObj.rol ?? 1);
           if (tipo === 2) {
-            guardarSesionAdmin(userObj, jwtToken);
+            guardarSesionAdmin(userObj);
           } else {
-            localStorage.removeItem(OPERADOR_STORAGE_KEY);
-            sessionStorage.removeItem(OPERADOR_STORAGE_KEY);
-            localStorage.setItem('usuario', JSON.stringify(userObj));
-            localStorage.setItem('user', JSON.stringify(userObj));
-            if (jwtToken) {
-              localStorage.setItem('token', jwtToken);
-            }
-            window.dispatchEvent(new Event('user_progress_updated'));
+            clearLegacyAuthStorage();
+            setSessionUser(userObj);
           }
 
           setNombreUsuario(userObj.name || userObj.nombre || '¡Hola!');

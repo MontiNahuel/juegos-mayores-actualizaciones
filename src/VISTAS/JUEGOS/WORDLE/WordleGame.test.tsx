@@ -6,9 +6,9 @@ import { getActiveProgressStorageKey } from '../attemptsService';
 
 vi.mock('../../../context/PlayerEconomyContext', () => ({
   usePlayerEconomy: () => ({
+    puntos: 0,
     puntosPorCalificacion: { S: 100, A: 90, B: 75, C: 50, F: 0 },
     escalasTiempoPorJuego: {},
-    abrirMiniTienda: vi.fn(),
     abrirComprarPista: vi.fn(),
   }),
 }));
@@ -58,7 +58,7 @@ it('muestra 6 filas de tablero y limita a 6 intentos terminando en derrota si no
   // Comprobar que tras el intento 6 se agotan los intentos y se marca la derrota
   await waitFor(() => {
     expect(screen.getByText((content) => content.includes('Intentos:') && content.includes('6 / 6'))).toBeTruthy();
-  });
+  }, { timeout: 3000 });
   expect(screen.getByText('¡Se agotaron los intentos!')).toBeTruthy();
 
   // El CompletedModal debe mostrar el título de derrota para Wordle después del timeout

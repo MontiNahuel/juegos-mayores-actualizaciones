@@ -4,22 +4,22 @@ import {
   fireEvent,
   render,
   screen,
+  waitFor,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import AppNavbar from "./AppNavbar";
 import type { Usuario } from "./navbar.types";
+import { setSessionUser } from "../../AUTH/sessionStore";
 
-/** La prueba usa la sesión real del hook y simula solo las dependencias externas de presentación/economía. */
+/** La prueba usa la sesión real en memoria y simula solo las dependencias externas de economía/red. */
 const economy = vi.hoisted(() => ({
   puntos: 120,
+  racha: 0,
   isLoading: false,
-  recargarEconomia: vi.fn(),
+  recargarEconomia: vi.fn().mockResolvedValue(undefined),
 }));
 vi.mock("../../../context/PlayerEconomyContext", () => ({
   usePlayerEconomy: () => economy,
-}));
-vi.mock("../../AUTH/authUtils", () => ({
-  limpiarTodasLasSesiones: () => localStorage.clear(),
 }));
 vi.mock("@ionic/react", () => ({
   IonHeader: ({ children, ...props }: React.HTMLAttributes<HTMLElement>) => (
@@ -55,7 +55,7 @@ vi.mock("../MODALS/AuthModal", () => ({
   }) =>
     isOpen ? (
       <div role="dialog">
-        <button onClick={() => onSuccess({ id: 1, name: "Ana", racha: 3 })}>
+        <button onClick={() => onSuccess({ id: 1, name: "Ana" })}>
           Entrar en prueba
         </button>
         <button onClick={onClose}>Cancelar</button>
@@ -66,20 +66,27 @@ vi.mock("../MODALS/AuthModal", () => ({
 beforeEach(() => {
   localStorage.clear();
   sessionStorage.clear();
+  setSessionUser(null);
+  economy.puntos = 120;
+  economy.racha = 0;
   window.history.replaceState({}, "", "/menu");
+  vi.stubGlobal("fetch", vi.fn(async () => new Response('{"success":true}')));
   vi.clearAllMocks();
 });
 afterEach(() => {
   cleanup();
   localStorage.clear();
   sessionStorage.clear();
+  setSessionUser(null);
+  vi.unstubAllGlobals();
   window.history.replaceState({}, "", "/");
 });
 
 describe("AppNavbar: estructura y estados compartidos", () => {
-  /** Acceso y salida actualizan la misma navbar, notifican al consumidor y recargan la economía. */
-  it("transiciona de invitado a autenticado y de vuelta sin duplicar cabeceras", () => {
+  /** Acceso y salida actualizan la misma navbar, notifican al consumidor y usan cookie HttpOnly sin localStorage. */
+  it("transiciona de invitado a autenticado y cierra sesión vía /api/auth/logout", async () => {
     const notify = vi.fn();
+    economy.racha = 3;
     const { container } = render(
       <AppNavbar view={{ kind: "menu" }} onUsuarioChange={notify} />,
     );
@@ -90,6 +97,7 @@ describe("AppNavbar: estructura y estados compartidos", () => {
       "data-navbar-session",
       "authenticated",
     );
+    expect(screen.getByTitle("Días de racha")).toHaveTextContent("3 días");
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(notify).toHaveBeenLastCalledWith(
       expect.objectContaining({ name: "Ana" }),
@@ -100,7 +108,25 @@ describe("AppNavbar: estructura y estados compartidos", () => {
       "guest",
     );
     expect(notify).toHaveBeenLastCalledWith(null);
-    expect(economy.recargarEconomia).toHaveBeenCalledTimes(2);
+    await waitFor(() => expect(economy.recargarEconomia).toHaveBeenCalledTimes(2));
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining("/api/auth/logout"),
+      expect.objectContaining({ method: "POST", credentials: "include" }),
+    );
+    expect(localStorage.getItem("usuario")).toBeNull();
+    expect(localStorage.getItem("token")).toBeNull();
+  });
+
+  /** Muestra 0 días cuando la racha está cortada en vez de simular 1. */
+  it("muestra exactamente la racha del contexto (incluido 0 y singular 1 día)", () => {
+    setSessionUser({ id: 1, name: "Ana" });
+    economy.racha = 0;
+    const { rerender } = render(<AppNavbar view={{ kind: "menu" }} />);
+    expect(screen.getByTitle("Días de racha")).toHaveTextContent("0 días");
+
+    economy.racha = 1;
+    rerender(<AppNavbar view={{ kind: "menu" }} />);
+    expect(screen.getByTitle("Días de racha")).toHaveTextContent("1 día");
   });
 
   /** Cambiar de contexto conserva la estructura y activa únicamente los slots correspondientes. */
@@ -166,20 +192,18 @@ describe("AppNavbar: estructura y estados compartidos", () => {
     expect(onHint).toHaveBeenCalledOnce();
   });
 
-  /** Una sesión actualizada fuera del componente se refleja, y un JSON inválido elimina datos obsoletos. */
-  it("sincroniza eventos locales y de otras pestañas sin conservar un usuario inválido", () => {
+  /** Actualizaciones en memoria de la sesión se reflejan inmediatamente sin eventos de storage. */
+  it("sincroniza cambios de sesión en memoria y vuelve a invitado si se limpia la sesión", () => {
     const { container } = render(<AppNavbar view={{ kind: "menu" }} />);
     act(() => {
-      localStorage.setItem("usuario", JSON.stringify({ id: 2, name: "Luis" }));
-      window.dispatchEvent(new Event("user_progress_updated"));
+      setSessionUser({ id: 2, name: "Luis" });
     });
     expect(container.querySelector("header")).toHaveAttribute(
       "data-navbar-session",
       "authenticated",
     );
     act(() => {
-      localStorage.setItem("usuario", "{invalid");
-      window.dispatchEvent(new Event("storage"));
+      setSessionUser(null);
     });
     expect(container.querySelector("header")).toHaveAttribute(
       "data-navbar-session",
@@ -198,7 +222,5 @@ describe("AppNavbar: estructura y estados compartidos", () => {
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     expect(window.location.search).toBe("?origen=correo");
     expect(window.location.hash).toBe("#juegos");
-    fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 });

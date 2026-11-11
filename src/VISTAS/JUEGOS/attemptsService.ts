@@ -12,6 +12,7 @@
  */
 
 import { API_URL } from '../../config/api';
+import { getSessionUser, setSessionUser } from '../AUTH/sessionStore';
 const escrituras = new Map<string, Promise<unknown>>();
 // Guarda en orden con los datos de este paso.
 function guardarEnOrden(clave: string, enviar: () => Promise<unknown>): Promise<unknown> {
@@ -116,16 +117,10 @@ export interface SaveProgressPayload {
  * Devuelve null si no hay sesión (modo invitado / sin cuenta).
  */
 export function getCurrentUserId(): number | null {
-  try {
-    const userRaw = localStorage.getItem('usuario') || localStorage.getItem('user');
-    if (!userRaw) return null;
-    const parsed = JSON.parse(userRaw);
-    if (!parsed || parsed.id == null) return null;
-    const uid = typeof parsed.id === 'number' ? parsed.id : parseInt(parsed.id, 10);
-    return isNaN(uid) ? null : uid;
-  } catch {
-    return null;
-  }
+  const user = getSessionUser();
+  if (!user || user.id == null) return null;
+  const uid = typeof user.id === 'number' ? user.id : parseInt(String(user.id), 10);
+  return isNaN(uid) ? null : uid;
 }
 
 /**
@@ -255,15 +250,14 @@ export async function getActiveGameProgress(
     return null;
   }
 
-  // 3. Usuario autenticado: consultar al backend si no estaba en local
+  // 3. Usuario autenticado: consultar al backend enviando cookie HttpOnly
   try {
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-    const headers: Record<string, string> = {};
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-
-    // Intenta la consulta usando la dirección de servidor indicada.
     const tryFetch = async (url: string) => {
-      const res = await fetch(url, { headers });
+      const res = await fetch(url, { credentials: 'include' });
+      if (res.status === 401) {
+        setSessionUser(null);
+        return null;
+      }
       if (!res.ok) return null;
       return await res.json();
     };
@@ -349,9 +343,8 @@ export async function saveActiveGameProgress(payload: SaveProgressPayload, confi
     return;
   }
 
-  // 3. Sincronización asíncrona con el backend (sólo usuario autenticado)
+  // 3. Sincronización asíncrona con el backend (sólo usuario autenticado vía cookie HttpOnly)
   try {
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
     const body = {
       user_id: uid,
       game_id: payload.gameId,
@@ -369,16 +362,17 @@ export async function saveActiveGameProgress(payload: SaveProgressPayload, confi
     };
 
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
 
     // Sincroniza el avance con el servidor sin bloquear la partida.
     const sendBackend = async (url: string) => {
       const res = await fetch(url, {
         method: 'POST',
+        credentials: 'include',
         headers,
         body: JSON.stringify(body),
         keepalive: true,
       });
+      if (res.status === 401) setSessionUser(null);
       if (!res.ok) throw new Error('No se pudo guardar la partida en el servidor.');
     };
 
@@ -430,15 +424,17 @@ export async function saveFinalGameAttempt(payload: SaveProgressPayload): Promis
   else localStorage.setItem(storageKey, JSON.stringify(progress));
   if (uid === null) return progress;
 
-  const token = localStorage.getItem('token') || sessionStorage.getItem('token');
   const response = await guardarEnOrden(storageKey, async () => {
     const res = await fetch(API_URL + '/api/games/attempts', {
-      method: 'POST', headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) },
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ user_id: uid, game_id: payload.gameId, date: payload.date,
         mode: 'daily', status: won ? 'completed' : 'failed', word: payload.word,
         attempts: payload.attempts, grade: payload.grade, stars: payload.stars,
         time_taken_seconds: payload.timeTakenSeconds, guesses: payload.guesses, game_data: payload.gameData }),
     });
+    if (res.status === 401) setSessionUser(null);
     if (!res.ok) throw new Error('No se pudo confirmar el resultado.');
     return res.json();
   }) as { grade?: string; stars: number; score: number; puntos_ganados?: number; puntos_totales_usuario?: number };
@@ -449,11 +445,9 @@ export async function saveFinalGameAttempt(payload: SaveProgressPayload): Promis
     if (won) cacheCompleted(confirmed);
     else localStorage.setItem(storageKey, JSON.stringify(confirmed));
     if (Number.isFinite(response.puntos_totales_usuario)) {
-      for (const key of ['usuario', 'user']) {
-        try {
-          const raw = localStorage.getItem(key);
-          if (raw) localStorage.setItem(key, JSON.stringify({ ...JSON.parse(raw), puntos: response.puntos_totales_usuario }));
-        } catch { /* La cabecera se actualiza mediante el evento. */ }
+      const user = getSessionUser();
+      if (user) {
+        setSessionUser({ ...user, puntos: response.puntos_totales_usuario });
       }
       window.dispatchEvent(new CustomEvent('user_progress_updated', { detail: { economiaConfirmada: true, puntos: response.puntos_totales_usuario } }));
     } else window.dispatchEvent(new Event('user_progress_updated'));

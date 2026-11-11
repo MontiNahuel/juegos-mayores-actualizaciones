@@ -5,9 +5,11 @@ const balance = { mes_actual: 2, fase_actual: 'BALANCE_MES', recursos: { oro: 50
 const draft = { grafo_actual: null, evento_actual: null, resultado_actual: null, conversacion_actual: null, mes_actual: 3, fase_actual: 'DRAFT_MENSUAL', recursos: { oro: 48 }, cartas_draft_actual: [{ _id: 'nueva' }] };
 const response = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status });
 
-beforeEach(() => {
+beforeEach(async () => {
   vi.resetModules();
-  localStorage.clear(); sessionStorage.clear(); localStorage.setItem('token', 'prueba');
+  localStorage.clear(); sessionStorage.clear();
+  const { setSessionUser } = await import('../../AUTH/sessionStore');
+  setSessionUser({ id: 1, name: 'Test' });
   vi.stubGlobal('fetch', vi.fn());
 });
 afterEach(() => { vi.unstubAllGlobals(); localStorage.clear(); sessionStorage.clear(); });

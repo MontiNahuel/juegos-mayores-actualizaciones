@@ -1,2 +1,0 @@
-/* Deja a mano las piezas de game header para importarlas desde un lugar. */
-export * from './LivesBadge';

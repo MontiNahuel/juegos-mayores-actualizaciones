@@ -1,24 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import { usePlayerEconomy } from "../../../context/PlayerEconomyContext";
-import { limpiarTodasLasSesiones } from "../../AUTH/authUtils";
+import {
+  getSessionUser,
+  logoutAuthSession,
+  setSessionUser,
+  subscribeSessionUser,
+} from "../../AUTH/sessionStore";
 import type { AppNavbarProps, NavbarSession, Usuario } from "./navbar.types";
 
-/** Lee la sesión guardada; datos incompletos o JSON corrupto vuelven al estado invitado. */
+/** Lee la sesión activa en memoria sin consultar localStorage. */
 export function readNavbarUser(): Usuario | null {
-  try {
-    const saved =
-      localStorage.getItem("usuario") || localStorage.getItem("user");
-    if (!saved) return null;
-    const parsed: unknown = JSON.parse(saved);
-    return parsed &&
-      typeof parsed === "object" &&
-      "name" in parsed &&
-      typeof parsed.name === "string"
-      ? (parsed as Usuario)
-      : null;
-  } catch {
-    return null;
-  }
+  const user = getSessionUser();
+  return user && typeof user.name === "string" ? (user as Usuario) : null;
 }
 
 /** Centraliza acceso, cierre y sincronización de sesión para los tres contextos visuales. */
@@ -51,30 +44,25 @@ export function useNavbarSession(
     );
   }, []);
 
-  // Cambios de progreso en esta pestaña y cambios de almacenamiento en otras usan la misma lectura.
+  // Sincroniza la UI ante cambios de sesión en memoria (cookie HttpOnly / login / logout / 401).
   useEffect(() => {
-    const synchronize = () => setUser(readNavbarUser());
-    window.addEventListener("user_progress_updated", synchronize);
-    window.addEventListener("storage", synchronize);
-    return () => {
-      window.removeEventListener("user_progress_updated", synchronize);
-      window.removeEventListener("storage", synchronize);
-    };
+    setUser(readNavbarUser());
+    return subscribeSessionUser(() => setUser(readNavbarUser()));
   }, []);
 
-  /** El modal ya persistió las credenciales; aquí solo actualizamos UI y economía. */
+  /** La cookie HttpOnly ya quedó guardada; aquí actualizamos sesión en memoria y economía. */
   const login = (loggedUser: Usuario) => {
+    setSessionUser(loggedUser);
     setUser(loggedUser);
     setAuthOpen(false);
     void economy.recargarEconomia();
   };
 
-  /** Usa la limpieza compartida para cerrar también las sesiones de operador. */
+  /** Cierra la sesión en el servidor (borra cookie HttpOnly) y limpia la memoria local. */
   const logout = () => {
-    limpiarTodasLasSesiones();
     setUser(null);
     setAuthOpen(false);
-    void economy.recargarEconomia();
+    void logoutAuthSession().then(() => economy.recargarEconomia());
   };
 
   const session: NavbarSession = user

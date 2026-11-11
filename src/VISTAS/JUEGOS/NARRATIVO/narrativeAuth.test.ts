@@ -32,18 +32,13 @@ describe('identidad de King’s Court', () => {
     expect(fetch).toHaveBeenCalledTimes(1);
   });
 
-  it.each(['local', 'session', 'operator'])('respeta la sesión %s y no solicita identidad de invitado', async source => {
-    if (source === 'local') localStorage.setItem('token','cuenta');
-    if (source === 'session') sessionStorage.setItem('token','cuenta');
-    if (source === 'operator') localStorage.setItem('asistodo_operador_session',JSON.stringify({ token:'cuenta',tipoUsuario:2 }));
-    expect(await (await import('./narrativeAuth')).narrativeGameHeaders()).toEqual({ Authorization:'Bearer cuenta' });
+  it('deja autenticar la cookie de una cuenta en memoria sin degradarla a invitado ni guardar en localStorage', async () => {
+    const session = await import('../../AUTH/sessionStore');
+    session.setSessionUser({ id: 42, name: 'Dai' });
+    const api = await import('./narrativeAuth');
+    expect(await api.narrativeGameHeaders()).toEqual({});
     expect(fetch).not.toHaveBeenCalled();
-  });
-
-  it('deja autenticar la cookie de una cuenta conocida sin degradarla a invitado', async () => {
-    localStorage.setItem('usuario',JSON.stringify({ id:42 }));
-    expect(await (await import('./narrativeAuth')).narrativeGameHeaders()).toEqual({});
-    expect(fetch).not.toHaveBeenCalled();
+    expect(localStorage.getItem(key)).toBeNull();
   });
 
   it('no guarda respuestas inválidas y permite recuperar la solicitud después del error', async () => {

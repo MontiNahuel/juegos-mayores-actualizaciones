@@ -271,7 +271,7 @@ async function request<T>(path: string, options?: RequestInit, permitirRespaldo 
     timeout = setTimeout(() => controller.abort(), ESPERA_SERVIDOR_MS);
     const response = await fetch(`${API}${path}`, {
       ...options,
-      credentials: 'same-origin',
+      credentials: 'include',
       signal: controller.signal,
       headers: { 'Content-Type': 'application/json', ...authHeaders },
     });
@@ -315,7 +315,7 @@ export const obtenerCatalogosCronica = async (date: string, universoId?: string)
     if (universoId) parametros.set('universo_id', universoId);
     const respuesta = await fetch(`${API}${NARRATIVE_CATALOG_PATHS[nombre]}?${parametros}`, {
       headers: authHeaders,
-      credentials: 'same-origin',
+      credentials: 'include',
       signal: controller.signal,
     });
     if (!respuesta.ok) return [];

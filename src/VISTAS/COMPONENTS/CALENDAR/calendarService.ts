@@ -97,13 +97,9 @@ export async function fetchUserMonthAttempts(
   month: number,
   userId: number
 ) {
-  const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-  const headers: Record<string, string> = {};
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-
   return await apiFetch<any>(
     `/api/games/attempts?game_id=${gameId}&year=${year}&month=${month}&user_id=${userId}`,
-    { headers }
+    { credentials: 'include' }
   );
 }
 

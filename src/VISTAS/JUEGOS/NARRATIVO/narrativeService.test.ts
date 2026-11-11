@@ -7,6 +7,8 @@ const date = '2026-10-19';
 // Carga servicio con los datos de este paso.
 async function cargarServicio(habilitado = true) {
   vi.stubEnv('VITE_NARRATIVE_FALLBACK', String(habilitado));
+  const { setSessionUser } = await import('../../AUTH/sessionStore');
+  setSessionUser({ id: 7, name: 'Test' });
   const servicio = await import('./narrativeService');
   const { store } = await import('../../../store/store');
   return { servicio, store };
@@ -14,7 +16,6 @@ async function cargarServicio(habilitado = true) {
 
 beforeEach(/* Prepara un entorno limpio antes de cada prueba. */ () => {
   vi.resetModules();
-  vi.stubGlobal('localStorage', { getItem: vi.fn((key: string) => key === 'token' ? 'sesion-prueba' : null) });
   vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Servidor desconectado')));
 });
 afterEach(/* Limpia el entorno al terminar cada prueba. */ () => {
