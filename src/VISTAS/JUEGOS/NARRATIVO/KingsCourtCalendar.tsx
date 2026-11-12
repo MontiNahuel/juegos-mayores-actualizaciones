@@ -10,6 +10,7 @@ export default function KingsCourtCalendar() {
       title="King's Court"
       heroBadge="Desafío narrativo"
       heroSubtitle="Tomá decisiones para guiar a tu corte durante el desafío del día."
+      difficulty="normal"
       playRoute="/juegos/kings-court/jugar"
     />
   );
