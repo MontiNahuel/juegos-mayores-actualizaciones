@@ -18,6 +18,9 @@ export interface EstadoFondoCorte {
 
 export const FONDO_CORTE_DEFAULT = '/assets/narrative/court.jpg';
 
+// Respaldo visual cuando el nodo no trae imagen o su descarga falla.
+export const FONDO_CONVERSACION = '/assets/narrative/conversation-hall.png';
+
 // Coordenadas porcentuales de court.jpg (1920 × 1080), antes del recorte de object-cover.
 // La fuga marca el fondo de la sala; aumentar y acerca un elemento hacia el espectador.
 export const FUGA_CORTE = { x: 50, y: 62 };

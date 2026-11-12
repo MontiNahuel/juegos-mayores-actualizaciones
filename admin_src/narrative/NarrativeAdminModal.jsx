@@ -21,6 +21,7 @@ import CalendarioTab from './CalendarioTab';
 import GrafosV2Tab from './GrafosV2Tab';
 import AccionesTab from './AccionesTab';
 import FrecuenciasTab from './FrecuenciasTab';
+import { fetchNarrativeAdmin } from './api';
 
 // Organiza las pestañas para administrar el contenido narrativo.
 export default function NarrativeAdminModal({ abierto, onCerrar, embebido = false }) {
@@ -31,7 +32,7 @@ export default function NarrativeAdminModal({ abierto, onCerrar, embebido = fals
   // Cargar lista de universos
   const cargarUniversos = async () => {
     try {
-      const res = await fetch('/api/narrative/admin/universos');
+      const res = await fetchNarrativeAdmin('/api/narrative/admin/universos');
       if (res.ok) {
         const data = await res.json();
         setUniversos(data);
@@ -44,7 +45,7 @@ export default function NarrativeAdminModal({ abierto, onCerrar, embebido = fals
   // Cargar lista de personajes para referencias cruzadas
   const cargarPersonajes = async () => {
     try {
-      const res = await fetch('/api/narrative/admin/personajes');
+      const res = await fetchNarrativeAdmin('/api/narrative/admin/personajes');
       if (res.ok) {
         const data = await res.json();
         setPersonajes(data);

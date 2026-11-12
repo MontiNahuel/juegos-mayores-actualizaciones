@@ -18,9 +18,46 @@
 .calendar-shared-modal-card { @apply motion-safe:animate-calendar-modal; }
 
 :root {
-  --ion-background-color: #f8fafc;
+  --app-background: #151e2b;
+  --app-panel: #2a394c;
+  --app-panel-raised: #34465b;
+  --app-border: #52647b;
+  --app-text: #f3f6fa;
+  --app-copy: #c0cbd7;
+  --ion-background-color: var(--app-background);
   --ion-text-color: #0f172a;
   --ion-safe-area-top: env(safe-area-inset-top, 0px);
   --ion-safe-area-bottom: max(env(safe-area-inset-bottom, 0px), 36px);
   --app-safe-bottom: max(calc(env(safe-area-inset-bottom, 0px) + 16px), 48px);
+}
+
+/* Shared game surface: muted menu palette around high-contrast puzzle boards. */
+.cognitive-game {
+  --game-accent: #99dcd1;
+  min-height: 100dvh;
+  background: var(--app-background);
+  color: var(--app-text);
+  font-family: "Nunito Sans", "Segoe UI", sans-serif;
+}
+
+.cognitive-game--wordle { --game-accent: #99dcd1; }
+.cognitive-game--sopa { --game-accent: #f0bb98; }
+.cognitive-game--sudoku { --game-accent: #c8bbf0; }
+.cognitive-game--crucigrama { --game-accent: #a8ccef; }
+
+.cognitive-game :is(button, a):focus-visible {
+  outline: 3px solid var(--game-accent);
+  outline-offset: 3px;
+}
+
+.cognitive-game ::selection {
+  background: var(--game-accent);
+  color: #172433;
+}
+
+/* Tailwind aliases keep menu typography and surfaces tied to shared tokens. */
+@theme {
+  --color-menu-ink: var(--app-text);
+  --color-menu-copy: var(--app-copy);
+  --color-menu-panel: var(--app-panel);
 }

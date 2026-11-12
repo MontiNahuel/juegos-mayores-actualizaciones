@@ -7,6 +7,8 @@ const date = '2026-10-19';
 // Carga servicio con los datos de este paso.
 async function cargarServicio(habilitado = true) {
   vi.stubEnv('VITE_NARRATIVE_FALLBACK', String(habilitado));
+  const { setSessionUser } = await import('../../AUTH/sessionStore');
+  setSessionUser({ id: 7, name: 'Test' });
   const servicio = await import('./narrativeService');
   const { store } = await import('../../../store/store');
   return { servicio, store };
@@ -14,7 +16,6 @@ async function cargarServicio(habilitado = true) {
 
 beforeEach(/* Prepara un entorno limpio antes de cada prueba. */ () => {
   vi.resetModules();
-  vi.stubGlobal('localStorage', { getItem: vi.fn().mockReturnValue(null) });
   vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Servidor desconectado')));
 });
 afterEach(/* Limpia el entorno al terminar cada prueba. */ () => {
@@ -43,25 +44,24 @@ describe('respaldo del juego narrativo', /* Agrupa las pruebas de este comportam
       store.dispatch(acciones.mostrarEvento(evento));
       const opcion = evento.opciones[mes % 2];
       store.dispatch(acciones.registrarDecisionEvento({ evento_id: evento.id, opcion_id: opcion.id }));
-      const data = await api.decidirEvento(date, opcion.id);
+      const data = await api.avanzarNodo(date, opcion.id, evento.id);
       store.dispatch(acciones.guardarResultado(data.resultado_actual));
       store.dispatch(acciones.limpiarResultado());
       if (data.conversacion_actual) {
         store.dispatch(acciones.mostrarConversacion(data.conversacion_actual));
         const decision = data.conversacion_actual.decisiones[0];
         store.dispatch(acciones.resolverConversacion({ conversacionId: data.conversacion_actual._id, decision }));
-        await api.responderConversacion(date, decision.opcion);
+        await api.avanzarNodo(date, String(decision.opcion), data.conversacion_actual._id);
       }
-      store.dispatch(acciones.avanzarMes());
       const siguiente = await api.avanzarMes(date);
+      store.dispatch(acciones.sincronizarPartida(siguiente));
       if (mes === 6) {
         expect(siguiente.finalizacion?.tipo).toBe('victoria_tiempo');
         store.dispatch(acciones.finalizarPartida(siguiente.finalizacion));
       } else store.dispatch(acciones.guardarCartasDraft(siguiente.cartas_draft_actual?.map(normalizar)));
     }
     expect(store.getState().narrativoSelection.jugador.recursos.oro).toBe(32);
-    expect(store.getState().narrativoSelection.jugador.conversaciones_jugadas).toHaveLength(3);
-    expect(Object.values(store.getState().narrativoSelection.jugador.afinidad)).toContain(74);
+    expect(store.getState().narrativoSelection.jugador.conversaciones_jugadas).toHaveLength(0);
     const historial = (await api.obtenerHistorialPartida(date)).historial_mensual;
     expect(historial).toHaveLength(6);
     expect(historial[0].recursos_fin_mes).toMatchObject({ oro: expect.any(Number), pueblo: expect.any(Number) });
@@ -86,14 +86,14 @@ describe('respaldo del juego narrativo', /* Agrupa las pruebas de este comportam
   it('reconstruye los nombres desde el mismo universo sin perder la crónica si falla un catálogo', /* Comprueba el comportamiento indicado en este caso. */ async () => {
     vi.mocked(fetch).mockImplementation(/* Completa este paso con los datos recibidos por la operación. */ async input => {
       const url = String(input);
-      if (url.includes('/admin/resultados?')) return new Response('{}', { status: 503 });
+      if (url.includes('/admin/v2/conversaciones?')) return new Response('{}', { status: 503 });
       return new Response(JSON.stringify([{ _id: 'c1', nombre: 'Sello real' }]));
     });
     const { servicio } = await cargarServicio(false);
     const catalogos = await servicio.obtenerCatalogosCronica(date, 'corte_medieval');
     expect(catalogos.cartas[0].nombre).toBe('Sello real');
-    expect(catalogos.resultados).toEqual([]);
-    expect(fetch).toHaveBeenCalledTimes(4);
+    expect(catalogos.conversaciones).toEqual([]);
+    expect(fetch).toHaveBeenCalledTimes(3);
     expect(String(vi.mocked(fetch).mock.calls[0][0])).toContain('universo_id=corte_medieval');
   });
 
@@ -124,7 +124,18 @@ describe('respaldo del juego narrativo', /* Agrupa las pruebas de este comportam
     }));
     const { servicio } = await cargarServicio();
     const setup = servicio.obtenerSetup(date);
-    await vi.advanceTimersByTimeAsync(2500);
+    await vi.advanceTimersByTimeAsync(10_000);
     expect((await setup).personajes_ofrecidos).toHaveLength(4);
+    expect(servicio.esPartidaNarrativaLocal(date)).toBe(true);
+  });
+
+  it('no reemplaza por la demostración local una partida que el servidor ya confirmó', /* Comprueba el comportamiento indicado en este caso. */ async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(new Response(JSON.stringify({ tiene_partida_activa: true })));
+    const { servicio } = await cargarServicio();
+    await servicio.obtenerSetup(date);
+    vi.mocked(fetch).mockRejectedValueOnce(new TypeError('Servidor desconectado'));
+    await expect(servicio.obtenerEstadoPartida(date)).rejects.toThrow('Servidor desconectado');
+    expect(servicio.esPartidaNarrativaLocal(date)).toBe(false);
+    expect(fetch).toHaveBeenCalledTimes(2);
   });
 });

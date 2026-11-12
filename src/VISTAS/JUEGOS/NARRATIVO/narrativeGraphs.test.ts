@@ -22,14 +22,48 @@ const grafo = (cambios: Partial<EstadoGrafoApi> = {}): EstadoGrafoApi => ({
 // Simula la respuesta del servidor para probar el avance del grafo.
 const responder = (datos: unknown) => new Response(JSON.stringify(datos));
 
-beforeEach(/* Prepara un entorno limpio antes de cada prueba. */ () => {
+beforeEach(/* Prepara un entorno limpio antes de cada prueba. */ async () => {
   vi.resetModules();
-  vi.stubGlobal('localStorage', { getItem: vi.fn().mockReturnValue('token-prueba') });
+  const { setSessionUser } = await import('../../AUTH/sessionStore');
+  setSessionUser({ id: 1, name: 'Prueba' });
   vi.stubGlobal('fetch', vi.fn());
 });
-afterEach(/* Limpia el entorno al terminar cada prueba. */ () => vi.unstubAllGlobals());
+afterEach(/* Limpia el entorno al terminar cada prueba. */ async () => {
+  const { setSessionUser } = await import('../../AUTH/sessionStore');
+  setSessionUser(null);
+  vi.unstubAllGlobals();
+});
 
 describe('contrato de grafos narrativos V2', /* Agrupa las pruebas de este comportamiento. */ () => {
+  it('prioriza la imagen del nodo de conversación y deja usar el salón si se omite', async () => {
+    const dialogo = grafo({ tipo: 'conversacion', imagen: '/portada-del-grafo.webp' });
+    vi.mocked(fetch).mockResolvedValueOnce(responder({ grafo_actual: dialogo }));
+    const api = await import('./narrativeService');
+    expect((await api.obtenerEstadoPartida(date)).conversacion_actual?.imagen).toBe('');
+    dialogo.nodo_actual.imagen = '/fondo-del-nodo.webp';
+    vi.mocked(fetch).mockResolvedValueOnce(responder({ grafo_actual: dialogo }));
+    expect((await api.obtenerEstadoPartida(date)).conversacion_actual?.imagen).toBe('/fondo-del-nodo.webp');
+  });
+  it('conserva el reparto entregado por el servidor además del hablante actual', async () => {
+    const dialogo = grafo({ tipo: 'conversacion', requisitos: ['elena', 'vera'] });
+    dialogo.nodo_actual.hablante_id = 'vera';
+    vi.mocked(fetch).mockResolvedValue(responder({ grafo_actual: dialogo }));
+    const api = await import('./narrativeService');
+    const estado = await api.obtenerEstadoPartida(date);
+    expect(estado.conversacion_actual?.requisitos).toEqual([{ personajeId: 'elena' }, { personajeId: 'vera' }]);
+    expect(estado.conversacion_actual?.frases[0].personajeId).toBe('vera');
+  });
+  it('conserva el diálogo encadenado que acompaña al resultado terminal', async () => {
+    const conversacion = { _id: 'charla_pendiente', titulo: 'Audiencia', frases: [], decisiones: [], requisitos: [], imagen: '' };
+    const final = grafo({ fase_actual: 'TOMA_DECISION_CONVERSACION', conversacion_actual: conversacion });
+    final.nodo_actual.es_final = true;
+    vi.mocked(fetch).mockResolvedValue(responder(final));
+    const api = await import('./narrativeService');
+    const estado = await api.avanzarNodo(date, 'opt_guardia', 'evt_cometa');
+    expect(estado.resultado_actual).toBeTruthy();
+    expect(estado.conversacion_actual).toEqual(conversacion);
+  });
+
   it('abre el grafo al elegir carta y conserva únicamente las opciones habilitadas', /* Comprueba el comportamiento indicado en este caso. */ async () => {
     vi.mocked(fetch).mockResolvedValue(responder({ recursos, evento_actual: null, grafo_actual: grafo() }));
     const api = await import('./narrativeService');
@@ -62,7 +96,7 @@ describe('contrato de grafos narrativos V2', /* Agrupa las pruebas de este compo
     expect(store.getState().narrativoSelection.jugador.afinidad).toEqual({ vera: 50 });
     expect(fetch).toHaveBeenCalledWith(expect.stringContaining('/v2/partida/avanzar-nodo'), expect.objectContaining({
       method: 'POST', body: JSON.stringify({ date, opcion_id: 'opt_enviar_guardia' }),
-      headers: expect.objectContaining({ Authorization: 'Bearer token-prueba' }),
+      credentials: 'include',
     }));
   });
 

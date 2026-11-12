@@ -1,5 +1,8 @@
 # Motor de acciones autoritativo y máquina de estados de presentación
 
+> Actualización del 6/11/2026: este documento conserva el diseño inicial. Para el contrato real de acciones referenciadas y el front coordinador, usar [King’s Court: front coordinador sobre el contrato V2](coordinador-frontend-contrato-v2.md). Los commandId, versiones de run y endpoints v3 de aquí son propuestas; no están publicados como tales en el OpenAPI consultado.
+
+
 Estado: propuesta de implementación, no descripción de una migración ya realizada.
 Fecha: 5 de noviembre de 2026.
 Destino: agente que implemente los cambios en frontend y backend de Cognijuegos.

@@ -1,24 +1,26 @@
-/* Habla con el servidor para iniciar la historia, decidir y recuperar la partida. */
+/* Habla con el servidor para iniciar la historia, avanzar en grafos V2 y recuperar la partida. */
 import { store } from '../../../store/store';
 import { resolverRespaldoNarrativo } from './narrativeFallback';
 import { API_URL } from '../../../config/api';
+import { ErrorServidorNarrativo, narrativeAdminHeaders, narrativeGameHeaders } from './narrativeAuth';
+import { NARRATIVE_API_PATH, NARRATIVE_CATALOG_PATHS, NARRATIVE_GAME_PATHS } from './narrativeEndpoints';
 
-const API = `${API_URL}/api/narrative`;
+const API = `${API_URL}${NARRATIVE_API_PATH}`;
 
 // Respaldo temporal para jugar sin servidor. Poner VITE_NARRATIVE_FALLBACK=false
 // en .env.local y reiniciar Vite (o recompilar) para deshabilitar TODOS estos fallbacks.
 // Activado por defecto: usa una partida local ante errores de red, timeout, HTTP 404 o 5xx.
 export const HABILITAR_FALLBACK_NARRATIVO = import.meta.env.VITE_NARRATIVE_FALLBACK !== 'false';
-const ESPERA_SERVIDOR_MS = 2500;
+// Los cierres mensuales aplican pasivos y sorteos en el servidor: 2,5 s abortaba
+// operaciones válidas y el juego quedaba sin avanzar.
+const ESPERA_SERVIDOR_MS = 10_000;
 const fechasLocales = new Set<string>();
+// Una vez que el servidor confirmó la partida, un fallo de red no debe reemplazarla
+// por la demostración local: se informa el error y se reintenta.
+const partidasServidor = new Set<string>();
 
 // Comprueba si la partida usa el respaldo local.
 export const esPartidaNarrativaLocal = (date: string) => HABILITAR_FALLBACK_NARRATIVO && fechasLocales.has(date);
-
-class ErrorServidorNarrativo extends Error {
-  // Completa este paso con los datos recibidos por la operación.
-  constructor(public status: number, mensaje: string) { super(mensaje); }
-}
 
 export interface PersonajeApi {
   _id: string;
@@ -48,39 +50,9 @@ export interface EventoApi {
   opciones: { id: string; texto: string; bloqueada: boolean; es_secreta?: boolean; secreto?: string; condiciones?: any[] }[];
 }
 
-// El endpoint de turno omite las condiciones; se consultan en la definición del evento.
-let catalogoEventos: Promise<any[]> | null = null;
-// Busca definicion evento con los datos de este paso.
-export const obtenerDefinicionEvento = async (id: string) => {
-  catalogoEventos ||= (/* Completa este paso con los datos recibidos por la operación. */ async () => {
-    const token = localStorage.getItem('token');
-    const response = await fetch(`${API}/admin/eventos?limit=500`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    });
-    if (!response.ok) throw new Error(`No se pudieron cargar las condiciones del evento (${response.status}).`);
-    return response.json();
-  })();
-  const eventos = await catalogoEventos;
-  return eventos.find(/* Busca el primer elemento que cumple esta condición. */ (evento: any) => evento._id === id || evento.id === id) || null;
-};
-
-// Guarda en el evento local las condiciones de su opcion secreta.
+// En el motor de grafos V2 las opciones ya vienen sanitizadas directamente desde el nodo activo.
 export const agregarCondicionesSecretas = async (evento: EventoApi): Promise<EventoApi> => {
-  // Los grafos ya entregan opciones sanitizadas; no consultar su definición interna.
-  if (evento.nodo_id) return evento;
-  try {
-    const definicion = await obtenerDefinicionEvento(evento.id);
-    return {
-      ...evento,
-      opciones: evento.opciones.map(/* Prepara el resultado de cada elemento. */ opcion => ({
-        ...opcion,
-        es_secreta: opcion.es_secreta ?? definicion?.opciones?.find(/* Busca el primer elemento que cumple esta condición. */ (x: any) => x.id === opcion.id)?.es_secreta,
-        condiciones: definicion?.opciones?.find(/* Busca el primer elemento que cumple esta condición. */ (x: any) => x.id === opcion.id)?.condiciones || [],
-      })),
-    };
-  } catch {
-    return evento;
-  }
+  return evento;
 };
 
 export interface ResultadoApi {
@@ -136,6 +108,7 @@ export interface EstadoGrafoApi {
   tipo: 'evento' | 'conversacion' | 'evento_especial';
   titulo: string;
   imagen: string;
+  requisitos?: string[];
   nodo_actual: {
     id: string;
     hablante_id: string;
@@ -152,10 +125,14 @@ export interface EstadoGrafoApi {
   afinidad?: Record<string, number> | null;
   finalizacion?: FinalizacionApi | null;
   status: string;
+  conversacion_actual?: ConversacionApi | null;
 }
 
 // Conserva las pantallas existentes: cada nodo se presenta como evento, diálogo o resultado.
 function adaptarEstadoGrafo(estado: EstadoPartida): EstadoPartida {
+  if (estado.fase_actual?.toUpperCase() === 'DRAFT_MENSUAL') return {
+    ...estado, grafo_actual: null, evento_actual: null, resultado_actual: null, conversacion_actual: null,
+  };
   const grafo = estado.grafo_actual;
   if (!grafo) return estado;
   const nodo = grafo.nodo_actual;
@@ -168,8 +145,9 @@ function adaptarEstadoGrafo(estado: EstadoPartida): EstadoPartida {
   };
   if (nodo.es_final) return {
     ...base,
+    conversacion_actual: grafo.conversacion_actual ?? estado.conversacion_actual ?? null,
     resultado_actual: {
-      titulo: grafo.titulo, texto: [nodo.texto, nodo.resultado_texto].filter(Boolean).join('\n\n'),
+      titulo: grafo.titulo, texto: [...new Set([nodo.texto, nodo.resultado_texto].map(texto => texto?.trim()).filter(Boolean))].join('\n\n'),
       imagen, tipo_resultado: 'neutro',
       efectos: nodo.impactos_recursos.map(/* Prepara el resultado de cada elemento. */ ({ recurso, delta }) => ({ accion: { clave: recurso, valor: delta } })),
     },
@@ -177,8 +155,9 @@ function adaptarEstadoGrafo(estado: EstadoPartida): EstadoPartida {
   if (grafo.tipo === 'conversacion') return {
     ...base,
     conversacion_actual: {
-      _id: grafo.grafo_id, nodo_id: nodo.id, titulo: grafo.titulo, imagen,
-      requisitos: [{ personajeId: nodo.hablante_id }],
+      // La portada del grafo no sustituye el fondo ausente del nodo: la vista usa el salón.
+      _id: grafo.grafo_id, nodo_id: nodo.id, titulo: grafo.titulo, imagen: nodo.imagen || '',
+      requisitos: [...new Set([...(grafo.requisitos || []), nodo.hablante_id])].filter(Boolean).map(personajeId => ({ personajeId })),
       frases: [{ personajeId: nodo.hablante_id, texto: nodo.texto }],
       decisiones: opciones.map(/* Prepara el resultado de cada elemento. */ opcion => ({ opcion: opcion.id, texto: opcion.texto, resultado_texto: '', impacto_afinidad: [] })),
     },
@@ -252,7 +231,6 @@ export interface SetupPartida {
   tiene_partida_activa: boolean;
 }
 
-// Hint opcional para el motor: la ruta actual sigue funcionando si el backend aun no lo consume.
 export interface PreferenciaConversacion {
   probabilidad_no_repetida: number;
   excluir_ids: string[];
@@ -275,29 +253,38 @@ async function request<T>(path: string, options?: RequestInit, permitirRespaldo 
   const respaldo = () => resolverRespaldoNarrativo(path, options, store.getState().narrativoSelection) as T;
   // Completa la respuesta con los datos de la siguiente etapa.
   const completar = (data: T) => {
-    if (path === '/partida/reiniciar') fechasLocales.delete(date);
+    if (path === NARRATIVE_GAME_PATHS.reiniciar) {
+      fechasLocales.delete(date);
+      partidasServidor.delete(date);
+    }
     return data;
   };
-  if (permitirRespaldo && esPartidaNarrativaLocal(date)) return completar(respaldo());
+  // Una partida que el servidor ya confirmó no se reemplaza por la demostración local.
+  const respaldoPermitido = permitirRespaldo && HABILITAR_FALLBACK_NARRATIVO && !partidasServidor.has(date);
+  if (respaldoPermitido && esPartidaNarrativaLocal(date)) return completar(respaldo());
 
   const controller = new AbortController();
-  const timeout = HABILITAR_FALLBACK_NARRATIVO && permitirRespaldo ? setTimeout(/* Ejecuta este paso cuando se cumple la espera. */ () => controller.abort(), ESPERA_SERVIDOR_MS) : undefined;
+  let timeout: ReturnType<typeof setTimeout> | undefined;
   try {
-    const token = localStorage.getItem('token');
+    const authHeaders = await narrativeGameHeaders();
+    // La emisión inicial de la credencial tiene su propia espera; no consume la del juego.
+    timeout = setTimeout(() => controller.abort(), ESPERA_SERVIDOR_MS);
     const response = await fetch(`${API}${path}`, {
       ...options,
+      credentials: 'include',
       signal: controller.signal,
-      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
     });
 
     if (!response.ok) {
       const detalle = await response.json().catch(/* Maneja el fallo de esta operación. */ () => null);
       throw new ErrorServidorNarrativo(response.status, detalle?.detail || `Error ${response.status}.`);
     }
+    if (date) partidasServidor.add(date);
     return completar(await response.json() as T);
   } catch (error) {
     // Los errores de autenticacion, validacion o conflicto siguen visibles con su mensaje real.
-    if (!permitirRespaldo || !HABILITAR_FALLBACK_NARRATIVO || (error instanceof ErrorServidorNarrativo && error.status < 500 && error.status !== 404)) throw error;
+    if (!respaldoPermitido || (error instanceof ErrorServidorNarrativo && error.status < 500 && error.status !== 404)) throw error;
     const data = respaldo();
     fechasLocales.add(date);
     return completar(data);
@@ -307,96 +294,116 @@ async function request<T>(path: string, options?: RequestInit, permitirRespaldo 
 }
 
 // Carga las opciones de preparacion de la etapa 0.
-export const obtenerSetup = (date: string) => request<SetupPartida>(`/partida/setup?date=${date}`);
+export const obtenerSetup = (date: string) => request<SetupPartida>(`${NARRATIVE_GAME_PATHS.setup}?date=${encodeURIComponent(date)}`);
 
 // Lee solo el contenido de la fase activa para reanudar una partida existente.
-export const obtenerEstadoPartida = (date: string) => request<EstadoPartida>(`/v2/partida/estado?date=${date}`).then(adaptarEstadoGrafo);
+export const obtenerEstadoPartida = (date: string) => request<EstadoPartida>(`${NARRATIVE_GAME_PATHS.estado}?date=${encodeURIComponent(date)}`).then(adaptarEstadoGrafo);
 
 // Lee el historial mensual solo al abrir las estadisticas finales.
-export const obtenerHistorialPartida = (date: string) => request<HistorialPartidaApi>(`/partida/historial?date=${date}`);
+export const obtenerHistorialPartida = (date: string) => request<HistorialPartidaApi>(`${NARRATIVE_GAME_PATHS.historial}?date=${encodeURIComponent(date)}`);
 
-// Resuelve los IDs de la bitácora con los catálogos del mismo universo. Si un
-// catálogo no está disponible, los balances y las demás entradas siguen visibles.
+// Resuelve los IDs de la bitácora con los catálogos del mismo universo.
 export const obtenerCatalogosCronica = async (date: string, universoId?: string): Promise<CatalogosCronica> => {
   const vacios: CatalogosCronica = { cartas: [], eventos: [], resultados: [], conversaciones: [] };
   if (esPartidaNarrativaLocal(date)) return vacios;
-  const token = localStorage.getItem('token');
+  const authHeaders = narrativeAdminHeaders();
   const controller = new AbortController();
   const timeout = setTimeout(/* Ejecuta este paso cuando se cumple la espera. */ () => controller.abort(), ESPERA_SERVIDOR_MS);
-  const nombres = Object.keys(vacios) as (keyof CatalogosCronica)[];
-  const consultas = nombres.map(/* Prepara el resultado de cada elemento. */ async nombre => {
+
+  const consultas = (['cartas', 'eventos', 'conversaciones'] as const).map(async nombre => {
     const parametros = new URLSearchParams({ limit: '500' });
     if (universoId) parametros.set('universo_id', universoId);
-    const respuesta = await fetch(`${API}/admin/${nombre}?${parametros}`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    const respuesta = await fetch(`${API}${NARRATIVE_CATALOG_PATHS[nombre]}?${parametros}`, {
+      headers: authHeaders,
+      credentials: 'include',
       signal: controller.signal,
     });
-    if (!respuesta.ok) throw new Error(`No se pudo consultar ${nombre}.`);
-    return respuesta.json() as Promise<EntradaCatalogoCronica[]>;
+    if (!respuesta.ok) return [];
+    return (await respuesta.json()) as EntradaCatalogoCronica[];
   });
+
   try {
-    const resultados = await Promise.allSettled(consultas);
-    return Object.fromEntries(nombres.map(/* Prepara el resultado de cada elemento. */ (nombre, indice) => [
-      nombre, resultados[indice].status === 'fulfilled' ? resultados[indice].value : [],
-    ])) as unknown as CatalogosCronica;
+    const [cartas, eventos, conversaciones] = await Promise.all(consultas);
+    return {
+      cartas: cartas || [],
+      eventos: eventos || [],
+      resultados: [],
+      conversaciones: conversaciones || [],
+    };
+  } catch {
+    return vacios;
   } finally {
     clearTimeout(timeout);
   }
 };
 
 // Lee las cartas y tags que quedaron en la partida terminada.
-export const obtenerInventarioPartida = (date: string) => request<any>(`/partida/inventario?date=${date}`);
+export const obtenerInventarioPartida = (date: string) => request<any>(`${NARRATIVE_GAME_PATHS.inventario}?date=${encodeURIComponent(date)}`);
 
 // Lee los personajes de corte y sus afinidades finales.
-export const obtenerCortePartida = (date: string) => request<any>(`/partida/corte?date=${date}`);
+export const obtenerCortePartida = (date: string) => request<any>(`${NARRATIVE_GAME_PATHS.corte}?date=${encodeURIComponent(date)}`);
 
 // Lee el rango y epilogo final guardados por el servidor.
-export const obtenerFinalizacionPartida = (date: string) => request<any>(`/partida/finalizacion?date=${date}`);
+export const obtenerFinalizacionPartida = (date: string) => request<any>(`${NARRATIVE_GAME_PATHS.finalizacion}?date=${encodeURIComponent(date)}`);
 
 // Elimina el avance de prueba para volver a la seleccion inicial.
-export const reiniciarPartida = (date: string) => request<any>('/partida/reiniciar', {
+export const reiniciarPartida = (date: string) => request<any>(NARRATIVE_GAME_PATHS.reiniciar, {
   method: 'POST', body: JSON.stringify({ date }),
 });
 
 // Inicia el ciclo v2 y recibe solo el draft mensual.
-export const iniciarPartida = (date: string, corte: string[], cartas: string[]) => request<EstadoPartida>('/v2/partida/iniciar', {
+export const iniciarPartida = (date: string, corte: string[], cartas: string[]) => request<EstadoPartida>(NARRATIVE_GAME_PATHS.iniciar, {
   method: 'POST', body: JSON.stringify({ date, corte_elegida_ids: corte, cartas_iniciales_ids: cartas }),
 });
 
-// Pide el evento generado por la carta mensual elegida.
-export const elegirCartaMensual = (date: string, cartaId: string) => request<EstadoPartida>('/v2/partida/elegir-carta-mes', {
+// Pide el evento generado por la carta mensual elegida (motor de grafos V2).
+export const elegirCartaMensual = (date: string, cartaId: string) => request<EstadoPartida>(NARRATIVE_GAME_PATHS.elegirCarta, {
   method: 'POST', body: JSON.stringify({ date, carta_id: cartaId }),
 }).then(adaptarEstadoGrafo);
 
-// Eventos y conversaciones del motor de grafos usan el mismo endpoint e IDs de opción.
+// Eventos y conversaciones del motor de grafos V2 usan el mismo endpoint interactivo e IDs de opción.
 export const avanzarNodo = async (date: string, opcionId: string, grafoAnteriorId: string): Promise<EstadoPartida> => {
-  const grafo = await request<EstadoGrafoApi>('/v2/partida/avanzar-nodo', {
+  // Una partida de servidor no puede cambiar de motor al fallar una decisión.
+  const grafo = await request<EstadoGrafoApi>(NARRATIVE_GAME_PATHS.avanzarNodo, {
     method: 'POST', body: JSON.stringify({ date, opcion_id: opcionId }),
-  }, false);
+  }, esPartidaNarrativaLocal(date));
   // Al encadenar otro grafo la respuesta omite los impactos del anterior.
   if (grafo.grafo_id !== grafoAnteriorId) {
-    return adaptarEstadoGrafo(await request<EstadoPartida>(`/v2/partida/estado?date=${date}`, undefined, false));
+    return adaptarEstadoGrafo(await request<EstadoPartida>(`${NARRATIVE_GAME_PATHS.estado}?date=${encodeURIComponent(date)}`, undefined, esPartidaNarrativaLocal(date)));
   }
   return adaptarEstadoGrafo({ grafo_actual: grafo, fase_actual: grafo.fase_actual });
 };
 
-// Pide el resultado, la conversacion o la finalizacion del evento.
-export const decidirEvento = (date: string, opcionId: string, preferenciaConversacion?: PreferenciaConversacion) => request<EstadoPartida>('/v2/partida/decidir-evento', {
-  method: 'POST',
-  body: JSON.stringify({
-    date,
-    opcion_id: opcionId,
-    // Solo se agrega cuando el llamador lo pide; asi se mantiene el contrato anterior por defecto.
-    ...(preferenciaConversacion ? { preferencia_conversacion: preferenciaConversacion } : {}),
-  }),
-});
-
-// Registra la mediacion elegida y cierra la conversacion.
-export const responderConversacion = (date: string, opcionNumero: number | string) => request<EstadoPartida>('/v2/partida/responder-conversacion', {
-  method: 'POST', body: JSON.stringify({ date, opcion_numero: opcionNumero }),
-});
-
 // Cierra el balance y recibe el nuevo draft o la finalizacion.
-export const avanzarMes = (date: string) => request<EstadoPartida>('/v2/partida/avanzar-mes', {
+export const avanzarMes = (date: string) => request<EstadoPartida>(NARRATIVE_GAME_PATHS.avanzarMes, {
   method: 'POST', body: JSON.stringify({ date }),
-});
+}, esPartidaNarrativaLocal(date)).then(adaptarEstadoGrafo);
+
+const continuaciones = new Map<string, Promise<EstadoPartida>>();
+
+/** Continuar confirma la fase real: una conversación pendiente nunca cierra el mes. */
+export function continuarTurno(date: string): Promise<EstadoPartida> {
+  const pendiente = continuaciones.get(date);
+  if (pendiente) return pendiente;
+  const leerEstado = () => request<EstadoPartida>(`${NARRATIVE_GAME_PATHS.estado}?date=${encodeURIComponent(date)}`, undefined, false).then(adaptarEstadoGrafo);
+  const continuar = async () => {
+    if (esPartidaNarrativaLocal(date)) return avanzarMes(date);
+    const estado = await leerEstado();
+    if (estado.finalizacion) return estado;
+    if (estado.fase_actual?.toUpperCase() !== 'BALANCE_MES') return { ...estado, resultado_actual: null };
+    try { return await avanzarMes(date); }
+    catch (error) {
+      // Si el servidor confirmó antes del timeout, recuperar sin repetir pasivos ni el POST.
+      try {
+        const actual = await leerEstado();
+        if (actual.mes_actual !== estado.mes_actual || actual.fase_actual !== estado.fase_actual || actual.finalizacion) {
+          return actual.fase_actual?.toUpperCase() === 'BALANCE_MES' ? actual : { ...actual, resultado_actual: null };
+        }
+      } catch { /* Conserva el rechazo original si tampoco se puede recuperar el estado. */ }
+      throw error;
+    }
+  };
+  const tarea = continuar().finally(() => continuaciones.delete(date));
+  continuaciones.set(date, tarea);
+  return tarea;
+}

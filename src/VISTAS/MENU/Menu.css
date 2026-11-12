@@ -1,0 +1,167 @@
+@font-face {
+  font-family: "Nunito Sans";
+  src: url("../../assets/fonts/NunitoSans-Variable.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 200 900;
+  font-display: swap;
+}
+
+.menu-theme {
+  font-family: "Nunito Sans", "Segoe UI", sans-serif;
+}
+.menu-content {
+  --background: var(--app-background);
+}
+.cognitive-navbar ion-toolbar {
+  --background: #1b2737;
+  --border-width: 0;
+}
+.menu-shell *,
+.menu-nav * {
+  box-sizing: border-box;
+}
+.menu-shell ::selection,
+.menu-nav ::selection {
+  background: #b7edff;
+  color: #f3f6fa;
+}
+.menu-shell :is(button, a):focus-visible,
+.menu-nav :is(button, a):focus-visible {
+  outline: 3px solid #f3d894;
+  outline-offset: 4px;
+}
+
+/* Board details stay separate from layout utilities and share the animation selectors. */
+.menu-mini-board--wordle span:nth-child(3) {
+  transform: translateY(-9px);
+  background: #418478;
+  color: white;
+}
+.menu-mini-board--crucigrama span:empty {
+  background: #40556e;
+}
+.menu-mini-board--sudoku span:empty::after {
+  content: attr(data-fill);
+  opacity: 1;
+}
+.menu-court-preview span + span {
+  margin-left: -16px;
+}
+.menu-court-preview span:nth-child(1) {
+  rotate: -8deg;
+}
+.menu-court-preview span:nth-child(2) {
+  translate: 0 -4px;
+  z-index: 1;
+}
+.menu-court-preview span:nth-child(3) {
+  rotate: 8deg;
+}
+
+/* Previews never move the cards or delay their controls. */
+@media (prefers-reduced-motion: no-preference) {
+  .menu-card--preview .menu-mini-board--wordle span {
+    animation: menu-letter-check 1100ms ease-out both;
+  }
+  .menu-card--preview .menu-mini-board--wordle span:nth-child(2) {
+    animation-delay: 80ms;
+  }
+  .menu-card--preview .menu-mini-board--wordle span:nth-child(3) {
+    animation-delay: 160ms;
+  }
+  .menu-card--preview .menu-mini-board--wordle span:nth-child(4) {
+    animation-delay: 240ms;
+  }
+  .menu-card--preview .menu-mini-board--wordle span:nth-child(5) {
+    animation-delay: 320ms;
+  }
+  .menu-card--preview .menu-mini-board--sopa-letras span:nth-child(-n + 3) {
+    animation: menu-word-found 1200ms ease-out both;
+  }
+  .menu-card--preview .menu-mini-board--sopa-letras span:nth-child(2) {
+    animation-delay: 120ms;
+  }
+  .menu-card--preview .menu-mini-board--sopa-letras span:nth-child(3) {
+    animation-delay: 240ms;
+  }
+  .menu-card--preview .menu-mini-board--sudoku span:empty::after {
+    animation: menu-number-fill 1100ms ease-out both;
+  }
+  .menu-card--preview .menu-mini-board--sudoku span:nth-child(4)::after {
+    animation-delay: 120ms;
+  }
+  .menu-card--preview .menu-mini-board--sudoku span:nth-child(6)::after {
+    animation-delay: 240ms;
+  }
+  .menu-card--preview .menu-mini-board--sudoku span:nth-child(8)::after {
+    animation-delay: 360ms;
+  }
+  .menu-card--preview .menu-mini-board--crucigrama span:not(:empty) {
+    animation: menu-word-found 1200ms ease-out both;
+  }
+  .menu-card--preview .menu-mini-board--crucigrama span:nth-child(2),
+  .menu-card--preview .menu-mini-board--crucigrama span:nth-child(8) {
+    animation-delay: 300ms;
+  }
+}
+@keyframes menu-letter-check {
+  0% {
+    transform: translateY(0) rotateX(0);
+  }
+  35% {
+    transform: translateY(-5px) rotateX(65deg);
+    background: #418478;
+    color: white;
+  }
+  100% {
+    transform: translateY(0) rotateX(0);
+  }
+}
+@keyframes menu-word-found {
+  0% {
+    background: #40556e;
+    color: #f3f6fa;
+  }
+  100% {
+    background: var(--game-color);
+    color: #172433;
+  }
+}
+@keyframes menu-number-fill {
+  0% {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu-card--preview .menu-mini-board span:not(:empty),
+  .menu-card--preview .menu-court-preview span:nth-child(2) {
+    animation: menu-gentle-highlight 1000ms ease-out;
+  }
+  .menu-card--preview .menu-mini-board--sudoku span:empty::after {
+    animation: menu-gentle-fill 1000ms ease-out;
+  }
+}
+@keyframes menu-gentle-highlight {
+  from {
+    background-color: #40556e;
+    color: #f3f6fa;
+  }
+  to {
+    background-color: var(--game-color);
+    color: #172433;
+  }
+}
+@keyframes menu-gentle-fill {
+  from {
+    opacity: 0.3;
+  }
+  to {
+    opacity: 1;
+  }
+}

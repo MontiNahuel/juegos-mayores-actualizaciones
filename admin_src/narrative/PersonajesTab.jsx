@@ -19,6 +19,7 @@ import EfectosEditor from './EfectosEditor';
 import CondicionesAparicionEditor from './CondicionesAparicionEditor';
 import TagSelector from './TagSelector';
 import { textoDelDetalle } from './erroresApi';
+import { fetchNarrativeAdmin } from './api';
 
 // Formatea de forma legible y elegante una acción dentro de la tarjeta de personaje
 function formatAccionResumen(acc) {
@@ -103,7 +104,7 @@ export default function PersonajesTab({ universos = [] }) {
       const url = uId
         ? `/api/narrative/admin/personajes?universo_id=${encodeURIComponent(uId)}`
         : '/api/narrative/admin/personajes';
-      const res = await fetch(url);
+      const res = await fetchNarrativeAdmin(url);
       if (res.ok) {
         const data = await res.json();
         setPersonajes(data);
@@ -211,7 +212,7 @@ export default function PersonajesTab({ universos = [] }) {
     };
 
     try {
-      const res = await fetch('/api/narrative/admin/personajes', {
+      const res = await fetchNarrativeAdmin('/api/narrative/admin/personajes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -239,7 +240,7 @@ export default function PersonajesTab({ universos = [] }) {
   const handleEliminar = async (pId) => {
     if (!confirm(`¿Estás seguro de eliminar el personaje "${pId}"?`)) return;
     try {
-      const res = await fetch(`/api/narrative/admin/personajes/${pId}`, {
+      const res = await fetchNarrativeAdmin(`/api/narrative/admin/personajes/${pId}`, {
         method: 'DELETE',
       });
       if (res.ok) {

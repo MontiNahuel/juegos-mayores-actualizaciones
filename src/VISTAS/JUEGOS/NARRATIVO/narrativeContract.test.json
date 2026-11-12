@@ -1,0 +1,487 @@
+{
+  "source": "http://10.16.2.19:8090/openapi.json",
+  "reviewed": "2026-11-06",
+  "apiVersion": "2.0.0",
+  "operations": [
+    {
+      "method": "POST",
+      "path": "/api/auth/guest-credential",
+      "requiredQuery": [],
+      "requiredBody": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/challenges/admin/status",
+      "requiredQuery": [],
+      "requiredBody": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/narrative/partida/setup",
+      "requiredQuery": [
+        "date"
+      ],
+      "requiredBody": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/narrative/partida/reiniciar",
+      "requiredQuery": [],
+      "requiredBody": [
+        "date"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/narrative/partida/historial",
+      "requiredQuery": [
+        "date"
+      ],
+      "requiredBody": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/narrative/partida/inventario",
+      "requiredQuery": [
+        "date"
+      ],
+      "requiredBody": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/narrative/partida/corte",
+      "requiredQuery": [
+        "date"
+      ],
+      "requiredBody": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/narrative/partida/finalizacion",
+      "requiredQuery": [
+        "date"
+      ],
+      "requiredBody": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/narrative/v2/partida/iniciar",
+      "requiredQuery": [],
+      "requiredBody": [
+        "date",
+        "corte_elegida_ids",
+        "cartas_iniciales_ids"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/narrative/v2/partida/elegir-carta-mes",
+      "requiredQuery": [],
+      "requiredBody": [
+        "date",
+        "carta_id"
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/api/narrative/v2/partida/avanzar-mes",
+      "requiredQuery": [],
+      "requiredBody": [
+        "date"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/narrative/v2/partida/estado",
+      "requiredQuery": [
+        "date"
+      ],
+      "requiredBody": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/narrative/v2/partida/avanzar-nodo",
+      "requiredQuery": [],
+      "requiredBody": [
+        "date",
+        "opcion_id"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/narrative/v2/partida/grafo-actual",
+      "requiredQuery": [
+        "date"
+      ],
+      "requiredBody": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/narrative/v2/partida/iniciar-evento-grafo",
+      "requiredQuery": [
+        "date"
+      ],
+      "requiredBody": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/narrative/v2/partida/iniciar-conversacion-grafo",
+      "requiredQuery": [
+        "date"
+      ],
+      "requiredBody": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/narrative/admin/catalogo-reglas",
+      "requiredQuery": [],
+      "requiredBody": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/narrative/admin/upload-imagen",
+      "requiredQuery": [
+        "categoria"
+      ],
+      "requiredBody": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/narrative/admin/universos",
+      "requiredQuery": [],
+      "requiredBody": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/narrative/admin/universos",
+      "requiredQuery": [],
+      "requiredBody": [
+        "_id",
+        "nombre",
+        "descripcion",
+        "recursos"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/narrative/admin/universos/{universo_id}",
+      "requiredQuery": [],
+      "requiredBody": []
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/narrative/admin/universos/{universo_id}",
+      "requiredQuery": [],
+      "requiredBody": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/narrative/admin/personajes",
+      "requiredQuery": [],
+      "requiredBody": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/narrative/admin/personajes",
+      "requiredQuery": [],
+      "requiredBody": [
+        "_id",
+        "universo_id",
+        "nombre",
+        "titulo",
+        "descripcion"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/narrative/admin/personajes/{personaje_id}",
+      "requiredQuery": [],
+      "requiredBody": []
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/narrative/admin/personajes/{personaje_id}",
+      "requiredQuery": [],
+      "requiredBody": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/narrative/admin/cartas",
+      "requiredQuery": [],
+      "requiredBody": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/narrative/admin/cartas",
+      "requiredQuery": [],
+      "requiredBody": [
+        "_id",
+        "universo_id",
+        "categoria",
+        "nombre",
+        "descripcion"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/narrative/admin/cartas/{carta_id}",
+      "requiredQuery": [],
+      "requiredBody": []
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/narrative/admin/cartas/{carta_id}",
+      "requiredQuery": [],
+      "requiredBody": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/narrative/admin/finalizaciones",
+      "requiredQuery": [],
+      "requiredBody": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/narrative/admin/finalizaciones",
+      "requiredQuery": [],
+      "requiredBody": [
+        "_id",
+        "universo_id",
+        "titulo",
+        "texto"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/narrative/admin/finalizaciones/{finalizacion_id}",
+      "requiredQuery": [],
+      "requiredBody": []
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/narrative/admin/finalizaciones/{finalizacion_id}",
+      "requiredQuery": [],
+      "requiredBody": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/narrative/admin/universos/{universo_id}/sembrar-finalizaciones",
+      "requiredQuery": [],
+      "requiredBody": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/narrative/admin/generar-mes",
+      "requiredQuery": [
+        "year",
+        "month",
+        "universo_id"
+      ],
+      "requiredBody": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/narrative/admin/v2/eventos",
+      "requiredQuery": [],
+      "requiredBody": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/narrative/admin/v2/eventos",
+      "requiredQuery": [],
+      "requiredBody": [
+        "_id",
+        "titulo",
+        "imagen",
+        "nodo_raiz",
+        "nodos"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/narrative/admin/v2/eventos/{evento_id}",
+      "requiredQuery": [],
+      "requiredBody": []
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/narrative/admin/v2/eventos/{evento_id}",
+      "requiredQuery": [],
+      "requiredBody": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/narrative/admin/v2/conversaciones",
+      "requiredQuery": [],
+      "requiredBody": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/narrative/admin/v2/conversaciones",
+      "requiredQuery": [],
+      "requiredBody": [
+        "_id",
+        "titulo",
+        "imagen",
+        "nodo_raiz",
+        "nodos"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/narrative/admin/v2/conversaciones/{conversacion_id}",
+      "requiredQuery": [],
+      "requiredBody": []
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/narrative/admin/v2/conversaciones/{conversacion_id}",
+      "requiredQuery": [],
+      "requiredBody": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/narrative/admin/v2/eventos-especiales",
+      "requiredQuery": [],
+      "requiredBody": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/narrative/admin/v2/eventos-especiales",
+      "requiredQuery": [],
+      "requiredBody": [
+        "_id",
+        "personaje_id",
+        "direccion",
+        "titulo",
+        "nodo_raiz",
+        "nodos"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/narrative/admin/v2/eventos-especiales/{evento_id}",
+      "requiredQuery": [],
+      "requiredBody": []
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/narrative/admin/v2/eventos-especiales/{evento_id}",
+      "requiredQuery": [],
+      "requiredBody": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/narrative/admin/v2/validar",
+      "requiredQuery": [],
+      "requiredBody": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/narrative/admin/tags",
+      "requiredQuery": [],
+      "requiredBody": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/narrative/admin/tags",
+      "requiredQuery": [],
+      "requiredBody": [
+        "_id",
+        "universo_id",
+        "nombre"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/narrative/admin/tags/{tag_id}",
+      "requiredQuery": [],
+      "requiredBody": []
+    },
+    {
+      "method": "PUT",
+      "path": "/api/narrative/admin/tags/{tag_id}",
+      "requiredQuery": [],
+      "requiredBody": []
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/narrative/admin/tags/{tag_id}",
+      "requiredQuery": [],
+      "requiredBody": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/narrative/admin/operaciones",
+      "requiredQuery": [],
+      "requiredBody": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/narrative/admin/eventos-motor",
+      "requiredQuery": [],
+      "requiredBody": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/narrative/admin/acciones",
+      "requiredQuery": [],
+      "requiredBody": []
+    },
+    {
+      "method": "POST",
+      "path": "/api/narrative/admin/acciones",
+      "requiredQuery": [],
+      "requiredBody": [
+        "_id",
+        "universo_id",
+        "nombre",
+        "primitiva"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/narrative/admin/acciones/{accion_id}",
+      "requiredQuery": [],
+      "requiredBody": []
+    },
+    {
+      "method": "PUT",
+      "path": "/api/narrative/admin/acciones/{accion_id}",
+      "requiredQuery": [],
+      "requiredBody": []
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/narrative/admin/acciones/{accion_id}",
+      "requiredQuery": [],
+      "requiredBody": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/narrative/admin/acciones/{accion_id}/usos",
+      "requiredQuery": [],
+      "requiredBody": []
+    },
+    {
+      "method": "GET",
+      "path": "/api/narrative/admin/frecuencias",
+      "requiredQuery": [],
+      "requiredBody": []
+    },
+    {
+      "method": "PUT",
+      "path": "/api/narrative/admin/frecuencias/{universo_id}",
+      "requiredQuery": [],
+      "requiredBody": [
+        "items"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/narrative/admin/frecuencias/{frecuencia_id}/usos",
+      "requiredQuery": [],
+      "requiredBody": []
+    }
+  ]
+}

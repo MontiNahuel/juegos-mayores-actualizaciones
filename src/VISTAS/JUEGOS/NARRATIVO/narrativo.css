@@ -11,7 +11,7 @@
 .narrativo-modo-mayor .boton-narrativo--decision { min-height: 64px; line-height: 1.45; }
 .narrativo-modo-mayor .dialogo-narrativo__texto { font-size: var(--narrativo-texto-adaptado, 18px); line-height: 1.65; }
 .narrativo-modo-mayor .dialogo-narrativo__opciones { gap: 14px; }
-.narrativo-modo-mayor .narrativo-fade-dialogo { opacity: 1; visibility: visible; animation: none; }
+/* La conversación comparte su secuencia también con letra grande; Reduce Motion elimina la espera. */
 .narrativo-modo-mayor .titulo-narrativo__arte p { font-size: clamp(18px, 3vw, 24px); }
 .narrativo-modo-mayor .resultado-pergamino__relato { font-size: clamp(17px, 2.8vw, 21px); line-height: 1.6; }
 .narrativo-modo-mayor .conversacion-personajes {
@@ -19,6 +19,7 @@
 }
 
 /* Título: una única secuencia compartida; el layout vive en el componente. */
+.titulo-narrativo[data-animacion='externa'] .titulo-narrativo__arte { opacity: 0; visibility: hidden; }
 .titulo-narrativo[data-variante='evento'] .titulo-narrativo__espacio { isolation: isolate; }
 .titulo-narrativo[data-variante='evento'] .titulo-narrativo__espacio::before {
   content: '';
@@ -38,49 +39,46 @@
   filter: drop-shadow(0 0 3px #110c06cc) drop-shadow(0 0 7px #100a064d);
   -webkit-filter: drop-shadow(0 0 3px #110c06cc) drop-shadow(0 0 7px #100a064d);
 }
-.titulo-narrativo[data-intro='listo'] .titulo-narrativo__arte {
-  animation: narrativo-presentar-titulo 3800ms ease-in-out 100ms both;
-}
-.titulo-narrativo[data-intro='listo'][data-permanente='true'] .titulo-narrativo__arte {
-  animation: titulo-narrativo-entrar 760ms ease-in-out 100ms both;
-}
-@keyframes titulo-narrativo-entrar {
-  from { opacity: 0; visibility: hidden; }
-  to { opacity: 1; visibility: visible; }
-}
-@keyframes narrativo-presentar-titulo {
-  0%, 100% { opacity: 0; visibility: hidden; }
-  20%, 75% { opacity: 1; visibility: visible; }
-}
-@keyframes narrativo-retirar-titulo { to { opacity: 0; visibility: hidden; } }
-
-/* Entrada del diálogo compartida por eventos y conversaciones. */
-.narrativo-fade-dialogo { opacity: 0; visibility: hidden; }
-.narrativo-fade-dialogo[data-intro='listo'] {
-  animation: narrativo-aparecer 600ms ease-out both;
-}
-/* El texto del evento sólo espera cuando entró un elemento nuevo en la corte. */
-.evento-dialogo--espera-fondo[data-intro='listo'] { animation-delay: 1800ms; }
-@keyframes narrativo-aparecer {
-  from { opacity: 0; visibility: hidden; }
-  to { opacity: 1; visibility: visible; }
-}
-
-/* Conversación: fondo, texto y retratos entran en ese orden. */
-.conversacion-escena :is(.conversacion-fondo, .conversacion-personajes) { opacity: 0; visibility: hidden; }
-.conversacion-escena[data-intro='listo'] .conversacion-fondo { animation: conversacion-aparecer 100ms ease-out both; }
-.conversacion-escena[data-intro='listo'] .conversacion-personajes { animation: conversacion-aparecer 700ms ease-out 1900ms both; }
-.conversacion-dialogo[data-intro='listo'] { animation-delay: 1250ms; }
-.conversacion-retrato { transition: opacity 700ms ease-in-out, transform 700ms ease-in-out, filter 700ms ease-in-out; }
-.conversacion-retrato[data-visible='false'] {
-  opacity: 0;
+/* La conversación delega el movimiento en GSAP; el CSS conserva la composición. */
+/* El texto completo reserva su altura sin anunciar cada letra al lector de pantalla. */
+.dialogo-narrativo__revelado::before {
+  content: attr(data-texto);
+  display: block;
   visibility: hidden;
-  transition: opacity 700ms ease-in-out, filter 700ms ease-in-out, visibility 0s linear 700ms;
+  min-height: 1lh;
 }
-@keyframes conversacion-aparecer {
-  from { opacity: 0; visibility: hidden; }
-  to { opacity: 1; visibility: visible; }
+.dialogo-narrativo__glifo {
+  position: relative;
 }
+.dialogo-narrativo__glifo > span {
+  opacity: var(--glifo-real, 1);
+}
+.dialogo-narrativo__glifo::before {
+  position: absolute;
+  inset: 0;
+  content: attr(data-arcano);
+  color: #e6bd77;
+  opacity: var(--glifo-arcano, 0);
+  pointer-events: none;
+  transform: translateX(var(--glifo-recorrido, 0)) rotateY(var(--glifo-giro, 0deg));
+  transform-origin: center;
+}
+/* Cubre el padding superior del panel para que el texto no pase por encima de la guía fija. */
+.dialogo-narrativo__guia::before {
+  content: '';
+  position: absolute;
+  inset: -12px -4px 0;
+  z-index: -1;
+  background: #080910;
+}
+/* Las imágenes sin cargar siguen ocultas; GSAP revela la capa lista. */
+.conversacion-fondo { opacity: 0; visibility: hidden; }
+.conversacion-fondo[data-visible='true'] { opacity: 1; visibility: visible; }
+/* El navegador no debe anclar el nodo nuevo a las opciones del diálogo anterior. */
+.conversacion-dialogo { overflow-anchor: none; max-height: min(60dvh, 36rem); overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; }
+.conversacion-dialogo:focus-visible { outline: 2px solid #e6c57e; outline-offset: -2px; }
+.conversacion-dialogo .dialogo-narrativo__interior { max-width: 1100px; margin-inline: auto; }
+.conversacion-dialogo .dialogo-narrativo__texto { max-width: 72ch; }
 
 @media (max-width: 767px) {
   /* En móvil, conversación ocupa el viewport visible; el diálogo no empuja la página. */
@@ -90,7 +88,7 @@
   /* El retrato depende del viewport, no del espacio que deja cada frase. El panel recorta el excedente. */
   .narrativo-conversacion .conversacion-retrato > div { height: 70svh; min-height: 0; }
   .narrativo-conversacion .conversacion-dialogo {
-    max-height: 42dvh;
+    max-height: 60dvh;
     overflow-y: auto;
     overscroll-behavior: contain;
     padding-bottom: max(8px, env(safe-area-inset-bottom));
@@ -123,16 +121,35 @@
   .narrativo-conversacion.narrativo-modo-mayor .conversacion-personajes { min-height: 0; }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .titulo-narrativo[data-intro='listo'] .titulo-narrativo__arte {
-    animation: narrativo-retirar-titulo 1ms steps(1) 2500ms both;
-    opacity: 1;
-    visibility: visible;
-  }
-  .titulo-narrativo[data-intro='listo'][data-permanente='true'] .titulo-narrativo__arte,
-  .narrativo-fade-dialogo[data-intro='listo'],
-  .conversacion-escena[data-intro='listo'] :is(.conversacion-fondo, .conversacion-personajes),
-  .conversacion-dialogo[data-intro='listo'] { animation-delay: 0s; }
-  .conversacion-retrato,
-  .conversacion-retrato[data-visible='false'] { transition: none; }
+
+/* GSAP posee transform/opacity de las opciones; el hover sólo interpola su acabado. */
+.dialogo-narrativo__opciones > button { transition-property: border-color, background, box-shadow; }
+
+/* Consecuencias legibles sobre papel, con luz verde o carmesí según su signo. */
+.resultado-efecto--positivo { color: #235b30; text-shadow: 0 0 8px #87c978, .2px 0 currentColor; }
+.resultado-efecto--negativo { color: #711b2b; text-shadow: 0 1px 3px #4b122333, .2px 0 currentColor; }
+.resultado-efecto--neutro { color: #53351f; }
+
+/* El trazo es una capa decorativa: no altera el texto ni su espacio. */
+.resultado-efecto--negativo { position: relative; }
+.resultado-efecto__corte {
+  position: absolute;
+  left: 8%; right: 8%; top: 50%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #8e1c32 18%, #ef8b89 50%, #8e1c32 82%, transparent);
+  box-shadow: 0 0 7px #9c183a;
+  transform: rotate(-9deg) scaleX(0);
+  transform-origin: left center;
+  pointer-events: none;
 }
+
+.resultado-efecto__fragmentos { position: relative; display: inline-block; }
+.resultado-efecto__reserva { visibility: hidden; }
+.resultado-efecto__mitad { position: absolute; inset: 0; }
+.resultado-efecto__mitad--superior { clip-path: polygon(0 0, 100% 0, 100% 35%, 0 65%); }
+.resultado-efecto__mitad--inferior { clip-path: polygon(0 65%, 100% 35%, 100% 100%, 0 100%); }
+
+.dialogo-narrativo__revelado { overflow-x: clip; }
+
+.papel-ui__contenido { overflow-x: hidden; }
+.dialogo-narrativo__cursor { overflow: hidden; }

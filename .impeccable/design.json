@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 2,
+  "title": "Menús cognitivos",
+  "extensions": {
+    "breakpoints": [
+      {
+        "name": "mobile",
+        "value": "767px"
+      }
+    ]
+  },
+  "narrative": {
+    "northStar": "Un momento para tu mente",
+    "overview": "Menú oscuro legible, calendario con navbar coherente y una sola estructura de navegación. Juegos y King’s Court fuera del rediseño de esta etapa."
+  }
+}

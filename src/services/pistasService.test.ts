@@ -1,54 +1,67 @@
-/* Comprueba con pruebas que pistas service siga funcionando como se espera. */
+/* Comprueba con pruebas que pistasService use cookie HttpOnly sin localStorage. */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { pedirPistaConPuntos } from './pistasService';
+import { getSessionUser, setSessionUser } from '../VISTAS/AUTH/sessionStore';
 
-beforeEach(/* Prepara un entorno limpio antes de cada prueba. */ () => {
-  localStorage.setItem('token', 'sesion');
+beforeEach(() => {
+  localStorage.clear();
   sessionStorage.clear();
+  setSessionUser({ id: 7, name: 'Dai' });
   vi.stubGlobal('fetch', vi.fn());
 });
-afterEach(/* Limpia el entorno al terminar cada prueba. */ () => { localStorage.clear(); sessionStorage.clear(); vi.unstubAllGlobals(); });
+afterEach(() => {
+  localStorage.clear();
+  sessionStorage.clear();
+  setSessionUser(null);
+  vi.unstubAllGlobals();
+});
 
-describe('contrato use-hint', /* Agrupa las pruebas de este comportamiento. */ () => {
+describe('contrato use-hint', () => {
   it.each([
     { game_id: 'wordle' as const, date: '2026-10-29', hint_index: 0 },
     { game_id: 'sudoku' as const, date: '2026-10-29', row: 3, col: 4 },
     { game_id: 'crucigrama' as const, date: '2026-10-29', row: 2, col: 5 },
     { game_id: 'sopa_letras' as const, date: '2026-10-29', hint_index: 1 },
-  ])('envía el contexto de $game_id y devuelve la respuesta del servidor', /* Completa este paso con los datos recibidos por la operación. */ async solicitud => {
+  ])('envía el contexto de $game_id con credentials: include y devuelve la respuesta del servidor', async solicitud => {
     const respuesta = { success: true, puntos_restantes: 480, puntos_descontados: 20, pista: 'Ayuda', valor_revelado: 7 };
     vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify(respuesta)));
     expect(await pedirPistaConPuntos(solicitud)).toEqual(respuesta);
-    expect(fetch).toHaveBeenCalledExactlyOnceWith(expect.stringContaining('/api/economy/use-hint'), expect.objectContaining({
-      method: 'POST', body: JSON.stringify(solicitud), headers: { 'Content-Type': 'application/json', Authorization: 'Bearer sesion' },
-    }));
+    expect(fetch).toHaveBeenCalledExactlyOnceWith(
+      expect.stringContaining('/api/economy/use-hint'),
+      expect.objectContaining({
+        method: 'POST',
+        credentials: 'include',
+        body: JSON.stringify(solicitud),
+        headers: { 'Content-Type': 'application/json' },
+      })
+    );
   });
 
-  it('requiere sesión y no pide ni revela una pista para invitados', /* Comprueba el comportamiento indicado en este caso. */ async () => {
-    localStorage.clear();
+  it('requiere sesión en memoria y no pide ni revela una pista para invitados', async () => {
+    setSessionUser(null);
     await expect(pedirPistaConPuntos({ game_id: 'wordle' })).rejects.toMatchObject({ status: 401 });
     expect(fetch).not.toHaveBeenCalled();
   });
 
-  it('admite el token de sessionStorage', /* Comprueba el comportamiento indicado en este caso. */ async () => {
-    localStorage.clear(); sessionStorage.setItem('token', 'temporal');
-    vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify({ success: true, puntos_restantes: 0, puntos_descontados: 20, pista: 'Pista' })));
-    await pedirPistaConPuntos({ game_id: 'wordle' });
-    expect(vi.mocked(fetch).mock.calls[0][1]?.headers).toMatchObject({ Authorization: 'Bearer temporal' });
+  it('limpia la sesión en memoria si el servidor responde 401', async () => {
+    vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify({ detail: 'Expirada' }), { status: 401 }));
+    await expect(pedirPistaConPuntos({ game_id: 'wordle' })).rejects.toMatchObject({ status: 401, message: 'Expirada' });
+    expect(getSessionUser()).toBeNull();
   });
 
-  it('conserva el error 400 sin reintentar el descuento', /* Comprueba el comportamiento indicado en este caso. */ async () => {
+  it('conserva el error 400 sin reintentar el descuento', async () => {
     vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify({ detail: 'Sin puntos' }), { status: 400 }));
     await expect(pedirPistaConPuntos({ game_id: 'sudoku', row: 1, col: 2 })).rejects.toMatchObject({ status: 400, message: 'Sin puntos' });
     expect(fetch).toHaveBeenCalledTimes(1);
   });
 
-  it('no convierte un error de red en una pista local ni reintenta la compra', /* Comprueba el comportamiento indicado en este caso. */ async () => {
+  it('no convierte un error de red en una pista local ni reintenta la compra', async () => {
     vi.mocked(fetch).mockRejectedValue(new Error('Sin conexión'));
     await expect(pedirPistaConPuntos({ game_id: 'wordle' })).rejects.toThrow('Sin conexión');
     expect(fetch).toHaveBeenCalledTimes(1);
   });
 });
+
 it('rechaza un contrato viejo que todavía devuelve solo vidas', async () => {
   vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify({ success: true, vidas_restantes: 4, pista: 'Vieja' })));
   await expect(pedirPistaConPuntos({ game_id: 'wordle' })).rejects.toThrow('No se pudo confirmar');

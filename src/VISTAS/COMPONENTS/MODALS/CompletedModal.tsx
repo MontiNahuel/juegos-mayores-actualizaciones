@@ -3,7 +3,7 @@ import { useEffect, useId, useState } from 'react';
 import { ChallengeContinuation } from './ChallengeContinuation';
 import { SuccessFireworks } from '../ANIMATIONS/SuccessFireworks';
 import { SuccessCheckmark } from '../ANIMATIONS/SuccessCheckmark';
-import { GameHeader } from '../GameHeader';
+import AppNavbar from '../Navbar/AppNavbar';
 import type { DayChallenge } from '../CALENDAR/types';
 import { ModalBase } from './ModalBase';
 import { GamePerformance, type GamePerformanceProps } from './GamePerformance';
@@ -62,16 +62,19 @@ export function CompletedModal(props: CompletedModalProps) {
   const puntaje = result ? undefined : challenge?.score ?? registro?.score;
   const palabras: Palabra[] = config?.words ?? registro?.guesses ?? [];
   const detalles = [
-    ...(gameId === 'wordle' && palabra ? [{ etiqueta: isGameOver ? 'La palabra era' : 'Palabra descubierta', valor: palabra }] : []),
+    ...(gameId === 'wordle' && palabra && !isGameOver ? [{ etiqueta: 'Palabra descubierta', valor: palabra }] : []),
     ...(gameId === 'wordle' && intentos != null ? [{ etiqueta: 'Intentos', valor: String(intentos) }] : []),
     ...(config?.theme ? [{ etiqueta: 'Tema', valor: config.theme }] : []),
-    ...(puntaje != null ? [{ etiqueta: 'Puntos', valor: puntaje }] : []),
-    ...(typeof segundos === 'number' && Number.isFinite(segundos) ? [{ etiqueta: 'Tiempo', valor: `${Math.floor(segundos / 60)}:${String(segundos % 60).padStart(2, '0')}` }] : []),
+    ...(puntaje != null && !isGameOver ? [{ etiqueta: 'Puntos', valor: puntaje }] : []),
+    ...(!isGameOver && gameId !== 'wordle' && typeof segundos === 'number' && Number.isFinite(segundos) ? [{ etiqueta: 'Tiempo', valor: `${Math.floor(segundos / 60)}:${String(segundos % 60).padStart(2, '0')}` }] : []),
   ];
   const boton = 'min-h-12 w-full rounded-xl px-4 py-3 text-sm font-bold transition-colors';
 
   return (
-    <ModalBase isOpen onClose={close} labelledBy={titleId} header={continuationDateKey ? <GameHeader title="Resultado del desafío" onBack={close} pointsEarned={state?.saving ? 0 : state?.result?.awardedPoints} /> : undefined}>
+    <ModalBase isOpen onClose={close} labelledBy={titleId} header={continuationDateKey ? <AppNavbar view={{ kind: 'game',
+title: "Resultado del desafío",
+onBack: close,
+pointsEarned: state?.saving ? 0 : state?.result?.awardedPoints }} /> : undefined}>
       <div className="relative isolate space-y-4 p-5 text-center text-slate-700 sm:p-6">
         {!isGameOver && continuationDateKey && <SuccessFireworks />}
         {isGameOver ? <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-50 text-3xl text-rose-600" aria-hidden="true">💔</div> : <SuccessCheckmark />}
@@ -94,10 +97,27 @@ export function CompletedModal(props: CompletedModalProps) {
           </ul>
         )}
         <div className="flex flex-col gap-2">
-          {/* {(isGameOver || gameId === 'wordle') && props.onRestart && <button type="button" disabled={buying} onClick={props.onRestart} className={`${boton} bg-slate-100 hover:bg-slate-200 disabled:opacity-50`}>Jugar de nuevo</button>} */}
+          {isGameOver && props.onRestart && (
+            <button
+              type="button"
+              disabled={buying}
+              onClick={props.onRestart}
+              className={`${boton} bg-[#294C6B] text-white hover:bg-[#1E364D]`}
+            >
+              Intentar de nuevo
+            </button>
+          )}
           {continuationDateKey && !isGameOver ? (
             <ChallengeContinuation gameId={gameId} dateKey={continuationDateKey} onClose={close} buying={buying} onBuyingChange={setBuying} />
-          ) : <button type="button" onClick={onClose} className={`${boton} bg-[#294C6B] text-white hover:bg-[#1E364D]`}>{closeLabel}</button>}
+          ) : (
+            <button
+              type="button"
+              onClick={onClose}
+              className={`${boton} ${isGameOver && props.onRestart ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' : 'bg-[#294C6B] text-white hover:bg-[#1E364D]'}`}
+            >
+              {closeLabel}
+            </button>
+          )}
         </div>
       </div>
     </ModalBase>

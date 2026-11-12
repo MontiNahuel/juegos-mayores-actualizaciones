@@ -1,19 +1,22 @@
 /* Prepara las imágenes de la historia y comparte el trabajo de carga. */
 import { API_URL } from '../../../../config/api';
-import { FONDO_CORTE_DEFAULT, GUARDIAS_CORTE, MANOS_CORTE, ORO_CORTE } from '../../../../config/fondoCorte';
+import { FONDO_CONVERSACION, FONDO_CORTE_DEFAULT, GUARDIAS_CORTE, MANOS_CORTE, ORO_CORTE } from '../../../../config/fondoCorte';
 import type { ProgresoCargaNarrativa } from '../../../../store/narrativoCargaSlice';
 import marcoEvento from '../../../../assets/narrative/event-title.png';
 import caballoCarga from '../../../../assets/narrative/loading-horse.png';
 import { esPartidaNarrativaLocal, obtenerSetup, type SetupPartida } from '../narrativeService';
 import { ahorraDatos, guardarImagenesEnSegundoPlano, precargarImagenes } from '../../../../services/assetPreloader';
+import { getSessionUser } from '../../../AUTH/sessionStore';
+import { narrativeAdminHeaders } from '../narrativeAuth';
+import { NARRATIVE_API_PATH, NARRATIVE_CATALOG_PATHS } from '../narrativeEndpoints';
 
 export const CABALLO_CARGA = caballoCarga;
 const RECURSOS_INICIALES = [
-  FONDO_CORTE_DEFAULT, CABALLO_CARGA, marcoEvento,
+  FONDO_CORTE_DEFAULT, FONDO_CONVERSACION, CABALLO_CARGA, marcoEvento,
   '/assets/narrative/card-frame.png', '/assets/narrative/conversation-title.png',
 ];
 const RECURSOS_FUTUROS = [
-  '/assets/narrative/conversation-hall.png', '/assets/narrative/result-paper.png',
+  '/assets/narrative/result-paper.png',
   ...GUARDIAS_CORTE.map(/* Prepara el resultado de cada elemento. */ x => x.src), ...MANOS_CORTE.map(/* Prepara el resultado de cada elemento. */ x => x.src), ...ORO_CORTE.map(/* Prepara el resultado de cada elemento. */ x => x.src),
 ];
 
@@ -34,26 +37,22 @@ export function imagenesDelContenido(contenido: unknown): string[] {
 }
 
 // Busca las imágenes del universo que pueden aparecer más adelante.
-async function imagenesDelUniverso(setup: SetupPartida, date: string) {
+export async function imagenesDelUniverso(setup: SetupPartida, date: string) {
   if (esPartidaNarrativaLocal(date)) return [];
-  const token = localStorage.getItem('token');
-  if (!token) return [];
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
-    if (payload.tipoUsuario !== 2 && payload.rol !== 2 && payload.tipo_usuario !== 2) {
-      return [];
-    }
-  } catch {
-    return [];
-  }
+  const user = getSessionUser();
+  if (!user) return [];
+  const tipo = Number(user.tipoUsuario ?? user.rol ?? user.tipo_usuario ?? 1);
+  if (tipo !== 2) return [];
   const controller = new AbortController();
   const timeout = window.setTimeout(/* Ejecuta este paso cuando se cumple la espera. */ () => controller.abort(), 10_000);
   try {
     // Los catálogos administrativos solo se consultan para pre-cache si la sesión es de operador
-    const catalogos = await Promise.allSettled(['personajes', 'cartas', 'eventos', 'resultados', 'conversaciones', 'finalizaciones'].map(/* Prepara el resultado de cada elemento. */ async nombre => {
+    const nombres = ['personajes', 'cartas', 'eventos', 'conversaciones', 'eventosEspeciales', 'finalizaciones'] as const;
+    const catalogos = await Promise.allSettled(nombres.map(/* Prepara el resultado de cada elemento. */ async nombre => {
       const parametros = new URLSearchParams({ limit: '500', universo_id: setup.universo_id });
-      const respuesta = await fetch(`${API_URL}/api/narrative/admin/${nombre}?${parametros}`, {
-        signal: controller.signal, headers: { Authorization: `Bearer ${token}` },
+      const respuesta = await fetch(`${API_URL}${NARRATIVE_API_PATH}${NARRATIVE_CATALOG_PATHS[nombre]}?${parametros}`, {
+        credentials: 'include',
+        signal: controller.signal, headers: narrativeAdminHeaders(),
       });
       if (!respuesta.ok) return [];
       return respuesta.json();

@@ -14,6 +14,7 @@ import {
 } from '../Icons';
 import ImageUploadField from './ImageUploadField';
 import { textoDelDetalle } from './erroresApi';
+import { fetchNarrativeAdmin } from './api';
 
 export default function UniversosTab({ onUniversosChange }) {
   const [universos, setUniversos] = useState([]);
@@ -43,7 +44,7 @@ export default function UniversosTab({ onUniversosChange }) {
     setCargando(true);
     setError('');
     try {
-      const res = await fetch('/api/narrative/admin/universos');
+      const res = await fetchNarrativeAdmin('/api/narrative/admin/universos');
       if (res.ok) {
         const data = await res.json();
         setUniversos(data);
@@ -135,7 +136,7 @@ export default function UniversosTab({ onUniversosChange }) {
     };
 
     try {
-      const res = await fetch('/api/narrative/admin/universos', {
+      const res = await fetchNarrativeAdmin('/api/narrative/admin/universos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -162,7 +163,7 @@ export default function UniversosTab({ onUniversosChange }) {
   const handleEliminar = async (uId) => {
     if (!confirm(`¿Estás seguro de eliminar el universo "${uId}"? Esta acción no se puede deshacer.`)) return;
     try {
-      const res = await fetch(`/api/narrative/admin/universos/${uId}`, {
+      const res = await fetchNarrativeAdmin(`/api/narrative/admin/universos/${uId}`, {
         method: 'DELETE',
       });
       if (res.ok) {

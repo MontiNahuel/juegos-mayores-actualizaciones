@@ -80,10 +80,20 @@ export function useClassicChallenge(game: ClassicGameId, date: string, running: 
           pending.current = { ...saved, ...restored };
           void submit();
         }
+      } else if (saved.status === 'lost' || saved.status === 'failed') {
+        const restored = { grade: saved.grade || 'F', score: saved.score || 0, stars: saved.stars || 0, timeTakenSeconds: undefined, awardedPoints: 0 };
+        setResult(restored);
+        if (saved.synced === false && getCurrentUserId() !== null) {
+          pending.current = { ...saved, ...restored };
+          void submit();
+        }
       }
     },
     complete: (payload: Omit<SaveProgressPayload, 'gameId' | 'date'>) => {
-      const calculated = getClassicResult(game, payload.attempts, getSeconds(), config);
+      const isWon = payload.status === 'won' || payload.status === 'completed';
+      const calculated = isWon
+        ? getClassicResult(game, payload.attempts, getSeconds(), config)
+        : { grade: 'F', score: 0, stars: 0, timeTakenSeconds: undefined, awardedPoints: 0 };
       setResult(calculated);
       pending.current = { ...payload, gameId: game, date, ...calculated,
         gameData: { ...payload.gameData, ...(game !== 'wordle' ? { elapsedSeconds: calculated.timeTakenSeconds } : {}) } };

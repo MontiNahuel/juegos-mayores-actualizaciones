@@ -107,6 +107,7 @@ export async function loginSistemas(usuario, password) {
   const response = await fetch('/api/auth/login-sistemas', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'same-origin',
     body: JSON.stringify({ email, password: passwordLimpio }),
   });
 
@@ -136,6 +137,7 @@ export async function canjearTicketSSO(ticket) {
   const response = await fetch('/api/auth/sso/canjear-ticket', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'same-origin',
     body: JSON.stringify({ ticket: ticket.trim() }),
   });
 
@@ -158,6 +160,7 @@ export async function solicitarTicketRetorno(servicioDestino = 'autenticador') {
   const response = await fetch('/api/auth/sso/crear-ticket-retorno', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    credentials: 'same-origin',
     body: JSON.stringify({ servicioDestino }),
   });
 

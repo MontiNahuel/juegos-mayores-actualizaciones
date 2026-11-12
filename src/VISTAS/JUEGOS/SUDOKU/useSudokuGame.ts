@@ -1,7 +1,7 @@
 import { useClassicChallenge } from '../useClassicChallenge';
 /* Lleva la lógica de números, notas, errores, pistas y guardado del Sudoku. */
 /* Lleva la lógica de números, notas, errores, pistas y guardado del Sudoku. */
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { SudokuCell, SudokuGrid, DifficultyLevel } from './types';
 import { generateDailyPuzzle, hasConflict } from './sudokuEngine';
@@ -40,11 +40,23 @@ export function useSudokuGame() {
   const [errors, setErrors] = useState<number>(0);
   const [isNotesMode, setIsNotesMode] = useState<boolean>(false);
   const [isWon, setIsWon] = useState<boolean>(false);
+  const errorTimeoutsRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
+
+  // Limpiar temporizadores pendientes al desmontar
+  useEffect(() => {
+    return () => {
+      errorTimeoutsRef.current.forEach((timer) => clearTimeout(timer));
+      errorTimeoutsRef.current.clear();
+    };
+  }, []);
 
   const classic = useClassicChallenge('sudoku', dateKey, progressReady && !isWon, economy);
 
   // Inicializar o reiniciar partida del día
   const initGame = useCallback(async (forceFresh: boolean = false) => {
+    errorTimeoutsRef.current.forEach((timer) => clearTimeout(timer));
+    errorTimeoutsRef.current.clear();
+
     setLoadedDate('');
     if (!forceFresh) {
       const progress = await getActiveGameProgress('sudoku', dateKey);
@@ -53,7 +65,10 @@ export function useSudokuGame() {
       if (saved) {
         setDifficultyLevel(saved.difficultyLevel);
         setSolution(saved.solution);
-        setCells(saved.cells);
+        const restoredCells = (saved.cells || []).map((row: SudokuCell[]) =>
+          row.map((c: SudokuCell) => (c.error ? { ...c, value: 0, error: false } : c))
+        );
+        setCells(restoredCells);
         setSelectedRow(null);
         setSelectedCol(null);
         setErrors(saved.errors);
@@ -163,25 +178,48 @@ export function useSudokuGame() {
     }
 
     const isCorrect = solution.length > 0 && solution[selectedRow][selectedCol] === num;
+    const targetRow = selectedRow;
+    const targetCol = selectedCol;
+    const cellKey = `${targetRow}-${targetCol}`;
+
+    // Si ya había un temporizador de error para esta casilla, cancelarlo
+    if (errorTimeoutsRef.current.has(cellKey)) {
+      clearTimeout(errorTimeoutsRef.current.get(cellKey)!);
+      errorTimeoutsRef.current.delete(cellKey);
+    }
 
     setCells(/* Actualiza cells a partir del valor anterior. */ prev => {
       const copy = prev.map(/* Prepara el resultado de cada elemento. */ r => r.map(/* Prepara el resultado de cada elemento. */ c => ({ ...c })));
-      const target = copy[selectedRow][selectedCol];
+      const target = copy[targetRow][targetCol];
       target.value = num;
       target.notes = [];
 
       const numericGrid = copy.map(/* Prepara el resultado de cada elemento. */ r => r.map(/* Prepara el resultado de cada elemento. */ c => c.value));
-      const conflict = hasConflict(numericGrid, selectedRow, selectedCol, num);
+      const conflict = hasConflict(numericGrid, targetRow, targetCol, num);
       target.error = !isCorrect || conflict;
 
       return copy;
     });
 
-    // Registrar errores para la calificación, sin limitar intentos.
+    // Registrar errores para la calificación y programar borrado automático tras 1 segundo
     if (!isCorrect) {
-      const newErrors = errors + 1;
-      setErrors(newErrors);
+      setErrors(prev => prev + 1);
 
+      const timer = setTimeout(() => {
+        setCells(prev => {
+          if (!prev.length || !prev[targetRow]?.[targetCol]) return prev;
+          const target = prev[targetRow][targetCol];
+          // Solo borrar si sigue con error y con el número incorrecto ingresado
+          if (!target.error || target.value !== num) return prev;
+          const copy = prev.map(r => r.map(c => ({ ...c })));
+          copy[targetRow][targetCol].value = 0;
+          copy[targetRow][targetCol].error = false;
+          return copy;
+        });
+        errorTimeoutsRef.current.delete(cellKey);
+      }, 1000);
+
+      errorTimeoutsRef.current.set(cellKey, timer);
     }
   };
 
@@ -190,6 +228,12 @@ export function useSudokuGame() {
     if (!progressReady || selectedRow === null || selectedCol === null || isWon) return;
     const current = cells[selectedRow][selectedCol];
     if (current.initial) return;
+
+    const cellKey = `${selectedRow}-${selectedCol}`;
+    if (errorTimeoutsRef.current.has(cellKey)) {
+      clearTimeout(errorTimeoutsRef.current.get(cellKey)!);
+      errorTimeoutsRef.current.delete(cellKey);
+    }
 
     setCells(/* Actualiza cells a partir del valor anterior. */ prev => {
       const copy = prev.map(/* Prepara el resultado de cada elemento. */ r => r.map(/* Prepara el resultado de cada elemento. */ c => ({ ...c })));

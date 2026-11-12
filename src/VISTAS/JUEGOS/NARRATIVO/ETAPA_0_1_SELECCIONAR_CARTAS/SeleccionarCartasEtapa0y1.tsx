@@ -14,7 +14,7 @@ export default function SeleccionarCartasEtapa0y1({ titulo, descripcion, cartas,
   const tanda = `${titulo}:${cartas.map(/* Prepara el resultado de cada elemento. */ (carta: any) => carta.id).join(',')}`;
 
   // Reparte antes de pintar cada tanda nueva; seleccionar una carta no reinicia el shuffle.
-  useLayoutEffect(/* Ajusta la vista antes de mostrar el cambio. */ () => shuffleCartas(mazo.current), [tanda]);
+  useLayoutEffect(/* Ajusta la vista antes de mostrar el cambio. */ () => shuffleCartas(mazo.current, '.reparto-carta'), [tanda]);
 
   // Agrega o quita una carta sin superar la cantidad pedida.
   const seleccionar = (carta: any) => {
@@ -62,13 +62,15 @@ export default function SeleccionarCartasEtapa0y1({ titulo, descripcion, cartas,
           const selected = seleccion.some(/* Comprueba si algún elemento cumple esta condición. */ (item) => item.id === carta.id);
 
           return (
+            <div className="reparto-carta" key={carta.id}>
             <CartaSeleccionableEtapa0y1
-              key={carta.id}
               carta={carta}
               selected={selected}
+              bloqueada={!selected && seleccion.length === cantidad}
               disabled={confirmando || (!selected && seleccion.length === cantidad)}
               onSelect={/* Responde a select desde este control. */ () => seleccionar(carta)}
             />
+            </div>
           );
         })}
       </div>

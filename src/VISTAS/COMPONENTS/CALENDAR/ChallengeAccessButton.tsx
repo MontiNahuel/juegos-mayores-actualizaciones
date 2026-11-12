@@ -8,12 +8,12 @@ export function ChallengeAccessButton({ gameId, dateKey, onPlay, onBuyingChange 
   gameId: string; dateKey: string; onPlay: () => void; onBuyingChange?: (buying: boolean) => void;
 }) {
   const navigate = useNavigate();
-  const { puntos, costoDesbloqueoDiaPuntos: cost, isDiaDesbloqueado, desbloquearDia } = usePlayerEconomy();
+  const { isAuthenticated, puntos, costoDesbloqueoDiaPuntos: cost, isDiaDesbloqueado, desbloquearDia } = usePlayerEconomy();
   const [buying, setBuying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const pending = useRef(false);
   const locked = !isDiaDesbloqueado(gameId, dateKey);
-  const guest = !localStorage.getItem('token') && !sessionStorage.getItem('token');
+  const guest = !isAuthenticated;
   const insufficient = locked && !guest && puntos < cost;
   const label = buying ? 'Desbloqueando...' : !locked ? 'Resolver el día anterior' : guest ? 'Iniciar sesión / Registrarse' : 'Desbloquear y jugar';
 

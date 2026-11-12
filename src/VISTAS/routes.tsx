@@ -14,6 +14,14 @@ import KingsCourtCalendar from './JUEGOS/NARRATIVO/KingsCourtCalendar';
 import KingsCourt from './JUEGOS/NARRATIVO/KingsCourt';
 import { AccesoToken } from './LOGIN/AccesoToken';
 
+// Redirecciona rutas legadas hacia el panel de administración central de juegos (/admin/juegos)
+const RedirectToAdmin = () => {
+  useEffect(() => {
+    window.location.href = '/admin/juegos';
+  }, []);
+  return null;
+};
+
 // Intercepta token en /menu para iniciar sesión de inmediato en vez de quedar como invitado
 const MenuWrapper = () => {
   const [params] = useSearchParams();
@@ -34,22 +42,6 @@ const RootRedirection = () => {
   return <Navigate to="/menu" replace />;
 };
 
-// Muestra fallback loader y conecta sus controles con la pantalla.
-const FallbackLoader = () => (
-  <div className="min-h-screen bg-slate-950 flex items-center justify-center text-amber-400 font-bold">
-    Cargando Torre de Control...
-  </div>
-);
-
-// El panel administrativo se sirve como aplicación separada bajo /admin.
-const AdminRedirect = ({ target = '/admin' }: { target?: string }) => {
-  useEffect(() => {
-    window.location.replace(`${target}${window.location.search}`);
-  }, [target]);
-
-  return <FallbackLoader />;
-};
-
 // Muestra app routes y conecta sus controles con la pantalla.
 const AppRoutes = () => (
   <BrowserRouter>
@@ -67,12 +59,14 @@ const AppRoutes = () => (
       <Route path="/juegos/kings-court" element={<KingsCourtCalendar />} />
       <Route path="/juegos/kings-court/jugar" element={<KingsCourt />} />
 
-      {/* Aliases históricos: el panel vive en la aplicación /admin. */}
-      <Route path="/panel" element={<AdminRedirect />} />
-      <Route path="/panel-juegos" element={<AdminRedirect />} />
-      <Route path="/editor-narrativo" element={<AdminRedirect />} />
-      <Route path="/torre" element={<AdminRedirect />} />
-      <Route path="/login" element={<AdminRedirect target="/admin/login" />} />
+      {/* Redirección del antiguo editor hacia la administración central unificada (/admin/juegos) */}
+      <Route path="/editor-narrativo" element={<RedirectToAdmin />} />
+      <Route path="/panel" element={<RedirectToAdmin />} />
+      <Route path="/panel-juegos" element={<RedirectToAdmin />} />
+      <Route path="/torre" element={<RedirectToAdmin />} />
+      <Route path="/admin" element={<RedirectToAdmin />} />
+      <Route path="/admin/narrativo" element={<RedirectToAdmin />} />
+      <Route path="/login" element={<Navigate to="/menu" replace />} />
 
       <Route path="/" element={<RootRedirection />} />
       <Route path="*" element={<RootRedirection />} />

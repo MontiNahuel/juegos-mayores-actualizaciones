@@ -1,3 +1,4 @@
+import { fetchNarrativeAdmin } from './api';
 /* Permite configurar finales según el universo y sus recursos. */
 import { useState, useEffect } from 'react';
 import {
@@ -73,7 +74,7 @@ export default function FinalizacionesTab({ universos = [] }) {
       if (rClave) params.append('recurso_clave', rClave);
 
       const qs = params.toString() ? `?${params.toString()}` : '';
-      const res = await fetch(`/api/narrative/admin/finalizaciones${qs}`);
+      const res = await fetchNarrativeAdmin(`/api/narrative/admin/finalizaciones${qs}`);
       if (res.ok) {
         const data = await res.json();
         setFinalizaciones(data);
@@ -158,7 +159,7 @@ export default function FinalizacionesTab({ universos = [] }) {
     setError('');
     setExito('');
     try {
-      const res = await fetch(`/api/narrative/admin/universos/${encodeURIComponent(targetUniverso)}/sembrar-finalizaciones`, {
+      const res = await fetchNarrativeAdmin(`/api/narrative/admin/universos/${encodeURIComponent(targetUniverso)}/sembrar-finalizaciones`, {
         method: 'POST'
       });
       if (res.ok) {
@@ -201,7 +202,7 @@ export default function FinalizacionesTab({ universos = [] }) {
     };
 
     try {
-      const res = await fetch('/api/narrative/admin/finalizaciones', {
+      const res = await fetchNarrativeAdmin('/api/narrative/admin/finalizaciones', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -229,7 +230,7 @@ export default function FinalizacionesTab({ universos = [] }) {
       return;
     }
     try {
-      const res = await fetch(`/api/narrative/admin/finalizaciones/${encodeURIComponent(finId)}`, {
+      const res = await fetchNarrativeAdmin(`/api/narrative/admin/finalizaciones/${encodeURIComponent(finId)}`, {
         method: 'DELETE',
       });
       if (res.ok) {

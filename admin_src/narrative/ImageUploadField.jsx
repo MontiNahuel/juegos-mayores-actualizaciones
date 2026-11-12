@@ -8,6 +8,7 @@ import {
   AlertTriangleIcon,
   XIcon,
 } from '../Icons';
+import { fetchNarrativeAdmin } from './api';
 
 // Permite elegir, arrastrar, subir o quitar una imagen.
 export default function ImageUploadField({
@@ -52,7 +53,7 @@ export default function ImageUploadField({
       const formData = new FormData();
       formData.append('file', file);
 
-      const res = await fetch(`/api/narrative/admin/upload-imagen?categoria=${encodeURIComponent(categoria)}`, {
+      const res = await fetchNarrativeAdmin(`/api/narrative/admin/upload-imagen?categoria=${encodeURIComponent(categoria)}`, {
         method: 'POST',
         body: formData,
       });

@@ -1,23 +1,8 @@
 import { DEFAULT_GRADE_POINTS, DEFAULT_TIME_GRADES, type ScoringConfig } from '../VISTAS/JUEGOS/classicScoring';
-/* Guarda el saldo y las reglas de la tienda para que todos los juegos vean lo mismo. */
+/* Guarda el saldo, la racha y las reglas activas para que todos los juegos vean lo mismo. */
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
-export interface TiendaPaquete {
-  id: string;
-  vidas: number;
-  puntos: number;
-  popular?: boolean;
-  badge?: string | null;
-  descuento?: string | null;
-}
-
 export type SuscripcionTipo = 'basica' | 'premium';
-
-const DEFAULT_PAQUETES: TiendaPaquete[] = [
-  { id: 'pack_1', vidas: 1, puntos: 200, popular: false, badge: null, descuento: null },
-  { id: 'pack_3', vidas: 3, puntos: 600, popular: true, badge: 'Popular', descuento: null },
-  { id: 'pack_5', vidas: 5, puntos: 1000, popular: false, badge: null, descuento: null },
-];
 
 const DEFAULT_PUNTOS_POR_JUEGO: Record<string, number> = {
   wordle: 50,
@@ -28,24 +13,31 @@ const DEFAULT_PUNTOS_POR_JUEGO: Record<string, number> = {
 };
 
 export interface PlayerEconomyState extends ScoringConfig {
-  vidas: number;
   puntos: number;
-  costoVidaPuntos: number;
+  racha: number;
+  rachaUltimaFecha: string | null;
+  rachaHoyIngresada: boolean;
   costoPistaPuntos: number;
   costoDesbloqueoDiaPuntos: number;
   suscripcion: SuscripcionTipo;
   diasDesbloqueados: string[];
-  paquetesTienda: TiendaPaquete[];
   puntosPorJuego: Record<string, number>;
-  vidasMaximas: number | null;
   isLoading: boolean;
 }
 
 const initialState: PlayerEconomyState = {
-  puntosPorCalificacion: DEFAULT_GRADE_POINTS, escalasTiempoPorJuego: DEFAULT_TIME_GRADES,
-  vidas: 5, puntos: 0, costoVidaPuntos: 200, costoPistaPuntos: 20, costoDesbloqueoDiaPuntos: 100,
-  suscripcion: 'basica', diasDesbloqueados: [], paquetesTienda: DEFAULT_PAQUETES,
-  puntosPorJuego: DEFAULT_PUNTOS_POR_JUEGO, vidasMaximas: null, isLoading: true,
+  puntosPorCalificacion: DEFAULT_GRADE_POINTS,
+  escalasTiempoPorJuego: DEFAULT_TIME_GRADES,
+  puntos: 0,
+  racha: 0,
+  rachaUltimaFecha: null,
+  rachaHoyIngresada: false,
+  costoPistaPuntos: 20,
+  costoDesbloqueoDiaPuntos: 100,
+  suscripcion: 'basica',
+  diasDesbloqueados: [],
+  puntosPorJuego: DEFAULT_PUNTOS_POR_JUEGO,
+  isLoading: true,
 };
 
 const playerEconomySlice = createSlice({
@@ -60,8 +52,18 @@ const playerEconomySlice = createSlice({
     agregarDiaDesbloqueado: (state, { payload }: PayloadAction<string>) => {
       if (!state.diasDesbloqueados.includes(payload)) state.diasDesbloqueados.push(payload);
     },
+    // Restablece los indicadores del usuario al cerrar sesión o entrar como invitado.
+    resetearEconomia: (state) => {
+      state.puntos = 0;
+      state.racha = 0;
+      state.rachaUltimaFecha = null;
+      state.rachaHoyIngresada = false;
+      state.suscripcion = 'basica';
+      state.diasDesbloqueados = [];
+      state.isLoading = false;
+    },
   },
 });
 
-export const { actualizarEconomia, agregarDiaDesbloqueado } = playerEconomySlice.actions;
+export const { actualizarEconomia, agregarDiaDesbloqueado, resetearEconomia } = playerEconomySlice.actions;
 export default playerEconomySlice.reducer;

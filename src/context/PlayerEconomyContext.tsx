@@ -1,87 +1,105 @@
 import type { ScoringConfig } from '../VISTAS/JUEGOS/classicScoring';
-/* Conecta los juegos con la economía de Redux y maneja las compras y las ventanas de la tienda. */
+/* Conecta los juegos con la economía y racha en Redux usando cookies HttpOnly y estado en memoria. */
 import { useDispatch, useSelector } from 'react-redux';
 import type { RootState, AppDispatch } from '../store/store';
-import { actualizarEconomia, agregarDiaDesbloqueado } from '../store/playerEconomySlice';
+import {
+  actualizarEconomia,
+  agregarDiaDesbloqueado,
+  resetearEconomia,
+  type SuscripcionTipo,
+} from '../store/playerEconomySlice';
 import { API_URL } from '../config/api';
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { pedirPistaConPuntos, type SolicitudPista, type RespuestaPista } from '../services/pistasService';
+import {
+  clearLegacyAuthStorage,
+  fetchAuthSession,
+  getSessionUser,
+  setSessionUser,
+  subscribeSessionUser,
+} from '../VISTAS/AUTH/sessionStore';
 
 export interface CompraPista extends SolicitudPista {
   onRecibir: (pista: RespuestaPista) => void;
 }
 
-export type { TiendaPaquete, SuscripcionTipo } from '../store/playerEconomySlice';
-import type { TiendaPaquete, SuscripcionTipo } from '../store/playerEconomySlice';
+export type { SuscripcionTipo };
+
 export interface PlayerEconomyContextType extends ScoringConfig {
-  vidas: number;
+  isAuthenticated: boolean;
   puntos: number;
-  costoVidaPuntos: number;
+  racha: number;
+  rachaUltimaFecha: string | null;
+  rachaHoyIngresada: boolean;
   costoPistaPuntos: number;
   costoDesbloqueoDiaPuntos: number;
   suscripcion: SuscripcionTipo;
   diasDesbloqueados: string[];
-  paquetesTienda: TiendaPaquete[];
   puntosPorJuego: Record<string, number>;
-  vidasMaximas: number | null;
   isLoading: boolean;
-  isMiniTiendaOpen: boolean;
   isComprarPistaOpen: boolean;
   abrirComprarPista: (solicitud: CompraPista) => void;
   comprarPista: () => Promise<void>;
   cerrarComprarPista: () => void;
-  abrirMiniTienda: () => void;
-  cerrarMiniTienda: () => void;
-  consumirVida: () => Promise<boolean>;
-  gastarPuntos: (cantidad: number) => Promise<void>;
-  canjearVidas: (paqueteId: string) => Promise<{ success: boolean; message: string }>;
   desbloquearDia: (gameId: string, date: string) => Promise<{ success: boolean; message: string }>;
   isDiaDesbloqueado: (gameId: string, date: string) => boolean;
   recargarEconomia: () => Promise<void>;
   getPuntosParaJuego: (gameId: string) => number;
 }
 
-const GUEST_ECONOMY_KEY = 'asistodo_guest_economy';
-
 const PlayerEconomyContext = createContext<PlayerEconomyContextType | undefined>(undefined);
 
-// Busca el token de la sesión sin fallar si el navegador no deja leerlo.
-function getAuthToken(): string | null {
-  try {
-    return localStorage.getItem('token') || sessionStorage.getItem('token');
-  } catch {
-    return null;
-  }
-}
-
-// Conecta el saldo de Redux con los juegos y mantiene locales las ventanas y las compras en curso.
+// Conecta el saldo y la racha de Redux con los juegos sin guardar sesión en localStorage.
 export const PlayerEconomyProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const dispatch = useDispatch<AppDispatch>();
-  const { puntosPorCalificacion, escalasTiempoPorJuego, vidas, puntos, costoVidaPuntos, costoPistaPuntos, costoDesbloqueoDiaPuntos, suscripcion,
-    diasDesbloqueados, paquetesTienda, puntosPorJuego, vidasMaximas, isLoading,
-  } = useSelector(/* Lee de Redux el dato compartido que necesita la pantalla. */ (state: RootState) => state.playerEconomy);
-  const [isMiniTiendaOpen, setIsMiniTiendaOpen] = useState<boolean>(false);
+  const {
+    puntosPorCalificacion,
+    escalasTiempoPorJuego,
+    puntos,
+    racha,
+    rachaUltimaFecha,
+    rachaHoyIngresada,
+    costoPistaPuntos,
+    costoDesbloqueoDiaPuntos,
+    suscripcion,
+    diasDesbloqueados,
+    puntosPorJuego,
+    isLoading,
+  } = useSelector((state: RootState) => state.playerEconomy);
+
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => getSessionUser() !== null);
   const [solicitudPista, setSolicitudPista] = useState<CompraPista | null>(null);
   const comprandoPista = useRef(false);
+  const recargaEnCursoRef = useRef<Promise<void> | null>(null);
+
+  useEffect(() => {
+    return subscribeSessionUser((user) => {
+      setIsAuthenticated(user !== null);
+    });
+  }, []);
+
   // Abre la confirmación y conserva la función que entregará la pista al juego.
   const abrirComprarPista = useCallback((solicitud: CompraPista) => {
     if (comprandoPista.current) return;
-    setSolicitudPista(solicitud); setIsMiniTiendaOpen(false);
+    setSolicitudPista(solicitud);
   }, []);
+
   // Cierra la confirmación y descarta la solicitud de pista pendiente.
   const cerrarComprarPista = useCallback(() => {
     setSolicitudPista(null);
   }, []);
 
-  const confirmarSaldo = useCallback((saldo: { puntos: number; vidas?: number }) => {
-    dispatch(actualizarEconomia(saldo));
-    for (const clave of ['usuario', 'user']) {
-      try {
-        const raw = localStorage.getItem(clave);
-        if (raw) localStorage.setItem(clave, JSON.stringify({ ...JSON.parse(raw), ...saldo }));
-      } catch { /* Redux conserva el saldo confirmado aunque no haya almacenamiento. */ }
+  const confirmarSaldo = useCallback((saldo: { puntos: number }) => {
+    dispatch(actualizarEconomia({ puntos: saldo.puntos }));
+    const user = getSessionUser();
+    if (user) {
+      setSessionUser({ ...user, puntos: saldo.puntos });
     }
-    window.dispatchEvent(new CustomEvent('user_progress_updated', { detail: { economiaConfirmada: true } }));
+    window.dispatchEvent(
+      new CustomEvent('user_progress_updated', {
+        detail: { economiaConfirmada: true, puntos: saldo.puntos },
+      })
+    );
   }, [dispatch]);
 
   // Compra la pista, actualiza los puntos confirmados y entrega la ayuda al juego.
@@ -94,339 +112,207 @@ export const PlayerEconomyProvider: React.FC<{ children: React.ReactNode }> = ({
       confirmarSaldo({ puntos: resultado.puntos_restantes });
       setSolicitudPista(null);
       onRecibir(resultado);
-    } finally { comprandoPista.current = false; }
+    } finally {
+      comprandoPista.current = false;
+    }
   }, [solicitudPista, confirmarSaldo]);
 
-  // Abre la tienda para que el jugador pueda reponer vidas.
-  const abrirMiniTienda = useCallback(() => setIsMiniTiendaOpen(true), []);
-  // Cierra la tienda y deja al jugador en su pantalla actual.
-  const cerrarMiniTienda = useCallback(() => setIsMiniTiendaOpen(false), []);
-
-  // Carga inicial y recarga
+  // Carga inicial y recarga deduplicada usando cookie HttpOnly (/api/auth/session + /api/economy/me)
   const recargarEconomia = useCallback(async () => {
-    dispatch(actualizarEconomia({ isLoading: true }));
-    let configVidasIniciales = 5;
-
-    // 1. Obtener configuración pública de economía
-    try {
-      const configRes = await fetch(`${API_URL}/api/economy/config`);
-      if (configRes.ok) {
-        const configData = await configRes.json();
-        configVidasIniciales = configData.vidas_iniciales ?? 5;
-        if (configData.puntos_por_calificacion) dispatch(actualizarEconomia({ puntosPorCalificacion: configData.puntos_por_calificacion }));
-        if (configData.escalas_tiempo_por_juego) dispatch(actualizarEconomia({ escalasTiempoPorJuego: configData.escalas_tiempo_por_juego }));
-        dispatch(actualizarEconomia({ costoVidaPuntos: configData.costo_vida_puntos ?? 200, costoPistaPuntos: configData.costo_pista_puntos ?? 20, costoDesbloqueoDiaPuntos: configData.costo_desbloqueo_dia_puntos ?? 100 }));
-        if (Array.isArray(configData.paquetes_tienda) && configData.paquetes_tienda.length > 0) {
-          dispatch(actualizarEconomia({ paquetesTienda: configData.paquetes_tienda }));
-        }
-        if (configData.puntos_por_juego) {
-          dispatch(actualizarEconomia({ puntosPorJuego: configData.puntos_por_juego }));
-        }
-        dispatch(actualizarEconomia({ vidasMaximas: configData.vidas_maximas ?? null }));
-      }
-    } catch (e) {
-      console.warn('No se pudo obtener config de economía:', e);
+    if (recargaEnCursoRef.current) {
+      return recargaEnCursoRef.current;
     }
 
-    // 2. Si el usuario está autenticado, sincronizar desde el backend
-    const token = getAuthToken();
-    if (token) {
+    const tarea = (async () => {
+      dispatch(actualizarEconomia({ isLoading: true }));
+
+      const session = await fetchAuthSession();
+      if (!session) {
+        dispatch(resetearEconomia());
+        return;
+      }
+
+      dispatch(
+        actualizarEconomia({
+          racha: session.streak.racha,
+          rachaUltimaFecha: session.streak.rachaUltimaFecha,
+          rachaHoyIngresada: session.streak.rachaHoyIngresada,
+        })
+      );
+
       try {
         const userRes = await fetch(`${API_URL}/api/economy/me`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
+          method: 'GET',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
         });
+
+        if (userRes.status === 401 || userRes.status === 403) {
+          setSessionUser(null);
+          dispatch(resetearEconomia());
+          return;
+        }
+
         if (userRes.ok) {
           const userData = await userRes.json();
-          dispatch(actualizarEconomia({ vidas: userData.vidas, puntos: userData.puntos, suscripcion: userData.suscripcion === 'premium' ? 'premium' : 'basica', diasDesbloqueados: Array.isArray(userData.dias_desbloqueados) ? userData.dias_desbloqueados : [] }));
+          const rachaActual =
+            typeof userData.racha === 'number' ? userData.racha : session.streak.racha;
+          const rachaUltima =
+            typeof userData.racha_ultima_fecha === 'string'
+              ? userData.racha_ultima_fecha
+              : session.streak.rachaUltimaFecha;
+          const rachaHoy =
+            typeof userData.racha_hoy_ingresada === 'boolean'
+              ? userData.racha_hoy_ingresada
+              : session.streak.rachaHoyIngresada;
 
-          // Actualizar snapshot en localStorage usuario
-          try {
-            const rawUser = localStorage.getItem('usuario') || localStorage.getItem('user');
-            if (rawUser) {
-              const u = JSON.parse(rawUser);
-              u.vidas = userData.vidas;
-              u.puntos = userData.puntos;
-              u.suscripcion = userData.suscripcion;
-              u.dias_desbloqueados = userData.dias_desbloqueados;
-              localStorage.setItem('usuario', JSON.stringify(u));
-              localStorage.setItem('user', JSON.stringify(u));
-            }
-          } catch {}
-          dispatch(actualizarEconomia({ isLoading: false }));
+          dispatch(
+            actualizarEconomia({
+              puntos: typeof userData.puntos === 'number' ? userData.puntos : 0,
+              racha: rachaActual,
+              rachaUltimaFecha: rachaUltima,
+              rachaHoyIngresada: rachaHoy,
+              suscripcion: userData.suscripcion === 'premium' ? 'premium' : 'basica',
+              diasDesbloqueados: Array.isArray(userData.dias_desbloqueados)
+                ? userData.dias_desbloqueados
+                : [],
+              costoPistaPuntos:
+                typeof userData.costo_pista_puntos === 'number'
+                  ? userData.costo_pista_puntos
+                  : 20,
+              isLoading: false,
+            })
+          );
           return;
         }
       } catch (e) {
         console.warn('Error al obtener economía de usuario autenticado:', e);
       }
-    }
 
-    // 3. Si es usuario invitado (sin token), gestionar en localStorage
+      dispatch(actualizarEconomia({ isLoading: false }));
+    })();
+
+    recargaEnCursoRef.current = tarea;
     try {
-      const rawGuest = localStorage.getItem(GUEST_ECONOMY_KEY);
-      if (rawGuest) {
-        const guestData = JSON.parse(rawGuest);
-        dispatch(actualizarEconomia({ vidas: typeof guestData.vidas === 'number' ? guestData.vidas : configVidasIniciales, puntos: typeof guestData.puntos === 'number' ? guestData.puntos : 0, suscripcion: 'basica', diasDesbloqueados: [] }));
-      } else {
-        const initialGuest = { vidas: configVidasIniciales, puntos: 0 };
-        localStorage.setItem(GUEST_ECONOMY_KEY, JSON.stringify(initialGuest));
-        dispatch(actualizarEconomia({ vidas: configVidasIniciales, puntos: 0, suscripcion: 'basica', diasDesbloqueados: [] }));
-      }
-    } catch {
-      dispatch(actualizarEconomia({ vidas: configVidasIniciales, puntos: 0, suscripcion: 'basica', diasDesbloqueados: [] }));
+      await tarea;
+    } finally {
+      recargaEnCursoRef.current = null;
     }
-
-    dispatch(actualizarEconomia({ isLoading: false }));
   }, [dispatch]);
 
-  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
-    recargarEconomia();
+  useEffect(() => {
+    clearLegacyAuthStorage();
+    void recargarEconomia();
 
-    // Vuelve a leer el progreso cuando otra pantalla o pestaña avisa que cambió.
     const handleProgressUpdate = (event: Event) => {
       if (event instanceof CustomEvent && event.detail?.economiaConfirmada) {
-        if (Number.isFinite(event.detail.puntos)) dispatch(actualizarEconomia({ puntos: event.detail.puntos }));
+        if (Number.isFinite(event.detail.puntos)) {
+          dispatch(actualizarEconomia({ puntos: event.detail.puntos }));
+        }
         return;
       }
-      recargarEconomia();
+      void recargarEconomia();
     };
 
     window.addEventListener('user_progress_updated', handleProgressUpdate);
-    window.addEventListener('storage', handleProgressUpdate);
-    return /* Libera los recursos de este efecto cuando deja de usarse. */ () => {
+    return () => {
       window.removeEventListener('user_progress_updated', handleProgressUpdate);
-      window.removeEventListener('storage', handleProgressUpdate);
     };
-  }, [recargarEconomia]);
+  }, [recargarEconomia, dispatch]);
 
-  // Consumir vida global
-  const consumirVida = useCallback(async (): Promise<boolean> => {
-    const token = getAuthToken();
+  // Verificar si un día histórico está desbloqueado
+  const isDiaDesbloqueado = useCallback(
+    (gameId: string, date: string): boolean => {
+      if (suscripcion === 'premium') return true;
+      const cleanGame = gameId.toLowerCase().trim();
+      const cleanDate = date.trim();
+      const key = `${cleanGame}:${cleanDate}`;
+      return diasDesbloqueados.includes(key);
+    },
+    [suscripcion, diasDesbloqueados]
+  );
 
-    // Si tiene token, consumir en backend
-    if (token) {
-      try {
-        const res = await fetch(`${API_URL}/api/economy/consume-life`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ motivo: 'error_juego' }),
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          dispatch(actualizarEconomia({ vidas: data.vidas }));
-          try {
-            const rawUser = localStorage.getItem('usuario') || localStorage.getItem('user');
-            if (rawUser) {
-              const u = JSON.parse(rawUser);
-              u.vidas = data.vidas;
-              localStorage.setItem('usuario', JSON.stringify(u));
-              localStorage.setItem('user', JSON.stringify(u));
-            }
-          } catch {}
-          window.dispatchEvent(new Event('user_progress_updated'));
-          return true;
-        } else {
-          const errData = await res.json().catch(/* Maneja el fallo de esta operación. */ () => ({}));
-          dispatch(actualizarEconomia({ vidas: errData.vidas ?? 0 }));
-          setIsMiniTiendaOpen(true);
-          return false;
-        }
-      } catch (e) {
-        console.warn('Error consumiendo vida en servidor, aplicando fallback local:', e);
+  // Desbloquear un día histórico con puntos
+  const desbloquearDia = useCallback(
+    async (gameId: string, date: string): Promise<{ success: boolean; message: string }> => {
+      if (!getSessionUser()) {
+        return {
+          success: false,
+          message: 'Debes iniciar sesión para desbloquear desafíos de días anteriores.',
+        };
       }
-    }
 
-    // Fallback o modo invitado en localStorage
-    if (vidas <= 0) {
-      setIsMiniTiendaOpen(true);
-      return false;
-    }
-
-    const nextVidas = Math.max(0, vidas - 1);
-    dispatch(actualizarEconomia({ vidas: nextVidas }));
-    try {
-      const rawGuest = localStorage.getItem(GUEST_ECONOMY_KEY);
-      const guestData = rawGuest ? JSON.parse(rawGuest) : { vidas: 5, puntos: 0 };
-      guestData.vidas = nextVidas;
-      localStorage.setItem(GUEST_ECONOMY_KEY, JSON.stringify(guestData));
-    } catch {}
-
-    window.dispatchEvent(new Event('user_progress_updated'));
-    if (nextVidas === 0) {
-      setIsMiniTiendaOpen(true);
-      return false;
-    }
-    return true;
-  }, [vidas, dispatch]);
-
-  // Pide descontar los puntos y guarda el saldo confirmado por el servidor.
-  const gastarPuntos = useCallback(async (cantidad: number) => {
-    const token = getAuthToken();
-    if (!token) throw new Error('Iniciá sesión para restaurar tus vidas.');
-    const raw = localStorage.getItem('usuario') || localStorage.getItem('user');
-    const usuario = raw ? JSON.parse(raw) : null;
-    if (!usuario?.id) throw new Error('No se pudo identificar tu cuenta.');
-    if (puntos < cantidad) throw new Error('No tenés suficientes puntos.');
-    const res = await fetch(API_URL + '/api/admin/economy/user/adjust', {
-      method: 'POST',
-      headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ identificador: String(usuario.id), puntos_sumar: -cantidad }),
-    });
-    const data = await res.json();
-    if (!res.ok || !data.success) throw new Error(res.status === 403 ? 'El servidor todavía no permite este canje para jugadores.' : data.detail || 'No se pudo confirmar el descuento.');
-    confirmarSaldo({ puntos: data.puntos });
-  }, [puntos, confirmarSaldo]);
-
-  // Canjear vidas en la mini-tienda
-  const canjearVidas = useCallback(async (paqueteId: string): Promise<{ success: boolean; message: string }> => {
-    const token = getAuthToken();
-
-    if (token) {
       try {
-        const res = await fetch(`${API_URL}/api/economy/buy-lives`, {
+        const res = await fetch(`${API_URL}/api/economy/unlock-day`, {
           method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ package_id: paqueteId }),
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ game_id: gameId, date }),
         });
+
+        if (res.status === 401) {
+          setSessionUser(null);
+          dispatch(resetearEconomia());
+          return {
+            success: false,
+            message: 'Tu sesión expiró. Volvé a iniciar sesión para continuar.',
+          };
+        }
 
         const data = await res.json();
         if (res.ok && data.success) {
-          confirmarSaldo({ vidas: data.vidas, puntos: data.puntos });
-          return { success: true, message: data.message || `¡Canje exitoso! Tenés ${data.vidas} vidas.` };
-        } else {
-          return { success: false, message: data.detail || 'No tenés suficientes puntos para este paquete.' };
+          if (typeof data.puntos === 'number') {
+            confirmarSaldo({ puntos: data.puntos });
+          }
+          const key = `${gameId.toLowerCase().trim()}:${date.trim()}`;
+          dispatch(agregarDiaDesbloqueado(key));
+          return {
+            success: true,
+            message: data.message || '¡Desafío desbloqueado exitosamente!',
+          };
         }
-      } catch (e) {
-        return { success: false, message: 'Error de conexión con el servidor.' };
-      }
-    }
-
-    // Modo invitado local
-    const pack = paquetesTienda.find(/* Busca el primer elemento que cumple esta condición. */ (p) => p.id === paqueteId);
-    if (!pack) {
-      return { success: false, message: 'El paquete seleccionado no existe.' };
-    }
-
-    if (puntos < pack.puntos) {
-      const faltan = pack.puntos - puntos;
-      return {
-        success: false,
-        message: `Te faltan ${faltan} puntos para este paquete. ¡Seguí jugando para ganar más!`,
-      };
-    }
-
-    const nextPuntos = puntos - pack.puntos;
-    const nextVidas = vidasMaximas ? Math.min(vidasMaximas, vidas + pack.vidas) : vidas + pack.vidas;
-
-    dispatch(actualizarEconomia({ puntos: nextPuntos, vidas: nextVidas }));
-
-    try {
-      const guestData = { vidas: nextVidas, puntos: nextPuntos };
-      localStorage.setItem(GUEST_ECONOMY_KEY, JSON.stringify(guestData));
-    } catch {}
-
-    window.dispatchEvent(new Event('user_progress_updated'));
-    return {
-      success: true,
-      message: `¡Excelente! Sumaste ${pack.vidas} vidas. Ahora tenés ${nextVidas} vidas.`,
-    };
-  }, [paquetesTienda, puntos, vidas, vidasMaximas, dispatch, confirmarSaldo]);
-
-  // Verificar si un día histórico está desbloqueado
-  const isDiaDesbloqueado = useCallback((gameId: string, date: string): boolean => {
-    if (suscripcion === 'premium') return true;
-    const cleanGame = gameId.toLowerCase().trim();
-    const cleanDate = date.trim();
-    const key = `${cleanGame}:${cleanDate}`;
-    return diasDesbloqueados.includes(key);
-  }, [suscripcion, diasDesbloqueados]);
-
-  // Desbloquear un día histórico con puntos
-  const desbloquearDia = useCallback(async (gameId: string, date: string): Promise<{ success: boolean; message: string }> => {
-    const token = getAuthToken();
-    if (!token) {
-      return {
-        success: false,
-        message: 'Debes iniciar sesión para desbloquear desafíos de días anteriores.',
-      };
-    }
-
-    try {
-      const res = await fetch(`${API_URL}/api/economy/unlock-day`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ game_id: gameId, date }),
-      });
-
-      const data = await res.json();
-      if (res.ok && data.success) {
-        if (typeof data.puntos === 'number') {
-          dispatch(actualizarEconomia({ puntos: data.puntos }));
-        }
-        const key = `${gameId.toLowerCase().trim()}:${date.trim()}`;
-        dispatch(agregarDiaDesbloqueado(key));
-        window.dispatchEvent(new Event('user_progress_updated'));
-        return {
-          success: true,
-          message: data.message || '¡Desafío desbloqueado exitosamente!',
-        };
-      } else {
         return {
           success: false,
           message: data.detail || 'No se pudo desbloquear el desafío. Verificá tus puntos.',
         };
+      } catch {
+        return {
+          success: false,
+          message: 'Error de conexión con el servidor al intentar desbloquear el desafío.',
+        };
       }
-    } catch (e) {
-      return {
-        success: false,
-        message: 'Error de conexión con el servidor al intentar desbloquear el desafío.',
-      };
-    }
-  }, [dispatch]);
+    },
+    [dispatch, confirmarSaldo]
+  );
 
   // Devuelve cuántos puntos entrega ese juego al completarlo.
-  const getPuntosParaJuego = useCallback((gameId: string): number => {
-    return puntosPorJuego[gameId] ?? 50;
-  }, [puntosPorJuego]);
+  const getPuntosParaJuego = useCallback(
+    (gameId: string): number => {
+      return puntosPorJuego[gameId] ?? 50;
+    },
+    [puntosPorJuego]
+  );
 
   return (
     <PlayerEconomyContext.Provider
       value={{
-        vidas,
+        isAuthenticated,
         puntos,
-        costoVidaPuntos,
+        racha,
+        rachaUltimaFecha,
+        rachaHoyIngresada,
         costoPistaPuntos,
         puntosPorCalificacion,
         escalasTiempoPorJuego,
         costoDesbloqueoDiaPuntos,
         suscripcion,
         diasDesbloqueados,
-        paquetesTienda,
         puntosPorJuego,
-        vidasMaximas,
         isLoading,
-        isMiniTiendaOpen,
         isComprarPistaOpen: solicitudPista !== null,
         abrirComprarPista,
         comprarPista,
         cerrarComprarPista,
-        abrirMiniTienda,
-        cerrarMiniTienda,
-        consumirVida,
-        gastarPuntos,
-        canjearVidas,
         desbloquearDia,
         isDiaDesbloqueado,
         recargarEconomia,
@@ -438,7 +324,7 @@ export const PlayerEconomyProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 };
 
-// Entrega el saldo y las acciones de la tienda al componente que los necesita.
+// Entrega el saldo, racha y acciones de economía al componente que los necesita.
 export const usePlayerEconomy = (): PlayerEconomyContextType => {
   const context = useContext(PlayerEconomyContext);
   if (!context) {
@@ -446,4 +332,3 @@ export const usePlayerEconomy = (): PlayerEconomyContextType => {
   }
   return context;
 };
-

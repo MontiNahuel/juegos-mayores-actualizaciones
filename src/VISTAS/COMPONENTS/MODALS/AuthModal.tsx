@@ -13,10 +13,11 @@ import {
   shieldCheckmarkOutline,
   arrowBackOutline,
 } from 'ionicons/icons';
-import type { Usuario } from '../../LOGIN/LoginHeader';
+import type { Usuario } from '../Navbar/navbar.types';
 import { migrateGuestProgressToNewUser } from '../../JUEGOS/attemptsService';
 import { API_URL } from '../../../config/api';
 import { guardarSesionAdmin } from '../../AUTH/authUtils';
+import { clearLegacyAuthStorage, setSessionUser } from '../../AUTH/sessionStore';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -90,6 +91,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
     const tryFetch = async (url: string) => {
       const res = await fetch(url, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: cleanEmail, codigo: cleanCode }),
       });
@@ -102,16 +104,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
       if (data && data.success && data.user) {
         const tipo = Number(data.user.tipoUsuario ?? data.user.tipo_usuario ?? data.user.rol ?? 1);
         if (tipo === 2) {
-          guardarSesionAdmin(data.user, data.token || '');
+          guardarSesionAdmin(data.user);
         } else {
-          localStorage.removeItem('asistodo_operador_session');
-          sessionStorage.removeItem('asistodo_operador_session');
-          localStorage.setItem('usuario', JSON.stringify(data.user));
-          localStorage.setItem('user', JSON.stringify(data.user));
-          if (data.token) {
-            localStorage.setItem('token', data.token);
-          }
-          window.dispatchEvent(new Event('user_progress_updated'));
+          clearLegacyAuthStorage();
+          setSessionUser(data.user);
         }
         setCodeEmailInput('');
         setCodigoInput('');
@@ -140,6 +136,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
     try {
       const res = await fetch(`${API_URL}/api/auth/login-sistemas`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: cleanEmail,
@@ -158,7 +155,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
           throw new Error('Acceso denegado: Se requieren permisos de administrador.');
         }
 
-        guardarSesionAdmin(data.user, data.token || '');
+        guardarSesionAdmin(data.user);
         setAdminEmailInput('');
         setAdminPasswordInput('');
         onSuccess(data.user);
@@ -197,6 +194,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
     const tryRegister = async (url: string) => {
       const res = await fetch(url, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: cleanName,
@@ -223,8 +221,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
           setInfoMessage(data.message || 'Te enviamos tu código de 6 dígitos a tu correo.');
         } else if (data.user) {
           // Pre-activada por admin o modo directo
-          localStorage.setItem('usuario', JSON.stringify(data.user));
-          if (data.token) localStorage.setItem('token', data.token);
+          clearLegacyAuthStorage();
+          setSessionUser(data.user);
           if (data.user.id) await migrateGuestProgressToNewUser(data.user.id);
           setRegisteredUser(data.user);
         }
@@ -252,6 +250,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
     const tryVerify = async (url: string) => {
       const res = await fetch(url, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: pendingEmail,
@@ -269,10 +268,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
       const data = await tryVerify(`${API_URL}/api/auth/verificar-codigo-registro`);
 
       if (data && data.success && data.user) {
-        localStorage.setItem('usuario', JSON.stringify(data.user));
-        if (data.token) {
-          localStorage.setItem('token', data.token);
-        }
+        clearLegacyAuthStorage();
+        setSessionUser(data.user);
 
         if (data.user.id) {
           await migrateGuestProgressToNewUser(data.user.id);
@@ -302,6 +299,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
     const tryResend = async (url: string) => {
       const res = await fetch(url, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: pendingEmail }),
       });

@@ -6,6 +6,7 @@ import { getCalendarMonthData } from '../CALENDAR/calendarService';
 import type { DayChallenge } from '../CALENDAR/types';
 
 const economy = vi.hoisted(() => ({
+  isAuthenticated: true,
   puntos: 100, costoDesbloqueoDiaPuntos: 30,
   isDiaDesbloqueado: vi.fn(), desbloquearDia: vi.fn(),
 }));
@@ -13,7 +14,7 @@ vi.mock('../../../context/PlayerEconomyContext', () => ({ usePlayerEconomy: () =
 vi.mock('../CALENDAR/calendarService', () => ({ getCalendarMonthData: vi.fn() }));
 vi.mock('../../JUEGOS/useClassicChallenge', () => ({ useClassicChallenge: () => ({ completion: {} }) }));
 vi.mock('../ANIMATIONS/SuccessFireworks', () => ({ SuccessFireworks: () => null }));
-vi.mock('../GameHeader', () => ({ GameHeader: () => <header>Navbar del juego</header> }));
+vi.mock('../Navbar/AppNavbar', () => ({ default: () => <header>Navbar del juego</header> }));
 
 const previous: DayChallenge = { day: 31, dateKey: '2026-10-31', dateStr: '31 de Octubre', dayName: 'Sábado', config: { solution: 'HOGAR' }, status: 'pending' };
 function Destination() {
@@ -27,7 +28,7 @@ function renderResult(gameId: 'wordle' | 'sudoku' | 'sopa_letras' | 'crucigrama'
 }
 beforeEach(() => {
   vi.clearAllMocks();
-  localStorage.setItem('token', 'test');
+  economy.isAuthenticated = true;
   economy.puntos = 100;
   economy.isDiaDesbloqueado.mockReturnValue(true);
   economy.desbloquearDia.mockResolvedValue({ success: true });
@@ -103,7 +104,7 @@ it('evita compras sin saldo suficiente', async () => {
 });
 
 it('pide iniciar sesión a invitados antes de comprar', async () => {
-  localStorage.clear();
+  economy.isAuthenticated = false;
   economy.isDiaDesbloqueado.mockReturnValue(false);
   renderResult();
   fireEvent.click(await screen.findByRole('button', { name: 'Iniciar sesión / Registrarse' }));
