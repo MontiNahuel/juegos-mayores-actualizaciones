@@ -1,4 +1,4 @@
-/* Permite editar precios, paquetes y puntos de los juegos. */
+/* Permite editar precios, puntos y bonus por racha de los juegos. */
 import { useState, useEffect } from 'react';
 import {
   CoinsIcon,
@@ -15,7 +15,6 @@ import {
   PuzzleIcon,
   StarIcon,
   TrophyIcon,
-  ShoppingBagIcon,
   StopwatchIcon,
   ThumbsUpIcon,
   XCircleIcon,
@@ -161,7 +160,7 @@ function Seccion({ Icon, titulo, descripcion, accion, children }) {
   );
 }
 
-// Permite editar precios, paquetes y puntos de los juegos.
+// Permite editar precios, puntos y bonus por racha de los juegos.
 export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso, embebido = false }) {
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
@@ -190,7 +189,15 @@ export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso, em
     crucigrama: 70,
     narrativo: 80,
   });
-  const [paquetesTienda, setPaquetesTienda] = useState([]);
+  const [bonusRacha, setBonusRacha] = useState({
+    activo: false,
+    modo: 'porcentaje',
+    tramos: [
+      { dias: 10, valor: 10 },
+      { dias: 15, valor: 20 },
+      { dias: 20, valor: 30 },
+    ],
+  });
 
   // Arma las cabeceras con la sesión para consultar el panel.
   const getAuthHeaders = () => {
@@ -239,7 +246,18 @@ export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso, em
             narrativo: 80,
           }
         );
-        setPaquetesTienda(data.paquetes_tienda || []);
+        if (data.bonus_racha) {
+          setBonusRacha({
+            activo: Boolean(data.bonus_racha.activo),
+            modo: data.bonus_racha.modo === 'puntos_fijos' ? 'puntos_fijos' : 'porcentaje',
+            tramos: Array.isArray(data.bonus_racha.tramos)
+              ? data.bonus_racha.tramos.map((tramo) => ({
+                  dias: Number(tramo.dias) || 1,
+                  valor: Number(tramo.valor) || 0,
+                }))
+              : [],
+          });
+        }
       } else {
         const err = await res.json().catch(/* Maneja el fallo de esta operación. */ () => ({}));
         setErrorMsg(err.detail || 'No se pudo cargar la configuración de economía.');
@@ -319,34 +337,32 @@ export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso, em
     }));
   };
 
-  // Actualiza el campo editado de un paquete de vidas.
-  const handlePaqueteChange = (index, campo, valor) => {
-    setPaquetesTienda(/* Actualiza paquetes tienda a partir del valor anterior. */ (prev) => {
-      const copy = [...prev];
-      copy[index] = { ...copy[index], [campo]: valor };
-      return copy;
+  // Actualiza el campo editado de un tramo de racha.
+  const handleTramoRachaChange = (index, campo, valor) => {
+    setBonusRacha((prev) => {
+      const tramos = [...prev.tramos];
+      tramos[index] = {
+        ...tramos[index],
+        [campo]: Math.max(campo === 'dias' ? 1 : 0, parseInt(valor, 10) || 0),
+      };
+      return { ...prev, tramos };
     });
   };
 
-  // Quita paquete con los datos de este paso.
-  const handleEliminarPaquete = (index) => {
-    setPaquetesTienda(/* Actualiza paquetes tienda a partir del valor anterior. */ (prev) => prev.filter(/* Conserva los elementos que cumplen esta condición. */ (_, i) => i !== index));
+  // Agrega un tramo de racha con datos sugeridos.
+  const handleAgregarTramoRacha = () => {
+    setBonusRacha((prev) => {
+      const ultimoDia = prev.tramos.reduce((maximo, tramo) => Math.max(maximo, tramo.dias), 0);
+      return { ...prev, tramos: [...prev.tramos, { dias: ultimoDia + 5, valor: 10 }] };
+    });
   };
 
-  // Agrega paquete con los datos de este paso.
-  const handleAgregarPaquete = () => {
-    const nuevoId = `pack_${paquetesTienda.length + 1}`;
-    setPaquetesTienda(/* Actualiza paquetes tienda a partir del valor anterior. */ (prev) => [
+  // Quita el tramo de racha indicado.
+  const handleEliminarTramoRacha = (index) => {
+    setBonusRacha((prev) => ({
       ...prev,
-      {
-        id: nuevoId,
-        vidas: 1,
-        puntos: costoVidaPuntos,
-        popular: false,
-        badge: '',
-        descuento: '',
-      },
-    ]);
+      tramos: prev.tramos.filter((_, i) => i !== index),
+    }));
   };
 
   // Valida el formulario y guarda los cambios.
@@ -355,6 +371,12 @@ export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso, em
     setGuardando(true);
     setErrorMsg('');
     setExitoMsg('');
+
+    if (bonusRacha.activo && bonusRacha.tramos.length === 0) {
+      setErrorMsg('El bonus por racha activo necesita al menos un tramo.');
+      setGuardando(false);
+      return;
+    }
 
     try {
       const payload = {
@@ -371,14 +393,17 @@ export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso, em
         },
         escalas_tiempo_por_juego: escalasTiempoPorJuego,
         puntos_por_juego: puntosPorJuego,
-        paquetes_tienda: paquetesTienda.map(/* Prepara el resultado de cada elemento. */ (p, idx) => ({
-          id: p.id || `pack_${idx + 1}`,
-          vidas: Math.max(1, parseInt(p.vidas, 10) || 1),
-          puntos: Math.max(1, parseInt(p.puntos, 10) || 1),
-          popular: Boolean(p.popular),
-          badge: p.badge ? p.badge.trim() : null,
-          descuento: p.descuento ? p.descuento.trim() : null,
-        })),
+        bonus_racha: {
+          activo: Boolean(bonusRacha.activo),
+          modo: bonusRacha.modo,
+          tramos: [...bonusRacha.tramos]
+            .filter((tramo, idx, lista) => lista.findIndex((otro) => otro.dias === tramo.dias) === idx)
+            .sort((a, b) => a.dias - b.dias)
+            .map((tramo) => ({
+              dias: Math.max(1, parseInt(tramo.dias, 10) || 1),
+              valor: Math.max(0, parseInt(tramo.valor, 10) || 0),
+            })),
+        },
         vidas_maximas: vidasMaximas.trim() ? parseInt(vidasMaximas, 10) : null,
       };
 
@@ -462,7 +487,7 @@ export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso, em
                 required
                 className={`${CAMPO} mt-1.5`}
               />
-              <p className={AYUDA}>Precio de referencia en la mini-tienda.</p>
+              <p className={AYUDA}>Precio de referencia para reponer vidas.</p>
             </div>
 
             <div>
@@ -541,6 +566,111 @@ export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso, em
                 </div>
               );
             })}
+          </div>
+        </Seccion>
+
+        <Seccion
+          Icon={SparklesIcon}
+          titulo="Bonus por racha"
+          descripcion="Puntos extra al completar un desafío según los días consecutivos de ingreso. Se aplica solo el tramo más alto alcanzado."
+          accion={
+            <label className="inline-flex w-fit cursor-pointer items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-bold text-slate-300">
+              <input
+                type="checkbox"
+                checked={bonusRacha.activo}
+                onChange={(e) => setBonusRacha((prev) => ({ ...prev, activo: e.target.checked }))}
+                className="rounded border-white/20 bg-slate-950 text-amber-500 focus:ring-amber-500/40"
+              />
+              <span>Activo</span>
+            </label>
+          }
+        >
+          <div className="space-y-2.5">
+            <div className="flex flex-col gap-2 sm:max-w-xs">
+              <label className={ETIQUETA}>Modo del bonus</label>
+              <select
+                value={bonusRacha.modo}
+                onChange={(e) => setBonusRacha((prev) => ({ ...prev, modo: e.target.value }))}
+                className={CAMPO}
+              >
+                <option value="porcentaje">Porcentaje del puntaje base</option>
+                <option value="puntos_fijos">Puntos fijos por tramo</option>
+              </select>
+              <p className={AYUDA}>
+                {bonusRacha.modo === 'porcentaje'
+                  ? 'El valor de cada tramo es un porcentaje (máximo 500%).'
+                  : 'El valor de cada tramo son puntos que se suman al puntaje base.'}
+              </p>
+            </div>
+
+            <div className="hidden grid-cols-12 gap-2 px-2 text-[10px] font-bold uppercase tracking-wider text-slate-600 sm:grid">
+              <div className="col-span-5">Días de racha</div>
+              <div className="col-span-5">
+                {bonusRacha.modo === 'porcentaje' ? 'Boost (%)' : 'Puntos extra'}
+              </div>
+              <div className="col-span-2 text-center">Quitar</div>
+            </div>
+
+            {bonusRacha.tramos.length === 0 && (
+              <div className="rounded-xl border border-dashed border-white/10 px-4 py-6 text-center text-xs text-slate-500">
+                No hay tramos configurados. Agregá el primero para definir desde qué racha suma.
+              </div>
+            )}
+
+            {bonusRacha.tramos.map((tramo, idx) => (
+              <div
+                key={idx}
+                className="grid grid-cols-12 items-center gap-2 rounded-xl border border-white/10 bg-white/[0.02] p-2.5"
+              >
+                <div className="col-span-6 flex items-center gap-2 sm:col-span-5">
+                  <input
+                    type="number"
+                    min="1"
+                    value={tramo.dias}
+                    onChange={(e) => handleTramoRachaChange(idx, 'dias', e.target.value)}
+                    className={`${CAMPO_MINI} text-right`}
+                  />
+                  <span className="text-[10px] font-semibold text-slate-500">días</span>
+                </div>
+                <div className="col-span-4 flex items-center gap-2 sm:col-span-5">
+                  <input
+                    type="number"
+                    min="0"
+                    max={bonusRacha.modo === 'porcentaje' ? 500 : 10000}
+                    value={tramo.valor}
+                    onChange={(e) => handleTramoRachaChange(idx, 'valor', e.target.value)}
+                    className={`${CAMPO_MINI} text-right`}
+                  />
+                  <span className="text-[10px] font-semibold text-amber-300">
+                    {bonusRacha.modo === 'porcentaje' ? '%' : 'pts'}
+                  </span>
+                </div>
+                <div className="col-span-2 flex justify-center">
+                  <button
+                    type="button"
+                    onClick={() => handleEliminarTramoRacha(idx)}
+                    title="Eliminar este tramo"
+                    className="rounded-lg p-1.5 text-slate-500 transition hover:bg-rose-500/10 hover:text-rose-300"
+                  >
+                    <TrashIcon size={14} />
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            <div className="flex flex-col gap-2 pt-2 sm:flex-row sm:items-center sm:justify-between">
+              <button
+                type="button"
+                onClick={handleAgregarTramoRacha}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-bold text-amber-300 transition hover:bg-amber-500/15"
+              >
+                <PlusIcon size={14} />
+                <span>Agregar tramo</span>
+              </button>
+              <span className="text-[10px] text-slate-600">
+                Si la racha supera varios tramos, se aplica el de más días.
+              </span>
+            </div>
           </div>
         </Seccion>
 
@@ -746,110 +876,6 @@ export default function ModalEconomia({ abierto, onCerrar, onGuardadoExitoso, em
           </div>
         </Seccion>
 
-        <Seccion
-          Icon={ShoppingBagIcon}
-          titulo="Mini-tienda"
-          descripcion="Paquetes de vidas que los jugadores pueden canjear con sus puntos."
-          accion={
-            <button
-              type="button"
-              onClick={handleAgregarPaquete}
-              className="inline-flex w-fit items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-bold text-slate-300 transition hover:bg-white/10"
-            >
-              <PlusIcon size={14} />
-              <span>Agregar paquete</span>
-            </button>
-          }
-        >
-          <div className="space-y-2.5">
-            {paquetesTienda.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-white/10 px-4 py-6 text-center text-xs text-slate-500">
-                No hay paquetes configurados. Usá “Agregar paquete” para crear el primero.
-              </div>
-            ) : (
-              paquetesTienda.map((pack, idx) => (
-                <div
-                  key={idx}
-                  className={`flex flex-col gap-3 rounded-xl border px-3 py-3 transition md:flex-row md:items-center md:justify-between ${
-                    pack.popular
-                      ? 'border-amber-500/40 bg-amber-500/[0.06]'
-                      : 'border-white/10 bg-white/[0.02]'
-                  }`}
-                >
-                  <div className="flex flex-wrap items-center gap-3">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-md bg-white/5 font-mono text-[10px] font-bold text-slate-400">
-                      {idx + 1}
-                    </span>
-
-                    <label className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400">
-                      Otorga
-                      <input
-                        type="number"
-                        min="1"
-                        value={pack.vidas}
-                        onChange={(e) =>
-                          handlePaqueteChange(idx, 'vidas', parseInt(e.target.value, 10) || 1)
-                        }
-                        className="w-14 rounded-md border border-white/10 bg-slate-950/60 px-2 py-1 text-center text-xs font-bold text-slate-200 focus:border-amber-500/60 focus:outline-none"
-                      />
-                      <span className="font-semibold text-rose-300">vidas</span>
-                    </label>
-
-                    <label className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400">
-                      Por
-                      <input
-                        type="number"
-                        min="1"
-                        value={pack.puntos}
-                        onChange={(e) =>
-                          handlePaqueteChange(idx, 'puntos', parseInt(e.target.value, 10) || 1)
-                        }
-                        className="w-20 rounded-md border border-white/10 bg-slate-950/60 px-2 py-1 text-center text-xs font-bold text-slate-200 focus:border-amber-500/60 focus:outline-none"
-                      />
-                      <span className="font-semibold text-amber-300">pts</span>
-                    </label>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-2">
-                    <input
-                      type="text"
-                      placeholder="Badge"
-                      value={pack.badge || ''}
-                      onChange={(e) => handlePaqueteChange(idx, 'badge', e.target.value)}
-                      className="w-24 rounded-md border border-white/10 bg-slate-950/60 px-2.5 py-1 text-xs text-slate-200 placeholder:text-slate-600 focus:border-amber-500/60 focus:outline-none"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Ahorro"
-                      value={pack.descuento || ''}
-                      onChange={(e) => handlePaqueteChange(idx, 'descuento', e.target.value)}
-                      className="w-28 rounded-md border border-white/10 bg-slate-950/60 px-2.5 py-1 text-xs text-slate-200 placeholder:text-slate-600 focus:border-amber-500/60 focus:outline-none"
-                    />
-
-                    <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-2 py-1 text-[11px] font-semibold text-slate-400 transition hover:bg-white/5">
-                      <input
-                        type="checkbox"
-                        checked={Boolean(pack.popular)}
-                        onChange={(e) => handlePaqueteChange(idx, 'popular', e.target.checked)}
-                        className="rounded border-white/20 bg-slate-950 text-amber-500 focus:ring-amber-500/40"
-                      />
-                      <span>Destacado</span>
-                    </label>
-
-                    <button
-                      type="button"
-                      onClick={() => handleEliminarPaquete(idx)}
-                      title="Eliminar este paquete"
-                      className="rounded-lg p-1.5 text-slate-500 transition hover:bg-rose-500/10 hover:text-rose-300"
-                    >
-                      <TrashIcon size={15} />
-                    </button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </Seccion>
       </form>
 
       <div className="sticky bottom-0 z-10 -mx-4 mt-8 border-t border-white/10 bg-slate-950/90 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
