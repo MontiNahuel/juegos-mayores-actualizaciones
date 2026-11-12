@@ -132,7 +132,7 @@ export default function EstadisticasPartidaEtapa5({ estado, historial, corte, ca
         <p className="m-0 text-base text-[#76583a]">{cronica.meses.length === cronica.totalMeses ? 'El reinado completo' : `${cronica.meses.length} de ${cronica.totalMeses} meses en la corte`}</p>
         <h2 className="mx-auto mt-2 max-w-[27ch] text-[clamp(25px,4vw,42px)] leading-tight text-[#392312]">{cierre?.titulo || 'Así fue tu reinado'}</h2>
         {cierre?.texto && <p className="mx-auto mt-2 max-w-[65ch] text-[clamp(15px,2vw,18px)] leading-relaxed text-[#624831]">{cierre.texto}</p>}
-        <p className="mx-auto mt-3 max-w-[65ch] text-[clamp(15px,2vw,18px)] leading-relaxed">Durante {cronica.meses.length} {cronica.meses.length === 1 ? 'mes' : 'meses'} tomaste {cronica.eventos} {cronica.eventos === 1 ? 'decisión' : 'decisiones'} ante los acontecimientos y participaste en {cronica.conversaciones} {cronica.conversaciones === 1 ? 'conversación' : 'conversaciones'} con tu corte.</p>
+        <p className="mx-auto mt-3 max-w-[65ch] text-[clamp(15px,2vw,18px)] leading-relaxed">Durante {cronica.meses.length} {cronica.meses.length === 1 ? 'mes' : 'meses'}, tomaste {cronica.eventos} {cronica.eventos === 1 ? 'decisión' : 'decisiones'} ante los acontecimientos y participaste en {cronica.conversaciones} {cronica.conversaciones === 1 ? 'conversación' : 'conversaciones'} con tu corte.</p>
       </header>
 
       {cronica.meses.length ? <>

@@ -95,7 +95,7 @@ export default function MostrarResultadoEtapa4({ resultado, finalizacion, efecto
 
       <div className="mt-2.5 flex w-[min(88vw,29rem)] flex-wrap justify-center gap-2 max-[480px]:[&_.boton-narrativo]:basis-full">
         {onContinuar && selloTerminado === identidad && <div ref={botonContinuar} className="max-[480px]:w-full"><BotonNarrativo disabled={saliendo || continuando} onClick={continuar}>{continuando ? 'Continuando...' : 'Continuar'}</BotonNarrativo></div>}
-        {onVerEstadisticas && <BotonNarrativo disabled={cargandoEstadisticas} onClick={onVerEstadisticas}>{cargandoEstadisticas ? 'Cargando estadisticas...' : 'Ver estadisticas'}</BotonNarrativo>}
+        {onVerEstadisticas && <BotonNarrativo disabled={cargandoEstadisticas} onClick={onVerEstadisticas}>{cargandoEstadisticas ? 'Cargando estadísticas...' : 'Ver estadísticas'}</BotonNarrativo>}
         {esFinal && onTerminar && <BotonNarrativo disabled={reiniciando} onClick={onTerminar}>{reiniciando ? 'Reiniciando...' : 'Terminar prueba'}</BotonNarrativo>}
       </div>
     </section>

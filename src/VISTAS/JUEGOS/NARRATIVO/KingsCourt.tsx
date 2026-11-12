@@ -388,7 +388,7 @@ export default function KingsCourt() {
       ]);
       setEstadisticas({ estado, historial, corte });
     } catch (e: any) {
-      setError(`No se pudieron cargar las estadisticas. ${e?.message || ''}`);
+      setError(`No se pudieron cargar las estadísticas. ${e?.message || ''}`);
     } finally { setCargandoEstadisticas(false); }
   };
 

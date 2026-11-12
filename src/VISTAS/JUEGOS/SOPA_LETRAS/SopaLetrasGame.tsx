@@ -596,7 +596,7 @@ hintDisabled: !progressReady || showVictoryModal }} />
                   key={idx}
                   style={{
                     alignItems: 'center',
-                    background: isJustFound ? '#b8e3d7' : isFound ? '#d5eee6' : 'var(--app-panel-raised)',
+                    background: isJustFound ? '#6EE7B7' : isFound ? '#A7F3D0' : 'var(--app-panel-raised)',
                     border: isJustFound ? '2px solid #73b9a6' : `1.5px solid ${isFound ? '#73b9a6' : 'var(--app-border)'}`,
                     borderRadius: 12,
                     boxShadow: isJustFound
@@ -666,17 +666,17 @@ hintDisabled: !progressReady || showVictoryModal }} />
                   cellColor = '#DC2626';
                   cellBorder = '2px solid #EF4444';
                 } else if (isJustFound) {
-                  cellBg = '#A7F3D0';
-                  cellColor = '#065F46';
+                  cellBg = '#6EE7B7';
+                  cellColor = '#064E3B';
                   cellBorder = '2px solid #059669';
                 } else if (isSelected) {
                   cellBg = '#f0bb98';
                   cellColor = '#172433';
                   cellBorder = '2px solid #c88960';
                 } else if (isFound) {
-                  cellBg = '#E8F8F5';
-                  cellColor = '#17695F';
-                  cellBorder = '1.5px solid #A3E5D9';
+                  cellBg = '#A7F3D0';
+                  cellColor = '#064E3B';
+                  cellBorder = '2px solid #10B981';
                 }
 
                 return (
