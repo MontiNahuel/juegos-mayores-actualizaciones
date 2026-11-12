@@ -180,6 +180,10 @@ export const PlayerEconomyProvider: React.FC<{ children: React.ReactNode }> = ({
                 typeof userData.costo_pista_puntos === 'number'
                   ? userData.costo_pista_puntos
                   : 20,
+              costoDesbloqueoDiaPuntos:
+                typeof userData.costo_desbloqueo_dia_puntos === 'number'
+                  ? userData.costo_desbloqueo_dia_puntos
+                  : 100,
               isLoading: false,
             })
           );

@@ -87,6 +87,7 @@ describe('economía y racha compartida en Redux con cookies HttpOnly', () => {
               suscripcion: 'basica',
               dias_desbloqueados: [],
               costo_pista_puntos: 20,
+              costo_desbloqueo_dia_puntos: 80,
             })
           );
         }
@@ -104,6 +105,7 @@ describe('economía y racha compartida en Redux con cookies HttpOnly', () => {
       rachaHoyIngresada: true,
     });
     expect(screen.getByTestId('saldo').textContent).toBe('500:4');
+    expect(economia.costoDesbloqueoDiaPuntos).toBe(80);
 
     const urls = vi.mocked(fetch).mock.calls.map(([u]) => String(u));
     expect(urls.some((u) => u.includes('/api/economy/config'))).toBe(false);
@@ -243,6 +245,7 @@ describe('economía y racha compartida en Redux con cookies HttpOnly', () => {
       diasDesbloqueados: ['sudoku:2026-10-01'],
     });
     expect(economia.isDiaDesbloqueado('sudoku', '2026-10-01')).toBe(true);
+    expect(economia.costoDesbloqueoDiaPuntos).toBe(100);
 
     const meCalls = vi.mocked(fetch).mock.calls.filter(([u]) => String(u).endsWith('/api/economy/me'));
     expect(meCalls).toHaveLength(1);
