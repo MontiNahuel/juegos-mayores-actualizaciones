@@ -1,13 +1,67 @@
-/* Da estilo a las pantallas del panel de administración. */
+/* Da estilo a las pantallas del panel de administración con las directivas de estilo CogniJuegos */
 @import "tailwindcss";
+
+:root {
+  color-scheme: dark;
+  --app-background: #151e2b;
+  --surface: #2a394c;
+  --narrative-surface: #2e3c50;
+  --navbar: #1b2737;
+  --text: #f3f6fa;
+  --secondary: #c0cbd7;
+  --border: #52647b;
+  --mint: #99dcd1;
+  --peach: #f0bb98;
+  --lavender: #c8bbf0;
+  --sky: #a8ccef;
+  --gold: #ecd098;
+  --focus: #f3d894;
+}
 
 @layer base {
   body {
-    background-color: #0b0f19;
-    color: #f3f4f6;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background-color: #151e2b;
+    color: #f3f6fa;
+    font-family: 'Nunito Sans', 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
     margin: 0;
     padding: 0;
     -webkit-font-smoothing: antialiased;
+    color-scheme: dark;
+    line-height: 1.55;
+  }
+
+  /* Desplegables nativos con la paleta cognitiva */
+  select {
+    color-scheme: dark;
+  }
+
+  select option,
+  select optgroup {
+    background-color: #1b2737;
+    color: #f3f6fa;
+  }
+
+  select option:checked {
+    background-color: #2a394c;
+    color: #ecd098;
+  }
+
+  /* Barras de desplazamiento acordes al diseño de CogniJuegos */
+  ::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #151e2b;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #52647b;
+    border-radius: 9999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #c0cbd7;
   }
 }

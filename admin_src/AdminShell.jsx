@@ -1,4 +1,4 @@
-/* Marco visual del panel: navegación lateral, cabecera y acciones comunes. */
+/* Marco visual del panel: navegación lateral, cabecera y acciones comunes con estilo CogniJuegos. */
 import { useState } from 'react';
 import {
   BookOpenIcon,
@@ -62,7 +62,7 @@ export default function AdminShell({
   const [menuAbierto, setMenuAbierto] = useState(false);
   const titulo = TITULOS[active] || TITULOS.resumen;
   const esHerramienta = HERRAMIENTAS.some(({ id }) => id === active);
-  const ancho = esHerramienta ? 'max-w-[1400px]' : 'max-w-6xl';
+  const ancho = esHerramienta ? 'w-full max-w-[1780px] 2xl:max-w-[1920px]' : 'mx-auto max-w-6xl';
 
   const navegar = (vista) => {
     setMenuAbierto(false);
@@ -75,25 +75,25 @@ export default function AdminShell({
   };
 
   const claseItem =
-    'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition';
+    'flex w-full items-center gap-3 rounded-[9px] px-3 py-2.5 text-sm font-semibold transition';
 
   const navegacion = (
-    <div className="flex h-full flex-col">
-      <div className="flex items-center gap-3 px-5 py-6">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20">
+    <div className="flex h-full flex-col bg-[#1b2737]">
+      <div className="flex items-center gap-3 px-5 py-6 border-b border-[#364454]">
+        <div className="flex h-10 w-10 items-center justify-center rounded-[9px] bg-[#ecd098] text-[#172433]">
           <CrownIcon size={20} />
         </div>
         <div>
-          <p className="text-sm font-black tracking-tight text-white">CogniJuegos</p>
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-400/80">
+          <p className="text-sm font-bold tracking-tight text-[#f3f6fa]">CogniJuegos</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#ecd098]">
             Torre de Control
           </p>
         </div>
       </div>
 
-      <nav className="flex-1 space-y-6 overflow-y-auto px-3 pb-4">
+      <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-5">
         <div className="space-y-1">
-          <p className="px-3 pb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
+          <p className="px-3 pb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#c0cbd7]">
             Panel
           </p>
           {VISTAS.map(({ id, label, icon: Icon }) => (
@@ -104,8 +104,8 @@ export default function AdminShell({
               aria-current={active === id ? 'page' : undefined}
               className={`${claseItem} ${
                 active === id
-                  ? 'bg-amber-500/10 text-amber-300 ring-1 ring-amber-500/20'
-                  : 'text-slate-400 hover:bg-white/5 hover:text-slate-100'
+                  ? 'bg-[#2e3c50] text-[#ecd098] border border-[#52647b]'
+                  : 'text-[#c0cbd7] hover:bg-[#2a394c] hover:text-[#f3f6fa]'
               }`}
             >
               <Icon size={17} />
@@ -115,7 +115,7 @@ export default function AdminShell({
         </div>
 
         <div className="space-y-1">
-          <p className="px-3 pb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
+          <p className="px-3 pb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#c0cbd7]">
             Herramientas
           </p>
           {HERRAMIENTAS.map(({ id, label, icon: Icon }) => (
@@ -126,8 +126,8 @@ export default function AdminShell({
               aria-current={active === id ? 'page' : undefined}
               className={`${claseItem} ${
                 active === id
-                  ? 'bg-amber-500/10 text-amber-300 ring-1 ring-amber-500/20'
-                  : 'text-slate-400 hover:bg-white/5 hover:text-slate-100'
+                  ? 'bg-[#2e3c50] text-[#ecd098] border border-[#52647b]'
+                  : 'text-[#c0cbd7] hover:bg-[#2a394c] hover:text-[#f3f6fa]'
               }`}
             >
               <Icon size={17} />
@@ -137,11 +137,11 @@ export default function AdminShell({
         </div>
       </nav>
 
-      <div className="space-y-1 border-t border-white/5 px-3 py-4">
+      <div className="space-y-1 border-t border-[#364454] px-3 py-4">
         <button
           type="button"
           onClick={irAlMenuDeJuegos}
-          className={`${claseItem} text-slate-400 hover:bg-white/5 hover:text-slate-100`}
+          className={`${claseItem} text-[#c0cbd7] hover:bg-[#2a394c] hover:text-[#f3f6fa]`}
         >
           <BookOpenIcon size={17} />
           Ir a Juegos
@@ -150,7 +150,7 @@ export default function AdminShell({
           type="button"
           onClick={onSSO}
           disabled={saltandoSSO}
-          className={`${claseItem} text-slate-400 hover:bg-white/5 hover:text-slate-100 disabled:opacity-50`}
+          className={`${claseItem} text-[#c0cbd7] hover:bg-[#2a394c] hover:text-[#f3f6fa] disabled:opacity-50`}
         >
           <ShieldIcon size={17} />
           {saltandoSSO ? 'Conectando...' : 'Usuarios Central'}
@@ -158,7 +158,7 @@ export default function AdminShell({
         <button
           type="button"
           onClick={onLogout}
-          className={`${claseItem} text-slate-500 hover:bg-rose-500/10 hover:text-rose-300`}
+          className={`${claseItem} text-[#c0cbd7] hover:bg-[#2a394c] hover:text-[#f0bb98]`}
         >
           <LogOutIcon size={17} />
           Cerrar sesión
@@ -168,8 +168,8 @@ export default function AdminShell({
   );
 
   return (
-    <div className="min-h-screen bg-slate-950 font-sans text-slate-100 selection:bg-amber-500/30">
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-white/5 bg-slate-950 lg:block">
+    <div className="min-h-screen bg-[#151e2b] font-sans text-[#f3f6fa] selection:bg-[#ecd098]/30">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-[#364454] bg-[#1b2737] lg:block">
         {navegacion}
       </aside>
 
@@ -179,14 +179,14 @@ export default function AdminShell({
             type="button"
             aria-label="Cerrar menú"
             onClick={() => setMenuAbierto(false)}
-            className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm"
+            className="absolute inset-0 bg-[#151e2b]/80 backdrop-blur-sm"
           />
-          <aside className="absolute inset-y-0 left-0 w-72 border-r border-white/5 bg-slate-950 shadow-2xl">
+          <aside className="absolute inset-y-0 left-0 w-72 border-r border-[#364454] bg-[#1b2737] shadow-2xl">
             <button
               type="button"
               aria-label="Cerrar menú"
               onClick={() => setMenuAbierto(false)}
-              className="absolute right-3 top-3 rounded-lg p-2 text-slate-400 transition hover:bg-white/5 hover:text-white"
+              className="absolute right-3 top-3 rounded-[9px] p-2 text-[#c0cbd7] transition hover:bg-[#2a394c] hover:text-[#f3f6fa]"
             >
               <XIcon size={18} />
             </button>
@@ -196,14 +196,14 @@ export default function AdminShell({
       )}
 
       <div className="lg:pl-64">
-        <header className="sticky top-0 z-20 border-b border-white/5 bg-slate-950/85 backdrop-blur">
+        <header className="sticky top-0 z-20 border-b border-[#364454] bg-[#1b2737]/95 backdrop-blur">
           <div className={`mx-auto flex h-16 ${ancho} items-center justify-between gap-4 px-4 sm:px-6 lg:px-8`}>
             <div className="flex min-w-0 items-center gap-3">
               <button
                 type="button"
                 onClick={() => setMenuAbierto(true)}
                 aria-label="Abrir menú"
-                className="rounded-xl p-2 text-slate-400 transition hover:bg-white/5 hover:text-white lg:hidden"
+                className="rounded-[9px] p-2 text-[#c0cbd7] transition hover:bg-[#2a394c] hover:text-[#f3f6fa] lg:hidden"
               >
                 <MenuIcon size={20} />
               </button>
@@ -211,31 +211,31 @@ export default function AdminShell({
                 <button
                   type="button"
                   onClick={() => navegar('resumen')}
-                  className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs font-semibold text-slate-300 transition hover:bg-white/10 hover:text-white"
+                  className="inline-flex items-center gap-1 rounded-[9px] border border-[#52647b] bg-[#2a394c] px-2.5 py-1.5 text-xs font-semibold text-[#f3f6fa] transition hover:bg-[#2e3c50]"
                 >
                   <ChevronRightIcon size={14} className="rotate-180" />
                   <span className="hidden sm:inline">Resumen</span>
                 </button>
               )}
               <div className="min-w-0">
-                <h1 className="truncate text-base font-bold text-white">{titulo.titulo}</h1>
-                <p className="truncate text-xs text-slate-500">{titulo.detalle}</p>
+                <h1 className="truncate text-base font-bold text-[#f3f6fa]">{titulo.titulo}</h1>
+                <p className="truncate text-xs text-[#c0cbd7]">{titulo.detalle}</p>
               </div>
             </div>
 
             <div className="flex items-center gap-3">
               <div className="hidden text-right sm:block">
-                <p className="text-xs font-bold text-slate-200">{operador?.user || 'Operador'}</p>
-                <p className="text-[11px] text-slate-500">{operador?.email || 'Sesión activa'}</p>
+                <p className="text-xs font-bold text-[#f3f6fa]">{operador?.user || 'Operador'}</p>
+                <p className="text-[11px] text-[#c0cbd7]">{operador?.email || 'Sesión activa'}</p>
               </div>
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-[11px] font-black text-amber-300 ring-1 ring-white/10">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#2a394c] text-[11px] font-bold text-[#ecd098] border border-[#52647b]">
                 {iniciales(operador?.user)}
               </div>
             </div>
           </div>
         </header>
 
-        <main className={`mx-auto w-full ${ancho} px-4 py-8 sm:px-6 lg:px-8`}>{children}</main>
+        <main className={`mx-auto w-full ${ancho} px-4 py-7 sm:px-6 lg:px-8`}>{children}</main>
       </div>
     </div>
   );

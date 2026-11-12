@@ -1,24 +1,26 @@
-/* Permite editar universos con sus recursos y reglas iniciales. */
+/* Permite listar, crear y editar universos narrativos con diseño CogniJuegos. */
 import { useState, useEffect } from 'react';
 import {
   CrownIcon,
   PlusIcon,
+  SearchIcon,
   EditIcon,
   TrashIcon,
   CheckIcon,
   AlertTriangleIcon,
-  CoinsIcon,
   RefreshIcon,
   XIcon,
+  CoinsIcon,
 } from '../Icons';
 import ImageUploadField from './ImageUploadField';
+import { textoDelDetalle } from './erroresApi';
 
-// Permite editar universos con sus recursos y reglas iniciales.
 export default function UniversosTab({ onUniversosChange }) {
   const [universos, setUniversos] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState('');
   const [exito, setExito] = useState('');
+  const [busqueda, setBusqueda] = useState('');
 
   // Modal Crear/Editar
   const [modalAbierto, setModalAbierto] = useState(false);
@@ -29,16 +31,14 @@ export default function UniversosTab({ onUniversosChange }) {
   const [id, setId] = useState('');
   const [nombre, setNombre] = useState('');
   const [descripcion, setDescripcion] = useState('');
-  const [imagen, setImagen] = useState('/assets/narrative/universos/default.webp');
-  const [icono, setIcono] = useState('crown');
+  const [imagen, setImagen] = useState('/assets/narrative/universos/corte_medieval.webp');
   const [recursos, setRecursos] = useState([
-    { clave: 'oro', nombre: 'Tesoro Real', icono: 'coins', min: 0, max: 100, inicial: 50 },
-    { clave: 'pueblo', nombre: 'Apoyo Popular', icono: 'users', min: 0, max: 100, inicial: 50 },
-    { clave: 'ejercito', nombre: 'Fuerza Militar', icono: 'shield', min: 0, max: 100, inicial: 50 },
-    { clave: 'fe', nombre: 'Fervor Religioso', icono: 'church', min: 0, max: 100, inicial: 50 },
+    { clave: 'oro', nombre: 'Tesoro Real', inicial: 50, max: 100 },
+    { clave: 'pueblo', nombre: 'Apoyo Popular', inicial: 50, max: 100 },
+    { clave: 'ejercito', nombre: 'Fuerza Militar', inicial: 50, max: 100 },
+    { clave: 'fe', nombre: 'Influencia Clerical', inicial: 50, max: 100 },
   ]);
 
-  // Carga universos con los datos de este paso.
   const cargarUniversos = async () => {
     setCargando(true);
     setError('');
@@ -59,72 +59,60 @@ export default function UniversosTab({ onUniversosChange }) {
     }
   };
 
-  useEffect(/* Sincroniza este efecto cuando cambian los datos de los que depende. */ () => {
+  useEffect(() => {
     cargarUniversos();
   }, []);
 
-  // Abre el formulario vacío para crear un registro.
   const abrirModalNuevo = () => {
     setEsEdicion(false);
-    setId('universo_' + Date.now().toString(36));
+    setId('');
     setNombre('');
     setDescripcion('');
-    setImagen('/assets/narrative/universos/default.webp');
-    setIcono('crown');
+    setImagen('/assets/narrative/universos/corte_medieval.webp');
     setRecursos([
-      { clave: 'oro', nombre: 'Tesoro Real', icono: 'coins', min: 0, max: 100, inicial: 50 },
-      { clave: 'pueblo', nombre: 'Apoyo Popular', icono: 'users', min: 0, max: 100, inicial: 50 },
-      { clave: 'ejercito', nombre: 'Fuerza Militar', icono: 'shield', min: 0, max: 100, inicial: 50 },
-      { clave: 'fe', nombre: 'Fervor Religioso', icono: 'church', min: 0, max: 100, inicial: 50 },
+      { clave: 'oro', nombre: 'Tesoro Real', inicial: 50, max: 100 },
+      { clave: 'pueblo', nombre: 'Apoyo Popular', inicial: 50, max: 100 },
+      { clave: 'ejercito', nombre: 'Fuerza Militar', inicial: 50, max: 100 },
+      { clave: 'fe', nombre: 'Influencia Clerical', inicial: 50, max: 100 },
     ]);
     setError('');
     setExito('');
     setModalAbierto(true);
   };
 
-  // Carga el registro en el formulario de edición.
   const abrirModalEditar = (u) => {
     setEsEdicion(true);
     setId(u._id || u.id);
     setNombre(u.nombre || '');
     setDescripcion(u.descripcion || '');
-    setImagen(u.imagen || '/assets/narrative/universos/default.webp');
-    setIcono(u.icono || 'crown');
+    setImagen(u.imagen || '/assets/narrative/universos/corte_medieval.webp');
     setRecursos(u.recursos && u.recursos.length > 0 ? JSON.parse(JSON.stringify(u.recursos)) : []);
     setError('');
     setExito('');
     setModalAbierto(true);
   };
 
-  // Agrega recurso con los datos de este paso.
   const handleAgregarRecurso = () => {
     setRecursos([
       ...recursos,
-      { clave: 'recurso_' + (recursos.length + 1), nombre: 'Nuevo Atributo', icono: 'coins', min: 0, max: 100, inicial: 50 },
+      { clave: 'nuevo_recurso', nombre: 'Nuevo Recurso', inicial: 50, max: 100 },
     ]);
   };
 
-  // Quita recurso con los datos de este paso.
-  const handleEliminarRecurso = (index) => {
-    setRecursos(recursos.filter(/* Conserva los elementos que cumplen esta condición. */ (_, idx) => idx !== index));
-  };
-
-  // Actualiza recurso con los datos de este paso.
-  const handleCambiarRecurso = (index, campo, valor) => {
+  const handleCambiarRecurso = (idx, campo, valor) => {
     const nuevos = [...recursos];
-    nuevos[index] = { ...nuevos[index], [campo]: valor };
+    nuevos[idx][campo] = valor;
     setRecursos(nuevos);
   };
 
-  // Valida el formulario y guarda los cambios.
+  const handleEliminarRecurso = (idx) => {
+    setRecursos(recursos.filter((_, i) => i !== idx));
+  };
+
   const handleGuardar = async (e) => {
     e.preventDefault();
     if (!id.trim() || !nombre.trim()) {
       setError('El identificador y el nombre son obligatorios.');
-      return;
-    }
-    if (recursos.length === 0) {
-      setError('Debes configurar al menos un recurso para el universo.');
       return;
     }
 
@@ -136,16 +124,14 @@ export default function UniversosTab({ onUniversosChange }) {
       _id: id.trim(),
       nombre: nombre.trim(),
       descripcion: descripcion.trim(),
-      icono: icono.trim() || 'crown',
-      imagen: imagen.trim() || '/assets/narrative/universos/default.webp',
-      recursos: recursos.map(/* Prepara el resultado de cada elemento. */ (r) => ({
-        clave: r.clave.trim().toLowerCase(),
+      imagen: imagen.trim() || '/assets/narrative/universos/corte_medieval.webp',
+      recursos: recursos.map((r) => ({
+        clave: r.clave.trim(),
         nombre: r.nombre.trim(),
-        icono: r.icono || 'coins',
-        min: parseInt(r.min, 10) || 0,
-        max: parseInt(r.max, 10) || 100,
         inicial: parseInt(r.inicial, 10) || 50,
+        max: parseInt(r.max, 10) || 100,
       })),
+      variables: {},
     };
 
     try {
@@ -157,11 +143,11 @@ export default function UniversosTab({ onUniversosChange }) {
 
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.detail || 'Error al guardar universo.');
+        throw new Error(textoDelDetalle(err.detail, 'Error al guardar universo.'));
       }
 
       setExito('Universo guardado correctamente.');
-      setTimeout(/* Ejecuta este paso cuando se cumple la espera. */ () => {
+      setTimeout(() => {
         setModalAbierto(false);
         cargarUniversos();
       }, 600);
@@ -173,11 +159,8 @@ export default function UniversosTab({ onUniversosChange }) {
     }
   };
 
-  // Pide borrar el registro y actualiza la lista.
   const handleEliminar = async (uId) => {
-    if (!confirm(`¿Estás seguro de eliminar el universo "${uId}"? Esta acción no se puede deshacer.`)) {
-      return;
-    }
+    if (!confirm(`¿Estás seguro de eliminar el universo "${uId}"? Esta acción no se puede deshacer.`)) return;
     try {
       const res = await fetch(`/api/narrative/admin/universos/${uId}`, {
         method: 'DELETE',
@@ -194,20 +177,33 @@ export default function UniversosTab({ onUniversosChange }) {
     }
   };
 
+  const universosFiltrados = universos.filter((u) => {
+    if (!busqueda.trim()) return true;
+    const q = busqueda.toLowerCase();
+    return (
+      (u.nombre && u.nombre.toLowerCase().includes(q)) ||
+      (u._id && u._id.toLowerCase().includes(q))
+    );
+  });
+
   return (
     <div className="space-y-6">
-      {/* Encabezado de pestaña */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900 p-4 rounded-2xl border border-white/10 shadow-xs">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-amber-500/10 text-amber-300">
-              <CrownIcon size={18} />
-            </span>
-            <h3 className="font-bold text-sm text-slate-100">Universos y Reinos Configurados</h3>
+      {/* Barra de Filtros y Acciones (#2a394c con borde #52647b) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#2a394c] p-3.5 sm:p-4 rounded-[16px] border border-[#52647b]">
+        <div className="flex items-center gap-2.5">
+          <div className="relative">
+            <SearchIcon size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#c0cbd7]" />
+            <input
+              type="text"
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              placeholder="Buscar universo por nombre o ID..."
+              className="pl-8.5 pr-3 py-2 rounded-[9px] border border-[#52647b] bg-[#1b2737] text-xs text-[#f3f6fa] placeholder:text-[#c0cbd7]/70 focus:outline-none focus:border-[#ecd098] focus:ring-1 focus:ring-[#ecd098] w-64 sm:w-80 transition"
+            />
           </div>
-          <p className="text-[11px] text-slate-500 mt-0.5">
-            Define la ambientación, las reglas básicas del reino y los recursos que los jugadores deberán equilibrar.
-          </p>
+          <span className="hidden xl:inline-block text-[11px] font-medium text-[#c0cbd7] pl-1">
+            {universosFiltrados.length} {universosFiltrados.length === 1 ? 'universo' : 'universos'}
+          </span>
         </div>
 
         <div className="flex items-center gap-2">
@@ -215,7 +211,7 @@ export default function UniversosTab({ onUniversosChange }) {
             type="button"
             onClick={cargarUniversos}
             disabled={cargando}
-            className="p-2 rounded-xl border border-white/10 hover:bg-white/10 text-slate-400 transition cursor-pointer"
+            className="p-2 rounded-[9px] border border-[#52647b] bg-[#1b2737] hover:bg-[#2e3c50] text-[#c0cbd7] hover:text-[#f3f6fa] transition cursor-pointer"
             title="Refrescar lista"
           >
             <RefreshIcon size={16} className={cargando ? 'animate-spin' : ''} />
@@ -224,7 +220,7 @@ export default function UniversosTab({ onUniversosChange }) {
           <button
             type="button"
             onClick={abrirModalNuevo}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-xs transition cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-[9px] bg-[#ecd098] hover:bg-[#f6deb0] text-[#172433] font-bold text-xs transition cursor-pointer"
           >
             <PlusIcon size={15} />
             <span>Nuevo Universo</span>
@@ -232,103 +228,101 @@ export default function UniversosTab({ onUniversosChange }) {
         </div>
       </div>
 
-      {/* Notificaciones */}
-      {error && !modalAbierto && (
-        <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-semibold flex items-center gap-2">
-          <AlertTriangleIcon size={16} />
-          <span>{error}</span>
-        </div>
-      )}
-
       {/* Grilla de Universos */}
       {cargando ? (
-        <div className="py-12 text-center text-slate-400 text-xs font-semibold">
-          Cargando universos...
+        <div className="py-16 text-center text-[#c0cbd7] text-xs font-semibold">
+          Cargando universos disponibles...
         </div>
-      ) : universos.length === 0 ? (
-        <div className="py-12 text-center bg-slate-900 rounded-2xl border border-white/10 p-6 text-slate-400 text-xs">
-          No hay universos configurados. Haz clic en "Nuevo Universo" para comenzar.
+      ) : universosFiltrados.length === 0 ? (
+        <div className="py-16 text-center bg-[#2a394c] rounded-[16px] border border-[#52647b] p-8 text-[#c0cbd7] text-xs">
+          No se encontraron universos. Haz clic en "Nuevo Universo" para crear el primero.
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {universos.map(/* Prepara el resultado de cada elemento. */ (u) => {
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5">
+          {universosFiltrados.map((u) => {
             const uid = u._id || u.id;
             return (
               <div
                 key={uid}
-                className="bg-slate-900 rounded-2xl border border-white/10 p-5 shadow-xs hover:border-white/20 transition flex flex-col justify-between"
+                className="bg-[#2e3c50] rounded-[16px] border border-[#52647b] hover:border-[#ecd098]/70 overflow-hidden transition-colors duration-200 flex flex-col justify-between group"
               >
                 <div>
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-2.5">
-                      <div className="relative w-11 h-11 rounded-xl overflow-hidden border border-white/10 bg-amber-500/10 flex-shrink-0 flex items-center justify-center shadow-2xs">
-                        <img
-                          src={u.imagen || '/assets/narrative/universos/default.webp'}
-                          alt={u.nombre}
-                          onError={/* Responde a error desde este control. */ (e) => {
-                            e.target.onerror = null;
-                            e.target.src = '/assets/narrative/universos/default.webp';
-                          }}
-                          className="w-full h-full object-cover"
-                        />
+                  {/* Banner / Ilustración panorámica */}
+                  <div className="relative h-40 bg-[#1b2737] border-b border-[#364454] overflow-hidden">
+                    <img
+                      src={u.imagen || '/assets/narrative/universos/corte_medieval.webp'}
+                      alt={u.nombre}
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = '/assets/narrative/universos/corte_medieval.webp';
+                      }}
+                      className="w-full h-full object-cover group-hover:scale-102 transition duration-300"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#151e2b]/95 via-[#151e2b]/30 to-transparent" />
+                    
+                    <div className="absolute bottom-3 left-4 right-4 flex items-end justify-between gap-3">
+                      <div className="min-w-0">
+                        <span className="text-[10px] font-mono text-[#ecd098] bg-[#1b2737]/85 border border-[#52647b] px-2 py-0.5 rounded-[5px] inline-block mb-1">
+                          {uid}
+                        </span>
+                        <h4 className="font-bold text-base text-[#f3f6fa] truncate drop-shadow-sm">{u.nombre}</h4>
                       </div>
-                      <div>
-                        <h4 className="font-bold text-sm text-slate-100">{u.nombre}</h4>
-                        <span className="text-[10px] font-mono font-semibold text-slate-400">ID: {uid}</span>
-                      </div>
-                    </div>
 
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={/* Responde a click desde este control. */ () => abrirModalEditar(u)}
-                        className="p-1.5 rounded-lg border border-white/10 hover:bg-white/10 text-slate-400 transition cursor-pointer"
-                        title="Editar universo"
-                      >
-                        <EditIcon size={14} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={/* Responde a click desde este control. */ () => handleEliminar(uid)}
-                        className="p-1.5 rounded-lg border border-rose-500/30 bg-rose-500/[0.07] hover:bg-rose-500/15 text-rose-400 transition cursor-pointer"
-                        title="Eliminar universo"
-                      >
-                        <TrashIcon size={14} />
-                      </button>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => abrirModalEditar(u)}
+                          className="p-1.5 rounded-[9px] border border-[#52647b] bg-[#1b2737]/90 hover:bg-[#2a394c] text-[#c0cbd7] hover:text-[#f3f6fa] transition cursor-pointer"
+                          title="Editar universo"
+                        >
+                          <EditIcon size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleEliminar(uid)}
+                          className="p-1.5 rounded-[9px] border border-[#52647b] bg-[#1b2737]/90 hover:bg-[#2a394c] hover:border-[#f0bb98] text-[#f0bb98] transition cursor-pointer"
+                          title="Eliminar universo"
+                        >
+                          <TrashIcon size={14} />
+                        </button>
+                      </div>
                     </div>
                   </div>
 
-                  <p className="text-xs text-slate-400 mt-3 leading-relaxed">
-                    {u.descripcion || 'Sin descripción detallada.'}
-                  </p>
+                  {/* Cuerpo de la tarjeta */}
+                  <div className="p-5 space-y-3.5">
+                    <p className="text-xs text-[#c0cbd7] leading-relaxed line-clamp-3">
+                      {u.descripcion || 'Sin descripción narrativa.'}
+                    </p>
 
-                  {/* Recursos configurados */}
-                  <div className="mt-4 pt-3 border-t border-white/5">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
-                      Recursos del Reino ({u.recursos?.length || 0})
-                    </span>
-                    <div className="flex flex-wrap gap-2">
-                      {(u.recursos || []).map(/* Prepara el resultado de cada elemento. */ (r) => (
-                        <div
-                          key={r.clave}
-                          className="px-2.5 py-1.5 rounded-xl bg-slate-950/60 border border-white/10 text-xs flex items-center gap-1.5"
-                        >
-                          <CoinsIcon size={13} className="text-amber-300" />
-                          <span className="font-bold text-slate-200">{r.nombre}</span>
-                          <span className="text-[10px] font-mono text-slate-400">
-                            (ini: {r.inicial} / máx: {r.max})
-                          </span>
-                        </div>
-                      ))}
+                    {/* Recursos del universo */}
+                    <div className="pt-3 border-t border-[#364454] space-y-2">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-[#ecd098] flex items-center gap-1.5">
+                        <CoinsIcon size={13} className="text-[#ecd098]" />
+                        Recursos Base del Reino ({u.recursos?.length || 0})
+                      </span>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        {(u.recursos || []).map((r, idx) => (
+                          <div
+                            key={idx}
+                            className="p-2 rounded-[8px] bg-[#1b2737] border border-[#52647b]/50 text-xs flex flex-col justify-between"
+                          >
+                            <span className="font-bold text-[11px] text-[#f3f6fa] truncate">{r.nombre}</span>
+                            <div className="flex items-center justify-between text-[10px] text-[#c0cbd7] mt-1 font-mono">
+                              <span>Ini: {r.inicial}</span>
+                              <span className="text-[#ecd098]">Máx: {r.max}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-[11px] text-slate-400 font-medium">
-                  <span>Icono: {u.icono || 'crown'}</span>
-                  <span className="text-emerald-300 bg-emerald-500/10 px-2 py-0.5 rounded-full font-bold text-[10px]">
-                    Activo
-                  </span>
+                <div className="px-5 py-3 border-t border-[#364454] bg-[#1b2737]/60 flex items-center justify-between text-[11px] text-[#c0cbd7]">
+                  <span>Motor V2 Activo</span>
+                  <span className="w-2 h-2 rounded-full bg-[#99dcd1]" />
                 </div>
               </div>
             );
@@ -336,153 +330,191 @@ export default function UniversosTab({ onUniversosChange }) {
         </div>
       )}
 
-      {/* MODAL CREAR / EDITAR UNIVERSO */}
+      {/* MODAL CREAR / EDITAR UNIVERSO (Horizontal Full-Width) */}
       {modalAbierto && (
-        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-slate-900 rounded-3xl border border-white/10 shadow-2xl w-full max-w-2xl flex flex-col max-h-[92vh] overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 bg-[#151e2b]/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 lg:p-8 overflow-y-auto">
+          <div className="bg-[#2a394c] rounded-[16px] border border-[#52647b] shadow-2xl w-full max-w-5xl xl:max-w-6xl flex flex-col max-h-[92vh] overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-150">
             {/* Cabecera */}
-            <div className="p-5 border-b border-white/5 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-300 flex items-center justify-center">
-                  <CrownIcon size={18} />
+            <div className="px-6 py-4 border-b border-[#364454] bg-[#1b2737] flex items-center justify-between gap-4 shrink-0">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-[9px] bg-[#2a394c] border border-[#52647b] text-[#ecd098] flex items-center justify-center shrink-0">
+                  <CrownIcon size={20} />
                 </div>
-                <div>
-                  <h3 className="font-bold text-sm text-slate-100">
-                    {esEdicion ? 'Editar Universo' : 'Crear Nuevo Universo'}
-                  </h3>
-                  <p className="text-[11px] text-slate-400">Configura los atributos y recursos base del reino.</p>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-bold text-sm sm:text-base text-[#f3f6fa] truncate">
+                      {esEdicion ? `Editar Universo: ${nombre || id}` : 'Crear Nuevo Universo'}
+                    </h3>
+                    <span className="font-mono text-[10px] bg-[#2a394c] border border-[#52647b] px-2 py-0.5 rounded-[6px] text-[#c0cbd7]">
+                      {id || 'nuevo'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#c0cbd7] mt-0.5">Configura los atributos y recursos base del reino.</p>
                 </div>
               </div>
 
               <button
                 type="button"
-                onClick={/* Responde a click desde este control. */ () => setModalAbierto(false)}
-                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-300 hover:bg-white/10 transition cursor-pointer"
+                onClick={() => setModalAbierto(false)}
+                className="p-2 rounded-[9px] text-[#c0cbd7] hover:text-[#f3f6fa] hover:bg-[#2a394c] transition cursor-pointer"
+                title="Cerrar modal (Esc)"
               >
                 <XIcon size={18} />
               </button>
             </div>
 
-            {/* Formulario */}
-            <form onSubmit={handleGuardar} className="flex-1 overflow-y-auto p-5 space-y-4">
+            {/* Formulario horizontal organizado */}
+            <form onSubmit={handleGuardar} className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5">
               {error && (
-                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-semibold flex items-center gap-2">
-                  <AlertTriangleIcon size={15} />
+                <div className="p-3.5 rounded-[9px] bg-[#1b2737] border border-[#f0bb98] text-[#f0bb98] text-xs font-semibold flex items-center gap-2.5">
+                  <AlertTriangleIcon size={16} className="shrink-0" />
                   <span>{error}</span>
                 </div>
               )}
               {exito && (
-                <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-semibold flex items-center gap-2">
-                  <CheckIcon size={15} />
+                <div className="p-3.5 rounded-[9px] bg-[#1b2737] border border-[#99dcd1] text-[#99dcd1] text-xs font-semibold flex items-center gap-2.5">
+                  <CheckIcon size={16} className="shrink-0" />
                   <span>{exito}</span>
                 </div>
               )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                    Identificador Único (ID)
-                  </label>
-                  <input
-                    type="text"
-                    value={id}
-                    onChange={/* Responde a change desde este control. */ (e) => setId(e.target.value)}
-                    disabled={esEdicion}
-                    placeholder="ej. corte_medieval"
-                    className="w-full px-3 py-2 rounded-xl border border-white/10 bg-slate-950/60 text-xs font-mono font-semibold text-slate-200 disabled:bg-white/5 disabled:text-slate-500 focus:outline-none focus:border-amber-500/60"
-                  />
+              {/* BLOQUE 1: IDENTIDAD Y BANNER */}
+              <div className="p-5 sm:p-6 rounded-[16px] border border-[#52647b] bg-[#2e3c50] space-y-4">
+                <div className="flex items-center justify-between pb-2 border-b border-[#364454]">
+                  <p className="text-xs font-bold uppercase tracking-wider text-[#ecd098] flex items-center gap-2">
+                    <CrownIcon size={14} />
+                    Identidad y Banner del Universo
+                  </p>
                 </div>
 
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                    Nombre del Universo
-                  </label>
-                  <input
-                    type="text"
-                    value={nombre}
-                    onChange={/* Responde a change desde este control. */ (e) => setNombre(e.target.value)}
-                    placeholder="ej. Crónicas de la Corte Real"
-                    className="w-full px-3 py-2 rounded-xl border border-white/10 bg-slate-950/60 text-xs font-semibold text-slate-200 focus:outline-none focus:border-amber-500/60"
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+                  {/* Banner a la izquierda */}
+                  <div className="md:col-span-5 lg:col-span-4 flex justify-center md:justify-start">
+                    <ImageUploadField
+                      label="Banner Panorámico del Universo"
+                      categoria="universos"
+                      value={imagen}
+                      onChange={setImagen}
+                    />
+                  </div>
+
+                  {/* Campos a la derecha */}
+                  <div className="md:col-span-7 lg:col-span-8 space-y-3.5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-bold text-[#c0cbd7] uppercase tracking-wider mb-1">
+                          Identificador Único (ID)
+                        </label>
+                        <input
+                          type="text"
+                          value={id}
+                          onChange={(e) => setId(e.target.value)}
+                          disabled={esEdicion}
+                          placeholder="ej. corte_medieval"
+                          className="w-full px-3 py-2 rounded-[9px] border border-[#52647b] bg-[#1b2737] text-xs font-mono font-semibold text-[#f3f6fa] disabled:opacity-50 focus:outline-none focus:border-[#ecd098] focus:ring-1 focus:ring-[#ecd098]"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-[#c0cbd7] uppercase tracking-wider mb-1">
+                          Nombre del Universo
+                        </label>
+                        <input
+                          type="text"
+                          value={nombre}
+                          onChange={(e) => setNombre(e.target.value)}
+                          placeholder="ej. Crónicas de la Corte Real"
+                          className="w-full px-3 py-2 rounded-[9px] border border-[#52647b] bg-[#1b2737] text-xs font-bold text-[#f3f6fa] focus:outline-none focus:border-[#ecd098] focus:ring-1 focus:ring-[#ecd098]"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-[#c0cbd7] uppercase tracking-wider mb-1">
+                        Descripción Narrativa
+                      </label>
+                      <textarea
+                        rows={3}
+                        value={descripcion}
+                        onChange={(e) => setDescripcion(e.target.value)}
+                        placeholder="Describe el contexto del reino, la ambientación histórica o fantástica y los desafíos..."
+                        className="w-full px-3 py-2 rounded-[9px] border border-[#52647b] bg-[#1b2737] text-xs text-[#f3f6fa] focus:outline-none focus:border-[#ecd098] focus:ring-1 focus:ring-[#ecd098] leading-relaxed resize-none"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                  Descripción Narrativa
-                </label>
-                <textarea
-                  rows={2}
-                  value={descripcion}
-                  onChange={/* Responde a change desde este control. */ (e) => setDescripcion(e.target.value)}
-                  placeholder="Describe el contexto del reino..."
-                  className="w-full px-3 py-2 rounded-xl border border-white/10 bg-slate-950/60 text-xs text-slate-200 focus:outline-none focus:border-amber-500/60"
-                />
-              </div>
-
-              <ImageUploadField
-                label="Banner / Ilustración del Universo"
-                categoria="universos"
-                value={imagen}
-                onChange={setImagen}
-                helperText="Banner panorámico del universo. Resolución recomendada: 1200x600 px."
-              />
-
-              {/* SECCIÓN DE RECURSOS DINÁMICOS */}
-              <div className="pt-2 border-t border-white/5">
-                <div className="flex items-center justify-between mb-2">
-                  <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider">
+              {/* BLOQUE 2: RECURSOS DEL REINO */}
+              <div className="p-5 sm:p-6 rounded-[16px] border border-[#52647b] bg-[#2e3c50] space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-[#364454]">
+                  <label className="text-xs font-bold uppercase tracking-wider text-[#ecd098] flex items-center gap-1.5">
+                    <CoinsIcon size={14} className="text-[#ecd098]" />
                     Recursos del Reino ({recursos.length})
                   </label>
                   <button
                     type="button"
                     onClick={handleAgregarRecurso}
-                    className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-300 hover:underline cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[9px] bg-[#ecd098]/15 hover:bg-[#ecd098]/25 text-[#ecd098] border border-[#ecd098]/30 text-xs font-bold transition cursor-pointer"
                   >
                     <PlusIcon size={13} />
                     <span>Agregar Recurso</span>
                   </button>
                 </div>
 
-                <div className="space-y-2.5 max-h-56 overflow-y-auto pr-1">
-                  {recursos.map(/* Prepara el resultado de cada elemento. */ (r, idx) => (
+                <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
+                  {recursos.map((r, idx) => (
                     <div
                       key={idx}
-                      className="p-3 rounded-xl border border-white/10 bg-slate-950/40 flex flex-col sm:flex-row items-center gap-2 text-xs"
+                      className="p-3 rounded-[10px] border border-[#52647b]/40 bg-[#1b2737] flex flex-col sm:flex-row items-center gap-3 text-xs"
                     >
-                      <input
-                        type="text"
-                        value={r.clave}
-                        onChange={/* Responde a change desde este control. */ (e) => handleCambiarRecurso(idx, 'clave', e.target.value)}
-                        placeholder="Clave (ej. oro)"
-                        className="w-full sm:w-28 px-2.5 py-1.5 rounded-lg border border-white/10 bg-slate-950/60 font-mono text-[11px] font-semibold text-slate-200"
-                      />
-                      <input
-                        type="text"
-                        value={r.nombre}
-                        onChange={/* Responde a change desde este control. */ (e) => handleCambiarRecurso(idx, 'nombre', e.target.value)}
-                        placeholder="Nombre visible"
-                        className="w-full sm:flex-1 px-2.5 py-1.5 rounded-lg border border-white/10 bg-slate-950/60 text-[11px] font-bold text-slate-200"
-                      />
-                      <div className="flex items-center gap-1.5 w-full sm:w-auto">
-                        <span className="text-[10px] text-slate-400 font-bold">Ini:</span>
+                      <div className="w-full sm:w-36">
+                        <label className="block text-[9px] uppercase font-bold text-[#c0cbd7] mb-0.5">Clave técnica</label>
                         <input
-                          type="number"
-                          value={r.inicial}
-                          onChange={/* Responde a change desde este control. */ (e) => handleCambiarRecurso(idx, 'inicial', parseInt(e.target.value, 10))}
-                          className="w-14 px-2 py-1.5 rounded-lg border border-white/10 bg-slate-950/60 text-[11px] text-center font-bold"
+                          type="text"
+                          value={r.clave}
+                          onChange={(e) => handleCambiarRecurso(idx, 'clave', e.target.value)}
+                          placeholder="ej. oro"
+                          className="w-full px-2.5 py-1.5 rounded-[7px] border border-[#52647b] bg-[#151e2b] font-mono text-[11px] font-semibold text-[#f3f6fa]"
                         />
-                        <span className="text-[10px] text-slate-400 font-bold">Máx:</span>
+                      </div>
+
+                      <div className="w-full sm:flex-1">
+                        <label className="block text-[9px] uppercase font-bold text-[#c0cbd7] mb-0.5">Nombre visible</label>
                         <input
-                          type="number"
-                          value={r.max}
-                          onChange={/* Responde a change desde este control. */ (e) => handleCambiarRecurso(idx, 'max', parseInt(e.target.value, 10))}
-                          className="w-14 px-2 py-1.5 rounded-lg border border-white/10 bg-slate-950/60 text-[11px] text-center font-bold"
+                          type="text"
+                          value={r.nombre}
+                          onChange={(e) => handleCambiarRecurso(idx, 'nombre', e.target.value)}
+                          placeholder="ej. Tesoro Real"
+                          className="w-full px-2.5 py-1.5 rounded-[7px] border border-[#52647b] bg-[#151e2b] text-[11px] font-bold text-[#f3f6fa]"
                         />
+                      </div>
+
+                      <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <div>
+                          <label className="block text-[9px] uppercase font-bold text-[#c0cbd7] mb-0.5">Inicial</label>
+                          <input
+                            type="number"
+                            value={r.inicial}
+                            onChange={(e) => handleCambiarRecurso(idx, 'inicial', parseInt(e.target.value, 10))}
+                            className="w-16 px-2 py-1.5 rounded-[7px] border border-[#52647b] bg-[#151e2b] text-[11px] text-center font-bold text-[#f3f6fa]"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[9px] uppercase font-bold text-[#c0cbd7] mb-0.5">Máximo</label>
+                          <input
+                            type="number"
+                            value={r.max}
+                            onChange={(e) => handleCambiarRecurso(idx, 'max', parseInt(e.target.value, 10))}
+                            className="w-16 px-2 py-1.5 rounded-[7px] border border-[#52647b] bg-[#151e2b] text-[11px] text-center font-bold text-[#ecd098]"
+                          />
+                        </div>
+
                         <button
                           type="button"
-                          onClick={/* Responde a click desde este control. */ () => handleEliminarRecurso(idx)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-300 hover:bg-rose-500/10 transition cursor-pointer ml-auto"
+                          onClick={() => handleEliminarRecurso(idx)}
+                          className="p-1.5 rounded-[7px] text-[#c0cbd7] hover:text-[#f0bb98] hover:bg-[#2a394c] transition cursor-pointer mt-3"
                           title="Quitar recurso"
                         >
                           <TrashIcon size={14} />
@@ -494,22 +526,27 @@ export default function UniversosTab({ onUniversosChange }) {
               </div>
 
               {/* Botones de acción */}
-              <div className="pt-4 border-t border-white/5 flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={/* Responde a click desde este control. */ () => setModalAbierto(false)}
-                  className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/15 text-slate-300 font-bold text-xs transition cursor-pointer"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={guardando}
-                  className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-xs transition cursor-pointer disabled:opacity-60"
-                >
-                  <CheckIcon size={14} />
-                  <span>{guardando ? 'Guardando...' : esEdicion ? 'Actualizar Universo' : 'Crear Universo'}</span>
-                </button>
+              <div className="pt-4 border-t border-[#364454] bg-[#1b2737] -mx-5 -mb-5 sm:-mx-6 sm:-mb-6 p-4 sm:p-5 flex items-center justify-between gap-3 shrink-0 rounded-b-[16px]">
+                <span className="text-[11px] text-[#c0cbd7] hidden sm:inline-block">
+                  Las mutaciones de recursos se aplican a todas las partidas activas del universo.
+                </span>
+                <div className="flex items-center gap-2 ml-auto">
+                  <button
+                    type="button"
+                    onClick={() => setModalAbierto(false)}
+                    className="px-4 py-2 rounded-[9px] border border-[#52647b] bg-[#2a394c] hover:bg-[#2e3c50] text-[#f3f6fa] font-bold text-xs transition cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={guardando}
+                    className="inline-flex items-center gap-2 px-5 py-2 rounded-[9px] bg-[#ecd098] hover:bg-[#f6deb0] text-[#172433] font-bold text-xs transition cursor-pointer disabled:opacity-60"
+                  >
+                    <CheckIcon size={14} />
+                    <span>{guardando ? 'Guardando...' : esEdicion ? 'Actualizar Universo' : 'Crear Universo'}</span>
+                  </button>
+                </div>
               </div>
             </form>
           </div>

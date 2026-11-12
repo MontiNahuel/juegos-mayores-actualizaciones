@@ -258,14 +258,14 @@ export default function EfectosEditor({
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <label className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-          <SparklesIcon size={14} className="text-amber-400" />
+          <SparklesIcon size={14} className="text-[#ecd098]" />
           Efectos Pasivos y Desacoplados ({listaEfectos.length})
         </label>
         <button
           type="button"
           onClick={handleAgregarEfecto}
           disabled={cargando}
-          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 text-[11px] font-bold transition disabled:opacity-50 cursor-pointer"
+          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-[#ecd098] border border-[#ecd098]/40 text-[11px] font-bold transition disabled:opacity-50 cursor-pointer"
         >
           <PlusIcon size={12} />
           <span>Agregar Efecto</span>
@@ -280,54 +280,46 @@ export default function EfectosEditor({
       )}
 
       {cargando ? (
-        <p className="text-[11px] text-slate-400 italic p-3 rounded-xl border border-dashed border-white/5 bg-slate-950/20 text-center">
+        <p className="text-[11px] text-slate-400 italic p-3 rounded-xl border border-dashed border-[#52647b]/30 bg-[#151e2b]/30 text-center">
           Cargando catálogos de acciones y frecuencias desde MongoDB...
         </p>
       ) : listaEfectos.length === 0 ? (
-        <p className="text-[11px] text-slate-500 italic p-3 rounded-xl border border-dashed border-white/5 bg-slate-950/20 text-center">
+        <p className="text-[11px] text-slate-500 italic p-3 rounded-xl border border-dashed border-[#52647b]/30 bg-[#151e2b]/30 text-center">
           No tiene efectos configurados. Haz clic en "Agregar Efecto" para vincular una acción del catálogo.
         </p>
       ) : (
         <div className="space-y-2.5 max-h-64 overflow-y-auto pr-1">
           {listaEfectos.map((ef, idxEf) => {
-            const frecDoc = catalogoFrecuencias.find((f) => f.id === ef.frecuencia_id);
-
+            
             return (
               <div
                 key={idxEf}
-                className="p-3 rounded-xl border border-white/10 bg-slate-950/60 space-y-2.5 text-xs"
+                className="p-3 rounded-[12px] border border-[#52647b]/40 bg-[#151e2b]/70 space-y-2.5 text-xs"
               >
                 {/* Selector de frecuencia dinámica de MongoDB */}
-                <div className="flex items-center justify-between gap-2 border-b border-white/5 pb-2">
+                <div className="flex items-center justify-between gap-2 border-b border-[#364454] pb-2">
                   <div className="flex items-center gap-2 flex-1">
-                    <ClockIcon size={14} className="text-amber-400 flex-shrink-0" />
+                    <ClockIcon size={14} className="text-[#ecd098] flex-shrink-0" />
                     <span className="text-[11px] font-semibold text-slate-400">Frecuencia:</span>
                     <select
                       value={ef.frecuencia_id}
                       onChange={(e) => handleCambiarFrecuencia(idxEf, e.target.value)}
-                      className="flex-1 max-w-xs px-2.5 py-1 rounded-lg border border-white/10 bg-slate-900 font-bold text-[11px] text-amber-200 focus:outline-none focus:border-amber-500/60"
+                      className="flex-1 max-w-xs px-2.5 py-1 rounded-lg border border-[#52647b]/40 bg-[#1b2737] font-bold text-[11px] text-[#ecd098] focus:outline-none focus:border-[#ecd098]/60"
                     >
                       {/* Opciones reales desde MongoDB */}
                       {catalogoFrecuencias.map((frec) => (
                         <option key={frec.id} value={frec.id}>
-                          {frec.nombre} ({frec.id})
+                          {frec.nombre}
                         </option>
                       ))}
 
                       {/* Garantizar que una frecuencia previa no se pierda si aún no fue sincronizada */}
                       {ef.frecuencia_id && !catalogoFrecuencias.some((f) => f.id === ef.frecuencia_id) && (
                         <option value={ef.frecuencia_id}>
-                          {ef.frecuencia_id} (catálogo actual)
+                          {ef.frecuencia_id}
                         </option>
                       )}
                     </select>
-
-                    {frecDoc && (
-                      <span className="hidden sm:inline-block px-1.5 py-0.5 rounded bg-white/5 text-[10px] text-slate-400 font-mono">
-                        {frecDoc.evento_motor}
-                        {frecDoc.evento_motor === 'inicio_mes' ? ` (c/${frecDoc.cada}m)` : ''}
-                      </span>
-                    )}
                   </div>
 
                   <button
@@ -341,7 +333,7 @@ export default function EfectosEditor({
                 </div>
 
                 {/* Lista de acciones dinámicas de MongoDB dentro del efecto */}
-                <div className="space-y-1.5 pl-2 border-l-2 border-amber-500/30">
+                <div className="space-y-1.5 pl-2 border-l-2 border-[#ecd098]/40">
                   {ef.acciones.map((acc, idxAcc) => {
                     const accDoc = catalogoAcciones.find((a) => (a._id || a.id) === acc.accion_id);
                     const primitiva = accDoc?.primitiva || acc.accion_id;
@@ -350,7 +342,7 @@ export default function EfectosEditor({
                     return (
                       <div
                         key={idxAcc}
-                        className="flex flex-wrap items-center gap-2 p-2 rounded-lg bg-slate-900/60 border border-white/5"
+                        className="flex flex-wrap items-center gap-2 p-2 rounded-lg bg-[#1b2737]/70 border border-[#52647b]/30 rounded-[8px]"
                       >
                         {/* Selector dinámico de acción desde MongoDB */}
                         <div className="flex flex-col">
@@ -358,7 +350,7 @@ export default function EfectosEditor({
                           <select
                             value={acc.accion_id}
                             onChange={(e) => handleCambiarAccionId(idxEf, idxAcc, e.target.value)}
-                            className="w-40 px-2 py-1 rounded-md border border-white/10 bg-slate-950 font-bold text-[11px] text-slate-200 focus:outline-none focus:border-amber-500/60"
+                            className="w-40 px-2 py-1 rounded-md border border-[#52647b]/40 bg-[#151e2b] font-bold text-[11px] text-slate-200 focus:outline-none focus:border-[#ecd098]/60"
                           >
                             {/* Opciones reales desde MongoDB filtradas por permitido_en */}
                             {accionesFiltradas.map((a) => {
@@ -388,7 +380,7 @@ export default function EfectosEditor({
                               value={acc.parametros?.tag || ''}
                               onChange={(e) => handleCambiarParametro(idxEf, idxAcc, 'tag', e.target.value)}
                               placeholder="Nombre del tag..."
-                              className="px-2 py-1 rounded-md border border-white/10 bg-slate-950 text-[11px] font-mono text-slate-200 focus:outline-none focus:border-amber-500/60"
+                              className="px-2 py-1 rounded-md border border-[#52647b]/40 bg-[#151e2b] text-[11px] font-mono text-slate-200 focus:outline-none focus:border-[#ecd098]/60"
                             />
                           </div>
                         ) : primitiva === 'modificar_afinidad' ? (
@@ -398,7 +390,7 @@ export default function EfectosEditor({
                               <select
                                 value={acc.parametros?.destino || (tipoEntidad === 'personaje' ? 'portador' : 'personaje')}
                                 onChange={(e) => handleCambiarParametro(idxEf, idxAcc, 'destino', e.target.value)}
-                                className="w-24 px-1.5 py-1 rounded-md border border-white/10 bg-slate-950 text-[11px] font-semibold text-slate-200"
+                                className="w-24 px-1.5 py-1 rounded-md border border-[#52647b]/40 bg-[#151e2b] text-[11px] font-semibold text-slate-200"
                               >
                                 {tipoEntidad === 'personaje' && <option value="portador">Portador (Él)</option>}
                                 <option value="personaje">Personaje</option>
@@ -411,7 +403,7 @@ export default function EfectosEditor({
                                 <select
                                   value={acc.parametros?.personaje_id || ''}
                                   onChange={(e) => handleCambiarParametro(idxEf, idxAcc, 'personaje_id', e.target.value)}
-                                  className="w-36 px-1.5 py-1 rounded-md border border-white/10 bg-slate-950 font-bold text-[11px] text-amber-300"
+                                  className="w-36 px-1.5 py-1 rounded-md border border-[#52647b]/40 bg-[#151e2b] font-bold text-[11px] text-[#ecd098]"
                                 >
                                   <option value="">Elegir Personaje...</option>
                                   {catalogoPersonajes.map((pj) => {
@@ -435,7 +427,7 @@ export default function EfectosEditor({
                                 type="number"
                                 value={acc.parametros?.valor ?? 10}
                                 onChange={(e) => handleCambiarParametro(idxEf, idxAcc, 'valor', parseFloat(e.target.value) || 0)}
-                                className="w-16 px-1.5 py-1 rounded-md border border-white/10 bg-slate-950 text-[11px] font-bold text-center text-slate-200"
+                                className="w-16 px-1.5 py-1 rounded-md border border-[#52647b]/40 bg-[#151e2b] text-[11px] font-bold text-center text-slate-200"
                               />
                             </div>
                           </div>
@@ -454,7 +446,7 @@ export default function EfectosEditor({
                                     else if (nuevoTipo === 'manual') defaultClave = acc.parametros?.ruta || '';
                                     handleCambiarParametro(idxEf, idxAcc, 'ruta', componerRuta(nuevoTipo, defaultClave));
                                   }}
-                                  className="w-32 px-1.5 py-1 rounded-md border border-white/10 bg-slate-950 text-[11px] font-semibold text-cyan-300 focus:outline-none"
+                                  className="w-32 px-1.5 py-1 rounded-md border border-[#52647b]/40 bg-[#151e2b] text-[11px] font-semibold text-cyan-300 focus:outline-none"
                                 >
                                   <option value="recurso">Recurso Numérico</option>
                                   <option value="limite_max">Límite Máximo (Techo)</option>
@@ -472,7 +464,7 @@ export default function EfectosEditor({
                                   <select
                                     value={rutaInfo.clave}
                                     onChange={(e) => handleCambiarParametro(idxEf, idxAcc, 'ruta', componerRuta(rutaInfo.tipo, e.target.value))}
-                                    className="w-28 px-1.5 py-1 rounded-md border border-white/10 bg-slate-950 font-bold text-[11px] text-emerald-300 focus:outline-none"
+                                    className="w-28 px-1.5 py-1 rounded-md border border-[#52647b]/40 bg-[#151e2b] font-bold text-[11px] text-emerald-300 focus:outline-none"
                                   >
                                     {recursosDinamicos.map((r) => (
                                       <option key={r} value={r}>
@@ -490,7 +482,7 @@ export default function EfectosEditor({
                                   <select
                                     value={rutaInfo.clave}
                                     onChange={(e) => handleCambiarParametro(idxEf, idxAcc, 'ruta', componerRuta('afinidad', e.target.value))}
-                                    className="w-40 px-1.5 py-1 rounded-md border border-white/10 bg-slate-950 font-bold text-[11px] text-amber-300 focus:outline-none"
+                                    className="w-40 px-1.5 py-1 rounded-md border border-[#52647b]/40 bg-[#151e2b] font-bold text-[11px] text-[#ecd098] focus:outline-none"
                                   >
                                     <option value="portador">Portador (Él mismo)</option>
                                     {catalogoPersonajes.map((pj) => {
@@ -517,7 +509,7 @@ export default function EfectosEditor({
                                     value={rutaInfo.clave}
                                     onChange={(e) => handleCambiarParametro(idxEf, idxAcc, 'ruta', componerRuta('variable', e.target.value))}
                                     placeholder="ej: inflacion"
-                                    className="w-28 px-1.5 py-1 rounded-md border border-white/10 bg-slate-950 font-mono text-[11px] text-slate-200"
+                                    className="w-28 px-1.5 py-1 rounded-md border border-[#52647b]/40 bg-[#151e2b] font-mono text-[11px] text-slate-200"
                                   />
                                 </div>
                               )}
@@ -531,7 +523,7 @@ export default function EfectosEditor({
                                     value={rutaInfo.clave}
                                     onChange={(e) => handleCambiarParametro(idxEf, idxAcc, 'ruta', e.target.value)}
                                     placeholder="ej: recursos.oro"
-                                    className="w-32 px-1.5 py-1 rounded-md border border-white/10 bg-slate-950 font-mono text-[11px] text-slate-200"
+                                    className="w-32 px-1.5 py-1 rounded-md border border-[#52647b]/40 bg-[#151e2b] font-mono text-[11px] text-slate-200"
                                   />
                                 </div>
                               )}
@@ -542,7 +534,7 @@ export default function EfectosEditor({
                                 <select
                                   value={acc.parametros?.operacion_matematica || 'sumar'}
                                   onChange={(e) => handleCambiarParametro(idxEf, idxAcc, 'operacion_matematica', e.target.value)}
-                                  className="w-28 px-1.5 py-1 rounded-md border border-white/10 bg-slate-950 font-bold text-[11px] text-amber-300 focus:outline-none"
+                                  className="w-28 px-1.5 py-1 rounded-md border border-[#52647b]/40 bg-[#151e2b] font-bold text-[11px] text-[#ecd098] focus:outline-none"
                                 >
                                   <option value="sumar">Sumar (+)</option>
                                   <option value="restar">Restar (-)</option>
@@ -561,7 +553,7 @@ export default function EfectosEditor({
                                   step="any"
                                   value={acc.parametros?.valor ?? 0}
                                   onChange={(e) => handleCambiarParametro(idxEf, idxAcc, 'valor', parseFloat(e.target.value) || 0)}
-                                  className="w-16 px-1.5 py-1 rounded-md border border-white/10 bg-slate-950 text-[11px] font-bold text-center text-slate-200"
+                                  className="w-16 px-1.5 py-1 rounded-md border border-[#52647b]/40 bg-[#151e2b] text-[11px] font-bold text-center text-slate-200"
                                 />
                               </div>
                             </div>
@@ -573,7 +565,7 @@ export default function EfectosEditor({
                               <select
                                 value={acc.parametros?.clave || recursosDinamicos[0] || 'oro'}
                                 onChange={(e) => handleCambiarParametro(idxEf, idxAcc, 'clave', e.target.value)}
-                                className="w-24 px-1.5 py-1 rounded-md border border-white/10 bg-slate-950 font-bold text-[11px] text-slate-200"
+                                className="w-24 px-1.5 py-1 rounded-md border border-[#52647b]/40 bg-[#151e2b] font-bold text-[11px] text-slate-200"
                               >
                                 {recursosDinamicos.map((r) => (
                                   <option key={r} value={r}>
@@ -591,7 +583,7 @@ export default function EfectosEditor({
                                 type="number"
                                 value={acc.parametros?.valor ?? 10}
                                 onChange={(e) => handleCambiarParametro(idxEf, idxAcc, 'valor', parseFloat(e.target.value) || 0)}
-                                className="w-16 px-1.5 py-1 rounded-md border border-white/10 bg-slate-950 text-[11px] font-bold text-center text-slate-200"
+                                className="w-16 px-1.5 py-1 rounded-md border border-[#52647b]/40 bg-[#151e2b] text-[11px] font-bold text-center text-slate-200"
                               />
                             </div>
 
@@ -601,7 +593,7 @@ export default function EfectosEditor({
                                 <select
                                   value={acc.parametros?.tipo_calculo || 'fijo'}
                                   onChange={(e) => handleCambiarParametro(idxEf, idxAcc, 'tipo_calculo', e.target.value)}
-                                  className="w-20 px-1 py-1 rounded-md border border-white/10 bg-slate-950 text-[10px] text-slate-300"
+                                  className="w-20 px-1 py-1 rounded-md border border-[#52647b]/40 bg-[#151e2b] text-[10px] text-slate-300"
                                 >
                                   <option value="fijo">Fijo</option>
                                   <option value="porcentual">%</option>
@@ -626,7 +618,7 @@ export default function EfectosEditor({
                   <button
                     type="button"
                     onClick={() => handleAgregarAccion(idxEf)}
-                    className="text-[10px] text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1 mt-1 pl-1 cursor-pointer"
+                    className="text-[10px] text-[#ecd098] hover:text-[#ecd098] font-semibold flex items-center gap-1 mt-1 pl-1 cursor-pointer"
                   >
                     <PlusIcon size={10} />
                     <span>Añadir acción ordenada a este efecto</span>

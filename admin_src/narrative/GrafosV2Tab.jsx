@@ -17,6 +17,8 @@ import {
 } from '../Icons';
 import DiagramaNodosV2 from './DiagramaNodosV2';
 import ImageUploadField from './ImageUploadField';
+import EfectosEditor from './EfectosEditor';
+import { normalizarErrorApi } from './erroresApi';
 
 const RECURSOS_DISPONIBLES = [
   { id: 'oro', label: 'Oro / Tesoro' },
@@ -24,6 +26,205 @@ const RECURSOS_DISPONIBLES = [
   { id: 'ejercito', label: 'Ejército / Orden Militar' },
   { id: 'fe', label: 'Fe / Iglesia' }
 ];
+
+const TIPOS_CONDICION = [
+  { id: 'comparar_recurso', label: 'Recurso Reino' },
+  { id: 'afinidad_personaje', label: 'Afinidad Consejero' },
+  { id: 'tiene_personaje', label: 'Consejero en Corte' },
+  { id: 'tiene_tag', label: 'Tag / Atributo' },
+  { id: 'tiene_carta', label: 'Carta / Objeto' }
+];
+
+// Al cambiar de tipo se escriben los campos que ese tipo necesita: el motor evalúa
+// la condición tal como queda guardada, no con los defaults que muestra el formulario.
+function condicionConTipo(condicionAnterior, tipo, personajes) {
+  const pjDefault = personajes[0]?._id || personajes[0]?.id || '';
+  const previa = condicionAnterior || {};
+  switch (tipo) {
+    case 'comparar_recurso':
+      return { tipo, clave: previa.clave || 'oro', operador: previa.operador || '>=', valor: previa.valor ?? 30 };
+    case 'afinidad_personaje':
+      return { tipo, personaje_id: previa.personaje_id || pjDefault, operador: previa.operador || '>=', valor: previa.valor ?? 50 };
+    case 'tiene_personaje':
+      return { tipo, personaje_id: previa.personaje_id || pjDefault };
+    case 'tiene_tag':
+      return { tipo, tag: previa.tag || '' };
+    case 'tiene_carta':
+      return { tipo, carta_id: previa.carta_id || '' };
+    default:
+      return { tipo };
+  }
+}
+
+// Fila de condición de un modificador de peso (versión compacta del editor de condiciones de opción).
+function EditorCondicionModificador({ condicion, personajes, onCambiar, compacto = false }) {
+  const caja = compacto
+    ? 'bg-white border border-slate-200 rounded px-1 py-0.5 font-bold text-slate-700 text-[9px]'
+    : 'bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 text-slate-700 font-bold text-xs';
+  const cond = condicion || {};
+
+  return (
+    <>
+      <select
+        value={cond.tipo || 'comparar_recurso'}
+        onChange={/* Cambia el tipo y completa los campos que ese tipo requiere. */ (e) => onCambiar(condicionConTipo(cond, e.target.value, personajes))}
+        className={caja}
+      >
+        {TIPOS_CONDICION.map(/* Prepara el resultado de cada elemento. */ (t) => (
+          <option key={t.id} value={t.id}>{t.label}</option>
+        ))}
+      </select>
+
+      {cond.tipo === 'comparar_recurso' && (
+        <>
+          <select
+            value={cond.clave || 'oro'}
+            onChange={/* Responde a change desde este control. */ (e) => onCambiar({ ...cond, clave: e.target.value })}
+            className={caja}
+          >
+            {RECURSOS_DISPONIBLES.map(/* Prepara el resultado de cada elemento. */ (r) => (
+              <option key={r.id} value={r.id}>{r.label.split(' ')[0]}</option>
+            ))}
+          </select>
+          <select
+            value={cond.operador || '>='}
+            onChange={/* Responde a change desde este control. */ (e) => onCambiar({ ...cond, operador: e.target.value })}
+            className={caja}
+          >
+            <option value=">=">&gt;=</option>
+            <option value="<=">&lt;=</option>
+            <option value=">">&gt;</option>
+            <option value="<">&lt;</option>
+            <option value="==">==</option>
+          </select>
+          <input
+            type="number"
+            value={cond.valor ?? 30}
+            onChange={/* Responde a change desde este control. */ (e) => onCambiar({ ...cond, valor: parseInt(e.target.value, 10) || 0 })}
+            className={caja}
+          />
+        </>
+      )}
+
+      {cond.tipo === 'afinidad_personaje' && (
+        <>
+          <select
+            value={cond.personaje_id || (personajes[0]?._id || personajes[0]?.id || '')}
+            onChange={/* Responde a change desde este control. */ (e) => onCambiar({ ...cond, personaje_id: e.target.value })}
+            className={`${caja} truncate max-w-[110px]`}
+          >
+            {personajes.map(/* Prepara el resultado de cada elemento. */ (p) => (
+              <option key={p._id || p.id} value={p._id || p.id}>{p.nombre}</option>
+            ))}
+          </select>
+          <select
+            value={cond.operador || '>='}
+            onChange={/* Responde a change desde este control. */ (e) => onCambiar({ ...cond, operador: e.target.value })}
+            className={caja}
+          >
+            <option value=">=">&gt;=</option>
+            <option value="<=">&lt;=</option>
+          </select>
+          <input
+            type="number"
+            value={cond.valor ?? 50}
+            onChange={/* Responde a change desde este control. */ (e) => onCambiar({ ...cond, valor: parseInt(e.target.value, 10) || 0 })}
+            className={caja}
+          />
+        </>
+      )}
+
+      {cond.tipo === 'tiene_personaje' && (
+        <select
+          value={cond.personaje_id || (personajes[0]?._id || personajes[0]?.id || '')}
+          onChange={/* Responde a change desde este control. */ (e) => onCambiar({ ...cond, personaje_id: e.target.value })}
+          className={`${caja} truncate flex-1`}
+        >
+          {personajes.map(/* Prepara el resultado de cada elemento. */ (p) => (
+            <option key={p._id || p.id} value={p._id || p.id}>{p.nombre}</option>
+          ))}
+        </select>
+      )}
+
+      {cond.tipo === 'tiene_tag' && (
+        <input
+          type="text"
+          placeholder="Tag activo..."
+          value={cond.tag || ''}
+          onChange={/* Responde a change desde este control. */ (e) => onCambiar({ ...cond, tag: e.target.value })}
+          className={`${caja} flex-1 font-mono`}
+        />
+      )}
+
+      {cond.tipo === 'tiene_carta' && (
+        <input
+          type="text"
+          placeholder="ID carta..."
+          value={cond.carta_id || ''}
+          onChange={/* Responde a change desde este control. */ (e) => onCambiar({ ...cond, carta_id: e.target.value })}
+          className={`${caja} flex-1 font-mono`}
+        />
+      )}
+    </>
+  );
+}
+
+// Modificadores de peso de un desenlace: suman o anulan pesos sólo si la condición se cumple en la partida.
+function BloqueModificadoresDesenlace({ desenlace, personajes, onAgregar, onCambiar, onEliminar, compacto = false }) {
+  const mods = desenlace?.modificadores_probabilidad || [];
+
+  return (
+    <div className="pl-2 border-l-2 border-amber-300 space-y-1">
+      <div className="flex items-center justify-between gap-1">
+        <span className={`${compacto ? 'text-[9px]' : 'text-[10px]'} font-bold text-amber-700`}>
+          Δ de peso según estado ({mods.length})
+        </span>
+        <button
+          type="button"
+          onClick={onAgregar}
+          className={`${compacto ? 'text-[9px]' : 'text-[10px]'} text-[#002B5E] hover:underline font-bold cursor-pointer`}
+        >
+          + Δ
+        </button>
+      </div>
+      {mods.map((mod, mIdx) => (
+        <div
+          key={mIdx}
+          className={`${compacto ? 'p-1 text-[9px]' : 'p-1.5 text-[10px]'} bg-white rounded-lg border border-slate-200 flex flex-wrap items-center gap-1`}
+        >
+          <EditorCondicionModificador
+            condicion={mod.condicion}
+            personajes={personajes}
+            compacto={compacto}
+            onCambiar={(nuevaCondicion) => onCambiar(mIdx, 'condicion', nuevaCondicion)}
+          />
+          <input
+            type="number"
+            value={mod.delta_peso ?? 20}
+            onChange={/* Responde a change desde este control. */ (e) => onCambiar(mIdx, 'delta_peso', parseFloat(e.target.value) || 0)}
+            title="Suma (o resta) al peso base cuando se cumple la condición"
+            className={`${compacto ? 'w-10 px-1' : 'w-14 px-1.5'} bg-amber-50 border border-amber-200 rounded px-1 py-0.5 font-mono text-center font-bold`}
+          />
+          <input
+            type="text"
+            value={mod.explicacion || ''}
+            onChange={/* Responde a change desde este control. */ (e) => onCambiar(mIdx, 'explicacion', e.target.value)}
+            placeholder="nota interna (no la ve el jugador)"
+            className={`${compacto ? 'px-1 py-0.5' : 'px-1.5 py-0.5'} flex-1 min-w-[90px] bg-slate-50 border border-slate-200 rounded`}
+          />
+          <button
+            type="button"
+            onClick={/* Responde a click desde este control. */ () => onEliminar(mIdx)}
+            className="text-slate-400 hover:text-rose-600 transition cursor-pointer"
+            title="Eliminar modificador"
+          >
+            <TrashIcon size={compacto ? 10 : 11} />
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 // Permite armar y probar historias con nodos, condiciones y desenlaces.
 export default function GrafosV2Tab({ universos = [], personajes = [] }) {
@@ -33,8 +234,15 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
   const [listaEspeciales, setListaEspeciales] = useState([]);
   const [cargando, setCargando] = useState(false);
   const [busqueda, setBusqueda] = useState('');
-  const [errorMsg, setErrorMsg] = useState('');
+  const [errorMsg, setErrorMsgText] = useState('');
+  const [errorDetalle, setErrorDetalle] = useState([]);
   const [exitoMsg, setExitoMsg] = useState('');
+
+  // La barrera de guardado devuelve lista de hallazgos; se muestran aparte del título del error.
+  const setErrorMsg = (texto, items = []) => {
+    setErrorMsgText(texto);
+    setErrorDetalle(items);
+  };
 
   // Modo edición / creación
   const [modoEdicion, setModoEdicion] = useState(false);
@@ -264,7 +472,8 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
         await cargarGrafos();
       } else {
         const data = await res.json().catch(/* Maneja el fallo de esta operación. */ () => ({}));
-        setErrorMsg(data.detail || data.message || 'Error al guardar el grafo.');
+        const { titulo, items } = normalizarErrorApi(data.detail || data.message, 'Error al guardar el grafo.');
+        setErrorMsg(titulo, items);
       }
     } catch (e) {
       console.error(e);
@@ -467,6 +676,39 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
     handleUpdateOpcion(optIdx, 'desenlaces', desenlaces);
   };
 
+  // Modificadores de peso por desenlace (probabilidad condicionada al estado de la partida).
+  const modificarDesenlace = (optIdx, dIdx, cambio) => {
+    if (!nodoActual || !nodoActual.opciones) return;
+    const desenlaces = [...(nodoActual.opciones[optIdx].desenlaces || [])];
+    desenlaces[dIdx] = cambio(desenlaces[dIdx]);
+    handleUpdateOpcion(optIdx, 'desenlaces', desenlaces);
+  };
+
+  const handleAgregarModificadorDesenlace = (optIdx, dIdx) => {
+    modificarDesenlace(optIdx, dIdx, (d) => ({
+      ...d,
+      modificadores_probabilidad: [
+        ...(d?.modificadores_probabilidad || []),
+        { condicion: condicionConTipo({}, 'comparar_recurso', personajes), delta_peso: 20, explicacion: '' }
+      ]
+    }));
+  };
+
+  const handleUpdateModificadorDesenlace = (optIdx, dIdx, mIdx, campo, valor) => {
+    modificarDesenlace(optIdx, dIdx, (d) => {
+      const mods = [...(d?.modificadores_probabilidad || [])];
+      mods[mIdx] = { ...mods[mIdx], [campo]: valor };
+      return { ...d, modificadores_probabilidad: mods };
+    });
+  };
+
+  const handleEliminarModificadorDesenlace = (optIdx, dIdx, mIdx) => {
+    modificarDesenlace(optIdx, dIdx, (d) => ({
+      ...d,
+      modificadores_probabilidad: (d?.modificadores_probabilidad || []).filter(/* Conserva los elementos que cumplen esta condición. */ (_, i) => i !== mIdx)
+    }));
+  };
+
   // Impactos Recursos
   const handleAgregarImpactoRecurso = () => {
     if (!nodoActual) return;
@@ -589,9 +831,18 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
     <div className="space-y-4">
       {/* Alertas */}
       {errorMsg && (
-        <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2">
+        <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-start gap-2">
           <AlertTriangleIcon size={16} />
-          <span>{errorMsg}</span>
+          <div className="space-y-1.5">
+            <span>{errorMsg}</span>
+            {errorDetalle.length > 0 && (
+              <ul className="list-disc pl-4 space-y-0.5 font-medium text-rose-800/90">
+                {errorDetalle.map((textoErr, i) => (
+                  <li key={i}>{textoErr}</li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
       )}
       {exitoMsg && (
@@ -1386,33 +1637,43 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                                     </span>
                                   )}
                                   {(opt.desenlaces || []).map(/* Prepara el resultado de cada elemento. */ (d, dIdx) => (
-                                    <div key={dIdx} className="flex items-center gap-1.5">
-                                      <select
-                                        value={d.nodo || ''}
-                                        onChange={/* Responde a change desde este control. */ (e) => handleUpdateDesenlace(idx, dIdx, 'nodo', e.target.value)}
-                                        className="flex-1 text-xs bg-white border border-slate-200 rounded px-1.5 py-0.5 font-mono font-bold text-slate-800"
-                                      >
-                                        {Object.keys(itemEnEdicion?.nodos || {}).map(/* Prepara el resultado de cada elemento. */ (targetId) => (
-                                          <option key={targetId} value={targetId}>
-                                            {targetId} {itemEnEdicion.nodos[targetId]?.es_final ? '(🏁)' : ''}
-                                          </option>
-                                        ))}
-                                      </select>
-                                      <input
-                                        type="number"
-                                        value={d.peso ?? 50}
-                                        onChange={/* Responde a change desde este control. */ (e) => handleUpdateDesenlace(idx, dIdx, 'peso', e.target.value)}
-                                        placeholder="peso"
-                                        className="w-14 text-xs bg-white border border-slate-200 rounded px-1 py-0.5 font-mono text-center font-bold"
-                                        title="Peso relativo (ej. 40 y 60)"
+                                    <div key={dIdx} className="space-y-1">
+                                      <div className="flex items-center gap-1.5">
+                                        <select
+                                          value={d.nodo || ''}
+                                          onChange={/* Responde a change desde este control. */ (e) => handleUpdateDesenlace(idx, dIdx, 'nodo', e.target.value)}
+                                          className="flex-1 text-xs bg-white border border-slate-200 rounded px-1.5 py-0.5 font-mono font-bold text-slate-800"
+                                        >
+                                          {Object.keys(itemEnEdicion?.nodos || {}).map(/* Prepara el resultado de cada elemento. */ (targetId) => (
+                                            <option key={targetId} value={targetId}>
+                                              {targetId} {itemEnEdicion.nodos[targetId]?.es_final ? '(🏁)' : ''}
+                                            </option>
+                                          ))}
+                                        </select>
+                                        <input
+                                          type="number"
+                                          value={d.peso ?? 50}
+                                          onChange={/* Responde a change desde este control. */ (e) => handleUpdateDesenlace(idx, dIdx, 'peso', e.target.value)}
+                                          placeholder="peso"
+                                          className="w-14 text-xs bg-white border border-slate-200 rounded px-1 py-0.5 font-mono text-center font-bold"
+                                          title="Peso relativo (ej. 40 y 60)"
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={/* Responde a click desde este control. */ () => handleEliminarDesenlace(idx, dIdx)}
+                                          className="text-slate-400 hover:text-rose-600 transition cursor-pointer"
+                                        >
+                                          <TrashIcon size={12} />
+                                        </button>
+                                      </div>
+                                      <BloqueModificadoresDesenlace
+                                        desenlace={d}
+                                        personajes={personajes}
+                                        compacto
+                                        onAgregar={/* Suma un modificador de peso a este desenlace. */ () => handleAgregarModificadorDesenlace(idx, dIdx)}
+                                        onCambiar={/* Actualiza un campo del modificador elegido. */ (mIdx, campo, valor) => handleUpdateModificadorDesenlace(idx, dIdx, mIdx, campo, valor)}
+                                        onEliminar={/* Quita el modificador elegido. */ (mIdx) => handleEliminarModificadorDesenlace(idx, dIdx, mIdx)}
                                       />
-                                      <button
-                                        type="button"
-                                        onClick={/* Responde a click desde este control. */ () => handleEliminarDesenlace(idx, dIdx)}
-                                        className="text-slate-400 hover:text-rose-600 transition cursor-pointer"
-                                      >
-                                        <TrashIcon size={12} />
-                                      </button>
                                     </div>
                                   ))}
                                 </div>
@@ -1579,11 +1840,37 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                             />
                           </div>
 
+                          <div className="flex items-center gap-1.5">
+                            <label className="text-[9px] font-bold text-emerald-800 uppercase tracking-wider">
+                              Semántica
+                            </label>
+                            <select
+                              value={nodoActual.tipo_desenlace || ''}
+                              onChange={/* Responde a change desde este control. */ (e) => handleUpdateNodoActual('tipo_desenlace', e.target.value || null)}
+                              className="flex-1 text-xs bg-white border border-slate-200 rounded px-1.5 py-0.5 font-bold text-slate-800"
+                              title="Si se deja en 'inferir', el motor la deduce del balance de impactos"
+                            >
+                              <option value="">(inferir del balance)</option>
+                              <option value="positivo">Positivo</option>
+                              <option value="negativo">Negativo</option>
+                              <option value="neutro">Neutro</option>
+                            </select>
+                          </div>
+
                           <div className="text-[10px] text-slate-600 bg-emerald-50/60 p-2.5 rounded-xl border border-emerald-200 flex items-center justify-between">
                             <span>Impactos configurados:</span>
                             <span className="font-bold text-emerald-800 font-mono">
                               {nodoActual.impactos_recursos?.length || 0} recursos / {nodoActual.impactos_afinidad?.length || 0} afinidad / {nodoActual.impactos_tags?.length || 0} tags
                             </span>
+                          </div>
+
+                          <div className="rounded-xl border border-slate-800 bg-slate-900 p-3">
+                            <EfectosEditor
+                              efectos={nodoActual.efectos || []}
+                              onChange={/* Reemplaza la lista de efectos del desenlace. */ (nuevos) => handleUpdateNodoActual('efectos', nuevos)}
+                              universoId={itemEnEdicion?.universo_id || 'corte_medieval'}
+                              tipoEntidad="nodo"
+                            />
                           </div>
                         </div>
                       )}
@@ -2016,36 +2303,45 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                                 </span>
                               )}
                               {(opt.desenlaces || []).map(/* Prepara el resultado de cada elemento. */ (d, dIdx) => (
-                                <div key={dIdx} className="flex items-center gap-2">
-                                  <select
-                                    value={d.nodo || ''}
-                                    onChange={/* Responde a change desde este control. */ (e) => handleUpdateDesenlace(idx, dIdx, 'nodo', e.target.value)}
-                                    className="flex-1 text-xs bg-white border border-slate-200 rounded-lg px-2 py-1 text-slate-800 font-mono font-bold"
-                                  >
-                                    {Object.keys(itemEnEdicion?.nodos || {}).map(/* Prepara el resultado de cada elemento. */ (targetId) => (
-                                      <option key={targetId} value={targetId}>
-                                        {targetId} {itemEnEdicion.nodos[targetId]?.es_final ? '(🏁 Final)' : ''}
-                                      </option>
-                                    ))}
-                                  </select>
-                                  <div className="w-28 flex items-center gap-1">
-                                    <input
-                                      type="number"
-                                      value={d.peso ?? 50}
-                                      onChange={/* Responde a change desde este control. */ (e) => handleUpdateDesenlace(idx, dIdx, 'peso', e.target.value)}
-                                      placeholder="peso"
-                                      className="w-full text-xs bg-white border border-slate-200 rounded-lg px-2 py-1 text-slate-800 font-mono text-center font-bold"
-                                      title="Peso relativo (ej. 40 y 60)"
-                                    />
+                                <div key={dIdx} className="space-y-1.5">
+                                  <div className="flex items-center gap-2">
+                                    <select
+                                      value={d.nodo || ''}
+                                      onChange={/* Responde a change desde este control. */ (e) => handleUpdateDesenlace(idx, dIdx, 'nodo', e.target.value)}
+                                      className="flex-1 text-xs bg-white border border-slate-200 rounded-lg px-2 py-1 text-slate-800 font-mono font-bold"
+                                    >
+                                      {Object.keys(itemEnEdicion?.nodos || {}).map(/* Prepara el resultado de cada elemento. */ (targetId) => (
+                                        <option key={targetId} value={targetId}>
+                                          {targetId} {itemEnEdicion.nodos[targetId]?.es_final ? '(🏁 Final)' : ''}
+                                        </option>
+                                      ))}
+                                    </select>
+                                    <div className="w-28 flex items-center gap-1">
+                                      <input
+                                        type="number"
+                                        value={d.peso ?? 50}
+                                        onChange={/* Responde a change desde este control. */ (e) => handleUpdateDesenlace(idx, dIdx, 'peso', e.target.value)}
+                                        placeholder="peso"
+                                        className="w-full text-xs bg-white border border-slate-200 rounded-lg px-2 py-1 text-slate-800 font-mono text-center font-bold"
+                                        title="Peso relativo (ej. 40 y 60)"
+                                      />
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={/* Responde a click desde este control. */ () => handleEliminarDesenlace(idx, dIdx)}
+                                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                                      title="Eliminar desenlace"
+                                    >
+                                      <TrashIcon size={14} />
+                                    </button>
                                   </div>
-                                  <button
-                                    type="button"
-                                    onClick={/* Responde a click desde este control. */ () => handleEliminarDesenlace(idx, dIdx)}
-                                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
-                                    title="Eliminar desenlace"
-                                  >
-                                    <TrashIcon size={14} />
-                                  </button>
+                                  <BloqueModificadoresDesenlace
+                                    desenlace={d}
+                                    personajes={personajes}
+                                    onAgregar={/* Suma un modificador de peso a este desenlace. */ () => handleAgregarModificadorDesenlace(idx, dIdx)}
+                                    onCambiar={/* Actualiza un campo del modificador elegido. */ (mIdx, campo, valor) => handleUpdateModificadorDesenlace(idx, dIdx, mIdx, campo, valor)}
+                                    onEliminar={/* Quita el modificador elegido. */ (mIdx) => handleEliminarModificadorDesenlace(idx, dIdx, mIdx)}
+                                  />
                                 </div>
                               ))}
                             </div>
@@ -2214,6 +2510,24 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                         />
                       </div>
 
+                      {/* Semántica del desenlace */}
+                      <div className="flex items-center gap-2">
+                        <label className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">
+                          Semántica del desenlace (tipo_desenlace)
+                        </label>
+                        <select
+                          value={nodoActual.tipo_desenlace || ''}
+                          onChange={/* Responde a change desde este control. */ (e) => handleUpdateNodoActual('tipo_desenlace', e.target.value || null)}
+                          className="text-xs bg-white border border-slate-200 rounded-lg px-2 py-1 font-bold text-slate-800"
+                          title="Si se deja en 'inferir', el motor la deduce del balance de impactos"
+                        >
+                          <option value="">(inferir del balance)</option>
+                          <option value="positivo">Positivo</option>
+                          <option value="negativo">Negativo</option>
+                          <option value="neutro">Neutro</option>
+                        </select>
+                      </div>
+
                       {/* Impactos Recursos */}
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
@@ -2353,6 +2667,16 @@ export default function GrafosV2Tab({ universos = [], personajes = [] }) {
                             </div>
                           ))}
                         </div>
+                      </div>
+
+                      {/* Efectos ECA del desenlace */}
+                      <div className="rounded-xl border border-slate-800 bg-slate-900 p-3">
+                        <EfectosEditor
+                          efectos={nodoActual.efectos || []}
+                          onChange={/* Reemplaza la lista de efectos del desenlace. */ (nuevos) => handleUpdateNodoActual('efectos', nuevos)}
+                          universoId={itemEnEdicion?.universo_id || 'corte_medieval'}
+                          tipoEntidad="nodo"
+                        />
                       </div>
                     </div>
                   )}
