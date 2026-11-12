@@ -319,8 +319,8 @@ export const reiniciarPartida = (date: string) => request<any>(NARRATIVE_GAME_PA
 });
 
 // Inicia el ciclo v2 y recibe solo el draft mensual.
-export const iniciarPartida = (date: string, corte: string[], cartas: string[]) => request<EstadoPartida>(NARRATIVE_GAME_PATHS.iniciar, {
-  method: 'POST', body: JSON.stringify({ date, corte_elegida_ids: corte, cartas_iniciales_ids: cartas }),
+export const iniciarPartida = (date: string, corte: string[], cartas: string[], dificultad: 'normal' | 'facil' = 'normal') => request<EstadoPartida>(NARRATIVE_GAME_PATHS.iniciar, {
+  method: 'POST', body: JSON.stringify({ date, corte_elegida_ids: corte, cartas_iniciales_ids: cartas, dificultad }),
 });
 
 // Pide el evento generado por la carta mensual elegida (motor de grafos V2).

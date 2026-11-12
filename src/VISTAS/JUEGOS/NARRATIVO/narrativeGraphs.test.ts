@@ -167,4 +167,11 @@ describe('contrato de grafos narrativos V2', /* Agrupa las pruebas de este compo
     await expect(api.avanzarNodo(date, 'opt_guardia', 'evt_cometa')).rejects.toThrow('Grafo no encontrado');
     expect(api.esPartidaNarrativaLocal(date)).toBe(false);
   });
+
+  it('no vuelve a amortiguar las pérdidas que el servidor ya aplicó en modo adaptado', /* Comprueba que sólo el backend descuente. */ async () => {
+    const { store } = await import('../../../store/store');
+    store.dispatch(iniciarJugador({ date, recursos, edad: 60, modo_mayor: true }));
+    store.dispatch(guardarResultado({ titulo: 'Resultado', efectos: [{ accion: { clave: 'oro', valor: -40 } }] }));
+    expect(store.getState().narrativoSelection.jugador.recursos.oro).toBe(10);
+  });
 });

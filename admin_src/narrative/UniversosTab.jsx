@@ -33,6 +33,7 @@ export default function UniversosTab({ onUniversosChange }) {
   const [nombre, setNombre] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [imagen, setImagen] = useState('/assets/narrative/universos/corte_medieval.webp');
+  const [dificultadFacilReduccion, setDificultadFacilReduccion] = useState(35);
   const [recursos, setRecursos] = useState([
     { clave: 'oro', nombre: 'Tesoro Real', inicial: 50, max: 100 },
     { clave: 'pueblo', nombre: 'Apoyo Popular', inicial: 50, max: 100 },
@@ -70,6 +71,7 @@ export default function UniversosTab({ onUniversosChange }) {
     setNombre('');
     setDescripcion('');
     setImagen('/assets/narrative/universos/corte_medieval.webp');
+    setDificultadFacilReduccion(35);
     setRecursos([
       { clave: 'oro', nombre: 'Tesoro Real', inicial: 50, max: 100 },
       { clave: 'pueblo', nombre: 'Apoyo Popular', inicial: 50, max: 100 },
@@ -87,6 +89,9 @@ export default function UniversosTab({ onUniversosChange }) {
     setNombre(u.nombre || '');
     setDescripcion(u.descripcion || '');
     setImagen(u.imagen || '/assets/narrative/universos/corte_medieval.webp');
+    setDificultadFacilReduccion(
+      typeof u.dificultad_facil_reduccion === 'number' ? u.dificultad_facil_reduccion : 35
+    );
     setRecursos(u.recursos && u.recursos.length > 0 ? JSON.parse(JSON.stringify(u.recursos)) : []);
     setError('');
     setExito('');
@@ -126,6 +131,10 @@ export default function UniversosTab({ onUniversosChange }) {
       nombre: nombre.trim(),
       descripcion: descripcion.trim(),
       imagen: imagen.trim() || '/assets/narrative/universos/corte_medieval.webp',
+      dificultad_facil_reduccion: Math.max(
+        0,
+        Math.min(90, parseInt(dificultadFacilReduccion, 10) || 0)
+      ),
       recursos: recursos.map((r) => ({
         clave: r.clave.trim(),
         nombre: r.nombre.trim(),
@@ -322,7 +331,7 @@ export default function UniversosTab({ onUniversosChange }) {
                 </div>
 
                 <div className="px-5 py-3 border-t border-[#364454] bg-[#1b2737]/60 flex items-center justify-between text-[11px] text-[#c0cbd7]">
-                  <span>Motor V2 Activo</span>
+                  <span>Motor V2 · Fácil −{u.dificultad_facil_reduccion ?? 35}%</span>
                   <span className="w-2 h-2 rounded-full bg-[#99dcd1]" />
                 </div>
               </div>
@@ -523,6 +532,36 @@ export default function UniversosTab({ onUniversosChange }) {
                       </div>
                     </div>
                   ))}
+                </div>
+              </div>
+
+              {/* BLOQUE 3: DIFICULTAD ASISTIDA */}
+              <div className="p-5 sm:p-6 rounded-[16px] border border-[#52647b] bg-[#2e3c50] space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-[#364454]">
+                  <label className="text-xs font-bold uppercase tracking-wider text-[#ecd098] flex items-center gap-1.5">
+                    <AlertTriangleIcon size={14} className="text-[#ecd098]" />
+                    Modo Fácil
+                  </label>
+                </div>
+
+                <div className="flex flex-col sm:flex-row sm:items-end gap-4">
+                  <div>
+                    <label className="block text-[11px] font-bold text-[#c0cbd7] uppercase tracking-wider mb-1">
+                      Reducción de pérdidas (%)
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={90}
+                      value={dificultadFacilReduccion}
+                      onChange={(e) => setDificultadFacilReduccion(e.target.value)}
+                      className="w-24 px-3 py-2 rounded-[9px] border border-[#52647b] bg-[#1b2737] text-xs text-center font-bold text-[#f3f6fa] focus:outline-none focus:border-[#ecd098] focus:ring-1 focus:ring-[#ecd098]"
+                    />
+                  </div>
+                  <p className="text-xs text-[#c0cbd7] leading-relaxed sm:pb-2">
+                    Amortigua las pérdidas de recursos cuando la partida arranca en modo fácil.
+                    No afecta afinidad, puntos ni recompensas. 0 desactiva la ayuda.
+                  </p>
                 </div>
               </div>
 

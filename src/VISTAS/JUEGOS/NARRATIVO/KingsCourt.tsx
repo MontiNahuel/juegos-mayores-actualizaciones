@@ -258,8 +258,10 @@ export default function KingsCourt() {
 
   // Envía la corte y las cartas iniciales; luego carga el primer mes.
   const comenzarPartida = async (cartas: any[]) => {
+    // El servidor aplica la amortiguación del modo adaptado; el front sólo informa la dificultad.
+    const dificultad = config.adaptado ? 'facil' : 'normal';
     const data = await pedir(
-      () => iniciarPartida(date, jugadorActual().corte_activa, cartas.map(carta => carta.id)),
+      () => iniciarPartida(date, jugadorActual().corte_activa, cartas.map(carta => carta.id), dificultad),
       'Las cartas quedaron elegidas, pero no se pudo pedir el siguiente draft.'
     );
     if (!data) return;

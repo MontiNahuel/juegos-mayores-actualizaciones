@@ -5,7 +5,6 @@ export const REGLAS_EDAD = {
   edadMayor: 45,
   edadMinima: 6,
   edadMaxima: 100,
-  factorNegativo: .5,
   textoMinimo: 18,
   textoMaximo: 22,
   controlMinimo: 52,
@@ -30,7 +29,6 @@ export const configuracionPorEdad = (edad: number | null) => {
     adaptado,
     mostrarNumeros: !adaptado,
     permitirCartasMensuales: !adaptado,
-    factorNegativo: adaptado ? REGLAS_EDAD.factorNegativo : 1,
     tamanioTexto: interpolar(REGLAS_EDAD.textoMinimo, REGLAS_EDAD.textoMaximo),
     altoControl: interpolar(REGLAS_EDAD.controlMinimo, REGLAS_EDAD.controlMaximo),
     fraccionVisiblePersonaje: adaptado ? REGLAS_EDAD.personajeVisibleMayor : REGLAS_EDAD.personajeVisibleNormal,
@@ -49,8 +47,6 @@ export const leerEdad = () => {
 export const guardarEdad = (edad: number) => localStorage.setItem(REGLAS_EDAD.storageKey, String(edad));
 // Comprueba si corresponde adaptar la experiencia para personas mayores.
 export const esModoMayor = (edad: number | null) => configuracionPorEdad(edad).adaptado;
-// Las perdidas consultan la misma configuracion; los valores positivos mantienen el flujo anterior.
-export const adaptarValorNegativo = (valor: number, edad: number | null) => valor < 0 ? valor * configuracionPorEdad(edad).factorNegativo : valor;
 // Decide si corresponde ocultar los números de los cambios.
 export const ocultarCambiosNumericos = (texto = '') => texto
   .replace(/\s*\([^)]*[+−-]\s*\d+[^)]*\)/g, '')

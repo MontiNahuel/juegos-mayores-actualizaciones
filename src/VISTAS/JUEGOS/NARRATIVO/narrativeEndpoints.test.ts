@@ -54,7 +54,7 @@ describe('rutas de King’s Court contra OpenAPI', () => {
   it('iniciar, elegir carta y avanzar mes envían solamente las selecciones del contrato', async () => {
     const api=await import('./narrativeService');
     for(const [call,path,payload] of [
-      [()=>api.iniciarPartida(date,['persona'],['carta']),NARRATIVE_GAME_PATHS.iniciar,{date,corte_elegida_ids:['persona'],cartas_iniciales_ids:['carta']}],
+      [()=>api.iniciarPartida(date,['persona'],['carta']),NARRATIVE_GAME_PATHS.iniciar,{date,corte_elegida_ids:['persona'],cartas_iniciales_ids:['carta'],dificultad:'normal'}],
       [()=>api.elegirCartaMensual(date,'carta'),NARRATIVE_GAME_PATHS.elegirCarta,{date,carta_id:'carta'}],
       [()=>api.avanzarMes(date),NARRATIVE_GAME_PATHS.avanzarMes,{date}],
       [()=>api.reiniciarPartida(date),NARRATIVE_GAME_PATHS.reiniciar,{date}],
@@ -67,5 +67,15 @@ describe('rutas de King’s Court contra OpenAPI', () => {
       expect(body).toEqual(payload);
       for(const field of operation('POST',NARRATIVE_API_PATH+path)!.requiredBody) expect(body).toHaveProperty(field);
     }
+  });
+
+  it('reenvía el modo fácil cuando la adaptación por edad está activa', async () => {
+    const api=await import('./narrativeService');
+    await api.iniciarPartida(date,['persona'],['carta'],'facil');
+    const [input,options]=vi.mocked(fetch).mock.calls.at(-1)!;
+    expect(new URL(String(input),'http://app').pathname).toBe(NARRATIVE_API_PATH+NARRATIVE_GAME_PATHS.iniciar);
+    expect(JSON.parse(String(options?.body))).toEqual({date,corte_elegida_ids:['persona'],cartas_iniciales_ids:['carta'],dificultad:'facil'});
+    // La dificultad es opcional en el contrato: omitirla equivale al modo normal.
+    expect(operation('POST',NARRATIVE_API_PATH+NARRATIVE_GAME_PATHS.iniciar)!.requiredBody).not.toContain('dificultad');
   });
 });

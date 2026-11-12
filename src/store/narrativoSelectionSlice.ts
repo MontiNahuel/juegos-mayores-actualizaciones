@@ -1,6 +1,5 @@
 /* Guarda en Redux la partida narrativa, las cartas y lo que va pasando en la corte. */
 import { createSlice } from '@reduxjs/toolkit';
-import { adaptarValorNegativo } from '../config/adaptacionEdad';
 import type { EstadoPartida } from '../VISTAS/JUEGOS/NARRATIVO/narrativeService';
 import { FONDO_CORTE_DEFAULT, GUARDIAS_CORTE, MANOS_CORTE, ORO_CORTE, cantidadManosPorPueblo, cantidadPorTramo, type EstadoFondoCorte } from '../config/fondoCorte';
 
@@ -88,7 +87,8 @@ const aplicarEfectosAlObtener = (jugador: any, elementos: any[]) => {
 
         if (accion?.tipo === 'modificar_recurso' && accion.clave) {
           const actual = jugador.recursos[accion.clave] || 0;
-          jugador.recursos[accion.clave] = limitar(actual + adaptarValorNegativo(Number(accion.valor || 0), jugador.edad));
+          // La amortiguación por dificultad la aplica el servidor; acá se refleja el valor tal cual.
+          jugador.recursos[accion.clave] = limitar(actual + Number(accion.valor || 0));
         }
 
         if (
@@ -208,7 +208,7 @@ const narrativoSelectionSlice = createSlice({
       resultado?.efectos?.forEach(/* Aplica este paso a cada elemento. */ ({ accion }: any) => {
         if (!accion?.clave) return;
         const actual = state.jugador.recursos[accion.clave] || 0;
-        state.jugador.recursos[accion.clave] = limitar(actual + adaptarValorNegativo(accion.valor, state.jugador.edad));
+        state.jugador.recursos[accion.clave] = limitar(actual + accion.valor);
       });
       state.jugador.historial_mensual.push({
         mes: state.jugador.mes_actual,
@@ -264,7 +264,7 @@ const narrativoSelectionSlice = createSlice({
 
       decision.impacto_afinidad?.forEach(/* Aplica este paso a cada elemento. */ ({ personaje_id, delta }: any) => {
         const actual = state.jugador.afinidad[personaje_id] || 50;
-        state.jugador.afinidad[personaje_id] = limitar(actual + adaptarValorNegativo(delta, state.jugador.edad));
+        state.jugador.afinidad[personaje_id] = limitar(actual + delta);
       });
     },
 
