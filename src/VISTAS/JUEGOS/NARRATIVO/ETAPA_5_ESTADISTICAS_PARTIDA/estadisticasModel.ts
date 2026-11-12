@@ -36,7 +36,9 @@ const valoresValidos = (origen?: Record<string, number>): Valores =>
 
 // El balance de un mes sólo se calcula si conocemos ambos extremos; así no
 // atribuimos a un mes los cambios ocurridos en otro o en una partida incompleta.
-export function construirCronica(historial: HistorialPartidaApi, estado: EstadoPartida, inicial: Record<string, number> | undefined, catalogos: CatalogosCronica) {
+const CATALOGOS_VACIOS: CatalogosCronica = { cartas: [], eventos: [], resultados: [], conversaciones: [] };
+
+export function construirCronica(historial: HistorialPartidaApi, estado: EstadoPartida, inicial: Record<string, number> | undefined, catalogos: CatalogosCronica = CATALOGOS_VACIOS) {
   // Arma un índice por identificador para encontrar los textos de la crónica.
   const indice = (elementos: EntradaCatalogoCronica[]) => new Map(elementos.filter(/* Conserva los elementos que cumplen esta condición. */ item => item._id || item.id).map(/* Prepara el resultado de cada elemento. */ item => [item._id || item.id, item]));
   const cartas = indice(catalogos.cartas);
@@ -64,7 +66,7 @@ export function construirCronica(historial: HistorialPartidaApi, estado: EstadoP
     const decision = conversacion?.decisiones?.find(/* Busca el primer elemento que cumple esta condición. */ item => item.opcion === registro.decision_conversacion_opcion);
     return {
       numero: registro.mes, registro, valores, cambios,
-      carta: carta?.nombre || carta?.titulo,
+      carta: registro.carta_nombre || registro.carta_titulo || carta?.nombre || carta?.titulo,
       evento: registro.evento_titulo || evento?.titulo,
       opcion: registro.opcion_texto || evento?.opciones?.find(/* Busca el primer elemento que cumple esta condición. */ opcion => opcion.id === registro.opcion_elegida_id)?.texto,
       resultado: registro.resultado || resultado?.titulo,

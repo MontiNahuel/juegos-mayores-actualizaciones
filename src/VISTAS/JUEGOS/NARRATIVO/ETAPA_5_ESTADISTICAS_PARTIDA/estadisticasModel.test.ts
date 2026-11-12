@@ -55,4 +55,30 @@ describe('crónica de la partida', /* Agrupa las pruebas de este comportamiento.
     expect(mes).toMatchObject({ carta: 'Sello real', evento: 'La helada', opcion: 'Comprar grano', resultado: 'Llegó el trigo', decision: 'Escuchar a Elena', decisionResultado: 'Marcus protesta.' });
     expect(mes.impactoAfinidad).toEqual([{ personajeId: 'marcus', delta: -15 }]);
   });
+
+  it('usa los nombres y textos enriquecidos de /historial sin depender de catálogos externos', () => {
+    const historial: HistorialPartidaApi = { historial_mensual: [{
+      mes: 1,
+      carta_nombre: 'Sello del Tesoro',
+      evento_titulo: 'Sequía en los campos',
+      opcion_texto: 'Abrir los silos reales',
+      resultado_texto: 'El grano alcanzó hasta la cosecha.',
+      conversacion_titulo: 'Audiencia en palacio',
+      decision_texto: 'Respaldar la guardia',
+      decision_resultado_texto: 'Marcus asiente satisfecho.',
+      impacto_afinidad: [{ personaje_id: 'pj_elena', delta: 10 }],
+      recursos_fin_mes: inicial,
+    }] };
+    const mes = construirCronica(historial, { recursos: inicial }, inicial).meses[0];
+    expect(mes).toMatchObject({
+      carta: 'Sello del Tesoro',
+      evento: 'Sequía en los campos',
+      opcion: 'Abrir los silos reales',
+      resultadoTexto: 'El grano alcanzó hasta la cosecha.',
+      conversacion: 'Audiencia en palacio',
+      decision: 'Respaldar la guardia',
+      decisionResultado: 'Marcus asiente satisfecho.',
+    });
+    expect(mes.impactoAfinidad).toEqual([{ personajeId: 'pj_elena', delta: 10 }]);
+  });
 });

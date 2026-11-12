@@ -2,8 +2,8 @@
 import { store } from '../../../store/store';
 import { resolverRespaldoNarrativo } from './narrativeFallback';
 import { API_URL } from '../../../config/api';
-import { ErrorServidorNarrativo, narrativeAdminHeaders, narrativeGameHeaders } from './narrativeAuth';
-import { NARRATIVE_API_PATH, NARRATIVE_CATALOG_PATHS, NARRATIVE_GAME_PATHS } from './narrativeEndpoints';
+import { ErrorServidorNarrativo, narrativeGameHeaders } from './narrativeAuth';
+import { NARRATIVE_API_PATH, NARRATIVE_GAME_PATHS } from './narrativeEndpoints';
 
 const API = `${API_URL}${NARRATIVE_API_PATH}`;
 
@@ -180,6 +180,8 @@ export interface HistorialMesApi {
   conversacion_id?: string | null;
   decision_conversacion_opcion?: number | null;
   recursos_fin_mes?: Record<string, number>;
+  carta_nombre?: string | null;
+  carta_titulo?: string | null;
   resultado?: string; // Titulo disponible en la partida local.
   resultado_texto?: string;
   evento_titulo?: string;
@@ -299,43 +301,8 @@ export const obtenerSetup = (date: string) => request<SetupPartida>(`${NARRATIVE
 // Lee solo el contenido de la fase activa para reanudar una partida existente.
 export const obtenerEstadoPartida = (date: string) => request<EstadoPartida>(`${NARRATIVE_GAME_PATHS.estado}?date=${encodeURIComponent(date)}`).then(adaptarEstadoGrafo);
 
-// Lee el historial mensual solo al abrir las estadisticas finales.
+// Lee el historial mensual enriquecido directamente al abrir la crónica final.
 export const obtenerHistorialPartida = (date: string) => request<HistorialPartidaApi>(`${NARRATIVE_GAME_PATHS.historial}?date=${encodeURIComponent(date)}`);
-
-// Resuelve los IDs de la bitácora con los catálogos del mismo universo.
-export const obtenerCatalogosCronica = async (date: string, universoId?: string): Promise<CatalogosCronica> => {
-  const vacios: CatalogosCronica = { cartas: [], eventos: [], resultados: [], conversaciones: [] };
-  if (esPartidaNarrativaLocal(date)) return vacios;
-  const authHeaders = narrativeAdminHeaders();
-  const controller = new AbortController();
-  const timeout = setTimeout(/* Ejecuta este paso cuando se cumple la espera. */ () => controller.abort(), ESPERA_SERVIDOR_MS);
-
-  const consultas = (['cartas', 'eventos', 'conversaciones'] as const).map(async nombre => {
-    const parametros = new URLSearchParams({ limit: '500' });
-    if (universoId) parametros.set('universo_id', universoId);
-    const respuesta = await fetch(`${API}${NARRATIVE_CATALOG_PATHS[nombre]}?${parametros}`, {
-      headers: authHeaders,
-      credentials: 'include',
-      signal: controller.signal,
-    });
-    if (!respuesta.ok) return [];
-    return (await respuesta.json()) as EntradaCatalogoCronica[];
-  });
-
-  try {
-    const [cartas, eventos, conversaciones] = await Promise.all(consultas);
-    return {
-      cartas: cartas || [],
-      eventos: eventos || [],
-      resultados: [],
-      conversaciones: conversaciones || [],
-    };
-  } catch {
-    return vacios;
-  } finally {
-    clearTimeout(timeout);
-  }
-};
 
 // Lee las cartas y tags que quedaron en la partida terminada.
 export const obtenerInventarioPartida = (date: string) => request<any>(`${NARRATIVE_GAME_PATHS.inventario}?date=${encodeURIComponent(date)}`);
