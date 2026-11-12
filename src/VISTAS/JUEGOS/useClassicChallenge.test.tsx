@@ -74,6 +74,16 @@ it('confirma los puntos pendientes al abrir un resultado guardado desde el calen
   vi.mocked(fetch).mockResolvedValueOnce(new Response(JSON.stringify({ grade: 'A', score: 90, stars: 3, puntos_ganados: 90, puntos_totales_usuario: 1090 })));
   render(<CompletedModal gameId="sudoku" challenge={{ dateKey: payload.date, completedData: saved }} onClose={() => {}} />);
   await waitFor(() => expect(getSessionUser()?.puntos).toBe(1090));
-  expect(screen.getByText('Se acreditaron 90 puntos a tu cuenta.')).toBeTruthy();
+  expect(screen.getByText('90 puntos')).toBeTruthy();
   expect(fetch).toHaveBeenCalledTimes(2);
+});
+
+it('muestra el total acreditado con bonus al abrir un día histórico', () => {
+  render(<CompletedModal gameId="sopa_letras" challenge={{ dateKey: '2026-10-05', completedData: { grade: 'S', score: 100, stars: 3, awardedPoints: 110 } }} onClose={() => {}} />);
+  expect(screen.getByText('110 puntos')).toBeTruthy();
+});
+
+it('en un replay sin puntos nuevos muestra la base del desafío', () => {
+  render(<CompletedModal gameId="sopa_letras" challenge={{ dateKey: '2026-10-05', completedData: { grade: 'S', score: 100, stars: 3, awardedPoints: 0 } }} onClose={() => {}} />);
+  expect(screen.getByText('100 puntos')).toBeTruthy();
 });

@@ -54,7 +54,7 @@ export function CompletedModal(props: CompletedModalProps) {
     return () => { active = false; };
   }, [gameId, challenge?.dateKey, registro, completion]);
   const state = completion ?? (registro?.synced === false ? historical.completion : undefined);
-  const result = state?.result ?? (registro?.grade ? { grade: registro.grade, score: registro.score, stars: registro.stars, timeTakenSeconds: registro.timeTakenSeconds ?? registro.time_taken_seconds } : undefined);
+  const result = state?.result ?? (registro?.grade ? { grade: registro.grade, score: registro.score, stars: registro.stars, timeTakenSeconds: registro.timeTakenSeconds ?? registro.time_taken_seconds, awardedPoints: registro.awardedPoints } : undefined);
   const estrellas = Math.max(0, Math.min(3, result?.stars ?? stars ?? challenge?.stars ?? registro?.stars ?? 3));
   const palabra = registro?.word ?? config?.solution;
   const intentos = challenge?.attempts ?? registro?.attempts;

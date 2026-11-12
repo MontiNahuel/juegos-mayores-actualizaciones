@@ -215,12 +215,14 @@ export async function getCalendarMonthData(
         const dayNum = parseInt(att.date.split('-')[2], 10);
         if (dayNum) {
           if (att.status === 'completed' || att.status === 'won') {
+            const bonusRachaPuntos = Number(att.bonus_racha_puntos) || 0;
             completedMap[dayNum] = {
               attempts: att.attempts,
               stars: att.stars,
               word: att.word,
               score: att.score,
               grade: att.grade,
+              awardedPoints: bonusRachaPuntos > 0 ? (att.score ?? 0) + bonusRachaPuntos : undefined,
               timeTakenSeconds: att.time_taken_seconds ?? att.game_data?.elapsedSeconds ?? att.game_data?.timeTaken,
               gameData: att.game_data,
               dateStr: `${dayNum} de ${monthName}`,

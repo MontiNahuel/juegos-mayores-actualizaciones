@@ -22,6 +22,7 @@ export interface CompletedRecord {
   word?: string;
   timeSeconds?: number;
   score?: number;
+  awardedPoints?: number;
   dateStr?: string;
   completedAt?: string;
   [key: string]: any;
