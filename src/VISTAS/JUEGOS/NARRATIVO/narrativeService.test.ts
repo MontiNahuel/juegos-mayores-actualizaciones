@@ -83,18 +83,22 @@ describe('respaldo del juego narrativo', /* Agrupa las pruebas de este comportam
     expect(servicio.esPartidaNarrativaLocal(date)).toBe(false);
   });
 
-  it('reconstruye los nombres desde el mismo universo sin perder la crónica si falla un catálogo', /* Comprueba el comportamiento indicado en este caso. */ async () => {
-    vi.mocked(fetch).mockImplementation(/* Completa este paso con los datos recibidos por la operación. */ async input => {
-      const url = String(input);
-      if (url.includes('/admin/v2/conversaciones?')) return new Response('{}', { status: 503 });
-      return new Response(JSON.stringify([{ _id: 'c1', nombre: 'Sello real' }]));
-    });
+  it('lee la crónica enriquecida desde /partida/historial sin consultar /api/narrative/admin/*', async () => {
+    vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify({
+      mes_actual: 2,
+      status: 'in_progress',
+      historial_mensual: [{ mes: 1, carta_nombre: 'Sello real', evento_titulo: 'La helada', opcion_texto: 'Abrir silos' }],
+    })));
     const { servicio } = await cargarServicio(false);
-    const catalogos = await servicio.obtenerCatalogosCronica(date, 'corte_medieval');
-    expect(catalogos.cartas[0].nombre).toBe('Sello real');
-    expect(catalogos.conversaciones).toEqual([]);
-    expect(fetch).toHaveBeenCalledTimes(3);
-    expect(String(vi.mocked(fetch).mock.calls[0][0])).toContain('universo_id=corte_medieval');
+    const historial = await servicio.obtenerHistorialPartida(date);
+    expect(historial.historial_mensual[0]).toMatchObject({
+      carta_nombre: 'Sello real',
+      evento_titulo: 'La helada',
+      opcion_texto: 'Abrir silos',
+    });
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(String(vi.mocked(fetch).mock.calls[0][0])).toContain('/partida/historial');
+    expect(String(vi.mocked(fetch).mock.calls[0][0])).not.toContain('/admin/');
   });
 
   it.each([404, 503])('habilita el respaldo ante HTTP %s', /* Completa este paso con los datos recibidos por la operación. */ async status => {

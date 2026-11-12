@@ -13,7 +13,7 @@ interface Props {
   estado: EstadoPartida;
   historial: HistorialPartidaApi;
   corte?: { corte?: MiembroCorte[]; afinidad?: Record<string, number> } | null;
-  catalogos: CatalogosCronica;
+  catalogos?: CatalogosCronica;
   recursosIniciales?: Record<string, number>;
   personajes: MiembroCorte['personaje'][];
   finalizacion?: FinalizacionApi | null;

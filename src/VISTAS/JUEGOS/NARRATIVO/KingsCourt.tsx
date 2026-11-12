@@ -15,7 +15,7 @@ import {
 } from '../../../store/narrativoSelectionSlice';
 import {
   agregarCondicionesSecretas, avanzarNodo, continuarTurno, elegirCartaMensual, esPartidaNarrativaLocal,
-  iniciarPartida, obtenerCatalogosCronica, obtenerCortePartida, obtenerEstadoPartida, obtenerHistorialPartida,
+  iniciarPartida, obtenerCortePartida, obtenerEstadoPartida, obtenerHistorialPartida,
   reiniciarPartida, type ConversacionApi,
 } from './narrativeService';
 import SeleccionarCartasEtapa0y1 from './ETAPA_0_1_SELECCIONAR_CARTAS/SeleccionarCartasEtapa0y1';
@@ -380,12 +380,11 @@ export default function KingsCourt() {
     setCargandoEstadisticas(true);
     try {
       setError('');
-      const [estado, historial, corte, catalogos] = await Promise.all([
+      const [estado, historial, corte] = await Promise.all([
         obtenerEstadoPartida(date), obtenerHistorialPartida(date),
         obtenerCortePartida(date).catch(() => null),
-        obtenerCatalogosCronica(date, setup?.universo_id),
       ]);
-      setEstadisticas({ estado, historial, corte, catalogos });
+      setEstadisticas({ estado, historial, corte });
     } catch (e: any) {
       setError(`No se pudieron cargar las estadisticas. ${e?.message || ''}`);
     } finally { setCargandoEstadisticas(false); }
@@ -432,7 +431,7 @@ export default function KingsCourt() {
     case 'estadisticas':
       pantalla = <EstadisticasPartidaEtapa5
         estado={estadisticas.estado} historial={estadisticas.historial} corte={estadisticas.corte}
-        catalogos={estadisticas.catalogos} recursosIniciales={setup.atributos_iniciales}
+        recursosIniciales={setup.atributos_iniciales}
         personajes={personajes} finalizacion={finalizacion} modoSimple={!config.mostrarNumeros}
         onVolver={() => setEstadisticas(null)}
       />;
