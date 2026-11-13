@@ -4,6 +4,17 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
 export type SuscripcionTipo = 'basica' | 'premium';
 
+export interface RachaTramo {
+  dias: number;
+  valor: number;
+}
+
+export interface BonusRachaConfig {
+  activo: boolean;
+  modo: 'porcentaje' | 'puntos_fijos';
+  tramos: RachaTramo[];
+}
+
 const DEFAULT_PUNTOS_POR_JUEGO: Record<string, number> = {
   wordle: 50,
   sopa_letras: 50,
@@ -17,6 +28,7 @@ export interface PlayerEconomyState extends ScoringConfig {
   racha: number;
   rachaUltimaFecha: string | null;
   rachaHoyIngresada: boolean;
+  bonusRacha: BonusRachaConfig | null;
   costoPistaPuntos: number;
   costoDesbloqueoDiaPuntos: number;
   suscripcion: SuscripcionTipo;
@@ -32,6 +44,7 @@ const initialState: PlayerEconomyState = {
   racha: 0,
   rachaUltimaFecha: null,
   rachaHoyIngresada: false,
+  bonusRacha: null,
   costoPistaPuntos: 20,
   costoDesbloqueoDiaPuntos: 100,
   suscripcion: 'basica',
@@ -58,6 +71,7 @@ const playerEconomySlice = createSlice({
       state.racha = 0;
       state.rachaUltimaFecha = null;
       state.rachaHoyIngresada = false;
+      state.bonusRacha = null;
       state.suscripcion = 'basica';
       state.diasDesbloqueados = [];
       state.isLoading = false;

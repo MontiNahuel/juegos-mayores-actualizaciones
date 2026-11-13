@@ -6,6 +6,8 @@ import {
   actualizarEconomia,
   agregarDiaDesbloqueado,
   resetearEconomia,
+  type BonusRachaConfig,
+  type RachaTramo,
   type SuscripcionTipo,
 } from '../store/playerEconomySlice';
 import { API_URL } from '../config/api';
@@ -31,6 +33,7 @@ export interface PlayerEconomyContextType extends ScoringConfig {
   racha: number;
   rachaUltimaFecha: string | null;
   rachaHoyIngresada: boolean;
+  bonusRacha: BonusRachaConfig | null;
   costoPistaPuntos: number;
   costoDesbloqueoDiaPuntos: number;
   suscripcion: SuscripcionTipo;
@@ -49,6 +52,32 @@ export interface PlayerEconomyContextType extends ScoringConfig {
 
 const PlayerEconomyContext = createContext<PlayerEconomyContextType | undefined>(undefined);
 
+// Normaliza los hitos que llegan del backend para que el modal nunca dependa de datos crudos.
+function normalizarBonusRacha(raw: unknown): BonusRachaConfig | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const data = raw as Record<string, unknown>;
+  if (!Array.isArray(data.tramos)) return null;
+
+  const tramos = data.tramos
+    .map((item): RachaTramo | null => {
+      if (!item || typeof item !== 'object') return null;
+      const tramo = item as Record<string, unknown>;
+      const dias = Number(tramo.dias);
+      const valor = Number(tramo.valor);
+      if (!Number.isFinite(dias) || dias <= 0) return null;
+      return { dias, valor: Number.isFinite(valor) && valor >= 0 ? valor : 0 };
+    })
+    .filter((tramo): tramo is RachaTramo => tramo !== null)
+    .sort((a, b) => a.dias - b.dias);
+
+  if (tramos.length === 0) return null;
+  return {
+    activo: data.activo === true,
+    modo: data.modo === 'puntos_fijos' ? 'puntos_fijos' : 'porcentaje',
+    tramos,
+  };
+}
+
 // Conecta el saldo y la racha de Redux con los juegos sin guardar sesión en localStorage.
 export const PlayerEconomyProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const dispatch = useDispatch<AppDispatch>();
@@ -59,6 +88,7 @@ export const PlayerEconomyProvider: React.FC<{ children: React.ReactNode }> = ({
     racha,
     rachaUltimaFecha,
     rachaHoyIngresada,
+    bonusRacha,
     costoPistaPuntos,
     costoDesbloqueoDiaPuntos,
     suscripcion,
@@ -172,6 +202,7 @@ export const PlayerEconomyProvider: React.FC<{ children: React.ReactNode }> = ({
               racha: rachaActual,
               rachaUltimaFecha: rachaUltima,
               rachaHoyIngresada: rachaHoy,
+              bonusRacha: normalizarBonusRacha(userData.bonus_racha),
               suscripcion: userData.suscripcion === 'premium' ? 'premium' : 'basica',
               diasDesbloqueados: Array.isArray(userData.dias_desbloqueados)
                 ? userData.dias_desbloqueados
@@ -305,6 +336,7 @@ export const PlayerEconomyProvider: React.FC<{ children: React.ReactNode }> = ({
         racha,
         rachaUltimaFecha,
         rachaHoyIngresada,
+        bonusRacha,
         costoPistaPuntos,
         puntosPorCalificacion,
         escalasTiempoPorJuego,

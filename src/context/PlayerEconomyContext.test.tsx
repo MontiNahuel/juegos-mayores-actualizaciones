@@ -88,6 +88,14 @@ describe('economía y racha compartida en Redux con cookies HttpOnly', () => {
               dias_desbloqueados: [],
               costo_pista_puntos: 20,
               costo_desbloqueo_dia_puntos: 80,
+              bonus_racha: {
+                activo: true,
+                modo: 'porcentaje',
+                tramos: [
+                  { dias: 15, valor: 20 },
+                  { dias: 10, valor: 10 },
+                ],
+              },
             })
           );
         }
@@ -106,6 +114,14 @@ describe('economía y racha compartida en Redux con cookies HttpOnly', () => {
     });
     expect(screen.getByTestId('saldo').textContent).toBe('500:4');
     expect(economia.costoDesbloqueoDiaPuntos).toBe(80);
+    expect(economia.bonusRacha).toEqual({
+      activo: true,
+      modo: 'porcentaje',
+      tramos: [
+        { dias: 10, valor: 10 },
+        { dias: 15, valor: 20 },
+      ],
+    });
 
     const urls = vi.mocked(fetch).mock.calls.map(([u]) => String(u));
     expect(urls.some((u) => u.includes('/api/economy/config'))).toBe(false);

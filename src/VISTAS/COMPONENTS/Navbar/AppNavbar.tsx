@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { IonHeader, IonToolbar, IonIcon } from "@ionic/react";
 import {
   flameOutline,
@@ -6,6 +7,7 @@ import {
   logOutOutline,
 } from "ionicons/icons";
 import { AuthModal } from "../MODALS/AuthModal";
+import { StreakProgressModal } from "../MODALS/StreakProgressModal";
 import { AnimatedPointsBadge } from "../AnimatedPointsBadge";
 import { HintButton } from "../GameHeader/HintButton";
 import { useNavbarSession } from "./useNavbarSession";
@@ -77,6 +79,7 @@ function NavbarAccount({
   loading,
   onLogin,
   onLogout,
+  onOpenStreak,
 }: {
   /** Visibilidad de acceso/salida según el contexto de la pantalla. */
   showSession: boolean;
@@ -90,6 +93,8 @@ function NavbarAccount({
   /** Callbacks del mismo controlador de sesión en todos los contextos. */
   onLogin: () => void;
   onLogout: () => void;
+  /** Abre el detalle de progreso de la racha diaria. */
+  onOpenStreak: () => void;
 }) {
   if (!user && !showSession) return null;
   return (
@@ -97,15 +102,17 @@ function NavbarAccount({
       {/* Los indicadores solo aparecen con sesión; nunca se simula una racha o saldo de invitado. */}
       {user && (
         <>
-          <span
+          <button
+            type="button"
+            onClick={onOpenStreak}
             title="Días de racha"
-            aria-label={`${racha} ${racha === 1 ? "día" : "días"} de racha`}
-            className="flex items-center gap-[5px] text-[15px] whitespace-nowrap text-[#edd499] tabular-nums max-md:text-sm"
+            aria-label={`${racha} ${racha === 1 ? "día" : "días"} de racha. Ver progreso`}
+            className="flex min-h-[46px] cursor-pointer items-center gap-[5px] rounded-[10px] border border-transparent bg-transparent px-1.5 py-2.5 font-[inherit] text-[15px] whitespace-nowrap text-[#edd499] tabular-nums transition-colors hover:border-[#526176] hover:bg-[#28384b] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#edd499] max-md:text-sm"
           >
             <IonIcon icon={flameOutline} aria-hidden="true" />
             <span>{racha}</span>
             <span className="max-md:hidden"> {racha === 1 ? "día" : "días"}</span>
-          </span>
+          </button>
           <span
             title="Puntos acumulados"
             aria-label={
@@ -146,7 +153,13 @@ function NavbarAccount({
 export default function AppNavbar({ view, onUsuarioChange }: AppNavbarProps) {
   const { session, economy, authOpen, openAuth, closeAuth, login, logout } =
     useNavbarSession(onUsuarioChange);
+  const [streakOpen, setStreakOpen] = useState(false);
   const menu = view.kind === "menu";
+  // Cerrar sesión también descarta el detalle de racha para no reabrirlo con otra cuenta.
+  const cerrarSesion = () => {
+    setStreakOpen(false);
+    logout();
+  };
   // El menú permite saludo y cuenta; calendario/juego reservan un centro flexible para el título.
   const layoutClass = menu
     ? "menu-nav mx-auto flex min-h-[88px] max-w-[1180px] flex-wrap items-center gap-6 px-9 py-4 text-menu-ink max-md:min-h-[78px] max-md:gap-3.5 max-md:px-5 max-md:py-3 max-[360px]:gap-1.5 max-[360px]:px-3"
@@ -203,7 +216,8 @@ export default function AppNavbar({ view, onUsuarioChange }: AppNavbarProps) {
                 points={economy.puntos}
                 loading={economy.isLoading}
                 onLogin={openAuth}
-                onLogout={logout}
+                onLogout={cerrarSesion}
+                onOpenStreak={() => setStreakOpen(true)}
               />
             )}
           </div>
@@ -211,6 +225,10 @@ export default function AppNavbar({ view, onUsuarioChange }: AppNavbarProps) {
       </IonHeader>
       {/* El único modal comparte apertura, cierre, acceso y sincronización con todas las pantallas. */}
       <AuthModal isOpen={authOpen} onClose={closeAuth} onSuccess={login} />
+      <StreakProgressModal
+        isOpen={streakOpen && session.kind === "authenticated"}
+        onClose={() => setStreakOpen(false)}
+      />
     </>
   );
 }
