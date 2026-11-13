@@ -1,6 +1,8 @@
 {
   "short_name": "CogniJuegos",
-  "name": "CogniJuegos",
+  "name": "CogniJuegos — Juegos Cognitivos",
+  "description": "Juegos cognitivos y de memoria para adultos mayores: sopa de letras, crucigramas, sudoku, palabras e historias interactivas.",
+  "lang": "es",
   "icons": [
     {
       "src": "cognijuegos-icon.svg",
@@ -21,7 +23,7 @@
       "purpose": "any maskable"
     }
   ],
-  "start_url": ".",
+  "start_url": "/menu",
   "display": "standalone",
   "theme_color": "#294C6B",
   "background_color": "#ffffff"

@@ -1,5 +1,6 @@
 /* Presenta un juego con su ilustración y su botón para empezar. */
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { IonIcon } from "@ionic/react";
 import { arrowForwardOutline } from "ionicons/icons";
 import GamePreview from "./GamePreview";
@@ -15,11 +16,13 @@ const accentClasses = {
 
 interface MenuCardProps {
   game: MenuCardGame;
-  onStart: () => void;
 }
 
-// Presenta un juego con su ilustración y su botón para empezar.
-const MenuCard: React.FC<MenuCardProps> = ({ game, onStart }) => {
+const playButtonClassName =
+  "menu-card__play mt-auto inline-flex min-h-12 min-w-[116px] cursor-pointer items-center justify-between gap-3.5 rounded-[9px] border-0 border-none bg-[var(--game-color)] px-[18px] py-[9px] font-[inherit] text-lg leading-normal font-bold text-[#172433]! no-underline! transition-colors duration-150 ease-out hover:bg-[color-mix(in_srgb,var(--game-color),white_18%)] active:bg-[#495e77] disabled:cursor-default disabled:bg-[#e5eaf0] disabled:text-[#536479]! max-md:col-span-full max-md:w-auto max-md:justify-self-start";
+
+// Presenta un juego con su ilustración y su enlace para empezar.
+const MenuCard: React.FC<MenuCardProps> = ({ game }) => {
   const cardRef = useRef<HTMLElement>(null);
   const [previewStarted, setPreviewStarted] = useState(false);
 
@@ -67,18 +70,25 @@ const MenuCard: React.FC<MenuCardProps> = ({ game, onStart }) => {
         <p className="menu-card__description mt-3.5 mb-5 max-w-[65ch] text-base leading-[1.55] text-menu-copy max-md:col-span-full max-md:my-2">
           {game.description}
         </p>
-        <button
-          type="button"
-          aria-label={`${game.available ? "Jugar" : "Próximamente"} ${game.title}`}
-          disabled={!game.available}
-          onClick={onStart}
-          className="menu-card__play mt-auto inline-flex min-h-12 min-w-[116px] cursor-pointer items-center justify-between gap-3.5 rounded-[9px] border-0 border-none bg-[var(--game-color)] px-[18px] py-[9px] font-[inherit] text-lg leading-normal font-bold text-[#172433] transition-colors duration-150 ease-out hover:bg-[color-mix(in_srgb,var(--game-color),white_18%)] active:bg-[#495e77] disabled:cursor-default disabled:bg-[#e5eaf0] disabled:text-[#536479] max-md:col-span-full max-md:w-auto max-md:justify-self-start"
-        >
-          {game.available ? "Jugar" : "Próximamente"}
-          {game.available && (
+        {game.available ? (
+          <Link
+            to={game.path}
+            aria-label={`Jugar ${game.title}`}
+            className={playButtonClassName}
+          >
+            Jugar
             <IonIcon icon={arrowForwardOutline} aria-hidden="true" />
-          )}
-        </button>
+          </Link>
+        ) : (
+          <button
+            type="button"
+            aria-label={`Próximamente ${game.title}`}
+            disabled
+            className={playButtonClassName}
+          >
+            Próximamente
+          </button>
+        )}
       </div>
     </article>
   );
