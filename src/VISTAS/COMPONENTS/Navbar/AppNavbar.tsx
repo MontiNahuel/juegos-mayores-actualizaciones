@@ -26,7 +26,7 @@ function NavbarIdentity({
     return (
       <>
         <a
-          href="/menu"
+          href="/"
           className="menu-brand flex shrink-0 items-center gap-2.5 text-[17px] leading-[1.2] font-extrabold text-menu-ink! no-underline max-md:gap-2 max-md:text-[15px]"
           aria-label="ASISTODO, inicio"
         >

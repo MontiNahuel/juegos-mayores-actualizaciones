@@ -22,7 +22,7 @@ const RedirectToAdmin = () => {
   return null;
 };
 
-// Intercepta token en /menu para iniciar sesión de inmediato en vez de quedar como invitado
+// Intercepta token en / para iniciar sesión de inmediato en vez de quedar como invitado
 const MenuWrapper = () => {
   const [params] = useSearchParams();
   const token = params.get('token');
@@ -32,22 +32,23 @@ const MenuWrapper = () => {
   return <Menu />;
 };
 
-// Redirecciona / o cualquier ruta comodín con ?token=... hacia /acceso para loguear
+// Redirecciona rutas desconocidas con ?token=... hacia /acceso para loguear o vuelve a /
 const RootRedirection = () => {
   const [params] = useSearchParams();
   const token = params.get('token');
   if (token) {
     return <Navigate to={`/acceso?token=${encodeURIComponent(token)}`} replace />;
   }
-  return <Navigate to="/menu" replace />;
+  return <Navigate to="/" replace />;
 };
 
 // Muestra app routes y conecta sus controles con la pantalla.
 const AppRoutes = () => (
   <BrowserRouter>
     <Routes>
+      <Route path="/" element={<MenuWrapper />} />
       <Route path="/acceso" element={<AccesoToken />} />
-      <Route path="/menu" element={<MenuWrapper />} />
+      <Route path="/menu" element={<Navigate to="/" replace />} />
       <Route path="/juegos/wordle" element={<WordleCalendar />} />
       <Route path="/juegos/wordle/jugar" element={<WordleGame />} />
       <Route path="/juegos/sopa-letras" element={<SopaLetrasCalendar />} />
@@ -66,9 +67,8 @@ const AppRoutes = () => (
       <Route path="/torre" element={<RedirectToAdmin />} />
       <Route path="/admin" element={<RedirectToAdmin />} />
       <Route path="/admin/narrativo" element={<RedirectToAdmin />} />
-      <Route path="/login" element={<Navigate to="/menu" replace />} />
+      <Route path="/login" element={<Navigate to="/" replace />} />
 
-      <Route path="/" element={<RootRedirection />} />
       <Route path="*" element={<RootRedirection />} />
     </Routes>
   </BrowserRouter>

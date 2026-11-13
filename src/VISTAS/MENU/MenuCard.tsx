@@ -19,7 +19,7 @@ interface MenuCardProps {
 }
 
 const playButtonClassName =
-  "menu-card__play mt-auto inline-flex min-h-12 min-w-[116px] cursor-pointer items-center justify-between gap-3.5 rounded-[9px] border-0 border-none bg-[var(--game-color)] px-[18px] py-[9px] font-[inherit] text-lg leading-normal font-bold text-[#172433]! no-underline! transition-colors duration-150 ease-out hover:bg-[color-mix(in_srgb,var(--game-color),white_18%)] active:bg-[#495e77] disabled:cursor-default disabled:bg-[#e5eaf0] disabled:text-[#536479]! max-md:col-span-full max-md:w-auto max-md:justify-self-start";
+  "menu-card__play mt-auto inline-flex min-h-12 min-w-[116px] cursor-pointer items-center justify-between gap-3.5 rounded-[9px] border-0 border-none bg-[var(--game-color)]! px-[18px] py-[9px] font-[inherit] text-lg leading-normal font-bold text-[#172433]! no-underline! transition-colors duration-150 ease-out hover:bg-[color-mix(in_srgb,var(--game-color),white_18%)]! active:bg-[#495e77]! disabled:cursor-default disabled:bg-[#e5eaf0]! disabled:text-[#536479]! max-md:col-span-full max-md:w-auto max-md:justify-self-start";
 
 // Presenta un juego con su ilustración y su enlace para empezar.
 const MenuCard: React.FC<MenuCardProps> = ({ game }) => {

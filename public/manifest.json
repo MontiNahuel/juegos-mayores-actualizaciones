@@ -23,7 +23,7 @@
       "purpose": "any maskable"
     }
   ],
-  "start_url": "/menu",
+  "start_url": "/",
   "display": "standalone",
   "theme_color": "#294C6B",
   "background_color": "#ffffff"

@@ -70,7 +70,7 @@ export const AccesoToken: React.FC = () => {
           // Redirección suave al menú tras confirmar acceso
           setTimeout(/* Ejecuta este paso cuando se cumple la espera. */ () => {
             if (!cancelado) {
-              navigate('/menu', { replace: true });
+              navigate('/', { replace: true });
             }
           }, 1200);
         } else {
@@ -245,7 +245,7 @@ export const AccesoToken: React.FC = () => {
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   <button
-                    onClick={/* Responde a click desde este control. */ () => navigate('/menu?abrirLogin=true', { replace: true })}
+                    onClick={/* Responde a click desde este control. */ () => navigate('/?abrirLogin=true', { replace: true })}
                     style={{
                       backgroundColor: color.blue,
                       color: '#FFFFFF',
@@ -266,7 +266,7 @@ export const AccesoToken: React.FC = () => {
                   </button>
 
                   <button
-                    onClick={/* Responde a click desde este control. */ () => navigate('/menu', { replace: true })}
+                    onClick={/* Responde a click desde este control. */ () => navigate('/', { replace: true })}
                     style={{
                       backgroundColor: 'transparent',
                       color: color.ink,

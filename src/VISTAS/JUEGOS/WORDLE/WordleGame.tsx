@@ -435,7 +435,7 @@ const WordleGame: React.FC = () => {
         `}</style>
         <AppNavbar view={{ kind: 'game',
 title: "Palabra del día",
-onBack: () => navigate("/menu"),
+onBack: () => navigate("/"),
 rightAction: <button
               type="button"
               onClick={/* Responde a click desde este control. */ () => setShowColorGuideModal(true)}
