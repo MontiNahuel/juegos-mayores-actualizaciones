@@ -11,6 +11,7 @@ export interface DayChallenge {
   attempts?: number;
   stars?: number;
   score?: number;
+  grade?: string; // Sello de desempeño: 'S', 'A', 'B', 'C', 'F'
   isToday?: boolean;
   completedData?: any; // Datos registrados al completar (palabra, intentos, tiempo, etc.)
 }
@@ -22,6 +23,7 @@ export interface CompletedRecord {
   word?: string;
   timeSeconds?: number;
   score?: number;
+  grade?: string;
   awardedPoints?: number;
   dateStr?: string;
   completedAt?: string;

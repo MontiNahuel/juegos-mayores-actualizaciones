@@ -37,3 +37,24 @@ it('deja los puntos acreditados sin definir si el intento no tuvo bonus', async 
 
   expect(challenges.find((item) => item.day === 5)?.completedData?.awardedPoints).toBeUndefined();
 });
+
+it('expone el sello del intento completado en el día', async () => {
+  mockMonth({ date: '2026-10-05', status: 'completed', attempts: 1, stars: 3, score: 100, grade: 'S' });
+
+  const { challenges } = await getCalendarMonthData('sopa_letras', 2026, 10, SERVER_TODAY);
+
+  const day = challenges.find((item) => item.day === 5);
+  expect(day?.status).toBe('completed');
+  expect(day?.grade).toBe('S');
+});
+
+it('muestra el sello F de una partida perdida sin bloquear el día', async () => {
+  mockMonth({ date: '2026-10-05', status: 'failed', attempts: 1, stars: 0, score: 0, grade: 'F' });
+
+  const { challenges } = await getCalendarMonthData('sopa_letras', 2026, 10, SERVER_TODAY);
+
+  const day = challenges.find((item) => item.day === 5);
+  expect(day?.status).toBe('pending');
+  expect(day?.grade).toBe('F');
+  expect(day?.completedData).toBeUndefined();
+});

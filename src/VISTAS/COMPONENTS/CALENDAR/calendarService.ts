@@ -143,6 +143,7 @@ export async function getTodayChallengeData(
     attempts: comp?.attempts,
     stars: comp?.stars,
     score: comp?.score,
+    grade: comp?.grade,
     isToday: true,
     completedData: comp,
   };
@@ -183,6 +184,8 @@ export async function getCalendarMonthData(
 
   // 2. Obtener intentos completados locales (modo offline / invitado) aislados por mes
   const completedMap: Record<number, CompletedRecord> = {};
+  // Calificaciones de partidas perdidas: el día sigue jugable, sólo se muestra el sello.
+  const failedGrades: Record<number, string> = {};
   try {
     const compKey = getCompletedDaysStorageKey(gameId, year, month);
     const storedLocal = localStorage.getItem(compKey);
@@ -201,6 +204,7 @@ export async function getCalendarMonthData(
         const activeData = JSON.parse(activeRaw);
         if (activeData.status === 'in_progress') {
           delete completedMap[d];
+          delete failedGrades[d];
         }
       }
     }
@@ -230,6 +234,9 @@ export async function getCalendarMonthData(
             };
           } else if (att.status === 'in_progress') {
             delete completedMap[dayNum];
+            delete failedGrades[dayNum];
+          } else if (att.status === 'failed' || att.status === 'lost') {
+            failedGrades[dayNum] = att.grade || 'F';
           }
         }
       });
@@ -284,6 +291,7 @@ export async function getCalendarMonthData(
       attempts: comp?.attempts,
       stars: comp?.stars,
       score: comp?.score,
+      grade: comp ? comp.grade : failedGrades[d],
       isToday,
       completedData: comp,
     });
