@@ -1,8 +1,9 @@
 /* Celebra una vez al día la racha de ingresos confirmada por el servidor con confeti y fuegos artificiales. */
 import { useEffect, useId, useState } from 'react';
 import { IonIcon } from '@ionic/react';
-import { flame } from 'ionicons/icons';
+import { flame, star } from 'ionicons/icons';
 import { usePlayerEconomy } from '../../../context/PlayerEconomyContext';
+import { puntosDelDia, textoDias } from '../../../utils/rachaUtils';
 import { getSessionUser } from '../../AUTH/sessionStore';
 import { SuccessFireworks } from '../ANIMATIONS/SuccessFireworks';
 import { ModalBase } from './ModalBase';
@@ -21,7 +22,14 @@ const CONFETTI_PIECES = [
 ];
 
 export function StreakCelebrationModal() {
-  const { isAuthenticated, isLoading, racha, rachaUltimaFecha } = usePlayerEconomy();
+  const {
+    isAuthenticated,
+    isLoading,
+    racha,
+    rachaUltimaFecha,
+    rachaPuntosDia = 0,
+    rachaTramosDiarios = [],
+  } = usePlayerEconomy();
   const [open, setOpen] = useState(false);
   const titleId = useId();
 
@@ -45,7 +53,7 @@ export function StreakCelebrationModal() {
     setOpen(true);
   }, [isAuthenticated, isLoading, racha, rachaUltimaFecha]);
 
-  const unidad = racha === 1 ? 'día' : 'días';
+  const puntosGanadosHoy = rachaPuntosDia > 0 ? rachaPuntosDia : puntosDelDia(racha, rachaTramosDiarios);
 
   return (
     <ModalBase isOpen={open} onClose={() => setOpen(false)} labelledBy={titleId}>
@@ -90,8 +98,14 @@ export function StreakCelebrationModal() {
             Tus días de racha
           </p>
           <p className="m-0 mt-1 text-4xl font-black text-amber-600 tabular-nums">
-            {racha} {unidad}
+            {textoDias(racha)}
           </p>
+          {puntosGanadosHoy > 0 && (
+            <p className="mt-3 mb-0 inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3.5 py-1 text-sm font-extrabold text-emerald-700 tabular-nums">
+              <IonIcon icon={star} className="text-base text-amber-500" aria-hidden="true" />
+              <span>+{puntosGanadosHoy} pts por ingresar hoy</span>
+            </p>
+          )}
         </div>
 
         <p className="relative z-10 mt-4 mb-5 text-sm leading-relaxed font-medium text-slate-600">
