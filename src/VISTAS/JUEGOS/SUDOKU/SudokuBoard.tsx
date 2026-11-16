@@ -60,7 +60,7 @@ export const SudokuBoard: React.FC<SudokuBoardProps> = ({
                 key={`${r}-${c}`}
                 type="button"
                 onClick={/* Responde a click desde este control. */ () => onSelectCell(r, c)}
-                className={`relative flex aspect-square min-w-0 items-center justify-center transition-colors duration-200 ${borderR} ${borderB} ${bg}`}
+                className={`relative flex aspect-square min-w-0 items-center justify-center transition-colors duration-200 focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#69588d] ${borderR} ${borderB} ${bg}`}
                 aria-label={`Fila ${r + 1}, Columna ${c + 1}, ${cell.value > 0 ? (cell.error ? `Incorrecto ${cell.value}` : `Valor ${cell.value}`) : 'Vacío'}`}
               >
                 {cell.value > 0 ? (
