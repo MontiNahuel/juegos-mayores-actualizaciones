@@ -1,6 +1,7 @@
 import { DEFAULT_GRADE_POINTS, DEFAULT_TIME_GRADES, type ScoringConfig } from '../VISTAS/JUEGOS/classicScoring';
 /* Guarda el saldo, la racha y las reglas activas para que todos los juegos vean lo mismo. */
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import type { TramoPuntosDiarios } from '../utils/rachaUtils';
 
 export type SuscripcionTipo = 'basica' | 'premium';
 
@@ -29,6 +30,8 @@ export interface PlayerEconomyState extends ScoringConfig {
   rachaUltimaFecha: string | null;
   rachaHoyIngresada: boolean;
   bonusRacha: BonusRachaConfig | null;
+  rachaPuntosDia: number;
+  rachaTramosDiarios: TramoPuntosDiarios[];
   costoPistaPuntos: number;
   costoDesbloqueoDiaPuntos: number;
   suscripcion: SuscripcionTipo;
@@ -45,6 +48,8 @@ const initialState: PlayerEconomyState = {
   rachaUltimaFecha: null,
   rachaHoyIngresada: false,
   bonusRacha: null,
+  rachaPuntosDia: 0,
+  rachaTramosDiarios: [],
   costoPistaPuntos: 20,
   costoDesbloqueoDiaPuntos: 100,
   suscripcion: 'basica',
@@ -72,6 +77,8 @@ const playerEconomySlice = createSlice({
       state.rachaUltimaFecha = null;
       state.rachaHoyIngresada = false;
       state.bonusRacha = null;
+      state.rachaPuntosDia = 0;
+      state.rachaTramosDiarios = [];
       state.suscripcion = 'basica';
       state.diasDesbloqueados = [];
       state.isLoading = false;

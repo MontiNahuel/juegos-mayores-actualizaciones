@@ -13,14 +13,10 @@ const economy = vi.hoisted(() => ({
   puntos: 1450,
   suscripcion: 'premium' as 'premium' | 'basica',
   diasDesbloqueados: [] as string[],
-  bonusRacha: {
-    activo: true,
-    modo: 'porcentaje' as const,
-    tramos: [
-      { dias: 10, valor: 10 },
-      { dias: 15, valor: 20 },
-    ],
-  },
+  rachaTramosDiarios: [
+    { dias: 1, puntos: 40 },
+    { dias: 15, puntos: 80 },
+  ],
 }));
 
 const fetchPerfilResumen = vi.hoisted(() => vi.fn());
@@ -165,7 +161,7 @@ describe('Perfil: resumen autenticado', () => {
     expect(within(sopa).getByText('Histórico · Sin medallas todavía')).toBeInTheDocument();
 
     expect(screen.getByText(/2 días con actividad/)).toBeInTheDocument();
-    expect(screen.getByText(/Te faltan 3 para sumar 20% extra/)).toBeInTheDocument();
+    expect(screen.getByText(/Te faltan 3 para ganar 80 puntos por día/)).toBeInTheDocument();
     expect(screen.getByText('1 de 2 hitos completados.')).toBeInTheDocument();
   });
 

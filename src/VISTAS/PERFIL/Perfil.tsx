@@ -89,7 +89,7 @@ const Perfil = () => {
     puntos,
     suscripcion,
     diasDesbloqueados,
-    bonusRacha,
+    rachaTramosDiarios,
   } = usePlayerEconomy();
   const [usuario, setUsuario] = useState<SessionUser | null>(() => getSessionUser());
   const [resumen, setResumen] = useState<PerfilResumen | null>(null);
@@ -124,7 +124,10 @@ const Perfil = () => {
     void cargar();
   }, [isAuthenticated, cargar]);
 
-  const tramos = bonusRacha?.tramos;
+  const tramos = useMemo(
+    () => rachaTramosDiarios.map((tramo) => ({ dias: tramo.dias, valor: tramo.puntos })),
+    [rachaTramosDiarios],
+  );
   const { siguiente, avance } = useMemo(
     () => progresoDeRacha(racha, tramos),
     [racha, tramos],
@@ -339,11 +342,8 @@ const Perfil = () => {
                           {siguiente.dias} días
                         </strong>
                         <span className="mt-1 text-sm leading-snug text-menu-copy">
-                          Te faltan {Math.max(0, siguiente.dias - racha)} para sumar{' '}
-                          {bonusRacha?.modo === 'puntos_fijos'
-                            ? `${siguiente.valor} puntos`
-                            : `${siguiente.valor}% extra`}
-                          .
+                          Te faltan {Math.max(0, siguiente.dias - racha)} para ganar{' '}
+                          {siguiente.valor} puntos por día.
                         </span>
                         <div
                           className="mt-4 h-2 overflow-hidden rounded-full bg-[#34465b]"

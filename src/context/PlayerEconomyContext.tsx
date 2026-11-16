@@ -11,6 +11,7 @@ import {
   type SuscripcionTipo,
 } from '../store/playerEconomySlice';
 import { API_URL } from '../config/api';
+import { normalizarTramosDiarios, type TramoPuntosDiarios } from '../utils/rachaUtils';
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { pedirPistaConPuntos, type SolicitudPista, type RespuestaPista } from '../services/pistasService';
 import {
@@ -34,6 +35,10 @@ export interface PlayerEconomyContextType extends ScoringConfig {
   rachaUltimaFecha: string | null;
   rachaHoyIngresada: boolean;
   bonusRacha: BonusRachaConfig | null;
+  /** Puntos que entrega por día el tramo de racha actual. */
+  rachaPuntosDia: number;
+  /** Tramos de puntos diarios definidos por el backend (ej. 1→40, 15→80). */
+  rachaTramosDiarios: TramoPuntosDiarios[];
   costoPistaPuntos: number;
   costoDesbloqueoDiaPuntos: number;
   suscripcion: SuscripcionTipo;
@@ -89,6 +94,8 @@ export const PlayerEconomyProvider: React.FC<{ children: React.ReactNode }> = ({
     rachaUltimaFecha,
     rachaHoyIngresada,
     bonusRacha,
+    rachaPuntosDia,
+    rachaTramosDiarios,
     costoPistaPuntos,
     costoDesbloqueoDiaPuntos,
     suscripcion,
@@ -203,6 +210,9 @@ export const PlayerEconomyProvider: React.FC<{ children: React.ReactNode }> = ({
               rachaUltimaFecha: rachaUltima,
               rachaHoyIngresada: rachaHoy,
               bonusRacha: normalizarBonusRacha(userData.bonus_racha),
+              rachaPuntosDia:
+                typeof userData.racha_puntos_dia === 'number' ? userData.racha_puntos_dia : 0,
+              rachaTramosDiarios: normalizarTramosDiarios(userData.racha_tramos_diarios),
               suscripcion: userData.suscripcion === 'premium' ? 'premium' : 'basica',
               diasDesbloqueados: Array.isArray(userData.dias_desbloqueados)
                 ? userData.dias_desbloqueados
@@ -337,6 +347,8 @@ export const PlayerEconomyProvider: React.FC<{ children: React.ReactNode }> = ({
         rachaUltimaFecha,
         rachaHoyIngresada,
         bonusRacha,
+        rachaPuntosDia,
+        rachaTramosDiarios,
         costoPistaPuntos,
         puntosPorCalificacion,
         escalasTiempoPorJuego,

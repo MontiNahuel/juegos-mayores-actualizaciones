@@ -3,7 +3,7 @@ import { useEffect, useId, useState } from 'react';
 import { IonIcon } from '@ionic/react';
 import { flameOutline } from 'ionicons/icons';
 import { usePlayerEconomy } from '../../../context/PlayerEconomyContext';
-import type { RachaTramo } from '../../../store/playerEconomySlice';
+import { puntosDelDia, textoBonusVictoria, textoDias, textoPuntosPorDia } from '../../../utils/rachaUtils';
 import { ModalBase } from './ModalBase';
 
 interface StreakProgressModalProps {
@@ -12,7 +12,8 @@ interface StreakProgressModalProps {
 }
 
 export function StreakProgressModal({ isOpen, onClose }: StreakProgressModalProps) {
-  const { racha, bonusRacha, recargarEconomia } = usePlayerEconomy();
+  const { racha, rachaPuntosDia, rachaTramosDiarios = [], bonusRacha = null, recargarEconomia } =
+    usePlayerEconomy();
   const titleId = useId();
   const [animado, setAnimado] = useState(false);
 
@@ -31,23 +32,33 @@ export function StreakProgressModal({ isOpen, onClose }: StreakProgressModalProp
     return () => cancelAnimationFrame(cuadro);
   }, [isOpen]);
 
-  const hitos = [...(bonusRacha?.tramos ?? [])].sort((a, b) => a.dias - b.dias);
+  const hitos = [...rachaTramosDiarios].sort((a, b) => a.dias - b.dias);
   const total = hitos[hitos.length - 1]?.dias ?? 0;
   const alcanzados = hitos.filter((hito) => racha >= hito.dias).length;
   const siguiente = hitos.find((hito) => racha < hito.dias) ?? null;
   const faltan = siguiente ? siguiente.dias - racha : 0;
-  const avance =
-    total > 0 ? Math.max(0, Math.min(100, Math.round((racha / total) * 100))) : 0;
+  // Los hitos se reparten a distancias iguales para que sus etiquetas nunca se superpongan;
+  // el avance se interpola dentro del tramo en que está la racha.
+  const posicion = (indice: number) =>
+    hitos.length > 1 ? (indice / (hitos.length - 1)) * 100 : 50;
+  const avance = (() => {
+    if (total <= 0 || racha < hitos[0].dias) return 0;
+    if (racha >= total) return 100;
+    const indice = hitos.findIndex((hito, i) => racha >= hito.dias && racha < hitos[i + 1].dias);
+    const desde = hitos[indice];
+    const hasta = hitos[indice + 1];
+    const fraccion = (racha - desde.dias) / (hasta.dias - desde.dias);
+    return Math.round(posicion(indice) + fraccion * (posicion(indice + 1) - posicion(indice)));
+  })();
   const unidad = (dias: number) => (dias === 1 ? 'día' : 'días');
   const faltanTexto = faltan === 1 ? 'Te falta 1 día' : `Te faltan ${faltan} días`;
-  const posicion = (dias: number) =>
-    total > 0 ? Math.max(0, Math.min(100, (dias / total) * 100)) : 0;
+  // Puntos diarios del tramo en que está hoy; si todavía no hay racha, el del primer día.
+  const puntosHoy = rachaPuntosDia > 0 ? rachaPuntosDia : puntosDelDia(Math.max(racha, 1), hitos);
 
-  // La recompensa sólo se nombra cuando el bonus está activo; así no se promete algo que no se acredita.
-  const recompensaDe = (tramo: RachaTramo): string | null => {
-    if (!bonusRacha || !bonusRacha.activo) return null;
-    return bonusRacha.modo === 'puntos_fijos' ? `+${tramo.valor} pts` : `+${tramo.valor}%`;
-  };
+  // El bonus por victoria sólo se muestra cuando está activo; así no se promete algo que no se acredita.
+  const tramosBonus = [...(bonusRacha?.tramos ?? [])].sort((a, b) => a.dias - b.dias);
+  const bonusActivo = bonusRacha?.activo === true && tramosBonus.length > 0;
+  const tramoBonusVigente = [...tramosBonus].reverse().find((tramo) => racha >= tramo.dias) ?? null;
 
   return (
     <ModalBase isOpen={isOpen} onClose={onClose} labelledBy={titleId}>
@@ -73,6 +84,11 @@ export function StreakProgressModal({ isOpen, onClose }: StreakProgressModalProp
           <span className="text-[11px] font-medium tracking-wide text-slate-400 uppercase">
             Racha actual
           </span>
+          {puntosHoy > 0 && (
+            <span className="text-xs font-semibold text-[#294C6B] tabular-nums">
+              [{textoPuntosPorDia(puntosHoy)}]
+            </span>
+          )}
         </div>
 
         {hitos.length === 0 ? (
@@ -117,14 +133,14 @@ export function StreakProgressModal({ isOpen, onClose }: StreakProgressModalProp
                 />
               </div>
 
-              {hitos.map((hito) => {
+              {hitos.map((hito, indiceHito) => {
                 const alcanzado = racha >= hito.dias;
                 const esSiguiente = siguiente?.dias === hito.dias;
                 return (
                   <span
                     key={hito.dias}
                     aria-hidden="true"
-                    style={{ left: `${posicion(hito.dias)}%` }}
+                    style={{ left: `${posicion(indiceHito)}%` }}
                     className={`absolute top-1/2 size-2 -translate-x-1/2 -translate-y-1/2 rounded-full border ${
                       alcanzado
                         ? 'border-[#294C6B] bg-[#294C6B]'
@@ -144,7 +160,7 @@ export function StreakProgressModal({ isOpen, onClose }: StreakProgressModalProp
             <div className="relative mt-2 h-9" aria-label="Hitos de racha">
               {hitos.map((hito, indice) => {
                 const alcanzado = racha >= hito.dias;
-                const recompensa = recompensaDe(hito);
+                const recompensa = textoPuntosPorDia(hito.puntos);
                 const alineacion =
                   hitos.length === 1
                     ? '-translate-x-1/2'
@@ -156,7 +172,7 @@ export function StreakProgressModal({ isOpen, onClose }: StreakProgressModalProp
                 return (
                   <span
                     key={hito.dias}
-                    style={{ left: `${posicion(hito.dias)}%` }}
+                    style={{ left: `${posicion(indice)}%` }}
                     className={`absolute top-0 text-center whitespace-nowrap ${alineacion}`}
                   >
                     <span
@@ -164,17 +180,50 @@ export function StreakProgressModal({ isOpen, onClose }: StreakProgressModalProp
                         alcanzado ? 'text-[#294C6B]' : 'text-slate-400'
                       }`}
                     >
-                      {recompensa ?? `${hito.dias} días`}
+                      {recompensa}
                     </span>
-                    {recompensa && (
-                      <span className="block text-[10px] leading-tight text-slate-400 tabular-nums">
-                        {hito.dias} días
-                      </span>
-                    )}
+                    <span className="block text-[10px] leading-tight text-slate-400 tabular-nums">
+                      {textoDias(hito.dias)}
+                    </span>
                   </span>
                 );
               })}
             </div>
+          </section>
+        )}
+
+        {bonusActivo && (
+          <section className="mt-5 border-t border-slate-100 pt-4" aria-label="Bonus por victoria">
+            <p className="m-0 text-sm font-semibold text-slate-600">Bonus al ganar una partida</p>
+            <p className="m-0 mt-0.5 text-xs font-medium text-slate-400">
+              Se suma al puntaje de cada desafío diario que completes.
+            </p>
+            <ul className="m-0 mt-3 flex list-none flex-wrap gap-2 p-0">
+              {tramosBonus.map((tramo) => {
+                const vigente = tramoBonusVigente?.dias === tramo.dias;
+                const alcanzado = racha >= tramo.dias;
+                return (
+                  <li
+                    key={tramo.dias}
+                    aria-current={vigente ? 'true' : undefined}
+                    className={`rounded-lg border px-2.5 py-1.5 text-center tabular-nums ${
+                      vigente
+                        ? 'border-[#294C6B] bg-[#294C6B]/5 text-[#294C6B]'
+                        : alcanzado
+                          ? 'border-slate-200 bg-white text-slate-500'
+                          : 'border-slate-200 bg-white text-slate-400'
+                    }`}
+                  >
+                    <span className="block text-[11px] font-semibold">
+                      {textoBonusVictoria(tramo.valor, bonusRacha?.modo)}
+                    </span>
+                    <span className="block text-[10px] leading-tight">
+                      {textoDias(tramo.dias)}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
           </section>
         )}
 
