@@ -1,0 +1,624 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mock · Modal de planes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --app-background: #151e2b;
+      --app-panel: #2a394c;
+      --app-border: #52647b;
+      --navy: #294C6B;
+      --copy: #64748B;
+
+      /* Bronce / Plata / Oro: mismo tratamiento de sello que la grilla del calendario. */
+      --bronce: #A9762F;
+      --bronce-ink: #8A5E22;
+      --bronce-glow: #D9A45E;
+      --plata: #8C97A6;
+      --plata-ink: #5F6B7A;
+      --plata-glow: #D5DBE4;
+      --oro: #B8860B;
+      --oro-ink: #8E6708;
+      --oro-glow: #E8C76A;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100dvh;
+      display: grid;
+      place-items: center;
+      padding: 40px 20px;
+      background:
+        radial-gradient(70% 50% at 50% 0%, #1e2c3d 0%, transparent 70%),
+        var(--app-background);
+      color: var(--navy);
+      font-family: "Nunito Sans", "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ---------- Panel ---------- */
+    .panel {
+      width: min(880px, 100%);
+      background: #fff;
+      border-radius: 20px;
+      padding: 26px 28px 22px;
+      box-shadow: 0 30px 70px -30px rgba(4, 10, 18, .85);
+      animation: modal-down 220ms cubic-bezier(.2,.8,.2,1) both;
+    }
+
+    @keyframes modal-down {
+      from { opacity: 0; transform: translateY(-14px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .panel-icon {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: #f1f5f9;
+      color: #64748b;
+      font-size: 15px;
+    }
+
+    .panel-head h1 {
+      margin: 0;
+      font-size: 16px;
+      line-height: 1.2;
+      font-weight: 800;
+      color: var(--navy);
+    }
+
+    .panel-head p {
+      margin: 2px 0 0;
+      font-size: 12px;
+      font-weight: 600;
+      color: #94a3b8;
+    }
+
+    /* ---------- Switch de periodo ---------- */
+    .period-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .switch {
+      display: inline-flex;
+      gap: 4px;
+      padding: 4px;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      background: #f8fafc;
+    }
+
+    .switch button {
+      min-height: 34px;
+      padding: 0 18px;
+      border: 0;
+      border-radius: 9px;
+      background: transparent;
+      color: #64748b;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: background-color .18s ease, color .18s ease, box-shadow .18s ease;
+    }
+
+    .switch button:hover { color: var(--navy); }
+
+    .switch button[aria-pressed="true"] {
+      background: var(--navy);
+      color: #fff;
+      box-shadow: 0 6px 14px -8px rgba(41, 76, 107, .9);
+    }
+
+    .switch button:focus-visible {
+      outline: 2px solid var(--navy);
+      outline-offset: 2px;
+    }
+
+    .period-note {
+      margin: 0;
+      font-size: 11px;
+      font-weight: 600;
+      color: #94a3b8;
+    }
+
+    /* ---------- Grilla de planes ---------- */
+    .plans {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px 14px;
+      margin: 26px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    @media (max-width: 760px) {
+      .plans { grid-template-columns: 1fr; gap: 24px; }
+      .panel { padding: 22px 18px 18px; }
+    }
+
+    .plan {
+      --tier: var(--bronce);
+      --tier-ink: var(--bronce-ink);
+      --tier-glow: var(--bronce-glow);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      padding: 26px 16px 16px;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      background:
+        radial-gradient(130% 70% at 50% 0%, color-mix(in srgb, var(--tier) 9%, transparent), transparent 65%),
+        #fff;
+      transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+    }
+
+    .plan.tier-plata { --tier: var(--plata); --tier-ink: var(--plata-ink); --tier-glow: var(--plata-glow); }
+    .plan.tier-oro   { --tier: var(--oro);   --tier-ink: var(--oro-ink);   --tier-glow: var(--oro-glow); }
+
+    .plan:hover,
+    .plan:focus-within {
+      transform: translateY(-3px);
+      border-color: color-mix(in srgb, var(--tier) 55%, #e2e8f0);
+      box-shadow:
+        0 0 0 1px color-mix(in srgb, var(--tier) 35%, transparent),
+        0 22px 34px -24px color-mix(in srgb, var(--tier) 75%, transparent);
+    }
+
+    /* ---------- Medalla sobre el borde superior ---------- */
+    .medal {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      z-index: 2;
+      display: grid;
+      place-items: center;
+      width: 46px;
+      height: 46px;
+      transform: translate(-50%, -50%);
+      border: 2px solid var(--tier);
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 32% 26%, #fff 0%, #fff 55%, color-mix(in srgb, var(--tier) 16%, #fff) 100%);
+      box-shadow:
+        0 6px 14px -8px color-mix(in srgb, var(--tier) 90%, transparent),
+        inset 0 0 0 3px #fff,
+        inset 0 0 0 4px color-mix(in srgb, var(--tier) 30%, transparent);
+      color: var(--tier-ink);
+      font-size: 19px;
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -.02em;
+      user-select: none;
+    }
+
+    /* Anillo punteado decorativo, como el sello del calendario. */
+    .medal::before {
+      content: "";
+      position: absolute;
+      inset: 5px;
+      border: 1px dashed color-mix(in srgb, var(--tier) 55%, transparent);
+      border-radius: 50%;
+      transform: rotate(-12deg);
+    }
+
+    .medal::after {
+      content: "";
+      position: absolute;
+      inset: -5px;
+      border-radius: 50%;
+      border: 1px solid color-mix(in srgb, var(--tier) 22%, transparent);
+    }
+
+    /* ---------- Encabezado de la tarjeta ---------- */
+    .plan-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .plan-kicker {
+      margin: 0 0 2px;
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--tier-ink);
+      opacity: .85;
+    }
+
+    .plan-name {
+      margin: 0;
+      font-size: 17px;
+      line-height: 1.2;
+      font-weight: 900;
+      letter-spacing: -.01em;
+      background-image: linear-gradient(
+        100deg,
+        var(--navy) 0%,
+        var(--navy) 36%,
+        var(--tier-glow) 50%,
+        var(--navy) 64%,
+        var(--navy) 100%
+      );
+      background-size: 250% 100%;
+      background-position: 120% 0;
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .plan:hover .plan-name,
+    .plan:focus-within .plan-name {
+      animation: name-shine 1.15s ease-out;
+    }
+
+    @keyframes name-shine {
+      from { background-position: 130% 0; }
+      to { background-position: -30% 0; }
+    }
+
+    .plan-desc {
+      margin: 4px 0 0;
+      font-size: 11.5px;
+      line-height: 1.35;
+      font-weight: 600;
+      color: var(--copy);
+    }
+
+    .price {
+      flex-shrink: 0;
+      padding: 4px 8px;
+      border-radius: 8px;
+      background: color-mix(in srgb, var(--tier) 10%, #f8fafc);
+      color: var(--tier-ink);
+      font-size: 11px;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .discount {
+      align-self: flex-start;
+      margin: 8px 0 0;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--tier) 14%, #fff);
+      color: var(--tier-ink);
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .benefits {
+      margin: 10px 0 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 5px;
+    }
+
+    .benefits li {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      font-size: 11.5px;
+      line-height: 1.35;
+      font-weight: 600;
+      color: #475569;
+    }
+
+    .benefits li::before {
+      content: "✓";
+      flex-shrink: 0;
+      margin-top: 1px;
+      color: var(--tier-ink);
+      font-weight: 900;
+    }
+
+    .plan-cta {
+      margin-top: auto;
+      padding-top: 12px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-height: 40px;
+      padding: 8px 14px;
+      border-radius: 11px;
+      border: 1px solid transparent;
+      font: inherit;
+      font-size: 12.5px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: background-color .18s ease, color .18s ease, border-color .18s ease;
+    }
+
+    .btn-primary {
+      background: var(--navy);
+      color: #fff;
+    }
+
+    .btn-primary:hover { background: #1f3a52; }
+
+    .btn-ghost {
+      background: #f1f5f9;
+      border-color: #e2e8f0;
+      color: #94a3b8;
+      cursor: not-allowed;
+    }
+
+    .btn:focus-visible {
+      outline: 2px solid var(--navy);
+      outline-offset: 2px;
+    }
+
+    /* ---------- Brillos al hover ---------- */
+    .spark-layer {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      border-radius: inherit;
+      pointer-events: none;
+    }
+
+    .spark {
+      position: absolute;
+      top: 6px;
+      left: var(--x);
+      width: var(--size);
+      height: var(--size);
+      border-radius: 50%;
+      background: var(--tier);
+      box-shadow: 0 0 6px 1px color-mix(in srgb, var(--tier-glow) 80%, transparent);
+      opacity: 0;
+    }
+
+    .plan:hover .spark,
+    .plan:focus-within .spark {
+      animation: spark-fall var(--dur) ease-in var(--delay) both;
+    }
+
+    @keyframes spark-fall {
+      0%   { opacity: 0; transform: translateY(-4px) scale(.6); }
+      18%  { opacity: .95; }
+      70%  { opacity: .7; }
+      100% { opacity: 0; transform: translateY(96px) scale(.9); }
+    }
+
+    /* ---------- Aviso + cierre ---------- */
+    .notice {
+      margin: 14px 0 0;
+      padding: 10px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      background: #f8fafc;
+      color: #475569;
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+
+    .notice[hidden] { display: none; }
+
+    .close {
+      width: 100%;
+      min-height: 42px;
+      margin-top: 14px;
+      border: 1px solid #e2e8f0;
+      border-radius: 11px;
+      background: #f8fafc;
+      color: var(--navy);
+      font: inherit;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: background-color .18s ease;
+    }
+
+    .close:hover { background: #f1f5f9; }
+    .close:focus-visible { outline: 2px solid var(--navy); outline-offset: 2px; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .panel { animation: none; }
+      .plan, .plan-name, .spark { transition: none; animation: none !important; }
+      .plan:hover, .plan:focus-within { transform: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="panel" role="dialog" aria-modal="true" aria-labelledby="mock-title">
+    <div class="panel-head">
+      <span class="panel-icon" aria-hidden="true">◈</span>
+      <div>
+        <h1 id="mock-title">Mejorar suscripción</h1>
+        <p>Elegí el plan que quieras para tu cuenta</p>
+      </div>
+    </div>
+
+    <div class="period-row">
+      <div class="switch" role="group" aria-label="Periodo de cobro">
+        <button type="button" data-period="mensual" aria-pressed="true">Mensual</button>
+        <button type="button" data-period="anual" aria-pressed="false">Anual</button>
+      </div>
+      <p class="period-note">El cobro anual se paga una vez por doce meses.</p>
+    </div>
+
+    <ul class="plans" aria-label="Planes disponibles">
+      <li class="plan tier-bronce">
+        <span class="medal" aria-hidden="true">E</span>
+        <span class="spark-layer" aria-hidden="true"></span>
+        <div class="plan-head">
+          <div>
+            <p class="plan-kicker">Nivel bronce</p>
+            <h2 class="plan-name">Esencial</h2>
+            <p class="plan-desc">Para entrenar la memoria todos los días.</p>
+          </div>
+          <span class="price" data-price></span>
+        </div>
+        <p class="discount" data-discount hidden></p>
+        <ul class="benefits">
+          <li>Juegos del mes y racha diaria</li>
+          <li>Historial de tus resultados</li>
+          <li>1 perfil activo</li>
+        </ul>
+        <div class="plan-cta">
+          <button type="button" class="btn btn-ghost" disabled aria-label="Esencial: próximamente">Próximamente</button>
+        </div>
+      </li>
+
+      <li class="plan tier-plata">
+        <span class="medal" aria-hidden="true">A</span>
+        <span class="spark-layer" aria-hidden="true"></span>
+        <div class="plan-head">
+          <div>
+            <p class="plan-kicker">Nivel plata</p>
+            <h2 class="plan-name">Aventura</h2>
+            <p class="plan-desc">Más desafíos, más días y rachas sin cortes.</p>
+          </div>
+          <span class="price" data-price></span>
+        </div>
+        <p class="discount" data-discount hidden></p>
+        <ul class="benefits">
+          <li>Todo lo del nivel bronce</li>
+          <li>Desafíos extra y vidas adicionales</li>
+          <li>Acceso anticipado a juegos nuevos</li>
+          <li>2 perfiles activos</li>
+        </ul>
+        <div class="plan-cta">
+          <button type="button" class="btn btn-ghost" disabled aria-label="Aventura: próximamente">Próximamente</button>
+        </div>
+      </li>
+
+      <li class="plan tier-oro">
+        <span class="medal" aria-hidden="true">L</span>
+        <span class="spark-layer" aria-hidden="true"></span>
+        <div class="plan-head">
+          <div>
+            <p class="plan-kicker">Nivel oro</p>
+            <h2 class="plan-name">Leyenda</h2>
+            <p class="plan-desc">Todo desbloqueado, sin límites y con ventajas exclusivas.</p>
+          </div>
+          <span class="price" data-price></span>
+        </div>
+        <p class="discount" data-discount hidden></p>
+        <ul class="benefits">
+          <li>Todo lo del nivel plata</li>
+          <li>Días históricos desbloqueados</li>
+          <li>Contenido narrativo exclusivo</li>
+          <li>4 perfiles activos</li>
+        </ul>
+        <div class="plan-cta">
+          <button type="button" class="btn btn-primary" data-buy>Elegir Leyenda</button>
+        </div>
+      </li>
+    </ul>
+
+    <p class="notice" id="notice" role="status" hidden></p>
+
+    <button type="button" class="close">Cerrar</button>
+  </main>
+
+  <script>
+    const PLANES = [
+      { nombre: 'Esencial', monto: 2999, descuento: 10 },
+      { nombre: 'Aventura', monto: 4999, descuento: 15 },
+      { nombre: 'Leyenda', monto: 7999, descuento: 20 },
+    ];
+
+    const formato = new Intl.NumberFormat('es-AR', {
+      style: 'currency',
+      currency: 'ARS',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+
+    let periodo = 'mensual';
+    const cards = [...document.querySelectorAll('.plan')];
+
+    function precioDe(plan) {
+      if (periodo === 'mensual') return { texto: `${formato.format(plan.monto)} / mes` };
+      const total = Math.round(plan.monto * 12 * (1 - plan.descuento / 100) * 100) / 100;
+      return { texto: `${formato.format(total)} / año`, descuento: `${plan.descuento}% de descuento` };
+    }
+
+    function pintarPrecios() {
+      cards.forEach((card, i) => {
+        const plan = PLANES[i];
+        const { texto, descuento } = precioDe(plan);
+        card.querySelector('[data-price]').textContent = texto;
+        const chip = card.querySelector('[data-discount]');
+        chip.textContent = descuento ?? '';
+        chip.hidden = !descuento;
+      });
+    }
+
+    document.querySelectorAll('[data-period]').forEach((boton) => {
+      boton.addEventListener('click', () => {
+        periodo = boton.dataset.period;
+        document.querySelectorAll('[data-period]').forEach((b) => {
+          b.setAttribute('aria-pressed', String(b === boton));
+        });
+        ocultarAviso();
+        pintarPrecios();
+      });
+    });
+
+    // Brillos: posiciones y ritmos distintos por tarjeta para que no caigan en bloque.
+    cards.forEach((card) => {
+      const capa = card.querySelector('.spark-layer');
+      for (let i = 0; i < 12; i++) {
+        const brillo = document.createElement('span');
+        brillo.className = 'spark';
+        brillo.style.setProperty('--x', `${4 + Math.random() * 92}%`);
+        brillo.style.setProperty('--size', `${2.5 + Math.random() * 3}px`);
+        brillo.style.setProperty('--dur', `${750 + Math.random() * 550}ms`);
+        brillo.style.setProperty('--delay', `${Math.random() * 550}ms`);
+        capa.appendChild(brillo);
+      }
+    });
+
+    const aviso = document.getElementById('notice');
+
+    function ocultarAviso() {
+      aviso.hidden = true;
+      aviso.textContent = '';
+    }
+
+    document.querySelector('[data-buy]').addEventListener('click', () => {
+      const modalidad = periodo === 'anual' ? ' en su modalidad anual' : '';
+      aviso.textContent = `La compra de “Leyenda”${modalidad} va a estar disponible cuando conectemos la pasarela de pagos.`;
+      aviso.hidden = false;
+    });
+
+    document.querySelector('.close').addEventListener('click', ocultarAviso);
+
+    pintarPrecios();
+  </script>
+</body>
+</html>
