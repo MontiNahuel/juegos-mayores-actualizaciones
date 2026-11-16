@@ -4,6 +4,7 @@ import {
   CrownIcon,
   CalendarIcon,
   CoinsIcon,
+  ShoppingBagIcon,
   UserIcon,
   SearchIcon,
   CheckIcon,
@@ -15,6 +16,7 @@ import NarrativeAdminModal from './narrative/NarrativeAdminModal';
 import ModalEconomia from './ModalEconomia';
 import ModalAsignarEconomia from './ModalAsignarEconomia';
 import ModalDesafios from './ModalDesafios';
+import ViewPlanes from './ViewPlanes';
 import {
   getAuthHeaders,
   limpiarSesion,
@@ -46,6 +48,14 @@ const HERRAMIENTAS = [
     title: 'Economía y vidas',
     desc: 'Vidas iniciales, puntos, recompensas y desbloqueos.',
     cta: 'Configurar economía',
+  },
+  {
+    id: 'planes',
+    icon: ShoppingBagIcon,
+    kicker: 'Ingresos',
+    title: 'Planes de suscripción',
+    desc: 'Catálogo de planes, visibilidad en el perfil y habilitación de compra.',
+    cta: 'Gestionar planes',
   },
   {
     id: 'jugadores',
@@ -353,6 +363,8 @@ export default function PanelJuegosAdmin() {
             onCerrar={() => setVista('resumen')}
             onGuardadoExitoso={() => showToast('Configuración de economía actualizada')}
           />
+        ) : vista === 'planes' ? (
+          <ViewPlanes onAviso={showToast} />
         ) : (
           <section className="space-y-8">
             <div>

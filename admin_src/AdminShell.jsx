@@ -9,6 +9,7 @@ import {
   LogOutIcon,
   MenuIcon,
   ShieldIcon,
+  ShoppingBagIcon,
   SparklesIcon,
   UserIcon,
   XIcon,
@@ -24,6 +25,7 @@ const HERRAMIENTAS = [
   { id: 'narrativo', label: 'Narrativo V2', icon: CrownIcon },
   { id: 'desafios', label: 'Desafíos', icon: CalendarIcon },
   { id: 'economia', label: 'Economía', icon: CoinsIcon },
+  { id: 'planes', label: 'Planes', icon: ShoppingBagIcon },
 ];
 
 const TITULOS = {
@@ -40,6 +42,10 @@ const TITULOS = {
   economia: {
     titulo: 'Economía y vidas',
     detalle: 'Parámetros globales de vidas, puntos y recompensas',
+  },
+  planes: {
+    titulo: 'Planes de suscripción',
+    detalle: 'Catálogo, visibilidad y habilitación de compra',
   },
 };
 
