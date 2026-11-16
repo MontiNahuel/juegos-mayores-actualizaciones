@@ -1,6 +1,5 @@
 /* Muestra los juegos y permite abrir sus calendarios. */
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { IonContent, IonPage } from "@ionic/react";
 import { BrainIcon } from "../COMPONENTS/Icons/Icons";
 import MenuCard from "./MenuCard";
@@ -12,7 +11,6 @@ import "./Menu.css";
 
 // Muestra los juegos y permite abrir sus calendarios.
 const Menu: React.FC = () => {
-  const navigate = useNavigate();
   const [esAdmin, setEsAdmin] = useState<boolean>(esUsuarioAdmin);
 
   return (
@@ -82,11 +80,7 @@ const Menu: React.FC = () => {
               </h2>
               <div className="menu-grid grid grid-cols-2 gap-5 max-md:grid-cols-1 max-md:gap-4">
                 {section.games.map((game) => (
-                  <MenuCard
-                    game={game}
-                    key={game.id}
-                    onStart={() => navigate(game.path)}
-                  />
+                  <MenuCard game={game} key={game.id} />
                 ))}
               </div>
             </section>

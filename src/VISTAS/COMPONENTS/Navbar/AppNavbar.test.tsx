@@ -97,7 +97,7 @@ beforeEach(() => {
   setSessionUser(null);
   economy.puntos = 120;
   economy.racha = 0;
-  window.history.replaceState({}, "", "/menu");
+  window.history.replaceState({}, "", "/");
   vi.stubGlobal("fetch", vi.fn(async () => new Response('{"success":true}')));
   vi.clearAllMocks();
 });
@@ -267,7 +267,7 @@ describe("AppNavbar: estructura y estados compartidos", () => {
     window.history.replaceState(
       {},
       "",
-      "/menu?abrirLogin=true&origen=correo#juegos",
+      "/?abrirLogin=true&origen=correo#juegos",
     );
     render(<AppNavbar view={{ kind: "menu" }} />, { wrapper });
     expect(screen.getByRole("dialog")).toBeInTheDocument();

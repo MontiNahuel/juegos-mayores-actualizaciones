@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+
+Disallow: /acceso
+Disallow: /admin
+Disallow: /panel
+Disallow: /panel-juegos
+Disallow: /editor-narrativo
+Disallow: /torre
+Disallow: /api/
+Disallow: /usuario
+Disallow: /progreso
+
+Sitemap: https://cognijuegos.asistodo.com.ar/sitemap.xml
