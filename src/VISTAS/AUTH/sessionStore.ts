@@ -13,6 +13,10 @@ export interface SessionUser {
   nombre?: string;
   codigoAcceso?: string;
   vidas?: number;
+  /** Fecha de alta que devuelve el Autenticador Central. */
+  dateStart?: string | null;
+  dateEnd?: string | null;
+  estadoCodigo?: string;
 }
 
 export interface SessionStreakInfo {

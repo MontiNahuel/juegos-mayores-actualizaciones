@@ -13,6 +13,7 @@ import CrucigramaGame from './JUEGOS/CRUCIGRAMA/CrucigramaGame';
 import KingsCourtCalendar from './JUEGOS/NARRATIVO/KingsCourtCalendar';
 import KingsCourt from './JUEGOS/NARRATIVO/KingsCourt';
 import { AccesoToken } from './LOGIN/AccesoToken';
+import Perfil from './PERFIL/Perfil';
 
 // Redirecciona rutas legadas hacia el panel de administración central de juegos (/admin/juegos)
 const RedirectToAdmin = () => {
@@ -48,6 +49,7 @@ const AppRoutes = () => (
     <Routes>
       <Route path="/acceso" element={<AccesoToken />} />
       <Route path="/menu" element={<MenuWrapper />} />
+      <Route path="/perfil" element={<Perfil />} />
       <Route path="/juegos/wordle" element={<WordleCalendar />} />
       <Route path="/juegos/wordle/jugar" element={<WordleGame />} />
       <Route path="/juegos/sopa-letras" element={<SopaLetrasCalendar />} />

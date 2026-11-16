@@ -30,6 +30,13 @@ export type NavbarView =
       onBack: () => void;
     }
   | {
+      kind: "profile";
+      /** Título de la pantalla de perfil. */
+      title: string;
+      /** Regreso al origen desde donde se abrió el perfil. */
+      onBack: () => void;
+    }
+  | {
       kind: "game";
       /** Título del juego o del resultado. */
       title: string;

@@ -6,10 +6,29 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
+import { MemoryRouter, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import AppNavbar from "./AppNavbar";
 import type { Usuario } from "./navbar.types";
 import { setSessionUser } from "../../AUTH/sessionStore";
+
+/** La navbar navega con el router de la app; las pruebas la montan en memoria. */
+const wrapper = ({ children }: { children: React.ReactNode }) => (
+  <MemoryRouter>{children}</MemoryRouter>
+);
+
+/** Refleja la ruta activa y el origen pedido por el perfil. */
+function SondaRuta() {
+  const location = useLocation();
+  return (
+    <>
+      <span data-testid="ruta">{location.pathname}</span>
+      <span data-testid="origen">
+        {(location.state as { from?: string } | null)?.from ?? ""}
+      </span>
+    </>
+  );
+}
 
 /** La prueba usa la sesión real en memoria y simula solo las dependencias externas de economía/red. */
 const economy = vi.hoisted(() => ({
@@ -98,6 +117,7 @@ describe("AppNavbar: estructura y estados compartidos", () => {
     economy.racha = 3;
     const { container } = render(
       <AppNavbar view={{ kind: "menu" }} onUsuarioChange={notify} />,
+      { wrapper },
     );
     expect(container.querySelectorAll("header")).toHaveLength(1);
     fireEvent.click(screen.getByRole("button", { name: "Iniciar sesión" }));
@@ -130,7 +150,9 @@ describe("AppNavbar: estructura y estados compartidos", () => {
   it("muestra exactamente la racha del contexto (incluido 0 y singular 1 día)", () => {
     setSessionUser({ id: 1, name: "Ana" });
     economy.racha = 0;
-    const { rerender } = render(<AppNavbar view={{ kind: "menu" }} />);
+    const { rerender } = render(<AppNavbar view={{ kind: "menu" }} />, {
+      wrapper,
+    });
     expect(screen.getByTitle("Días de racha")).toHaveTextContent("0 días");
 
     economy.racha = 1;
@@ -142,7 +164,7 @@ describe("AppNavbar: estructura y estados compartidos", () => {
   it("abre el progreso de racha al tocar el indicador y lo cierra con Seguir jugando", () => {
     setSessionUser({ id: 1, name: "Ana" });
     economy.racha = 3;
-    render(<AppNavbar view={{ kind: "menu" }} />);
+    render(<AppNavbar view={{ kind: "menu" }} />, { wrapper });
 
     fireEvent.click(screen.getByTitle("Días de racha"));
 
@@ -162,6 +184,7 @@ describe("AppNavbar: estructura y estados compartidos", () => {
       <AppNavbar
         view={{ kind: "calendar", title: "Palabra del día", onBack: back }}
       />,
+      { wrapper },
     );
     expect(
       screen.getByRole("heading", { name: "Palabra del día" }),
@@ -207,6 +230,7 @@ describe("AppNavbar: estructura y estados compartidos", () => {
     };
     const { rerender } = render(
       <AppNavbar view={{ ...view, hintDisabled: true }} />,
+      { wrapper },
     );
     const bulb = screen.getByRole("button", { name: "Pedir una pista" });
     expect(bulb).toBeDisabled();
@@ -219,7 +243,9 @@ describe("AppNavbar: estructura y estados compartidos", () => {
 
   /** Actualizaciones en memoria de la sesión se reflejan inmediatamente sin eventos de storage. */
   it("sincroniza cambios de sesión en memoria y vuelve a invitado si se limpia la sesión", () => {
-    const { container } = render(<AppNavbar view={{ kind: "menu" }} />);
+    const { container } = render(<AppNavbar view={{ kind: "menu" }} />, {
+      wrapper,
+    });
     act(() => {
       setSessionUser({ id: 2, name: "Luis" });
     });
@@ -243,9 +269,75 @@ describe("AppNavbar: estructura y estados compartidos", () => {
       "",
       "/menu?abrirLogin=true&origen=correo#juegos",
     );
-    render(<AppNavbar view={{ kind: "menu" }} />);
+    render(<AppNavbar view={{ kind: "menu" }} />, { wrapper });
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     expect(window.location.search).toBe("?origen=correo");
     expect(window.location.hash).toBe("#juegos");
+  });
+});
+
+describe("AppNavbar: acceso al perfil", () => {
+  /** El saludo es la única entrada desde el menú; el icono de cuenta no se duplica. */
+  it("abre el perfil desde el menú y recuerda de dónde vino", () => {
+    setSessionUser({ id: 1, name: "Ana" });
+    render(
+      <MemoryRouter initialEntries={["/menu"]}>
+        <AppNavbar view={{ kind: "menu" }} />
+        <SondaRuta />
+      </MemoryRouter>,
+    );
+
+    const saludo = screen.getByRole("link", { name: /¡Hola, Ana!/ });
+    expect(saludo).toHaveAttribute("href", "/perfil");
+    expect(
+      screen.queryByRole("button", { name: "Abrir mi perfil" }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(saludo);
+    expect(screen.getByTestId("ruta")).toHaveTextContent("/perfil");
+    expect(screen.getByTestId("origen")).toHaveTextContent("/menu");
+  });
+
+  /** El calendario también abre el perfil, pero la pantalla de juego no expone la salida. */
+  it("abre el perfil desde el calendario y no desde el juego", () => {
+    setSessionUser({ id: 1, name: "Ana" });
+    const back = vi.fn();
+    const { rerender } = render(
+      <MemoryRouter initialEntries={["/juegos/wordle"]}>
+        <AppNavbar view={{ kind: "calendar", title: "Palabra del día", onBack: back }} />
+        <SondaRuta />
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Abrir mi perfil" }));
+    expect(screen.getByTestId("ruta")).toHaveTextContent("/perfil");
+    expect(screen.getByTestId("origen")).toHaveTextContent("/juegos/wordle");
+
+    rerender(
+      <MemoryRouter>
+        <AppNavbar view={{ kind: "game", title: "Resultado", onBack: back }} />
+        <SondaRuta />
+      </MemoryRouter>,
+    );
+    expect(
+      screen.queryByRole("button", { name: "Abrir mi perfil" }),
+    ).not.toBeInTheDocument();
+  });
+
+  /** El perfil usa el título propio junto a la marca y no repite el saludo del menú. */
+  it("muestra el contexto de perfil con regreso Volver", () => {
+    setSessionUser({ id: 1, name: "Ana" });
+    const back = vi.fn();
+    render(
+      <MemoryRouter>
+        <AppNavbar view={{ kind: "profile", title: "Mi perfil", onBack: back }} />
+      </MemoryRouter>,
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "Mi perfil" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/¡Hola/)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Volver" }));
+    expect(back).toHaveBeenCalledOnce();
   });
 });

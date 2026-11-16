@@ -1,10 +1,12 @@
 import { useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { IonHeader, IonToolbar, IonIcon } from "@ionic/react";
 import {
   flameOutline,
   starOutline,
   logInOutline,
   logOutOutline,
+  personOutline,
 } from "ionicons/icons";
 import { AuthModal } from "../MODALS/AuthModal";
 import { StreakProgressModal } from "../MODALS/StreakProgressModal";
@@ -44,10 +46,48 @@ function NavbarIdentity({
             </span>
           </span>
         </a>
-        <span className="flex-1 pl-[26px] text-[15px] text-menu-copy [overflow-wrap:anywhere] max-[1001px]:hidden">
-          {user ? `¡Hola, ${user.name}!` : ""}
+        <span className="flex-1 pl-[26px] text-[15px] text-menu-copy [overflow-wrap:anywhere] max-md:pl-0">
+          {user ? (
+            <Link
+              to="/perfil"
+              state={{ from: "/menu" }}
+              className="inline-flex items-center gap-1.5 rounded-[6px] text-menu-copy! no-underline underline-offset-4 hover:text-menu-ink! hover:underline"
+            >
+              ¡Hola, {user.name}!
+              <IonIcon icon={personOutline} aria-hidden="true" />
+            </Link>
+          ) : (
+            ""
+          )}
         </span>
       </>
+    );
+
+  const esPerfil = view.kind === "profile";
+
+  if (esPerfil)
+    return (
+      <div className="flex min-w-0 items-center gap-3">
+        <button
+          type="button"
+          onClick={view.onBack}
+          className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-[10px] border-0 bg-transparent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#294c6b]"
+          aria-label="Volver"
+          title="Volver"
+        >
+          <img
+            src="/asistodo-logo.svg"
+            alt="ASISTODO"
+            width="40"
+            height="40"
+            className="max-md:size-[34px]"
+          />
+        </button>
+        <span className="h-7 w-px shrink-0 bg-[#364454]" aria-hidden="true" />
+        <h1 className="m-0! truncate text-[1.375rem]! leading-tight! font-bold! text-menu-ink max-md:text-lg!">
+          {view.title}
+        </h1>
+      </div>
     );
 
   // El consumidor decide el destino; la navbar no altera por su cuenta el historial.
@@ -80,6 +120,7 @@ function NavbarAccount({
   onLogin,
   onLogout,
   onOpenStreak,
+  onOpenProfile,
 }: {
   /** Visibilidad de acceso/salida según el contexto de la pantalla. */
   showSession: boolean;
@@ -95,6 +136,8 @@ function NavbarAccount({
   onLogout: () => void;
   /** Abre el detalle de progreso de la racha diaria. */
   onOpenStreak: () => void;
+  /** Entrada al perfil; solo existe fuera de la pantalla de juego. */
+  onOpenProfile?: () => void;
 }) {
   if (!user && !showSession) return null;
   return (
@@ -102,6 +145,17 @@ function NavbarAccount({
       {/* Los indicadores solo aparecen con sesión; nunca se simula una racha o saldo de invitado. */}
       {user && (
         <>
+          {onOpenProfile && (
+            <button
+              type="button"
+              onClick={onOpenProfile}
+              title="Mi perfil"
+              aria-label="Abrir mi perfil"
+              className="flex size-[46px] shrink-0 cursor-pointer items-center justify-center rounded-[10px] border border-transparent bg-transparent text-menu-ink transition-colors hover:border-[#526176] hover:bg-[#28384b] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#edd499]"
+            >
+              <IonIcon icon={personOutline} className="text-xl" aria-hidden="true" />
+            </button>
+          )}
           <button
             type="button"
             onClick={onOpenStreak}
@@ -154,16 +208,25 @@ export default function AppNavbar({ view, onUsuarioChange }: AppNavbarProps) {
   const { session, economy, authOpen, openAuth, closeAuth, login, logout } =
     useNavbarSession(onUsuarioChange);
   const [streakOpen, setStreakOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
   const menu = view.kind === "menu";
+  // El saludo del menú ya abre el perfil; el calendario necesita el icono como entrada propia.
+  const puedeVerPerfil =
+    session.kind === "authenticated" && view.kind === "calendar";
+  const abrirPerfil = () =>
+    navigate("/perfil", { state: { from: location.pathname } });
   // Cerrar sesión también descarta el detalle de racha para no reabrirlo con otra cuenta.
   const cerrarSesion = () => {
     setStreakOpen(false);
     logout();
   };
-  // El menú permite saludo y cuenta; calendario/juego reservan un centro flexible para el título.
+  // El menú permite saludo y cuenta; el perfil lleva título junto a la marca; calendario/juego reservan un centro flexible para el título.
   const layoutClass = menu
     ? "menu-nav mx-auto flex min-h-[88px] max-w-[1180px] flex-wrap items-center gap-6 px-9 py-4 text-menu-ink max-md:min-h-[78px] max-md:gap-3.5 max-md:px-5 max-md:py-3 max-[360px]:gap-1.5 max-[360px]:px-3"
-    : "menu-nav mx-auto grid min-h-[88px] w-full max-w-[1180px] grid-cols-[44px_minmax(0,1fr)_auto] items-center gap-3 px-9 py-4 text-menu-ink max-md:min-h-[78px] max-md:gap-2 max-md:px-3 max-md:py-3";
+    : view.kind === "profile"
+      ? "menu-nav mx-auto grid min-h-[88px] w-full max-w-[1180px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-9 py-4 text-menu-ink max-md:min-h-[78px] max-md:gap-2 max-md:px-3 max-md:py-3"
+      : "menu-nav mx-auto grid min-h-[88px] w-full max-w-[1180px] grid-cols-[44px_minmax(0,1fr)_auto] items-center gap-3 px-9 py-4 text-menu-ink max-md:min-h-[78px] max-md:gap-2 max-md:px-3 max-md:py-3";
 
   return (
     <>
@@ -176,8 +239,8 @@ export default function AppNavbar({ view, onUsuarioChange }: AppNavbarProps) {
         <IonToolbar>
           <div className={layoutClass}>
             <NavbarIdentity view={view} user={session.user} />
-            {/* Los puntos animados pertenecen al juego/resultado; el calendario solo necesita el título. */}
-            {view.kind !== "menu" && (
+            {/* El saludo pertenece solo al menú; el perfil ya lleva su título junto a la marca. */}
+            {(view.kind === "calendar" || view.kind === "game") && (
               <div className="min-w-0 text-center [overflow-wrap:anywhere]">
                 <h1 className="m-0! text-[1.375rem]! leading-tight! font-bold! text-menu-ink max-md:text-lg!">
                   {view.title}
@@ -210,7 +273,7 @@ export default function AppNavbar({ view, onUsuarioChange }: AppNavbarProps) {
               </div>
             ) : (
               <NavbarAccount
-                showSession={menu}
+                showSession={menu || view.kind === "profile"}
                 user={session.user}
                 racha={economy.racha ?? 0}
                 points={economy.puntos}
@@ -218,6 +281,7 @@ export default function AppNavbar({ view, onUsuarioChange }: AppNavbarProps) {
                 onLogin={openAuth}
                 onLogout={cerrarSesion}
                 onOpenStreak={() => setStreakOpen(true)}
+                onOpenProfile={puedeVerPerfil ? abrirPerfil : undefined}
               />
             )}
           </div>

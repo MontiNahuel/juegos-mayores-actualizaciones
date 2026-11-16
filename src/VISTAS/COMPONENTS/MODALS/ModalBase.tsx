@@ -8,10 +8,19 @@ interface ModalBaseProps {
   labelledBy: string;
   children: ReactNode;
   header?: ReactNode;
+  /** Ensancha el panel desde tablet; en móvil conserva el ancho compacto. */
+  size?: 'md' | 'lg';
 }
 
 // Da una base común a las ventanas emergentes y al manejo del cierre.
-export function ModalBase({ isOpen, onClose, labelledBy, children, header }: ModalBaseProps) {
+export function ModalBase({
+  isOpen,
+  onClose,
+  labelledBy,
+  children,
+  header,
+  size = 'md',
+}: ModalBaseProps) {
   const panel = useRef<HTMLDivElement>(null);
   const cerrar = useRef(onClose);
   cerrar.current = onClose;
@@ -58,7 +67,9 @@ export function ModalBase({ isOpen, onClose, labelledBy, children, header }: Mod
         onClick={event => { if (event.target === event.currentTarget) onClose(); }}>
       <div
         onKeyDown={/* Responde a key down desde este control. */ event => event.stopPropagation()}
-        className="modal-scroll motion-safe:animate-modal-down max-h-full w-full min-w-0 max-w-[480px] overflow-y-auto overscroll-contain rounded-3xl border border-slate-200 bg-white p-4 text-center text-slate-900 shadow-2xl outline-none sm:p-6">
+        className={`modal-scroll motion-safe:animate-modal-down max-h-full w-full min-w-0 overflow-y-auto overscroll-contain rounded-3xl border border-slate-200 bg-white p-4 text-center text-slate-900 shadow-2xl outline-none sm:p-6 ${
+          size === 'lg' ? 'max-w-[480px] sm:max-w-[760px] lg:max-w-[880px]' : 'max-w-[480px]'
+        }`}>
         {children}
       </div>
       </div>
