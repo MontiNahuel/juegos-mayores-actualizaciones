@@ -63,7 +63,7 @@ describe('StreakCelebrationModal', () => {
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByText('¡Felicidades!')).toBeInTheDocument();
     expect(screen.getByText('4 días')).toBeInTheDocument();
-    expect(screen.getByText('+40 pts por ingresar hoy')).toBeInTheDocument();
+    expect(screen.getByText('Recibiste +40 pts por ingresar hoy')).toBeInTheDocument();
     expect(screen.getByTestId('fireworks')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: '¡Vamos a jugar!' }));
@@ -96,6 +96,6 @@ describe('StreakCelebrationModal', () => {
 
     render(<StreakCelebrationModal />);
     expect(screen.getByText('15 días')).toBeInTheDocument();
-    expect(screen.getByText('+80 pts por ingresar hoy')).toBeInTheDocument();
+    expect(screen.getByText('Recibiste +80 pts por ingresar hoy')).toBeInTheDocument();
   });
 });

@@ -103,7 +103,7 @@ export function StreakCelebrationModal() {
           {puntosGanadosHoy > 0 && (
             <p className="mt-3 mb-0 inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3.5 py-1 text-sm font-extrabold text-emerald-700 tabular-nums">
               <IonIcon icon={star} className="text-base text-amber-500" aria-hidden="true" />
-              <span>+{puntosGanadosHoy} pts por ingresar hoy</span>
+              <span>Recibiste +{puntosGanadosHoy} pts por ingresar hoy</span>
             </p>
           )}
         </div>
