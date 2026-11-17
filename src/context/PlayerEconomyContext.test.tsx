@@ -88,6 +88,11 @@ describe('economía y racha compartida en Redux con cookies HttpOnly', () => {
               dias_desbloqueados: [],
               costo_pista_puntos: 20,
               costo_desbloqueo_dia_puntos: 80,
+              racha_puntos_dia: 40,
+              racha_tramos_diarios: [
+                { dias: 15, puntos: 80 },
+                { dias: 1, puntos: 40 },
+              ],
               bonus_racha: {
                 activo: true,
                 modo: 'porcentaje',
@@ -114,6 +119,11 @@ describe('economía y racha compartida en Redux con cookies HttpOnly', () => {
     });
     expect(screen.getByTestId('saldo').textContent).toBe('500:4');
     expect(economia.costoDesbloqueoDiaPuntos).toBe(80);
+    expect(economia.rachaPuntosDia).toBe(40);
+    expect(economia.rachaTramosDiarios).toEqual([
+      { dias: 1, puntos: 40 },
+      { dias: 15, puntos: 80 },
+    ]);
     expect(economia.bonusRacha).toEqual({
       activo: true,
       modo: 'porcentaje',

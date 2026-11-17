@@ -35,15 +35,11 @@ const economy = vi.hoisted(() => ({
   puntos: 120,
   racha: 0,
   isLoading: false,
-  bonusRacha: {
-    activo: false,
-    modo: "porcentaje" as const,
-    tramos: [
-      { dias: 10, valor: 10 },
-      { dias: 15, valor: 20 },
-      { dias: 20, valor: 30 },
-    ],
-  },
+  rachaPuntosDia: 40,
+  rachaTramosDiarios: [
+    { dias: 1, puntos: 40 },
+    { dias: 15, puntos: 80 },
+  ],
   recargarEconomia: vi.fn().mockResolvedValue(undefined),
 }));
 vi.mock("../../../context/PlayerEconomyContext", () => ({
@@ -169,8 +165,8 @@ describe("AppNavbar: estructura y estados compartidos", () => {
     fireEvent.click(screen.getByTitle("Días de racha"));
 
     expect(screen.getByRole("dialog")).toBeInTheDocument();
-    expect(screen.getByText("Te faltan 7 días")).toBeInTheDocument();
-    expect(screen.getByText("0 de 3 hitos")).toBeInTheDocument();
+    expect(screen.getByText("Te faltan 12 días")).toBeInTheDocument();
+    expect(screen.getByText("1 de 2 hitos")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Seguir jugando" }));
     expect(screen.queryByRole("dialog")).toBeNull();

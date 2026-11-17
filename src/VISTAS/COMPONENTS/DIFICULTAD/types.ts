@@ -29,10 +29,9 @@ export const DEFAULT_DIFFICULTY_OPTIONS: DifficultyOptionConfig[] = [
   {
     level: 1,
     title: 'Nivel Inicial',
-    description: 'Partida tranquila con 7 vidas. Más números iniciales revelados.',
+    description: 'Ideal para novatos. Una partida tranquila para empezar sin apuro.',
     stars: '★☆☆',
     badge: 'Recomendado',
-    lives: 7,
     leftBorderColor: 'border-l-emerald-500',
     leftBorderHex: '#10B981',
     actionBgColor: 'bg-emerald-50',
@@ -42,9 +41,8 @@ export const DEFAULT_DIFFICULTY_OPTIONS: DifficultyOptionConfig[] = [
   {
     level: 2,
     title: 'Nivel Intermedio',
-    description: 'Desafío estándar con 5 vidas. Lógica y deducción equilibrada.',
+    description: 'Para jugadores con experiencia. Un desafío equilibrado de lógica y deducción.',
     stars: '★★☆',
-    lives: 5,
     leftBorderColor: 'border-l-amber-500',
     leftBorderHex: '#F59E0B',
     actionBgColor: 'bg-amber-50',
@@ -54,9 +52,8 @@ export const DEFAULT_DIFFICULTY_OPTIONS: DifficultyOptionConfig[] = [
   {
     level: 3,
     title: 'Nivel Experto',
-    description: 'Máxima deducción con 3 vidas. Tablero exigente para ejercitar la mente.',
+    description: 'Solo para quienes buscan un reto de verdad. Máxima exigencia para ejercitar la mente.',
     stars: '★★★',
-    lives: 3,
     leftBorderColor: 'border-l-rose-500',
     leftBorderHex: '#F43F5E',
     actionBgColor: 'bg-rose-50',

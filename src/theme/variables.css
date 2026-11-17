@@ -72,9 +72,11 @@
 .cognitive-game--sudoku { --game-accent: #c8bbf0; }
 .cognitive-game--crucigrama { --game-accent: #a8ccef; }
 
-.cognitive-game :is(button, a):focus-visible {
-  outline: 3px solid var(--game-accent);
-  outline-offset: 3px;
+@layer base {
+  .cognitive-game :is(button, a):focus-visible {
+    outline: 3px solid var(--game-accent);
+    outline-offset: 3px;
+  }
 }
 
 .cognitive-game ::selection {

@@ -193,8 +193,10 @@ export function useSudokuGame() {
       const target = copy[targetRow][targetCol];
       target.value = num;
       target.notes = [];
+      target.error = false;
 
-      const numericGrid = copy.map(/* Prepara el resultado de cada elemento. */ r => r.map(/* Prepara el resultado de cada elemento. */ c => c.value));
+      // Ignorar celdas con error temporal (por desaparecer) para no invalidar otra jugada correcta.
+      const numericGrid = copy.map(/* Prepara el resultado de cada elemento. */ r => r.map(/* Prepara el resultado de cada elemento. */ c => (c.error ? 0 : c.value)));
       const conflict = hasConflict(numericGrid, targetRow, targetCol, num);
       target.error = !isCorrect || conflict;
 
@@ -257,6 +259,11 @@ export function useSudokuGame() {
       onRecibir: data => {
         const valor = Number(data.valor_revelado);
         if (!Number.isInteger(valor) || valor < 1 || valor > 9) throw new Error('Pista inválida');
+        const cellKey = `${row}-${col}`;
+        if (errorTimeoutsRef.current.has(cellKey)) {
+          clearTimeout(errorTimeoutsRef.current.get(cellKey)!);
+          errorTimeoutsRef.current.delete(cellKey);
+        }
         setCells(/* Actualiza cells a partir del valor anterior. */ prev => prev.map(/* Prepara el resultado de cada elemento. */ fila => fila.map(/* Prepara el resultado de cada elemento. */ c => c.row === row && c.col === col ? { ...c, value: valor, error: false, notes: [] } : c)));
         setSelectedRow(row); setSelectedCol(col);
       },

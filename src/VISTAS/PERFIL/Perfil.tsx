@@ -31,7 +31,7 @@ const Perfil = () => {
     puntos,
     suscripcion,
     diasDesbloqueados,
-    bonusRacha,
+    rachaTramosDiarios,
   } = usePlayerEconomy();
   const [usuario, setUsuario] = useState<SessionUser | null>(() => getSessionUser());
   const [planesAbiertos, setPlanesAbiertos] = useState(false);
@@ -98,7 +98,11 @@ const Perfil = () => {
                 </>
               )}
 
-              <ConstanciaSection resumen={resumen} racha={racha} bonusRacha={bonusRacha} />
+              <ConstanciaSection
+                resumen={resumen}
+                racha={racha}
+                rachaTramosDiarios={rachaTramosDiarios}
+              />
             </>
           )}
         </main>
