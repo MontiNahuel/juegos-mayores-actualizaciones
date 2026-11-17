@@ -1,23 +1,16 @@
-import { useClassicChallenge } from '../useClassicChallenge';
 /* Maneja las palabras, colorea los aciertos y guarda el resultado de Wordle. */
-/* Acá maneja las palabras, colorea los aciertos y guarda el resultado de Wordle. */
+import { useClassicChallenge } from '../useClassicChallenge';
 import { CompletedModal } from '../../COMPONENTS/MODALS/CompletedModal';
 import React, { useState, useEffect, useLayoutEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   IonContent,
   IonPage,
-  IonTitle,
-  IonToolbar,
   IonIcon,
 } from '@ionic/react';
 import AppNavbar from '../../COMPONENTS/Navbar/AppNavbar';
 import { usePlayerEconomy } from '../../../context/PlayerEconomyContext';
 import {
-  arrowBackOutline,
-  refreshOutline,
-  chevronDownOutline,
-  chevronUpOutline,
   helpCircleOutline,
   closeOutline,
 } from 'ionicons/icons';
@@ -31,7 +24,6 @@ import { isValidWordleWord } from './wordleDictionary';
 
 // Solución por defecto
 const DEFAULT_SOLUTION = 'HOGAR';
-const MIN_ROWS = 4;
 const WORD_LENGTH = 5;
 const MAX_ATTEMPTS = 6;
 

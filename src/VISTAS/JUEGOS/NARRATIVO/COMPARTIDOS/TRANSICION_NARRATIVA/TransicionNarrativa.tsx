@@ -1,3 +1,4 @@
+/* Conserva la escena anterior hasta terminar su animación de salida. */
 import { Component, createRef, type ReactNode } from 'react';
 import gsap from 'gsap';
 

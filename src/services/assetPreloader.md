@@ -29,4 +29,4 @@ const fondo = imagenPrecargada(urlOriginal, imagenPrecargada('/assets/narrative/
 - El ahorro de datos del dispositivo desactiva las descargas anticipadas de escenas futuras.
 - No se conservan todos los bitmaps decodificados; sólo se preparan los recursos que se van a mostrar. El navegador puede liberar esos bitmaps.
 
-En King's Court, `recursos/precargaNarrativa.ts` define las dos listas y consulta la API. `narrativoCargaSlice.ts` conserva únicamente el progreso. `CargaNarrativa.tsx` recibe todos sus datos por props.
+En King's Court, `KingsCourt.tsx` consulta la API y conserva el progreso local. `CargaNarrativa.tsx` prepara las imágenes recibidas y los recursos visuales comunes mediante `prepararImagenes`; no consulta endpoints ni usa Redux.

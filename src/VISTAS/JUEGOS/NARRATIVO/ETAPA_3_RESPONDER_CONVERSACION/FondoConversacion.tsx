@@ -1,3 +1,4 @@
+/* Conserva el fondo de la conversación durante el fundido entre imágenes. */
 import { useLayoutEffect, useRef, useState } from 'react';
 
 interface Props {

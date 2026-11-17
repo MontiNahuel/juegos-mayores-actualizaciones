@@ -6,7 +6,6 @@ import { DifficultyModalProps, DEFAULT_DIFFICULTY_OPTIONS } from '../DIFICULTAD/
 export const DifficultyModal: React.FC<DifficultyModalProps> = ({
   title = 'Elegí tu Desafío',
   subtitle,
-  categoryBadge = 'Cuaderno de Mente Activa',
   options = DEFAULT_DIFFICULTY_OPTIONS,
   onSelectDifficulty,
   onClose,

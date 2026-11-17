@@ -1,9 +1,10 @@
+/* Presenta la conversación recibida y coordina retratos, lectura y opciones. */
 import ImagenRetrato from './ImagenRetrato';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import FondoConversacion from './FondoConversacion';
-import { useAnimacionesConversacion } from './animacionesConversacion';
-import type { ConversacionApi, PersonajeApi } from '../narrativeService';
-import TituloConversacion from '../COMPARTIDOS/TITULO_NARRATIVO/TituloConversacion';
+import { useAnimacionesConversacion } from '../COMPARTIDOS/DIALOGO_NARRATIVO/animacionesNarrativas';
+import type { ConversacionApi, EstadoGrafoApi, PersonajeApi } from '../narrativeTypes';
+import TituloNarrativo from '../COMPARTIDOS/TITULO_NARRATIVO/TituloNarrativo';
 import DialogoNarrativo from '../COMPARTIDOS/DIALOGO_NARRATIVO/DialogoNarrativo';
 import { API_URL } from '../../../../config/api';
 import { FONDO_CONVERSACION } from '../../../../config/fondoCorte';
@@ -11,14 +12,14 @@ import { ocultarCambiosNumericos } from '../../../../config/adaptacionEdad';
 import { imagenPrecargada } from '../../../../services/assetPreloader';
 
 type PersonajeConversacion = PersonajeApi & { id?: string };
-type DecisionConversacion = ConversacionApi['decisiones'][number];
 
 interface Props {
-  conversacion: ConversacionApi;
+  conversacion?: ConversacionApi;
+  grafo?: EstadoGrafoApi;
   personajes: PersonajeConversacion[];
   modoSimple?: boolean;
   enviando?: boolean;
-  onElegir: (decision: DecisionConversacion) => void;
+  onElegir: (opcion: string) => void;
 }
 
 // Mantiene URLs absolutas y completa las imágenes del backend.
@@ -44,9 +45,6 @@ function Retrato({ personaje, activo, lado, solo }: {
     ? `absolute inset-y-0 ${derecha ? 'right-0' : 'left-0'} w-full`
     : 'relative w-1/2';
   const alineacion = derecha ? 'ml-auto mr-0 items-end' : 'ml-0 mr-auto items-start';
-  const encuadre = solo
-    ? 'justify-center'
-    : 'justify-center';
 
   return (
     <div
@@ -54,7 +52,7 @@ function Retrato({ personaje, activo, lado, solo }: {
       data-activo={activo}
       className={`conversacion-retrato ${posicion} ${alineacion} z-10 flex h-full max-w-2xl shrink-0 flex-col justify-start px-5 ${visible ? '' : 'pointer-events-none'}`}
     >
-      <div className={`relative flex h-[70svh] min-h-[32rem] w-full shrink-0 items-end drop-shadow-[0_6px_12px_rgba(0,0,0,0.35)] ${encuadre}`}>
+      <div className={`relative flex h-[70svh] min-h-[32rem] w-full shrink-0 items-end drop-shadow-[0_6px_12px_rgba(0,0,0,0.35)] justify-center`}>
         <span className="absolute inset-0 grid place-items-center text-4xl font-semibold text-amber-100/70">{iniciales(personaje.nombre)}</span>
         {personaje.imagen && <ImagenRetrato src={imagenDe(personaje.imagen)} nombre={personaje.nombre} />}
       </div>
@@ -64,8 +62,14 @@ function Retrato({ personaje, activo, lado, solo }: {
 
 // Recorre el diálogo y muestra las opciones al llegar a la última frase.
 export default function ResponderConversacionEtapa3({
-  conversacion, personajes, modoSimple = false, enviando = false, onElegir,
+  conversacion: recibida, grafo, personajes, modoSimple = false, enviando = false, onElegir,
 }: Props) {
+  const conversacion: ConversacionApi = grafo ? {
+    _id: grafo.grafo_id, nodo_id: grafo.nodo_actual.id, titulo: grafo.titulo, imagen: grafo.nodo_actual.imagen || '',
+    requisitos: [...new Set([...(grafo.requisitos ?? []), grafo.nodo_actual.hablante_id])].filter(Boolean).map(personajeId => ({ personajeId })),
+    frases: [{ personajeId: grafo.nodo_actual.hablante_id, texto: grafo.nodo_actual.texto }],
+    decisiones: grafo.nodo_actual.opciones.filter(opcion => opcion.disponible).map(opcion => ({ opcion: opcion.id, texto: opcion.texto })),
+  } : recibida!;
   // La lectura local pertenece al nodo, la introducción pertenece a toda la escena.
   const nodo = conversacion.nodo_id || conversacion._id;
   const [lectura, setLectura] = useState({ nodo, paso: 0 });
@@ -147,7 +151,7 @@ export default function ResponderConversacionEtapa3({
       <div ref={raiz} data-intro={fondoListo ? 'listo' : 'cargando'} className="conversacion-escena relative isolate flex min-h-[100svh] flex-col overflow-x-hidden pt-[58px] text-slate-100">
         <FondoConversacion imagen={fondo} respaldo={respaldo} onListo={mostrarEscena} animar={animarFondo} cancelar={cancelarFondo} />
         <div className="absolute inset-0 -z-10 bg-black/25" />
-        <TituloConversacion key={conversacion._id} titulo={conversacion.titulo} listo={fondoListo} onListo={prepararTitulo} animacionExterna />
+        <TituloNarrativo variante="conversacion" key={conversacion._id} titulo={conversacion.titulo} listo={fondoListo} onListo={prepararTitulo} animacionExterna />
 
         <div ref={escena} className="conversacion-personajes relative z-10 flex min-h-[calc(max(45.5svh,20.8rem)+0.25rem)] basis-0 grow items-start justify-between overflow-hidden px-2 pt-1 2xl:px-20">
           <div className="absolute inset-x-0 bottom-0 z-0 h-64 bg-gradient-to-t from-slate-950/90 to-transparent" />
@@ -171,7 +175,7 @@ export default function ResponderConversacionEtapa3({
             texto: texto(decision.texto),
             disabled: enviando || !lecturaCompleta,
             // Registra la opción elegida y avanza la historia.
-            onElegir: () => onElegir(decision),
+            onElegir: () => onElegir(String(decision.opcion)),
           })) : []}
         />
       </div>

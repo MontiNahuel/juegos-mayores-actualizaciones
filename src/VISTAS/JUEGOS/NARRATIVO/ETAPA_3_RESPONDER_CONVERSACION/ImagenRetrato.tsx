@@ -1,3 +1,4 @@
+/* Presenta el retrato y conserva su imagen anterior mientras carga la siguiente. */
 import { useLayoutEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 

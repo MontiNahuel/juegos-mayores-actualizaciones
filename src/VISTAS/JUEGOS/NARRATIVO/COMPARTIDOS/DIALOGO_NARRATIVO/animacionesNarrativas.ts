@@ -1,10 +1,10 @@
+/* Coordina las animaciones de entrada, retratos y texto de las conversaciones. */
 import { useCallback, useLayoutEffect, useRef, type RefObject } from 'react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 
 gsap.registerPlugin(useGSAP);
 
-import { presentarConversacion } from './presentarConversacion';
 import { RITMO } from './ritmoNarrativo';
 import { AnimacionTexto } from './AnimacionTexto';
 
@@ -28,7 +28,7 @@ export class CoordinadorAnimacionConversacion {
   private reducido = false;
   private anterior?: EstadoVisual;
 
-  constructor(private raiz: HTMLElement, private onLecturaCompleta?: (intervencion: string) => void) {
+  constructor(private raiz: HTMLElement, onLecturaCompleta?: (intervencion: string) => void) {
     this.contexto = gsap.context(() => {}, raiz);
     this.preferencias = gsap.matchMedia();
     this.texto = new AnimacionTexto(raiz, onLecturaCompleta);
@@ -138,4 +138,25 @@ export function useAnimacionesConversacion(
   const cancelarFondo = useCallback(() => coordinador.current?.cancelarFondo(), []);
   const acelerarTexto = useCallback(() => coordinador.current?.acelerarTexto(), []);
   return { animarFondo, cancelarFondo, acelerarTexto };
+}
+
+/** Plan de entrada: título, retirada, panel, retratos y lectura. No resuelve nodos. */
+function presentarConversacion(raiz: HTMLElement, titulo: Element, personajes: Element, dialogo: Element, reducido: boolean) {
+  const entrada = gsap.timeline({ data: 'conversacion:entrada', defaults: { ease: 'power2.out' } });
+  entrada.addLabel('titulo', RITMO.titulo.entrada)
+    .addLabel('personajes', RITMO.personajes.entrada)
+    .addLabel('lectura', RITMO.dialogo.entrada);
+
+  if (reducido) {
+    entrada.set([titulo, personajes, dialogo], { autoAlpha: 1, y: 0 })
+      .call(() => { raiz.dataset.animacion = 'lista'; })
+      .set(titulo, { autoAlpha: 0 }, 2.5);
+  } else {
+    entrada.fromTo(titulo, { autoAlpha: 0 }, { autoAlpha: 1, duration: RITMO.titulo.duracion }, 'titulo')
+      .to(titulo, { autoAlpha: 0, duration: RITMO.titulo.retirada }, RITMO.titulo.salida)
+      .fromTo(personajes, { autoAlpha: 0 }, { autoAlpha: 1, duration: RITMO.personajes.duracion }, 'personajes')
+      .fromTo(dialogo, { autoAlpha: 0, y: 6 }, { autoAlpha: 1, y: 0, duration: RITMO.dialogo.duracion }, 'lectura')
+      .call(() => { raiz.dataset.animacion = 'lista'; }, undefined, `personajes+=${RITMO.personajes.duracion}`);
+  }
+  return entrada;
 }

@@ -1,6 +1,18 @@
 # King’s Court: front coordinador sobre el contrato V2
 
-Revisión: 6 de noviembre de 2026. Estado: propuesta de refactor del frontend; no migración de juego implementada.
+Implementación actualizada: 16 de noviembre de 2026.
+
+`KingsCourt.tsx` es el único gestor de partida: consulta `narrativeService.ts`, conserva la respuesta confirmada en estado local y entrega datos y callbacks directamente a las etapas. No hay commander separado, selector intermedio, reducers narrativos ni motor local.
+
+- Selección conserva únicamente la elección temporal y anima las cartas recibidas.
+- Evento y conversación presentan el nodo y las opciones que habilita el backend.
+- Resultado presenta el desenlace y sus impactos, sin sumarlos a los recursos.
+- Estadísticas presenta el historial recibido; no consulta catálogos administrativos.
+- Los componentes compartidos conservan el fondo, los títulos, el diálogo y las transiciones.
+
+Los tipos describen el contrato; no transforman datos. La autenticación y las peticiones residen en un único servicio. Los nodos intermedios conservan los saldos anteriores cuando el servidor los omite. Las acciones se serializan en el gestor; la recuperación tras un fallo consulta el estado sin repetir el comando. El modo adaptado puede seleccionar la primera carta ofrecida, pero no cambia sus efectos.
+
+El resto de este documento conserva la revisión del contrato del 6 de noviembre y sus antecedentes; las capas sugeridas entonces no son archivos requeridos por la implementación actual.
 
 ## 1. Fuentes y precedencia
 

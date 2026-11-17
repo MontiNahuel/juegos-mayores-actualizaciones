@@ -1,3 +1,4 @@
+/* Controla la escritura progresiva y permite acelerar la lectura sin avanzar la partida. */
 import gsap from 'gsap';
 import { RITMO, GLIFOS_ARCANOS } from './ritmoNarrativo';
 
@@ -131,8 +132,7 @@ export class AnimacionTexto {
   // El glifo arcano se desplaza y se desvanece mientras aparece la letra legible.
   private animarGlifo(glifo: HTMLElement) {
     this.contexto.add(() => {
-      let transformacion: gsap.core.Tween;
-      transformacion = gsap.to(glifo, {
+      const transformacion = gsap.to(glifo, {
         '--glifo-real': 1,
         '--glifo-arcano': 0,
         '--glifo-recorrido': '0.14em',

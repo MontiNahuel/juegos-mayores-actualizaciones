@@ -1,25 +1,20 @@
-import { useClassicChallenge } from '../useClassicChallenge';
 /* Maneja la selección de palabras, las pistas y el avance en la sopa de letras. */
-/* Acá maneja la selección de palabras, las pistas y el avance en la sopa de letras. */
+import { useClassicChallenge } from '../useClassicChallenge';
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   IonContent,
   IonPage,
-  IonTitle,
-  IonToolbar,
   IonIcon,
 } from '@ionic/react';
 import AppNavbar from '../../COMPONENTS/Navbar/AppNavbar';
 import { usePlayerEconomy } from '../../../context/PlayerEconomyContext';
 import { CompletedModal } from '../../COMPONENTS/MODALS/CompletedModal';
 import {
-  arrowBackOutline,
   bulbOutline,
   checkmarkCircle,
   closeOutline,
   refreshOutline,
-  star,
 } from 'ionicons/icons';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { API_URL } from '../../../config/api';
@@ -37,7 +32,6 @@ interface CellCoord {
 
 const DEFAULT_THEME = 'Frutas Frescas';
 const DEFAULT_WORDS = ['MANZANA', 'PERA', 'LIMON', 'UVA'];
-const DEFAULT_HINTS = ['Roja y crujiente', 'Verde y jugosa', 'Amarillo y ácido', 'Viene en racimos'];
 const DEFAULT_GRID = [
   ['M', 'A', 'N', 'Z', 'A', 'N', 'A', 'O'],
   ['P', 'E', 'R', 'A', 'S', 'T', 'U', 'V'],
@@ -82,7 +76,6 @@ export const SopaLetrasGame: React.FC = () => {
   // Estados del juego
   const [theme, setTheme] = useState<string>(challengeState?.config?.theme || DEFAULT_THEME);
   const [targetWords, setTargetWords] = useState<string[]>(challengeState?.config?.words || DEFAULT_WORDS);
-  const [hints, setHints] = useState<string[]>(challengeState?.config?.hints || DEFAULT_HINTS);
   const [grid, setGrid] = useState<string[][]>(challengeState?.config?.grid || DEFAULT_GRID);
 
   const [foundWords, setFoundWords] = useState<string[]>([]);
@@ -138,7 +131,6 @@ export const SopaLetrasGame: React.FC = () => {
 
         if (data.config.theme) setTheme(data.config.theme);
         if (data.config.words) setTargetWords(data.config.words);
-        if (data.config.hints) setHints(data.config.hints);
         if (data.config.grid) setGrid(data.config.grid);
       } catch {
         // Fallback en estado local
@@ -365,7 +357,7 @@ export const SopaLetrasGame: React.FC = () => {
   );
 
   // Manejo de eventos Pointer (Unifica mouse y touch)
-  const handlePointerDown = (row: number, col: number, e: React.PointerEvent) => {
+  const handlePointerDown = (row: number, col: number) => {
     if (!progressReady || showVictoryModal) return;
 
     // Si ya había un tap inicial activo:
@@ -475,7 +467,6 @@ export const SopaLetrasGame: React.FC = () => {
     handleRestart();
   };
 
-  const unfoundCount = targetWords.length - foundWords.length;
 
   return (
     <IonPage className="cognitive-game cognitive-game--sopa">
@@ -684,7 +675,7 @@ hintDisabled: !progressReady || showVictoryModal }} />
                     key={cellKey}
                     data-cell-row={rIdx}
                     data-cell-col={cIdx}
-                    onPointerDown={/* Responde a pointer down desde este control. */ (e) => handlePointerDown(rIdx, cIdx, e)}
+                    onPointerDown={() => handlePointerDown(rIdx, cIdx)}
                     style={{
                       alignItems: 'center',
                       aspectRatio: '1 / 1',

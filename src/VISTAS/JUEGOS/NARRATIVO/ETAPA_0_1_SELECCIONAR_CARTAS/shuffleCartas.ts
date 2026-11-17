@@ -1,3 +1,4 @@
+/* Anima el reparto de cartas de selección y de la vista previa del menú. */
 import gsap from 'gsap';
 import { CustomEase } from 'gsap/CustomEase';
 
