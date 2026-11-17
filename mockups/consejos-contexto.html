@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mock · Sabías que… atado al progreso</title>
+  <style>
+    @font-face {
+      font-family: "Nunito Sans";
+      src: url("/src/assets/fonts/NunitoSans-Variable.ttf") format("truetype");
+      font-weight: 200 900;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    :root {
+      --bg: #151e2b;
+      --panel: #263548;
+      --border: #4b5d73;
+      --ink: #f3f6fa;
+      --copy: #c0cbd7;
+      --oro: #edd499;
+      --oro-suave: #e5cf9a;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Nunito Sans", "Segoe UI", sans-serif;
+      padding: 34px 24px 64px;
+    }
+
+    .wrap { max-width: 900px; margin: 0 auto; }
+
+    h1 { font-size: 22px; line-height: 1.25; margin: 0; }
+
+    .lead {
+      margin: 8px 0 0;
+      color: var(--copy);
+      font-size: 13.5px;
+      line-height: 1.5;
+      max-width: 92ch;
+    }
+
+    .lista { margin-top: 26px; display: grid; gap: 22px; }
+
+    .estado {
+      margin: 0 0 8px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--copy);
+    }
+
+    .tarjeta {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background:
+        linear-gradient(90deg, rgba(237, 212, 153, .07), transparent 42%),
+        var(--panel);
+      padding: 16px 18px;
+    }
+
+    .cabecera { display: flex; align-items: center; gap: 8px; }
+
+    .icono {
+      display: grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 9px;
+      background: rgba(237, 212, 153, .12);
+      color: var(--oro);
+      flex: none;
+    }
+
+    .icono svg { width: 17px; height: 17px; }
+
+    .rotulo {
+      margin: 0;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--oro);
+    }
+
+    .motivo {
+      margin: 9px 0 0;
+      font-size: 13.5px;
+      line-height: 1.35;
+      font-weight: 700;
+      color: var(--oro-suave);
+    }
+
+    .texto {
+      margin: 6px 0 0;
+      font-size: 14.5px;
+      line-height: 1.45;
+      color: var(--ink);
+    }
+
+    .fuente {
+      margin: 7px 0 0;
+      font-size: 11.5px;
+      line-height: 1.4;
+      color: var(--copy);
+    }
+
+    .flechas {
+      display: flex;
+      justify-content: flex-end;
+      gap: 4px;
+      margin-top: 2px;
+    }
+
+    .flechas button {
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border: 0;
+      background: none;
+      color: var(--copy);
+      cursor: pointer;
+    }
+
+    .flechas svg { width: 18px; height: 18px; }
+
+    .pie {
+      margin-top: 30px;
+      border-top: 1px solid #3d4f65;
+      padding-top: 14px;
+      font-size: 12px;
+      line-height: 1.6;
+      color: var(--copy);
+    }
+
+    @media (max-width: 640px) {
+      .texto { font-size: 13.5px; }
+      .motivo { font-size: 13px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Sabías que… atado al progreso</h1>
+    <p class="lead">
+      La tarjeta mantiene su texto editorial y su fuente. Cuando el consejo activo
+      trae una situación y el perfil la detecta, aparece una línea con los números
+      del usuario justo debajo del rótulo. Sin situación o sin coincidencia, el
+      consejo se muestra como hoy.
+    </p>
+
+    <div class="lista" id="lista"></div>
+
+    <p class="pie">
+      Los textos y las fuentes son los cuatro consejos ya sembrados. Los números de
+      cada motivo salen del resumen de perfil: la práctica por eje del año, los días
+      de ingreso seguidos y las medallas del mes contra el anterior. La evaluación
+      iría en el backend al armar el resumen; a igualdad de situación, manda el
+      orden que ya se carga desde la Torre de Control.
+    </p>
+  </div>
+
+  <script>
+    const BOMBILLA = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M9.2 18h5.6M10 21h4" />
+      <path d="M12 3a6 6 0 0 0-3.5 10.9c.6.4 1 1.1 1 1.9v.2h5v-.2c0-.8.4-1.5 1-1.9A6 6 0 0 0 12 3Z" />
+    </svg>`;
+
+    const IZQUIERDA = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M14.5 6 8.5 12l6 6" />
+    </svg>`;
+
+    const DERECHA = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M9.5 6l6 6-6 6" />
+    </svg>`;
+
+    const ESTADOS = [
+      {
+        estado: "Eje desbalanceado",
+        motivo: "Este año practicaste Lógica 3× más que Vocabulario.",
+        texto:
+          "Entrenar una capacidad mejora sobre todo esa capacidad: conviene alternar lógica, lenguaje y atención.",
+        fuente: "Fuente: Ball et al., JAMA, 2002",
+      },
+      {
+        estado: "Racha cortada",
+        motivo: "Tu racha de 6 días se cortó ayer.",
+        texto:
+          "La reserva cognitiva se construye a lo largo de la vida con educación y actividades mentales sostenidas.",
+        fuente: "Fuente: Stern, Lancet Neurology, 2012",
+      },
+      {
+        estado: "Mes en mejora",
+        motivo: "Noviembre suma 9 medallas: +4 respecto de octubre.",
+        texto:
+          "Aprender habilidades nuevas mejoró la memoria en adultos mayores más que las actividades rutinarias.",
+        fuente: "Fuente: Park et al., Psychological Science, 2014",
+      },
+    ];
+
+    const tarjeta = ({ estado, motivo, texto, fuente }) => `
+      <div>
+        <p class="estado">${estado}</p>
+        <section class="tarjeta" aria-label="Por qué estos juegos">
+          <div class="cabecera">
+            <span class="icono">${BOMBILLA}</span>
+            <p class="rotulo">Sabías que…</p>
+          </div>
+          <p class="motivo">${motivo}</p>
+          <p class="texto">${texto}</p>
+          <p class="fuente">${fuente}</p>
+          <div class="flechas">
+            <button type="button" aria-label="Consejo anterior">${IZQUIERDA}</button>
+            <button type="button" aria-label="Consejo siguiente">${DERECHA}</button>
+          </div>
+        </section>
+      </div>`;
+
+    document.getElementById("lista").innerHTML = ESTADOS.map(tarjeta).join("");
+  </script>
+</body>
+</html>

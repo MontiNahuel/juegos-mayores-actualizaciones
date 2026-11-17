@@ -1,0 +1,408 @@
+/* Diseño del mock de planes: sellos por nivel, brillo del nombre y partículas al hover. */
+
+.planes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 265px));
+  justify-content: center;
+  gap: 34px 14px;
+  margin: 26px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (max-width: 760px) {
+  .planes-grid {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+}
+
+.planes-card {
+  --tier: #a9762f;
+  --tier-ink: #8a5e22;
+  --tier-glow: #d9a45e;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 26px 16px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background:
+    radial-gradient(130% 70% at 50% 0%, color-mix(in srgb, var(--tier) 9%, transparent), transparent 65%),
+    #fff;
+  transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+}
+
+.planes-card[data-nivel='plata'] {
+  --tier: #8c97a6;
+  --tier-ink: #5f6b7a;
+  --tier-glow: #d5dbe4;
+}
+
+.planes-card[data-nivel='oro'] {
+  --tier: #b8860b;
+  --tier-ink: #8e6708;
+  --tier-glow: #e8c76a;
+}
+
+.planes-card:hover,
+.planes-card:focus-within {
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--tier) 55%, #e2e8f0);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--tier) 35%, transparent),
+    0 22px 34px -24px color-mix(in srgb, var(--tier) 75%, transparent);
+}
+
+/* Sello sobre el borde superior, con anillo punteado como el del calendario. */
+.planes-medal {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  transform: translate(-50%, -50%);
+  border: 2px solid var(--tier);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 32% 26%, #fff 0%, #fff 55%, color-mix(in srgb, var(--tier) 16%, #fff) 100%);
+  box-shadow:
+    0 6px 14px -8px color-mix(in srgb, var(--tier) 90%, transparent),
+    inset 0 0 0 3px #fff,
+    inset 0 0 0 4px color-mix(in srgb, var(--tier) 30%, transparent);
+  color: var(--tier-ink);
+  user-select: none;
+}
+
+.planes-medal::before {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border: 1px dashed color-mix(in srgb, var(--tier) 55%, transparent);
+  border-radius: 50%;
+  transform: rotate(-12deg);
+}
+
+.planes-medal::after {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border: 1px solid color-mix(in srgb, var(--tier) 22%, transparent);
+  border-radius: 50%;
+}
+
+.planes-pips {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  font-size: 9px;
+  color: var(--tier-ink);
+}
+
+.planes-pips-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+}
+
+.planes-medal[data-pips='1'] .planes-pips { font-size: 15px; }
+.planes-medal[data-pips='2'] .planes-pips { font-size: 11px; }
+
+.planes-pips ion-icon {
+  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, .9));
+}
+
+/* Badge de descuento espejando la medalla, en la esquina superior derecha. */
+.planes-discount {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 2;
+  transform: translateY(-55%);
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--tier) 16%, #fff);
+  color: var(--tier-ink);
+  font-size: 10px;
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: 0 4px 10px -6px color-mix(in srgb, var(--tier) 80%, transparent);
+}
+
+.planes-discount-sale {
+  animation: planes-discount-out .3s ease-in both;
+}
+
+@keyframes planes-discount-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/* La píldora completa, con su texto, aparece de izquierda a derecha. */
+.planes-discount-entra {
+  animation: planes-discount-reveal .46s cubic-bezier(.3, .7, .25, 1) both;
+}
+
+/* El recorte deja aire alrededor para que la sombra entre con el barrido, no después. */
+@keyframes planes-discount-reveal {
+  from { clip-path: inset(-20px 100% -20px 0); }
+  to   { clip-path: inset(-20px -20px -20px -20px); }
+}
+
+.planes-nota-entra {
+  animation: planes-nota .22s ease both;
+}
+
+@keyframes planes-nota {
+  from { opacity: 0; transform: translateY(2px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.planes-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.planes-head-text {
+  min-width: 0;
+}
+
+.planes-kicker {
+  margin: 0 0 2px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--tier-ink);
+  opacity: .85;
+}
+
+.planes-name {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.2;
+  font-weight: 900;
+  letter-spacing: -.01em;
+  background-image: linear-gradient(
+    100deg,
+    #294c6b 0%,
+    #294c6b 36%,
+    var(--tier-glow) 50%,
+    #294c6b 64%,
+    #294c6b 100%
+  );
+  background-size: 250% 100%;
+  background-position: 120% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.planes-card:hover .planes-name,
+.planes-card:focus-within .planes-name {
+  animation: planes-name-shine 1.15s ease-out;
+}
+
+@keyframes planes-name-shine {
+  from { background-position: 130% 0; }
+  to { background-position: -30% 0; }
+}
+
+.planes-desc {
+  margin: 4px 0 0;
+  font-size: 11.5px;
+  line-height: 1.35;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.planes-price {
+  position: relative;
+  display: inline-grid;
+  justify-items: end;
+  flex-shrink: 0;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--tier) 10%, #f8fafc);
+  color: var(--tier-ink);
+  font-size: 11px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Las dos capas comparten celda: el ancho se reserva y nada salta al cambiar. */
+.planes-price-valor {
+  position: relative;
+  grid-area: 1 / 1;
+}
+
+.planes-price-valor-entra {
+  animation: planes-price-in .3s cubic-bezier(.2, .7, .3, 1) .44s both;
+}
+
+.planes-price-valor-sale {
+  animation: planes-price-out .82s ease both;
+}
+
+.planes-price-valor-sale::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 0;
+  left: 0;
+  height: 1px;
+  border-radius: 2px;
+  background: color-mix(in srgb, currentColor 70%, transparent);
+  transform-origin: left center;
+  animation: planes-price-tacha .28s cubic-bezier(.4, 0, .2, 1) both;
+}
+
+@keyframes planes-price-in {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Primero se tacha, después se retira y recién ahí entra el precio nuevo. */
+@keyframes planes-price-out {
+  0%, 34%   { opacity: 1; transform: none; }
+  49%, 100% { opacity: 0; transform: translateY(-3px); }
+}
+
+@keyframes planes-price-tacha {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+.planes-benefits {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 5px;
+}
+
+.planes-benefits li {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 11.5px;
+  line-height: 1.35;
+  font-weight: 600;
+  color: #475569;
+}
+
+.planes-benefits li::before {
+  content: "✓";
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--tier-ink);
+  font-weight: 900;
+}
+
+.planes-cta {
+  margin-top: auto;
+  padding-top: 12px;
+}
+
+.planes-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 14px;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color .18s ease, color .18s ease, border-color .18s ease;
+}
+
+.planes-btn-primary {
+  background: #294c6b;
+  color: #fff;
+}
+
+.planes-btn-primary:hover {
+  background: #1f3a52;
+}
+
+.planes-btn-ghost {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.planes-btn:focus-visible {
+  outline: 2px solid #294c6b;
+  outline-offset: 2px;
+}
+
+/* Partículas que caen al pasar el mouse por la tarjeta. */
+.planes-sparks {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.planes-spark {
+  position: absolute;
+  top: 6px;
+  left: var(--x);
+  width: var(--size);
+  height: var(--size);
+  border-radius: 50%;
+  background: var(--tier);
+  box-shadow: 0 0 6px 1px color-mix(in srgb, var(--tier-glow) 80%, transparent);
+  opacity: 0;
+}
+
+.planes-card:hover .planes-spark,
+.planes-card:focus-within .planes-spark {
+  animation: planes-spark-fall var(--dur) ease-in var(--delay) both;
+}
+
+@keyframes planes-spark-fall {
+  0%   { opacity: 0; transform: translateY(-4px) scale(.6); }
+  18%  { opacity: .95; }
+  70%  { opacity: .7; }
+  100% { opacity: 0; transform: translateY(96px) scale(.9); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .planes-card,
+  .planes-name,
+  .planes-spark,
+  .planes-price-valor,
+  .planes-discount,
+  .planes-nota {
+    transition: none;
+    animation: none !important;
+  }
+
+  .planes-card:hover,
+  .planes-card:focus-within {
+    transform: none;
+  }
+
+  /* Sin animación no hay ventana de convivencia: solo se muestra el valor vigente. */
+  .planes-price-valor-sale {
+    display: none;
+  }
+}

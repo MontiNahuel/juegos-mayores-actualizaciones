@@ -1,5 +1,5 @@
 /* Catálogo público de planes de suscripción que ve el jugador. */
-import { API_URL } from '../../config/api';
+import { API_URL } from '../../../config/api';
 
 export type PeriodoCobro = 'mensual' | 'anual';
 

@@ -1,11 +1,17 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitForElementToBeRemoved,
+} from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { PlanesModal } from './PlanesModal';
-import type { CatalogoPlanes, PlanSuscripcion } from './planesService';
+import { PlanesModal } from '../components/planes/PlanesModal';
+import type { CatalogoPlanes, PlanSuscripcion } from '../services/planesService';
 
 const fetchPlanes = vi.hoisted(() => vi.fn());
 
-vi.mock('./planesService', () => ({ fetchPlanes }));
+vi.mock('../services/planesService', () => ({ fetchPlanes }));
 vi.mock('@ionic/react', () => ({
   IonIcon: () => <span aria-hidden="true" />,
 }));
@@ -51,6 +57,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe('PlanesModal', () => {
@@ -58,11 +65,15 @@ describe('PlanesModal', () => {
     render(<PlanesModal isOpen onClose={() => {}} />);
 
     expect(await screen.findByText('Premium')).toBeInTheDocument();
+    expect(screen.getByText('Nivel bronce')).toBeInTheDocument();
+    expect(screen.getByText('Nivel oro')).toBeInTheDocument();
     expect(screen.getByText(/\$\s*5\.000.*\/ mes/)).toBeInTheDocument();
     expect(screen.getByText('Sin anuncios')).toBeInTheDocument();
     expect(screen.getByText('Premium Plus')).toBeInTheDocument();
     expect(screen.getByText(/\$\s*9\.999.*\/ mes/)).toBeInTheDocument();
     expect(screen.queryByText(/\/ año/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/% OFF/)).not.toBeInTheDocument();
+    expect(screen.getByText('Se renueva todos los meses.')).toBeInTheDocument();
 
     const sinComprar = screen.getByRole('button', { name: 'Premium: próximamente' });
     expect(sinComprar).toBeDisabled();
@@ -78,7 +89,7 @@ describe('PlanesModal', () => {
     expect(fetchPlanes).toHaveBeenCalledTimes(1);
   });
 
-  it('cambia a precios y descuentos anuales desde el selector', async () => {
+  it('cambia a precios y descuentos anuales con el valor anterior tachado', async () => {
     render(<PlanesModal isOpen onClose={() => {}} />);
 
     const selector = await screen.findByRole('group', { name: 'Periodo de cobro' });
@@ -91,15 +102,40 @@ describe('PlanesModal', () => {
 
     expect(anual).toHaveAttribute('aria-pressed', 'true');
     expect(mensual).toHaveAttribute('aria-pressed', 'false');
-    expect(screen.getByText(/\$\s*48\.000.*\/ año/)).toBeInTheDocument();
-    expect(screen.getByText(/\$\s*119\.988.*\/ año/)).toBeInTheDocument();
-    expect(screen.getByText('20% de descuento')).toBeInTheDocument();
-    expect(screen.queryByText(/\$\s*5\.000.*\/ mes/)).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/\$\s*4\.000.*\/ mes/, { selector: '[data-estado="activo"]' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('20% OFF')).toBeInTheDocument();
+    expect(
+      screen.getByText('Precio por mes con descuento; se cobra una vez por año.'),
+    ).toBeInTheDocument();
+
+    const saliente = screen.getByText(/\$\s*5\.000.*\/ mes/, {
+      selector: '[data-estado="saliente"]',
+    });
+    expect(saliente).toHaveAttribute('aria-hidden', 'true');
+    await waitForElementToBeRemoved(saliente, { timeout: 2500 });
 
     fireEvent.click(screen.getByRole('button', { name: 'Mensual' }));
-    expect(screen.getByText(/\$\s*5\.000.*\/ mes/)).toBeInTheDocument();
-    expect(screen.queryByText('20% de descuento')).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/\$\s*5\.000.*\/ mes/, { selector: '[data-estado="activo"]' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Se renueva todos los meses.')).toBeInTheDocument();
+    await waitForElementToBeRemoved(() => screen.queryByText('20% OFF'), { timeout: 2500 });
+    expect(screen.queryByText(/\$\s*4\.000.*\/ mes/)).not.toBeInTheDocument();
     expect(selector).toBeInTheDocument();
+  });
+
+  it('cambia al instante cuando el usuario pide menos movimiento', async () => {
+    vi.stubGlobal('matchMedia', () => ({ matches: true }) as MediaQueryList);
+    render(<PlanesModal isOpen onClose={() => {}} />);
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Anual' }));
+
+    expect(
+      screen.getByText(/\$\s*4\.000.*\/ mes/, { selector: '[data-estado="activo"]' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/\$\s*5\.000.*\/ mes/)).not.toBeInTheDocument();
   });
 
   it('omite el selector cuando el cobro anual no está habilitado', async () => {

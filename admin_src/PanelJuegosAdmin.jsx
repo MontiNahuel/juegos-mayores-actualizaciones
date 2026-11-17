@@ -5,6 +5,7 @@ import {
   CalendarIcon,
   CoinsIcon,
   ShoppingBagIcon,
+  MessageSquareIcon,
   UserIcon,
   SearchIcon,
   CheckIcon,
@@ -17,6 +18,7 @@ import ModalEconomia from './ModalEconomia';
 import ModalAsignarEconomia from './ModalAsignarEconomia';
 import ModalDesafios from './ModalDesafios';
 import ViewPlanes from './ViewPlanes';
+import ViewConsejos from './ViewConsejos';
 import {
   getAuthHeaders,
   limpiarSesion,
@@ -56,6 +58,14 @@ const HERRAMIENTAS = [
     title: 'Planes de suscripción',
     desc: 'Catálogo de planes, visibilidad en el perfil y habilitación de compra.',
     cta: 'Gestionar planes',
+  },
+  {
+    id: 'consejos',
+    icon: MessageSquareIcon,
+    kicker: 'Perfil del jugador',
+    title: 'Consejos del perfil',
+    desc: 'Carrusel «Sabías que…» del perfil, con su fuente y enlace de respaldo.',
+    cta: 'Gestionar consejos',
   },
   {
     id: 'jugadores',
@@ -365,6 +375,8 @@ export default function PanelJuegosAdmin() {
           />
         ) : vista === 'planes' ? (
           <ViewPlanes onAviso={showToast} />
+        ) : vista === 'consejos' ? (
+          <ViewConsejos onAviso={showToast} />
         ) : (
           <section className="space-y-8">
             <div>

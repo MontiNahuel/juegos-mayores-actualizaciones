@@ -207,12 +207,28 @@
         inset 0 0 0 3px #fff,
         inset 0 0 0 4px color-mix(in srgb, var(--tier) 30%, transparent);
       color: var(--tier-ink);
-      font-size: 19px;
-      font-weight: 900;
-      line-height: 1;
-      letter-spacing: -.02em;
       user-select: none;
     }
+
+    .pips {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1px;
+      color: var(--tier-ink);
+    }
+
+    .pips svg {
+      display: block;
+      width: var(--pip-size, 9px);
+      height: var(--pip-size, 9px);
+      fill: currentColor;
+      filter: drop-shadow(0 1px 0 rgba(255, 255, 255, .9));
+    }
+
+    .medal[data-pips="1"] { --pip-size: 15px; }
+    .medal[data-pips="2"] { --pip-size: 11px; }
+    .medal[data-pips="3"] { --pip-size: 9px; }
 
     /* Anillo punteado decorativo, como el sello del calendario. */
     .medal::before {
@@ -301,15 +317,22 @@
       white-space: nowrap;
     }
 
+    /* Badge de descuento sobre el borde superior derecho, espejo de la medalla. */
     .discount {
-      align-self: flex-start;
-      margin: 8px 0 0;
-      padding: 2px 8px;
+      position: absolute;
+      top: 0;
+      right: 0;
+      z-index: 2;
+      transform: translateY(-55%);
+      margin: 0;
+      padding: 3px 9px;
       border-radius: 999px;
-      background: color-mix(in srgb, var(--tier) 14%, #fff);
+      background: color-mix(in srgb, var(--tier) 16%, #fff);
       color: var(--tier-ink);
       font-size: 10px;
       font-weight: 800;
+      white-space: nowrap;
+      box-shadow: 0 4px 10px -6px color-mix(in srgb, var(--tier) 80%, transparent);
     }
 
     .benefits {
@@ -466,12 +489,12 @@
         <button type="button" data-period="mensual" aria-pressed="true">Mensual</button>
         <button type="button" data-period="anual" aria-pressed="false">Anual</button>
       </div>
-      <p class="period-note">El cobro anual se paga una vez por doce meses.</p>
+      <p class="period-note" data-note></p>
     </div>
 
     <ul class="plans" aria-label="Planes disponibles">
       <li class="plan tier-bronce">
-        <span class="medal" aria-hidden="true">E</span>
+        <span class="medal" data-pips="1" aria-hidden="true"></span>
         <span class="spark-layer" aria-hidden="true"></span>
         <div class="plan-head">
           <div>
@@ -493,7 +516,7 @@
       </li>
 
       <li class="plan tier-plata">
-        <span class="medal" aria-hidden="true">A</span>
+        <span class="medal" data-pips="2" aria-hidden="true"></span>
         <span class="spark-layer" aria-hidden="true"></span>
         <div class="plan-head">
           <div>
@@ -516,7 +539,7 @@
       </li>
 
       <li class="plan tier-oro">
-        <span class="medal" aria-hidden="true">L</span>
+        <span class="medal" data-pips="3" aria-hidden="true"></span>
         <span class="spark-layer" aria-hidden="true"></span>
         <div class="plan-head">
           <div>
@@ -561,10 +584,18 @@
     let periodo = 'mensual';
     const cards = [...document.querySelectorAll('.plan')];
 
+    const ESTRELLA = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>';
+
+    cards.forEach((card) => {
+      const medalla = card.querySelector('.medal');
+      const pips = Number(medalla.dataset.pips);
+      medalla.innerHTML = `<span class="pips">${ESTRELLA.repeat(pips)}</span>`;
+    });
+
     function precioDe(plan) {
       if (periodo === 'mensual') return { texto: `${formato.format(plan.monto)} / mes` };
-      const total = Math.round(plan.monto * 12 * (1 - plan.descuento / 100) * 100) / 100;
-      return { texto: `${formato.format(total)} / año`, descuento: `${plan.descuento}% de descuento` };
+      const mensual = Math.round(plan.monto * (1 - plan.descuento / 100) * 100) / 100;
+      return { texto: `${formato.format(mensual)} / mes`, descuento: `${plan.descuento}% OFF` };
     }
 
     function pintarPrecios() {
@@ -576,6 +607,10 @@
         chip.textContent = descuento ?? '';
         chip.hidden = !descuento;
       });
+      document.querySelector('[data-note]').textContent =
+        periodo === 'anual'
+          ? 'Precio por mes con descuento; se cobra una vez por año.'
+          : 'Se renueva todos los meses.';
     }
 
     document.querySelectorAll('[data-period]').forEach((boton) => {

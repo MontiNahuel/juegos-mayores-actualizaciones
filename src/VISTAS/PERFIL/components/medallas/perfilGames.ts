@@ -9,6 +9,8 @@ import {
 export interface JuegoPerfil {
   /** Identificador que usa el backend en user_attempts. */
   id: string;
+  /** Nombre breve para las pestañas y el selector. */
+  corto: string;
   titulo: string;
   enfoque: string;
   acento: string;
@@ -18,6 +20,7 @@ export interface JuegoPerfil {
 export const JUEGOS_PERFIL: JuegoPerfil[] = [
   {
     id: 'wordle',
+    corto: 'Wordle',
     titulo: 'Palabra del día',
     enfoque: 'Memoria y vocabulario',
     acento: '#99dcd1',
@@ -25,6 +28,7 @@ export const JUEGOS_PERFIL: JuegoPerfil[] = [
   },
   {
     id: 'sopa_letras',
+    corto: 'Sopa',
     titulo: 'Sopa de letras',
     enfoque: 'Atención visual y rastreo',
     acento: '#f0bb98',
@@ -32,6 +36,7 @@ export const JUEGOS_PERFIL: JuegoPerfil[] = [
   },
   {
     id: 'sudoku',
+    corto: 'Sudoku',
     titulo: 'Sudoku diario',
     enfoque: 'Lógica y concentración',
     acento: '#c8bbf0',
@@ -39,6 +44,7 @@ export const JUEGOS_PERFIL: JuegoPerfil[] = [
   },
   {
     id: 'crucigrama',
+    corto: 'Crucigrama',
     titulo: 'Crucigrama diario',
     enfoque: 'Lenguaje y recuerdos',
     acento: '#a8ccef',

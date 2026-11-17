@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import { fetchPlanes } from './planesService';
+import { fetchPlanes } from '../services/planesService';
 
 const PLAN = {
   codigo: 'premium',

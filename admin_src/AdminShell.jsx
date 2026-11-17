@@ -8,6 +8,7 @@ import {
   CrownIcon,
   LogOutIcon,
   MenuIcon,
+  MessageSquareIcon,
   ShieldIcon,
   ShoppingBagIcon,
   SparklesIcon,
@@ -26,6 +27,7 @@ const HERRAMIENTAS = [
   { id: 'desafios', label: 'Desafíos', icon: CalendarIcon },
   { id: 'economia', label: 'Economía', icon: CoinsIcon },
   { id: 'planes', label: 'Planes', icon: ShoppingBagIcon },
+  { id: 'consejos', label: 'Consejos', icon: MessageSquareIcon },
 ];
 
 const TITULOS = {
@@ -46,6 +48,10 @@ const TITULOS = {
   planes: {
     titulo: 'Planes de suscripción',
     detalle: 'Catálogo, visibilidad y habilitación de compra',
+  },
+  consejos: {
+    titulo: 'Consejos del perfil',
+    detalle: 'Carrusel «Sabías que…» con su fuente de respaldo',
   },
 };
 

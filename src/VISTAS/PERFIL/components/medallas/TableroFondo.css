@@ -1,0 +1,65 @@
+/* El tablero de fondo repite las animaciones del menú al cambiar de pestaña;
+   los keyframes viven en Menu.css, que Perfil ya carga. */
+.perfil-tablero--sudoku span:empty::after {
+  content: attr(data-fill);
+  opacity: 1;
+}
+
+.perfil-tablero--crucigrama span:empty {
+  background: #40556e;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .perfil-tablero--wordle span {
+    animation: menu-letter-check 1100ms ease-out both;
+  }
+  .perfil-tablero--wordle span:nth-child(2) {
+    animation-delay: 80ms;
+  }
+  .perfil-tablero--wordle span:nth-child(3) {
+    animation-delay: 160ms;
+  }
+  .perfil-tablero--wordle span:nth-child(4) {
+    animation-delay: 240ms;
+  }
+  .perfil-tablero--wordle span:nth-child(5) {
+    animation-delay: 320ms;
+  }
+  .perfil-tablero--sopa_letras span:nth-child(-n + 3) {
+    animation: menu-word-found 1200ms ease-out both;
+  }
+  .perfil-tablero--sopa_letras span:nth-child(2) {
+    animation-delay: 120ms;
+  }
+  .perfil-tablero--sopa_letras span:nth-child(3) {
+    animation-delay: 240ms;
+  }
+  .perfil-tablero--sudoku span:empty::after {
+    animation: menu-number-fill 1100ms ease-out both;
+  }
+  .perfil-tablero--sudoku span:nth-child(4)::after {
+    animation-delay: 120ms;
+  }
+  .perfil-tablero--sudoku span:nth-child(6)::after {
+    animation-delay: 240ms;
+  }
+  .perfil-tablero--sudoku span:nth-child(8)::after {
+    animation-delay: 360ms;
+  }
+  .perfil-tablero--crucigrama span:not(:empty) {
+    animation: menu-word-found 1200ms ease-out both;
+  }
+  .perfil-tablero--crucigrama span:nth-child(2),
+  .perfil-tablero--crucigrama span:nth-child(8) {
+    animation-delay: 300ms;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .perfil-tablero span:not(:empty) {
+    animation: menu-gentle-highlight 1000ms ease-out;
+  }
+  .perfil-tablero--sudoku span:empty::after {
+    animation: menu-gentle-fill 1000ms ease-out;
+  }
+}
