@@ -1,4 +1,5 @@
 /* Dibuja el panel de diálogo, sus decisiones y los controles de lectura. */
+import './dialogoNarrativo.css';
 import gsap from 'gsap';
 /* Presenta los textos y las intervenciones de los personajes. */
 import { useLayoutEffect, useRef, type ReactNode } from 'react';

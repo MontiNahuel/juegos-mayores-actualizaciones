@@ -11,8 +11,6 @@ import { AnimacionTexto } from './AnimacionTexto';
 interface EstadoVisual {
   listo: boolean;
   intervencion: string;
-  solo: boolean;
-  hablante: string;
 }
 
 // Mediator de escena: ordena presentación, foco y lectura mediante bloques especializados.
@@ -21,7 +19,6 @@ export class CoordinadorAnimacionConversacion {
   private contexto: gsap.Context;
   private preferencias: gsap.MatchMedia;
   private entrada?: gsap.core.Timeline;
-  private intervencion?: gsap.core.Timeline;
   private fondo?: gsap.core.Tween;
   private texto: AnimacionTexto;
   private presentada = false;
@@ -37,7 +34,6 @@ export class CoordinadorAnimacionConversacion {
       // Cambiar la preferencia termina lo pendiente sin volver a presentar la escena.
       if (this.presentada) {
         this.entrada?.progress(1);
-        this.intervencion?.progress(1);
       }
       this.texto.reducir(this.reducido);
       if (this.reducido) this.fondo?.progress(1);
@@ -63,21 +59,6 @@ export class CoordinadorAnimacionConversacion {
       }
 
       const cambioTexto = this.anterior?.intervencion !== estado.intervencion;
-      const cambioRetratos = !this.anterior || this.anterior.solo !== estado.solo || this.anterior.hablante !== estado.hablante;
-      if (cambioRetratos) {
-        // kill() conserva la posición actual: un cambio rápido retoma el fundido desde ahí.
-        this.intervencion?.kill();
-        this.intervencion = gsap.timeline({ data: 'conversacion:intervencion', defaults: { ease: 'power2.out' } });
-        const retratos = this.raiz.querySelectorAll<HTMLElement>('.conversacion-retrato');
-        if (!this.anterior) gsap.set(retratos, {
-          autoAlpha: (_indice, retrato: HTMLElement) => retrato.dataset.visible === 'false' ? 0 : retrato.dataset.activo === 'true' ? 1 : .45,
-        });
-        this.intervencion.to(retratos, {
-          autoAlpha: (_indice, retrato: HTMLElement) => retrato.dataset.visible === 'false' ? 0 : retrato.dataset.activo === 'true' ? 1 : .45,
-          duration: this.reducido ? 0 : RITMO.personajes.alternancia,
-          overwrite: true,
-        }, 0);
-      }
       if (cambioTexto) this.escribirTexto(estado.intervencion);
       this.anterior = estado;
     });
@@ -126,10 +107,10 @@ export function useAnimacionesConversacion(
     return () => { actual.destruir(); coordinador.current = null; };
   }, { scope: raiz });
 
-  const { listo, intervencion, solo, hablante } = estado;
+  const { listo, intervencion } = estado;
   useLayoutEffect(() => {
-    coordinador.current?.actualizar({ listo, intervencion, solo, hablante });
-  }, [listo, intervencion, solo, hablante]);
+    coordinador.current?.actualizar({ listo, intervencion });
+  }, [listo, intervencion]);
 
   const animarFondo = useCallback((imagen: HTMLImageElement, confirmar: () => void) => {
     if (coordinador.current) coordinador.current.mostrarFondo(imagen, confirmar);

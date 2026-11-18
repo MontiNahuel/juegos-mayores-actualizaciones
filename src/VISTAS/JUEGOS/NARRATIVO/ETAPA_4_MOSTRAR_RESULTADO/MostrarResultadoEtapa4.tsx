@@ -1,4 +1,5 @@
 /* Cuenta qué pasó después de la decisión y permite continuar. */
+import './resultado.css';
 // Muestra el resultado de una decision o el cierre de la partida.
 import { useLayoutEffect, useRef, useState } from 'react';
 import gsap from 'gsap';

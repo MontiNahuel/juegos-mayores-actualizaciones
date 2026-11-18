@@ -1,4 +1,5 @@
 /* Envuelve el contenido con el aspecto de una hoja de papel. */
+import './papelUi.css';
 import { useRef } from 'react';
 import type { ReactNode } from 'react';
 import { useGSAP } from '@gsap/react';

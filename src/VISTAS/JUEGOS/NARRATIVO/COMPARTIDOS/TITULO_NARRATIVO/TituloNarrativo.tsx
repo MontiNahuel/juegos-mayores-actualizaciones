@@ -1,4 +1,5 @@
 /* Presenta los títulos de la historia con su marco y decoración. */
+import './tituloNarrativo.css';
 import gsap from 'gsap';
 import { useLayoutEffect, useRef, useState } from 'react';
 import marcoEvento from '../../../../../assets/narrative/event-title.png';

@@ -1,0 +1,2 @@
+/* Evita que el contenido del pergamino desborde horizontalmente. */
+.papel-ui__contenido { overflow-x: hidden; }

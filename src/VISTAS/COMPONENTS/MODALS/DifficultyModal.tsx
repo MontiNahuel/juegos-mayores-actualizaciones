@@ -13,40 +13,14 @@ export const DifficultyModal: React.FC<DifficultyModalProps> = ({
   return (
     <div
       onClick={/* Responde a click desde este control. */ event => { if (event.target === event.currentTarget) onClose(); }}
-      style={{
-        alignItems: 'center',
-        background: 'rgba(15, 23, 42, 0.60)',
-        backdropFilter: 'blur(5px)',
-        display: 'flex',
-        inset: 0,
-        justifyContent: 'center',
-        padding: '16px 14px max(calc(env(safe-area-inset-bottom, 0px) + 24px), 48px)',
-        position: 'fixed',
-        zIndex: 9999,
-      }}
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-[rgba(15,23,42,0.60)] px-[14px] pt-4 pb-[max(calc(env(safe-area-inset-bottom,0px)+24px),48px)] backdrop-blur-[5px]"
     >
       <div className="bg-white w-full max-w-md rounded-3xl p-5 sm:p-6 shadow-2xl space-y-4 border border-[#E2E8F0] animate-fade-in text-left relative">
         {/* Botón de Cierre Superior ✕ */}
         <button
           type="button"
           onClick={onClose}
-          style={{
-            position: 'absolute',
-            right: 16,
-            top: 16,
-            width: 36,
-            height: 36,
-            borderRadius: '9999px',
-            backgroundColor: '#F1F5F9',
-            border: 'none',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            padding: 0,
-            zIndex: 10,
-          }}
-          className="hover:bg-slate-200 active:scale-95 text-slate-500 hover:text-slate-800 font-bold text-sm transition-colors"
+          className="absolute top-4 right-4 z-10 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-0 bg-slate-100 p-0 text-sm font-bold text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-800 active:scale-95"
           title="Cerrar ventana"
           aria-label="Cerrar modal"
         >

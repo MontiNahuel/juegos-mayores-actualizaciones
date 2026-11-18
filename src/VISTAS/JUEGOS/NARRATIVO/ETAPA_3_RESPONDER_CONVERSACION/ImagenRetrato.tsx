@@ -34,8 +34,8 @@ export default function ImagenRetrato({ src, nombre }: Imagen) {
   }, [src]);
 
   return <div ref={raiz} className="absolute inset-0 z-10">
-    {capas.map(capa => <img key={capa.src} data-src={capa.src} data-retrato-actual={capa.src === src}
-      className="absolute bottom-0 left-1/2 -translate-x-1/2 block h-full w-auto max-w-none object-contain object-bottom"
+    {capas.map(capa => <img key={capa.src} data-src={capa.src}
+      className="absolute bottom-0 left-1/2 -translate-x-1/2 block h-full w-full object-contain object-bottom"
       style={{ opacity: capa.inicial }} src={capa.src} alt={capa.src === src ? nombre : ''}
       onError={evento => { evento.currentTarget.classList.add('hidden'); }} />)}
   </div>;
