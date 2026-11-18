@@ -1,9 +1,11 @@
 /* Configura cómo se sirve y compila la aplicación con sus recursos. */
+/// <reference types="vitest" />
 import legacy from '@vitejs/plugin-legacy'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { qrcode } from 'vite-plugin-qrcode'
-import { defineConfig, loadEnv } from 'vite'
+import { loadEnv } from 'vite'
+import { defineConfig } from 'vitest/config'
 import { createHash } from 'node:crypto'
 import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs'
 
@@ -86,6 +88,14 @@ export default defineConfig(/* Completa este paso con los datos recibidos por la
           },
         },
       },
+    },
+    test: {
+      globals: true,
+      environment: 'jsdom',
+      environmentOptions: {
+        jsdom: { url: 'http://localhost' },
+      },
+      setupFiles: './src/setupTests.ts',
     },
   }
 })
