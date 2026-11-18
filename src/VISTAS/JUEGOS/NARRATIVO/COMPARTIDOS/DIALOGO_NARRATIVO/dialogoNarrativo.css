@@ -1,0 +1,36 @@
+/* La conversación delega el movimiento en GSAP; el CSS conserva la composición. */
+/* El texto completo reserva su altura sin anunciar cada letra al lector de pantalla. */
+.dialogo-narrativo__revelado::before {
+  content: attr(data-texto);
+  display: block;
+  visibility: hidden;
+  min-height: 1lh;
+}
+.dialogo-narrativo__glifo {
+  position: relative;
+}
+.dialogo-narrativo__glifo > span {
+  opacity: var(--glifo-real, 1);
+}
+.dialogo-narrativo__glifo::before {
+  position: absolute;
+  inset: 0;
+  content: attr(data-arcano);
+  color: #e6bd77;
+  opacity: var(--glifo-arcano, 0);
+  pointer-events: none;
+  transform: translateX(var(--glifo-recorrido, 0)) rotateY(var(--glifo-giro, 0deg));
+  transform-origin: center;
+}
+/* Cubre el padding superior del panel para que el texto no pase por encima de la guía fija. */
+.dialogo-narrativo__guia::before {
+  content: '';
+  position: absolute;
+  inset: -12px -4px 0;
+  z-index: -1;
+  background: #080910;
+}
+
+.dialogo-narrativo__opciones > button { transition-property: border-color, background, box-shadow; }
+.dialogo-narrativo__revelado { overflow-x: clip; }
+.dialogo-narrativo__cursor { overflow: hidden; }

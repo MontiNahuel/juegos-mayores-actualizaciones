@@ -1,7 +1,7 @@
 import { useClassicChallenge } from '../useClassicChallenge';
 /* Maneja el tablero del crucigrama, sus letras, las pistas y el final de la partida. */
 /* Acá maneja el tablero del crucigrama, sus letras, las pistas y el final de la partida. */
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { IonPage, IonContent } from '@ionic/react';
 import { API_URL } from '../../../config/api';

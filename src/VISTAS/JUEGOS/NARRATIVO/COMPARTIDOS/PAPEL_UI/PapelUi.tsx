@@ -1,4 +1,5 @@
 /* Envuelve el contenido con el aspecto de una hoja de papel. */
+import './papelUi.css';
 import { useRef } from 'react';
 import type { ReactNode } from 'react';
 import { useGSAP } from '@gsap/react';
@@ -23,9 +24,9 @@ export default function PapelUi({ children, overlay, className = '', contenidoCl
 }) {
   const papel = useRef<HTMLDivElement>(null);
 
-  useGSAP(/* Completa este paso con los datos recibidos por la operación. */ () => {
+  useGSAP(() => {
     const movimiento = gsap.matchMedia();
-    movimiento.add('(prefers-reduced-motion: no-preference)', /* Completa este paso con los datos recibidos por la operación. */ () => {
+    movimiento.add('(prefers-reduced-motion: no-preference)', () => {
       gsap.timeline()
         .set('.papel-ui__entrada', { visibility: 'visible' })
         .fromTo('.papel-ui__entrada', { opacity: 0, y: -6, scale: .995, rotation: -.3, clipPath: FORMAS_RASGADO[0] }, { opacity: 1, y: 0, scale: 1, rotation: .12, clipPath: FORMAS_RASGADO[1], duration: .34, ease: 'sine.out' })
@@ -34,8 +35,8 @@ export default function PapelUi({ children, overlay, className = '', contenidoCl
         .to('.papel-ui__entrada', { rotation: 0, clipPath: FORMAS_RASGADO[4], duration: .38, ease: 'sine.out' })
         .from('.papel-ui__contenido', { opacity: 0, y: 5, filter: 'blur(1px)', duration: .55, ease: 'sine.out' }, '-=.08');
     });
-    movimiento.add('(prefers-reduced-motion: reduce)', /* Completa este paso con los datos recibidos por la operación. */ () => gsap.set('.papel-ui__entrada', { opacity: 1, visibility: 'visible', clipPath: 'none' }));
-    return /* Libera los recursos de este efecto cuando deja de usarse. */ () => movimiento.revert();
+    movimiento.add('(prefers-reduced-motion: reduce)', () => gsap.set('.papel-ui__entrada', { opacity: 1, visibility: 'visible', clipPath: 'none' }));
+    return () => movimiento.revert();
   }, { scope: papel });
 
   return (

@@ -20,10 +20,7 @@ export const SudokuGame: React.FC = () => {
 
   return (
     <div
-      style={{
-        paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 16px)',
-      }}
-      className="cognitive-game cognitive-game--sudoku flex min-h-dvh flex-col justify-between"
+      className="cognitive-game cognitive-game--sudoku flex min-h-dvh flex-col justify-between pb-[max(env(safe-area-inset-bottom,0px),16px)]"
     >
       {/* Barra superior estandarizada con Safe Area y centrado geométrico */}
       <AppNavbar view={{ kind: 'game',

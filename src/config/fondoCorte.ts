@@ -49,3 +49,17 @@ export const cantidadManosPorPueblo = (pueblo: number) =>
 // Los huecos 31–39 y 61–69 conservan el tramo anterior, igual que con los guardias.
 export const cantidadPorTramo = (valor: number) =>
   valor >= 0 && valor <= 30 ? 0 : valor >= 40 && valor <= 60 ? 1 : valor >= 70 && valor <= 100 ? 2 : null;
+
+export const CORTE_VACIA: EstadoFondoCorte = { src: FONDO_CORTE_DEFAULT, personajes: [], oro: [], manos: [] };
+
+// Traduce los saldos confirmados a adornos; los huecos entre tramos conservan la decoración anterior.
+export function componerFondo(recursos: Record<string, number> = {}, anterior = CORTE_VACIA): EstadoFondoCorte {
+  const guardias = cantidadPorTramo(recursos.ejercito) ?? anterior.personajes.length;
+  const oro = cantidadPorTramo(recursos.oro) ?? anterior.oro.length;
+  const manos = Number.isFinite(recursos.pueblo) ? cantidadManosPorPueblo(recursos.pueblo) : anterior.manos.length;
+  return { ...anterior,
+    personajes: guardias === anterior.personajes.length ? anterior.personajes : GUARDIAS_CORTE.slice(0, guardias),
+    oro: oro === anterior.oro.length ? anterior.oro : ORO_CORTE.slice(0, oro),
+    manos: manos === anterior.manos.length ? anterior.manos : MANOS_CORTE.slice(0, manos),
+  };
+}

@@ -1,499 +1,307 @@
-import { presentarResolucion } from './commanderNarrativo';
-import type { EstadoPartida } from './narrativeService';
-/* Coordina las etapas narrativas y sincroniza las decisiones de la partida. */
+/* Obtiene la partida del backend y entrega sus datos y acciones a la etapa visible. */
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { IonContent, IonPage } from '@ionic/react';
-import { useDispatch, useSelector, useStore } from 'react-redux';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { API_URL } from '../../../config/api';
 import { configuracionPorEdad, guardarEdad, leerEdad } from '../../../config/adaptacionEdad';
-import {
-  actualizarFondoBase, configurarEdadNarrativa, elegirCarta, finalizarPartida,
-  guardarCartasDraft, guardarCartasIniciales, guardarCorte, guardarPersonajesCorte,
-  guardarResultado, iniciarJugador, limpiarResultado, mostrarConversacion, mostrarEvento,
-  reiniciarSeleccionNarrativa, sincronizarPartida,
-} from '../../../store/narrativoSelectionSlice';
-import {
-  agregarCondicionesSecretas, avanzarNodo, continuarTurno, elegirCartaMensual, esPartidaNarrativaLocal,
-  iniciarPartida, obtenerCortePartida, obtenerEstadoPartida, obtenerHistorialPartida,
-  reiniciarPartida, type ConversacionApi,
-} from './narrativeService';
-import SeleccionarCartasEtapa0y1 from './ETAPA_0_1_SELECCIONAR_CARTAS/SeleccionarCartasEtapa0y1';
-import MuestraEventoEtapa0 from './ETAPA_0_MUESTRA_EVENTO/MuestraEventoEtapa0';
-import DecidirEventoEtapa2 from './ETAPA_2_DECIDIR_EVENTO/DecidirEventoEtapa2';
-import ResponderConversacionEtapa3 from './ETAPA_3_RESPONDER_CONVERSACION/ResponderConversacionEtapa3';
-import MostrarResultadoEtapa4 from './ETAPA_4_MOSTRAR_RESULTADO/MostrarResultadoEtapa4';
-import EstadisticasPartidaEtapa5 from './ETAPA_5_ESTADISTICAS_PARTIDA/EstadisticasPartidaEtapa5';
+import { componerFondo, CORTE_VACIA } from '../../../config/fondoCorte';
+import { imagenPrecargada, precargarImagenes } from '../../../services/assetPreloader';
+import type { CartaApi, EstadoPartida, PersonajeApi, SetupPartida } from './narrativeTypes';
+import { avanzarNodo, continuarTurno, elegirCartaMensual, iniciarPartida, obtenerSetup,
+  obtenerCortePartida, obtenerEstadoPartida, obtenerEstadisticasPartida, reiniciarPartida } from './narrativeService';
 import TransicionNarrativa from './COMPARTIDOS/TRANSICION_NARRATIVA/TransicionNarrativa';
 import BotonNarrativo from './COMPARTIDOS/BOTON_NARRATIVO/BotonNarrativo';
 import MazoUi from './COMPARTIDOS/MAZO_UI/MazoUi';
 import ConfiguracionEdad from './COMPARTIDOS/CONFIGURACION_EDAD/ConfiguracionEdad';
 import FondoCorte from './COMPARTIDOS/FONDO_CORTE/FondoCorte';
-import CargaNarrativa from './COMPARTIDOS/CARGA_NARRATIVA/CargaNarrativa';
-import { CABALLO_CARGA, prepararCargaNarrativa, imagenesDelContenido } from './recursos/precargaNarrativa';
-import { imagenPrecargada, precargarImagenes } from '../../../services/assetPreloader';
-import { iniciarCargaNarrativa, actualizarCargaNarrativa, fallarCargaNarrativa } from '../../../store/narrativoCargaSlice';
-import type { RootState } from '../../../store/store';
-import { GUARDIAS_CORTE, MANOS_CORTE, ORO_CORTE, cantidadManosPorPueblo, cantidadPorTramo, type EstadoFondoCorte } from '../../../config/fondoCorte';
+import CargaNarrativa, { prepararImagenes } from './COMPARTIDOS/CARGA_NARRATIVA/CargaNarrativa';
+import SeleccionarCartas from './ETAPA_0_1_SELECCIONAR_CARTAS/SeleccionarCartasEtapa0y1';
+import MuestraEvento from './ETAPA_0_MUESTRA_EVENTO/MuestraEventoEtapa0';
+import Evento from './ETAPA_2_DECIDIR_EVENTO/DecidirEventoEtapa2';
+import Conversacion from './ETAPA_3_RESPONDER_CONVERSACION/ResponderConversacionEtapa3';
+import Resultado from './ETAPA_4_MOSTRAR_RESULTADO/MostrarResultadoEtapa4';
+import Estadisticas from './ETAPA_5_ESTADISTICAS_PARTIDA/EstadisticasPartidaEtapa5';
 import './narrativo.css';
 
-// Tiempo para ver el cambio en la corte antes de abrir la próxima escena.
-const DURACION_CAMBIO_FONDO_MS = 3200;
-
-// Unifica los datos de cada carta y completa la URL de su imagen.
-const prepararCarta = (carta: any) => ({
-  ...carta,
-  id: carta.id || carta._id,
-  nombre: carta.nombre || carta.titulo,
-  imagen: carta.imagen ? imagenPrecargada(carta.imagen.startsWith('/') ? `${API_URL}${carta.imagen}` : carta.imagen) : carta.imagen,
-});
-
-// Genera una derrota si alguno de los recursos llega a cero.
-const finalPorRecurso = (recursos: any) => {
-  const recurso = Object.keys(recursos).find(clave => Number(recursos[clave]) <= 0);
-  return recurso ? {
-    _id: `fin_${recurso}_cero`, recurso_clave: recurso, tipo: 'derrota_recurso',
-    titulo: `El reino perdio ${recurso}`,
-    texto: `El valor de ${recurso} llego a cero. La corte no pudo sostener el reino.`,
-    imagen: '', rango: 'F',
-  } : null;
-};
-
-// Cuenta los cambios sin números y con palabras fáciles de entender.
-const describirEfectos = (resultado: any) => {
-  const frases: Record<string, [string, string]> = {
-    oro: ['Ahora hay más oro disponible.', 'Ahora queda menos oro.'],
-    pueblo: ['La gente quedó más contenta.', 'La gente quedó más molesta.'],
-    ejercito: ['La defensa del reino quedó más fuerte.', 'La defensa del reino quedó más débil.'],
-    fe: ['La gente recuperó confianza.', 'La gente perdió confianza.'],
-  };
-
-  return resultado?.efectos?.map(({ accion }: any) => {
-    const valor = Number(accion?.valor || 0);
-    return frases[accion?.clave]?.[valor > 0 ? 0 : 1];
-  }).filter(Boolean).join(' ') || 'La decisión no produjo cambios importantes.';
-};
-
-// Coordina la partida: carga datos, ejecuta acciones y muestra la etapa actual.
+// Cada fecha monta su propio gestor y descarta las respuestas de la visita anterior.
 export default function KingsCourt() {
-  const date = (useLocation().state as any)?.challenge?.dateKey || new Date().toISOString().slice(0, 10);
+  const ubicacion = useLocation().state as { challenge?: { dateKey?: string } } | null;
+  const date = ubicacion?.challenge?.dateKey || new Date().toISOString().slice(0, 10);
+  return <Partida key={date} date={date} />;
+}
+
+// Conserva datos confirmados; selección, lectura y animaciones pertenecen a las etapas.
+function Partida({ date }: { date: string }) {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
-  const store = useStore();
-  const juego = useSelector((state: any) => state.narrativoSelection);
-  const carga = useSelector((state: RootState) => state.narrativoCarga);
-  const [mostrarBuffer, setMostrarBuffer] = useState(true);
-  const [intentoCarga, setIntentoCarga] = useState(0);
-  // Prepara la entrada a la partida cuando la carga está lista.
-  const entrarAlJuego = useCallback(() => setMostrarBuffer(false), []);
-  const [setup, setSetup] = useState<any>(null);
-  const [personajesDisponibles, setPersonajesDisponibles] = useState<any[]>([]);
-  const [continuando, setContinuando] = useState(false);
-  const [respondiendo, setRespondiendo] = useState(false);
-  const respuestaEnCurso = useRef(false);
-  const continuacionEnCurso = useRef(false);
-  const [estadisticas, setEstadisticas] = useState<any>(null);
-  const [cargandoEstadisticas, setCargandoEstadisticas] = useState(false);
-  const [reiniciando, setReiniciando] = useState(false);
+  // Datos de la partida. Los recursos y las consecuencias siempre los confirma el backend.
+  const [setup, setSetup] = useState<SetupPartida | null>(null);
+  const [estado, setEstado] = useState<EstadoPartida>({});
+  const [personajes, setPersonajes] = useState<PersonajeApi[]>([]);
+  const [cartas, setCartas] = useState<CartaApi[]>([]);
+  // Estado de presentación: preparación inicial, carga, errores y animaciones.
+  const [preparacion, setPreparacion] = useState<'muestra' | 'corte' | 'cartas'>('muestra');
+  const [edad, setEdad] = useState(leerEdad);
+  const [ocupado, setOcupado] = useState(false);
   const [error, setError] = useState('');
-  const [edad, setEdad] = useState<number | null>(leerEdad);
-  const [mostrarMuestraEvento, setMostrarMuestraEvento] = useState(false);
+  const [porcentaje, setPorcentaje] = useState(0);
+  const [mostrarCarga, setMostrarCarga] = useState(true);
+  const [intento, setIntento] = useState(0);
+  const [verEstadisticas, setVerEstadisticas] = useState(false);
+  const [estadisticas, setEstadisticas] = useState<Awaited<ReturnType<typeof obtenerEstadisticasPartida>> | null>(null);
+  const [fondo, setFondo] = useState(CORTE_VACIA);
   const [cambioFondo, setCambioFondo] = useState(false);
-  const [demorarDialogoPorFondo, setDemorarDialogoPorFondo] = useState(false);
-  const temporizadorCambio = useRef<number | null>(null);
-  const secuenciaCambio = useRef(0);
-
-  useEffect(() => () => {
-    secuenciaCambio.current += 1;
-    if (temporizadorCambio.current !== null) window.clearTimeout(temporizadorCambio.current);
-  }, []);
-
+  const [demorarDialogo, setDemorarDialogo] = useState(false);
+  // El ref bloquea el segundo clic inmediatamente, antes del siguiente render.
+  const enCurso = useRef(false);
+  const activo = useRef(true);
   const config = configuracionPorEdad(edad);
-  const modoMayor = config.adaptado;
-  // La pausa sólo corresponde si el cambio agrega un elemento nuevo a la corte.
-  const guardiasEsperados = cantidadPorTramo(Number(juego.jugador.recursos.ejercito)) ?? juego.fondoBase.personajes.length;
-  const oroEsperado = cantidadPorTramo(Number(juego.jugador.recursos.oro)) ?? juego.fondoBase.oro.length;
-  const puebloActual = Number(juego.jugador.recursos.pueblo);
-  const manosEsperadas = Number.isFinite(puebloActual) ? cantidadManosPorPueblo(puebloActual) : juego.fondoBase.manos.length;
-  const cambioFondoPendiente = Boolean(juego.resultadoActual) &&
-    (guardiasEsperados > juego.fondoBase.personajes.length || oroEsperado > juego.fondoBase.oro.length || manosEsperadas > juego.fondoBase.manos.length);
-  // Lee el jugador actualizado de Redux, incluso después de un dispatch.
-  const jugadorActual = () => (store.getState() as any).narrativoSelection.jugador;
+  const grafo = estado.fase_actual?.toUpperCase() === 'DRAFT_MENSUAL' ? null : estado.grafo_actual;
+  const finalizacion = estado.finalizacion ?? grafo?.finalizacion;
+  const hayResultado = Boolean(estado.resultado_actual || grafo?.nodo_actual.es_final);
+  const hayConversacion = grafo?.tipo === 'conversacion' || Boolean(estado.conversacion_actual);
+  const hayEvento = Boolean(grafo || estado.evento_actual);
 
-  const estiloEdad = {
-    '--narrativo-texto-adaptado': `${config.tamanioTexto}px`,
-    '--narrativo-control-adaptado': `${config.altoControl}px`,
-    '--narrativo-personaje-visible-svh': `${70 * config.fraccionVisiblePersonaje}svh`,
-    '--narrativo-personaje-visible-rem': `${32 * config.fraccionVisiblePersonaje}rem`,
-  } as CSSProperties;
+  // Acepta los mapas del servidor completos; un nodo intermedio puede omitirlos.
+  const recibir = useCallback(async (respuesta: EstadoPartida, seleccionarAutomaticamente = true) => {
+    if (!activo.current) return;
+    const primeraCarta = respuesta.cartas_draft_actual?.[0];
+    const esDraft = respuesta.fase_actual?.toUpperCase() === 'DRAFT_MENSUAL';
+    const omitirSeleccion = !configuracionPorEdad(leerEdad()).permitirCartasMensuales;
 
-  // Sincroniza la edad y el modo de juego con Redux.
-  useEffect(() => {
-    dispatch(configurarEdadNarrativa({ edad, modo_mayor: modoMayor }));
-  }, [dispatch, edad, modoMayor]);
-
-  // El resultado conserva la corte anterior; la nueva composición entra al mostrarla entre escenas.
-  useEffect(() => {
-    if (juego.resultadoActual) return;
-    dispatch(actualizarFondoBase({ ejercito: juego.jugador.recursos.ejercito, oro: juego.jugador.recursos.oro, pueblo: juego.jugador.recursos.pueblo }));
-  }, [dispatch, juego.jugador.recursos.ejercito, juego.jugador.recursos.oro, juego.jugador.recursos.pueblo, juego.resultadoActual]);
-
-  // Ejecuta una petición y muestra el error sin interrumpir la partida.
-  const pedir = async <T,>(accion: () => Promise<T>, mensaje: string): Promise<T | null> => {
-    try {
-      setError('');
-      const data = await accion();
-      // Si la API agregó una ilustración nueva, se prepara mientras sigue visible la escena anterior.
-      await precargarImagenes(imagenesDelContenido(data));
-      return data;
-    } catch (e: unknown) {
-      setError(`${mensaje}${e instanceof Error ? ` ${e.message}` : ''}`);
-      return null;
+    // La recuperación de un error sólo consulta: no debe enviar otra selección automática.
+    if (seleccionarAutomaticamente && esDraft && primeraCarta && omitirSeleccion) {
+      respuesta = await elegirCartaMensual(date, primeraCarta._id);
     }
-  };
+    await prepararImagenes(respuesta);
+    if (!activo.current) return;
+    setEstado(anterior => ({ ...respuesta,
+      mes_actual: respuesta.mes_actual ?? anterior.mes_actual,
+      recursos: respuesta.recursos ?? respuesta.grafo_actual?.recursos ?? anterior.recursos,
+      afinidad: respuesta.afinidad ?? respuesta.grafo_actual?.afinidad ?? anterior.afinidad,
+    }));
+  }, [date]);
 
-  // Enriquece y guarda cada evento con sus condiciones antes de mostrarlo.
-  const guardarEventoLocal = async (evento: any) => dispatch(mostrarEvento(await agregarCondicionesSecretas(evento)));
-
-  // En modo adaptado pide el evento sin agregar la carta al mazo.
-  const abrirEventoSinCarta = async (cartas: any[]) => {
-    if (!cartas[0]) return;
-    const data = await pedir(() => elegirCartaMensual(date, cartas[0].id || cartas[0]._id), 'No se pudo preparar la siguiente decision.');
-    if (data) await mostrarEstado(data);
-  };
-
-  // Abre la selección mensual o salta al evento según la edad.
-  const cargarDraft = async (cartas: any[], desdeServidor = false) => {
-    const draft = cartas.map(prepararCarta);
-    if ((desdeServidor ? configuracionPorEdad(leerEdad()) : config).permitirCartasMensuales) {
-      setDemorarDialogoPorFondo(false);
-      dispatch(guardarCartasDraft(draft));
-    } else await abrirEventoSinCarta(draft);
-  };
-
-  // Recupera la etapa pendiente del servidor sin reemplazar al jugador local.
-  const mostrarEstado = async (estado: EstadoPartida) => {
-    if (!estado) return;
-    await presentarResolucion(estado, {
-      sincronizar: datos => { dispatch(sincronizarPartida(datos)); },
-      finalizar: final => { dispatch(finalizarPartida(final)); },
-      resultado: resultado => { dispatch(guardarResultado(resultado)); },
-      conversar: conversacion => { dispatch(mostrarConversacion(conversacion)); },
-      evento: guardarEventoLocal,
-      draft: cartas => cargarDraft(cartas, true),
-      // Una partida vieja o incompleta no tiene pantalla: sin aviso quedaba en blanco.
-      sinEtapa: () => setError(`La partida quedó guardada en la fase ${estado.fase_actual || 'desconocida'} sin contenido para mostrar. Usá "Salir de prueba" para comenzar de nuevo.`),
-    });
-  };
-
-  // Intenta restaurar la pantalla cuando falla la selección de carta.
-  const recuperarFase = async () => {
-    try { await mostrarEstado(await obtenerEstadoPartida(date)); }
-    catch { /* Conserva el error original. */ }
-  };
-
-  // Carga el desafío y, si existe, restaura la partida activa.
+  // Recupera preparación, corte y escena; nunca crea una partida ficticia si falla la red.
   useEffect(() => {
-    let activo = true;
-    setMostrarBuffer(true);
-    dispatch(iniciarCargaNarrativa(date));
-    const trabajo = prepararCargaNarrativa(date, progreso => {
-      if (activo) dispatch(actualizarCargaNarrativa(progreso));
-    });
-    // Inicializa el jugador y recupera su corte y su etapa pendiente.
+    let vigente = true;
+    activo.current = true;
+    setMostrarCarga(true);
+    setPorcentaje(0);
+    setError('');
     const cargar = async () => {
       try {
-        const data = await trabajo.promesa;
-        if (!activo) return;
-
-        setSetup(data);
-        // La muestra abre una sola vez al comenzar; una partida restaurada conserva su etapa real.
-        setMostrarMuestraEvento(!data.tiene_partida_activa);
-        setPersonajesDisponibles(data.personajes_ofrecidos.map(prepararCarta));
-        if (jugadorActual().date !== date) {
-          const edadGuardada = leerEdad();
-          dispatch(iniciarJugador({
-            date,
-            universo_id: data.universo_id || data.personajes_ofrecidos?.[0]?.universo_id || 'corte_medieval',
-            recursos: data.atributos_iniciales || { oro: 50, pueblo: 50, ejercito: 50, fe: 50 },
-            edad: edadGuardada,
-            modo_mayor: configuracionPorEdad(edadGuardada).adaptado,
-          }));
-        }
-        if (data.tiene_partida_activa && !esPartidaNarrativaLocal(date)) {
-          const [estado, corte] = await Promise.all([
-            pedir(() => obtenerEstadoPartida(date), 'No se pudo recuperar el contenido de la partida activa.'),
-            pedir(() => obtenerCortePartida(date), 'No se pudo recuperar la corte de la partida activa.'),
-          ]);
-          if (!activo) return;
-          if (!estado) throw new Error('No se pudo recuperar la partida activa. Volvé a intentar.');
-          if (corte?.corte) dispatch(guardarPersonajesCorte(corte.corte.map(({ personaje }: any) => prepararCarta(personaje))));
-          await mostrarEstado(estado);
-          const fondo = (store.getState() as RootState).narrativoSelection.fondoBase as EstadoFondoCorte;
-          await precargarImagenes([fondo.src, ...[...fondo.personajes, ...fondo.oro, ...fondo.manos].map(x => x.src)]);
-        }
-        if (activo) {
-          const progreso = (store.getState() as RootState).narrativoCarga;
-          dispatch(actualizarCargaNarrativa({ ...progreso, fase: 'lista', porcentaje: 100 }));
-        }
-      } catch (e) {
-        if (activo) dispatch(fallarCargaNarrativa(e instanceof Error ? e.message : 'No se pudo preparar el juego. Revisá la conexión y volvé a intentar.'));
+        const datos = await obtenerSetup(date);
+        const [partida, corte] = datos.tiene_partida_activa
+          ? await Promise.all([obtenerEstadoPartida(date), obtenerCortePartida(date)]) : [null, null];
+        await prepararImagenes([datos, partida, corte], valor => { if (vigente) setPorcentaje(valor); });
+        if (!vigente) return;
+        setSetup(datos);
+        setPersonajes(corte?.corte.map(miembro => miembro.personaje) ?? []);
+        setEstado({ recursos: datos.atributos_iniciales });
+        setFondo(componerFondo(partida?.recursos ?? datos.atributos_iniciales));
+        if (partida) await recibir(partida);
+        if (vigente) setPorcentaje(100);
+      } catch (fallo) {
+        if (vigente) setError(fallo instanceof Error ? fallo.message : 'No se pudo cargar la partida.');
       }
     };
     void cargar();
-    return () => { activo = false; trabajo.desconectar(); };
-  }, [date, dispatch, intentoCarga]);
+    return () => { vigente = false; activo.current = false; };
+  }, [date, intento, recibir]);
 
-  // Reinicia la prueba en el servidor y vuelve al calendario.
-  const salirDePrueba = async () => {
-    if (reiniciando) return;
-    setReiniciando(true);
-    const data = await pedir(() => reiniciarPartida(date), 'No se pudo reiniciar la partida de prueba.');
-    if (data) {
-      dispatch(reiniciarSeleccionNarrativa());
-      navigate('/juegos/kings-court', { replace: true });
-    }
-    setReiniciando(false);
-  };
+  // El resultado conserva la decoración anterior hasta que el jugador lo termine de leer.
+  useEffect(() => {
+    if (!hayResultado && !cambioFondo) setFondo(anterior => componerFondo(estado.recursos, anterior));
+  }, [estado.recursos, hayResultado, cambioFondo]);
 
-  // Envía la corte y las cartas iniciales; luego carga el primer mes.
-  const comenzarPartida = async (cartas: any[]) => {
-    // El servidor aplica la amortiguación del modo adaptado; el front sólo informa la dificultad.
-    const dificultad = config.adaptado ? 'facil' : 'normal';
-    const data = await pedir(
-      () => iniciarPartida(date, jugadorActual().corte_activa, cartas.map(carta => carta.id), dificultad),
-      'Las cartas quedaron elegidas, pero no se pudo pedir el siguiente draft.'
-    );
-    if (!data) return;
-    dispatch(guardarCartasIniciales(cartas));
-    await mostrarEstado(data);
-  };
-
-  // Selecciona una carta mensual y abre el evento siguiente.
-  const elegirCartaDelMes = async ([carta]: any[]) => {
-    const data = await pedir(() => elegirCartaMensual(date, carta.id), 'No se pudo seleccionar la carta.');
-    if (!data) {
-      await recuperarFase();
-      return;
-    }
-    dispatch(elegirCarta(carta));
-    await mostrarEstado(data);
-  };
-
-  // Guarda la decisión en el motor V2 de grafos y procesa el siguiente paso o desenlace.
-  const decidirEventoActual = async (opcionId: string) => {
-    if (respuestaEnCurso.current) return;
-    respuestaEnCurso.current = true;
-    setRespondiendo(true);
-    const evento = juego.eventoActual;
-    try {
-      const data = await pedir(
-        () => avanzarNodo(date, opcionId, evento?.id || evento?.nodo_id || ''),
-        'No se pudo guardar la decisión.'
-      );
-      if (data) await mostrarEstado(data);
-      const final = data?.finalizacion || finalPorRecurso(jugadorActual().recursos);
-      if (final) dispatch(finalizarPartida(final));
-    } finally {
-      respuestaEnCurso.current = false;
-      setRespondiendo(false);
-    }
-  };
-
-  // Sólo intercala la corte si un recurso cruzó un umbral y agregó un asset visible.
-  const continuarResultado = async () => {
-    if (continuacionEnCurso.current) return;
-    continuacionEnCurso.current = true;
-    setContinuando(true);
-    try {
-      // Mantiene el resultado y el mes visibles hasta recibir la confirmación del servidor.
-      const data = await pedir(() => continuarTurno(date), 'No se pudo continuar la partida. Volvé a intentar.');
-      if (!data) return;
-      const antesGuardias = juego.fondoBase.personajes.length;
-      const antesOro = juego.fondoBase.oro.length;
-      const antesManos = juego.fondoBase.manos.length;
-      const despuesGuardias = guardiasEsperados;
-      const despuesOro = oroEsperado;
-      const despuesManos = manosEsperadas;
-      if (!cambioFondoPendiente) {
-        setDemorarDialogoPorFondo(false);
-        dispatch(limpiarResultado());
-        await mostrarEstado(data);
-        return;
+  // Serializa todas las acciones; si una mutación falla, consulta el estado sin repetir el POST.
+  const ejecutar = async (accion: () => Promise<void>, recuperar = true) => {
+    if (enCurso.current) return;
+    enCurso.current = true;
+    setOcupado(true);
+    setError('');
+    try { await accion(); }
+    catch (fallo) {
+      if (!activo.current) return;
+      setError(fallo instanceof Error ? fallo.message : 'No se pudo completar la acción.');
+      if (recuperar) {
+        try { await recibir(await obtenerEstadoPartida(date), false); }
+        catch { /* Mantiene el error original y la última pantalla confirmada. */ }
       }
+    } finally {
+      enCurso.current = false;
+      if (activo.current) { setOcupado(false); setCambioFondo(false); }
+    }
+  };
 
-      // Sólo el próximo evento directo espera la entrada visual de un asset nuevo.
-      setDemorarDialogoPorFondo(true);
+  // Sólo la entrada de nuevos adornos intercala la pausa visual de la corte.
+  const continuar = () => ejecutar(async () => {
+    const siguiente = await continuarTurno(date);
+    const nuevoFondo = componerFondo(estado.recursos, fondo);
+    const nuevos = [...nuevoFondo.personajes.slice(fondo.personajes.length),
+      ...nuevoFondo.oro.slice(fondo.oro.length), ...nuevoFondo.manos.slice(fondo.manos.length)];
+    await precargarImagenes(nuevos.map(elemento => elemento.src));
+    if (!activo.current) return;
+    setDemorarDialogo(nuevos.length > 0);
+    if (nuevos.length) {
       setCambioFondo(true);
-      dispatch(limpiarResultado());
+      setFondo(nuevoFondo);
+      const reducirMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const duracion = reducirMovimiento ? 0 : 3200;
+      await new Promise(resolve => setTimeout(resolve, duracion));
+    }
+    if (activo.current) await recibir(siguiente);
+  });
+  // Eventos y conversaciones envían la misma intención al backend.
+  const responder = (opcion: string) => ejecutar(async () => {
+    const grafoId = grafo?.grafo_id || estado.evento_actual?.id || estado.conversacion_actual?._id || '';
+    const respuesta = await avanzarNodo(date, opcion, grafoId);
+    await recibir(respuesta);
+  });
+  // Reinicia el desafío únicamente tras la confirmación del servidor.
+  const salir = () => ejecutar(async () => {
+    await reiniciarPartida(date);
+    if (activo.current) navigate('/juegos/kings-court', { replace: true });
+  }, false);
+  // La edad sólo cambia la presentación y la selección automática del modo adaptado.
+  const cambiarEdad = (valor: number) => {
+    guardarEdad(valor);
+    setEdad(valor);
+    if (!configuracionPorEdad(valor).permitirCartasMensuales && estado.fase_actual?.toUpperCase() === 'DRAFT_MENSUAL')
+      void ejecutar(() => recibir(estado));
+  };
+  // La corte aún es una elección local: se envía junto con las cartas iniciales.
+  const confirmarCorte = (seleccion: PersonajeApi[]) => {
+    setPersonajes(seleccion);
+    setPreparacion('cartas');
+  };
 
-      // Espera la decodificación para que el nuevo asset no aparezca de golpe al terminar la pausa.
-      const secuencia = ++secuenciaCambio.current;
-      const nuevos = [
-        ...GUARDIAS_CORTE.slice(antesGuardias, despuesGuardias),
-        ...ORO_CORTE.slice(antesOro, despuesOro),
-        ...MANOS_CORTE.slice(antesManos, despuesManos),
-      ];
-      await precargarImagenes(nuevos.map(({ src }) => src));
-      if (secuencia !== secuenciaCambio.current) return;
-      const duracion = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : DURACION_CAMBIO_FONDO_MS;
-      await new Promise<void>(resolve => {
-        temporizadorCambio.current = window.setTimeout(resolve, duracion);
+  // Guarda las cartas visibles únicamente después de confirmar el inicio en el servidor.
+  const comenzarPartida = (seleccion: CartaApi[]) => ejecutar(async () => {
+    const corteIds = personajes.map(personaje => personaje._id);
+    const cartaIds = seleccion.map(carta => carta._id);
+    const respuesta = await iniciarPartida(date, corteIds, cartaIds);
+    await recibir(respuesta);
+    if (activo.current) setCartas(seleccion);
+  });
+
+  // La etapa exige una carta; el gestor envía su ID y conserva la respuesta confirmada.
+  const confirmarCartaMensual = ([carta]: CartaApi[]) => ejecutar(async () => {
+    if (!carta) return;
+    const respuesta = await elegirCartaMensual(date, carta._id);
+    await recibir(respuesta);
+    if (!activo.current) return;
+    setCartas(anteriores => [...anteriores, carta]);
+    setDemorarDialogo(false);
+  });
+
+  // Al abrir la pantalla, el gestor pide sus datos al backend.
+  useEffect(() => {
+    if (!verEstadisticas) return;
+    let vigente = true;
+    setEstadisticas(null);
+    setError('');
+    obtenerEstadisticasPartida(date)
+      .then(datos => { if (vigente) setEstadisticas(datos); })
+      .catch(fallo => {
+        if (vigente) setError(fallo instanceof Error ? fallo.message : 'No se pudieron cargar las estadísticas.');
       });
-      temporizadorCambio.current = null;
-      if (secuencia !== secuenciaCambio.current) return;
-      await mostrarEstado(data);
-      setCambioFondo(false);
-    } finally {
-      continuacionEnCurso.current = false;
-      setContinuando(false);
-    }
-  };
+    return () => { vigente = false; };
+  }, [date, verEstadisticas]);
 
-  // Envía una única decisión y conserva la intervención hasta recibir la siguiente del servidor.
-  const responderActual = async (decision: ConversacionApi['decisiones'][number]) => {
-    // Un doble toque no debe consumir dos nodos del grafo en el servidor.
-    if (respuestaEnCurso.current) return;
-    respuestaEnCurso.current = true;
-    setRespondiendo(true);
-    try {
-      const data = await pedir(
-        () => avanzarNodo(date, String(decision.opcion), juego.conversacionActual?._id || juego.conversacionActual?.nodo_id || ''),
-        'No se pudo guardar la respuesta.'
-      );
-      if (data) await mostrarEstado(data);
-    } finally {
-      respuestaEnCurso.current = false;
-      setRespondiendo(false);
-    }
-  };
+  // Retira la carga cuando su animación confirma que las imágenes están preparadas.
+  const entrar = useCallback(() => setMostrarCarga(false), []);
 
-  // Guarda la nueva edad y adapta el draft que esté abierto.
-  const cambiarEdad = (nuevaEdad: number) => {
-    guardarEdad(nuevaEdad);
-    setEdad(nuevaEdad);
-    if (!configuracionPorEdad(nuevaEdad).permitirCartasMensuales && juego.jugador.fase_actual === 'draft_mensual' && juego.cartasDraft.length)
-      void abrirEventoSinCarta(juego.cartasDraft);
-  };
+  // La prioridad evita ocultar un final o un resultado detrás de una escena pendiente.
+  // Esta elección sólo decide qué dibujar; no hace avanzar la partida.
+  let etapa: string = 'desconocida';
+  if (verEstadisticas) etapa = 'estadisticas';
+  else if (finalizacion) etapa = 'final';
+  else if (cambioFondo) etapa = 'cambio_fondo';
+  else if (hayResultado) etapa = 'resultado';
+  else if (hayConversacion) etapa = 'conversacion';
+  else if (hayEvento) etapa = 'evento';
+  else if (estado.fase_actual?.toUpperCase() === 'DRAFT_MENSUAL') etapa = 'draft';
+  else if (!estado.fase_actual && !setup?.tiene_partida_activa) etapa = preparacion;
 
-  // Consulta en paralelo el estado y el historial de la partida.
-  const verEstadisticas = async () => {
-    if (cargandoEstadisticas) return;
-    setCargandoEstadisticas(true);
-    try {
-      setError('');
-      const [estado, historial, corte] = await Promise.all([
-        obtenerEstadoPartida(date), obtenerHistorialPartida(date),
-        obtenerCortePartida(date).catch(() => null),
-      ]);
-      setEstadisticas({ estado, historial, corte });
-    } catch (e: any) {
-      setError(`No se pudieron cargar las estadísticas. ${e?.message || ''}`);
-    } finally { setCargandoEstadisticas(false); }
-  };
-
-  if (!setup || mostrarBuffer) return (
-    <IonPage><IonContent scrollY={false} className="narrativo-contenido" style={{ '--narrativo-fondo-base': `url("${imagenPrecargada(juego.fondoBase.src)}")` } as CSSProperties}>
-      {/* Misma capa que en la partida: React conserva la imagen al terminar la carga. */}
-      <FondoCorte fondo={{ ...juego.fondoBase, personajes: [], oro: [], manos: [] }} atenuado fijo />
-      <CargaNarrativa porcentaje={carga.porcentaje} listo={carga.fase === 'lista'} caballo={imagenPrecargada(CABALLO_CARGA)}
-        mensaje={carga.fase === 'preparando' ? 'Reuniendo las historias del reino…' : 'Preparando personajes y escenarios…'}
-        error={carga.error} onReintentar={() => setIntentoCarga(intento => intento + 1)} onEntrar={entrarAlJuego} />
-    </IonContent></IonPage>
-  );
-
-  const { jugador, personajesCorte: personajes, finalizacion } = juego;
-  const etapa = estadisticas ? 'estadisticas' : finalizacion ? 'final' : cambioFondo ? 'cambio_fondo'
-    : juego.resultadoActual ? 'resultado' : juego.conversacionActual ? 'conversacion'
-    : juego.eventoActual ? 'evento' : mostrarMuestraEvento ? 'muestra_evento' : jugador.fase_actual;
-  const etapaVisible = ({
-    estadisticas: 'estadisticas', final: `final:${finalizacion?._id}`,
-    resultado: `resultado:${jugador.mes_actual}`,
-    conversacion: `conversacion:${juego.conversacionActual?._id}`,
-    evento: `evento:${juego.eventoActual?.id || juego.eventoActual?._id}`,
-  } as Record<string, string>)[etapa] || `${etapa}:${jugador.mes_actual}`;
-
-  // Reutiliza la misma pantalla para las tres selecciones de cartas.
-  const seleccionar = (titulo: string, descripcion: string, cartas: any[], cantidad: number, onConfirmar: any) => (
-    <SeleccionarCartasEtapa0y1 key={etapa} {...{ titulo, descripcion, cartas, cantidad, onConfirmar }} />
-  );
-
+  const etapaVisible = `${etapa}:${grafo?.grafo_id || estado.conversacion_actual?._id || estado.evento_actual?.id || estado.mes_actual || ''}`;
+  const modoSimple = !config.mostrarNumeros;
   let pantalla: ReactNode = null;
-  // Elige una única pantalla según la fase actual de la partida.
-  switch (etapa) {
+  if (setup) switch (etapa) {
+    case 'muestra':
+      pantalla = <MuestraEvento eventos={setup.eventos_del_dia ?? []} onContinuar={() => setPreparacion('corte')} />;
+      break;
+    case 'corte':
+      pantalla = <SeleccionarCartas key={etapaVisible} enviando={ocupado} titulo="Forma tu corte" descripcion="Elegí tres personajes para comenzar el desafio." cartas={setup.personajes_ofrecidos} cantidad={3}
+      onConfirmar={confirmarCorte} />;
+      break;
+    case 'cartas':
+      pantalla = <SeleccionarCartas key={etapaVisible} enviando={ocupado} titulo="Prepara el reino" descripcion="Elegí tres cartas para comenzar la partida." cartas={setup.cartas_ofrecidas} cantidad={3}
+      onConfirmar={comenzarPartida} />;
+      break;
+    case 'draft':
+      pantalla = <SeleccionarCartas key={etapaVisible} enviando={ocupado} titulo={`Mes ${estado.mes_actual}`} descripcion="Elegí una carta para afrontar el proximo evento." cartas={estado.cartas_draft_actual ?? []} cantidad={1}
+      onConfirmar={confirmarCartaMensual} />;
+      break;
+    case 'evento':
+      pantalla = <Evento key={etapaVisible} evento={estado.evento_actual ?? undefined} grafo={grafo ?? undefined} atributos={estado.recursos ?? {}} fondoBase={fondo}
+      modoSimple={modoSimple} demorarDialogoPorFondo={demorarDialogo} enviando={ocupado} onElegir={responder} />;
+      break;
+    case 'conversacion':
+      pantalla = <Conversacion key={etapaVisible} conversacion={estado.conversacion_actual ?? undefined} grafo={grafo ?? undefined} personajes={personajes}
+      modoSimple={modoSimple} enviando={ocupado} onElegir={responder} />;
+      break;
+    case 'resultado':
+    case 'final':
+      pantalla = <Resultado resultado={estado.resultado_actual ?? undefined} grafo={grafo ?? undefined} finalizacion={finalizacion ?? undefined}
+      modoSimple={modoSimple} continuando={ocupado} onContinuar={finalizacion ? undefined : continuar} reiniciando={ocupado} onTerminar={salir}
+      onVerEstadisticas={finalizacion ? () => setVerEstadisticas(true) : undefined} />;
+      break;
+    case 'estadisticas':
+      pantalla = estadisticas
+        ? <Estadisticas {...estadisticas} recursosIniciales={setup.atributos_iniciales} cartas={cartas}
+            personajes={personajes} finalizacion={finalizacion} modoSimple={modoSimple} onVolver={() => setVerEstadisticas(false)} />
+        : <section aria-label="Estadísticas">
+            <p role="status">{error ? 'No se pudieron cargar las estadísticas.' : 'Cargando estadísticas...'}</p>
+            <BotonNarrativo onClick={() => setVerEstadisticas(false)}>Volver al cierre</BotonNarrativo>
+          </section>;
+      break;
     case 'cambio_fondo':
       pantalla = <section className="flex-1" aria-label="La corte muestra el cambio" />;
       break;
-    case 'muestra_evento':
-      pantalla = <MuestraEventoEtapa0
-        eventos={setup.eventos_del_dia || setup.eventos_ofrecidos || setup.cartas_evento || []}
-        onContinuar={() => setMostrarMuestraEvento(false)}
-      />;
-      break;
-    case 'estadisticas':
-      pantalla = <EstadisticasPartidaEtapa5
-        estado={estadisticas.estado} historial={estadisticas.historial} corte={estadisticas.corte}
-        recursosIniciales={setup.atributos_iniciales}
-        personajes={personajes} finalizacion={finalizacion} modoSimple={!config.mostrarNumeros}
-        onVolver={() => setEstadisticas(null)}
-      />;
-      break;
-    case 'final':
-      pantalla = <MostrarResultadoEtapa4 finalizacion={finalizacion} onVerEstadisticas={verEstadisticas} cargandoEstadisticas={cargandoEstadisticas} onTerminar={salirDePrueba} reiniciando={reiniciando} />;
-      break;
-    case 'resultado':
-      pantalla = <MostrarResultadoEtapa4 resultado={juego.resultadoActual} efectoTexto={!config.mostrarNumeros ? describirEfectos(juego.resultadoActual) : undefined} continuando={continuando} onContinuar={continuarResultado} />;
-      break;
-    case 'conversacion':
-      // El grafo identifica la escena; el nodo sólo cambia la intervención dentro de ella.
-      pantalla = <ResponderConversacionEtapa3 key={juego.conversacionActual._id} conversacion={juego.conversacionActual} personajes={personajes} modoSimple={!config.mostrarNumeros} enviando={respondiendo} onElegir={responderActual} />;
-      break;
-    case 'evento':
-      pantalla = <DecidirEventoEtapa2 key={etapaVisible} evento={juego.eventoActual} atributos={jugador.recursos} fondoBase={juego.fondoBase} personajes={personajes} afinidad={jugador.afinidad} tags={jugador.tags_activos} cartas={jugador.cartas_en_mano} modoSimple={!config.mostrarNumeros} demorarDialogoPorFondo={demorarDialogoPorFondo} enviando={respondiendo} onElegir={decidirEventoActual} />;
-      break;
-    case 'seleccionar_corte':
-      pantalla = seleccionar('Forma tu corte', 'Elegí tres personajes para comenzar el desafio.', personajesDisponibles, 3, (cartas: any[]) => dispatch(guardarCorte(cartas)));
-      break;
-    case 'seleccionar_cartas':
-      pantalla = seleccionar('Prepara el reino', 'Elegí tres cartas para comenzar la partida.', setup.cartas_ofrecidas.map(prepararCarta), 3, comenzarPartida);
-      break;
-    case 'draft_mensual':
-      if (config.permitirCartasMensuales)
-        pantalla = seleccionar(`Mes ${jugador.mes_actual}`, 'Elegí una carta para afrontar el proximo evento.', juego.cartasDraft.map(prepararCarta), 1, elegirCartaDelMes);
+    default:
+      pantalla = <p role="alert">La fase {estado.fase_actual} no tiene contenido para mostrar. Volvé a intentar o salí de prueba.
+      <BotonNarrativo disabled={ocupado} onClick={() => ejecutar(async () => recibir(await obtenerEstadoPartida(date)))}>Volver a intentar</BotonNarrativo></p>;
   }
 
   const enConversacion = etapa === 'conversacion';
   const enEvento = etapa === 'evento';
-  // La corte permanece montada bajo todas las etapas; sólo su decoración espera a preparación.
-  const mostrarDecoracion = !['seleccionar_corte', 'seleccionar_cartas', 'muestra_evento'].includes(etapa);
-  const fondoVisible = mostrarDecoracion ? juego.fondoBase : { ...juego.fondoBase, personajes: [], oro: [], manos: [] };
-  const claseEscena = enConversacion
-    ? 'narrativo-conversacion relative z-10 min-h-screen'
-    : enEvento
-      ? 'narrativo-evento relative z-10 min-h-full text-white'
-      : 'relative z-10 isolate mx-auto flex min-h-full max-w-[1240px] flex-col gap-3 px-5 pt-[max(8px,env(safe-area-inset-top))] pb-[max(12px,env(safe-area-inset-bottom))] text-white max-md:gap-2 max-md:px-3';
+  const fondoVisible = mostrarCarga || ['muestra', 'corte', 'cartas'].includes(etapa) ? CORTE_VACIA : fondo;
+  const estiloEdad = {
+    '--narrativo-texto-adaptado': `${config.tamanioTexto}px`, '--narrativo-control-adaptado': `${config.altoControl}px`,
+    '--narrativo-personaje-visible-svh': `${70 * config.fraccionVisiblePersonaje}svh`,
+    '--narrativo-personaje-visible-rem': `${32 * config.fraccionVisiblePersonaje}rem`,
+  } as CSSProperties;
+  const claseEscena = enConversacion ? 'narrativo-conversacion relative z-10 min-h-screen'
+    : enEvento ? 'narrativo-evento relative z-10 min-h-full text-white'
+    : 'relative z-10 isolate mx-auto flex min-h-full max-w-[1240px] flex-col gap-3 px-5 pt-[max(8px,env(safe-area-inset-top))] pb-[max(12px,env(safe-area-inset-bottom))] text-white max-md:gap-2 max-md:px-3';
   const claseHerramientas = `narrativo-herramientas flex min-h-[30px] items-center justify-end gap-2 text-xs max-md:flex-nowrap max-md:[&>p]:hidden [&>p]:mr-auto [&>p]:mb-0 [&>p]:text-shadow-[0_1px_3px_#000] ${enConversacion
     ? 'absolute inset-x-3 top-[max(8px,env(safe-area-inset-top))] z-[60]'
     : enEvento ? 'absolute inset-x-4 top-[max(8px,env(safe-area-inset-top))] z-50' : 'flex-wrap'}`;
 
-  return (
-    <IonPage>
-      <IonContent scrollY={!enConversacion} className="narrativo-contenido" style={{ '--narrativo-fondo-base': `url("${imagenPrecargada(juego.fondoBase.src)}")` } as CSSProperties}>
-        {/* La corte queda sin azul en eventos; las imágenes propias conservan su velo en la etapa. */}
-        <FondoCorte fondo={fondoVisible} atenuado sinTinte={enEvento || etapa === 'cambio_fondo'} destacado={etapa === 'cambio_fondo'} fijo />
-        <TransicionNarrativa etapa={etapaVisible}>
-          <main style={modoMayor ? estiloEdad : undefined} className={`${claseEscena}${modoMayor ? ' narrativo-modo-mayor' : ''}`}>
-            {error && <p role="alert" className="relative z-50 rounded border border-amber-300 bg-amber-50 p-3 text-amber-900">{error}</p>}
-            <div className={claseHerramientas}>
-              {esPartidaNarrativaLocal(date) && <p role="status" title="Partida local de seis meses. El progreso dura mientras la app esté abierta.">Prueba sin servidor</p>}
-              <MazoUi cartas={config.permitirCartasMensuales ? jugador.cartas_en_mano : []} personajes={personajes} mostrarCantidad={config.mostrarNumeros} />
-              <ConfiguracionEdad edad={edad} onGuardar={cambiarEdad} />
-              {!finalizacion && <BotonNarrativo disabled={reiniciando} onClick={salirDePrueba}>{reiniciando ? 'Saliendo...' : 'Salir de prueba'}</BotonNarrativo>}
-            </div>
-            {pantalla}
-          </main>
-        </TransicionNarrativa>
-      </IonContent>
-    </IonPage>
-  );
+  return <IonPage><IonContent scrollY={!enConversacion} className="narrativo-contenido" style={{ '--narrativo-fondo-base': `url("${imagenPrecargada(fondo.src)}")` } as CSSProperties}>
+    <FondoCorte fondo={fondoVisible} atenuado sinTinte={enEvento || cambioFondo} destacado={cambioFondo} fijo />
+    {mostrarCarga || !setup ? <CargaNarrativa porcentaje={porcentaje} listo={porcentaje === 100} mensaje={porcentaje ? 'Preparando personajes y escenarios…' : 'Reuniendo las historias del reino…'}
+      error={error} onReintentar={() => setIntento(valor => valor + 1)} onEntrar={entrar} />
+      : <TransicionNarrativa etapa={etapaVisible}>
+        <main style={config.adaptado ? estiloEdad : undefined} className={`${claseEscena}${config.adaptado ? ' narrativo-modo-mayor' : ''}`}>
+          {error && <p role="alert" className="relative z-50 rounded border border-amber-300 bg-amber-50 p-3 text-amber-900">{error}</p>}
+          <div className={claseHerramientas}>
+            <MazoUi cartas={config.permitirCartasMensuales ? cartas : []} personajes={personajes} mostrarCantidad={config.mostrarNumeros} />
+            <ConfiguracionEdad edad={edad} onGuardar={cambiarEdad} />
+            {!finalizacion && <BotonNarrativo disabled={ocupado} onClick={salir}>{ocupado ? 'Esperando...' : 'Salir de prueba'}</BotonNarrativo>}
+          </div>
+          {pantalla}
+        </main>
+      </TransicionNarrativa>}
+  </IonContent></IonPage>;
 }

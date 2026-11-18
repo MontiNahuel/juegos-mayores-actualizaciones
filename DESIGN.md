@@ -89,3 +89,9 @@ Usar `--app-background`, `--app-panel`, `--app-panel-raised`, `--app-border`, `-
 - Implementar estructura y estados con Tailwind; reservar CSS para fuente, integración Ionic, foco y animaciones.
 - Los tokens compartidos están en `src/theme/variables.css`. Las utilidades de títulos tienen prioridad explícita frente a la tipografía de Ionic.
 - Aplicar esta guía a menú, calendarios y clásicos. King’s Court se mantiene independiente y sin rediseño.
+
+## Criterio de implementación visual
+- Resolver tamaños, disposición, visibilidad adaptable y puntos de corte con Tailwind o CSS; no medir el viewport en React para decidir el diseño.
+- Ubicar cada CSS junto al componente que lo utiliza. Mantener en archivos globales solamente tokens y reglas compartidas.
+- Reservar estado y efectos de React para datos e interacción. Usar JavaScript o GSAP cuando la animación necesite coordinación, dimensiones reales o desplazamiento, y respetar movimiento reducido.
+- Mantener la identidad y las animaciones existentes al simplificar. Preferir las herramientas ya instaladas antes de agregar otra librería.

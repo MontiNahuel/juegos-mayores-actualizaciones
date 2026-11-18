@@ -247,7 +247,7 @@ export function useSudokuGame() {
   };
 
   // El canje se confirma en el modal antes de revelar la pista.
-  const useHint = () => {
+  const aplicarPista = () => {
     if (!progressReady || isWon || !solution.length || !cells.length) return;
     const seleccionada = selectedRow !== null && selectedCol !== null ? cells[selectedRow]?.[selectedCol] : null;
     const casilla = seleccionada && !seleccionada.initial && seleccionada.value !== solution[seleccionada.row][seleccionada.col]
@@ -348,14 +348,14 @@ export function useSudokuGame() {
       // 5. Pedir Pista con 'p', 'P', 'h' o 'H'
       if (['p', 'P', 'h', 'H'].includes(e.key)) {
         e.preventDefault();
-        useHint();
+        aplicarPista();
         return;
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return /* Libera los recursos de este efecto cuando deja de usarse. */ () => window.removeEventListener('keydown', handleKeyDown);
-  }, [inputNumber, eraseCell, useHint, isWon, progressReady]);
+  }, [inputNumber, eraseCell, aplicarPista, isWon, progressReady]);
 
   return {
     dateKey,
@@ -373,7 +373,7 @@ export function useSudokuGame() {
     selectCell,
     inputNumber,
     eraseCell,
-    useHint,
+    useHint: aplicarPista,
     // Alterna entre escribir números y tomar notas.
     toggleNotes: () => setIsNotesMode(/* Actualiza is notes mode a partir del valor anterior. */ p => !p),
     // Prepara otra vez la partida desde el inicio.

@@ -1,5 +1,21 @@
+/* Transporta las peticiones del editor con la sesión del operador. */
 import { API_URL } from '../../src/config/api';
-import { narrativeAdminHeaders } from '../../src/VISTAS/JUEGOS/NARRATIVO/narrativeAuth';
+const OPERATOR_KEY = 'asistodo_operador_session';
+
+/** Recupera el token del operador cuando se accede a los catálogos administrativos. */
+function narrativeAdminHeaders() {
+  for (const storage of [localStorage, sessionStorage]) {
+    try {
+      const session = JSON.parse(storage.getItem(OPERATOR_KEY) || 'null');
+      if (typeof session?.token === 'string' && session.token) {
+        return { Authorization: `Bearer ${session.token}` };
+      }
+    } catch { /* Una sesión incompleta no constituye una credencial. */ }
+  }
+  return {};
+}
+
+
 
 /** Transporte del editor de King's Court, compartido por sus pestañas. */
 export function fetchNarrativeAdmin(path, options = {}) {

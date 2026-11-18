@@ -1,18 +1,16 @@
+/* Coordina las animaciones de entrada, retratos y texto de las conversaciones. */
 import { useCallback, useLayoutEffect, useRef, type RefObject } from 'react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 
 gsap.registerPlugin(useGSAP);
 
-import { presentarConversacion } from './presentarConversacion';
 import { RITMO } from './ritmoNarrativo';
 import { AnimacionTexto } from './AnimacionTexto';
 
 interface EstadoVisual {
   listo: boolean;
   intervencion: string;
-  solo: boolean;
-  hablante: string;
 }
 
 // Mediator de escena: ordena presentación, foco y lectura mediante bloques especializados.
@@ -21,14 +19,13 @@ export class CoordinadorAnimacionConversacion {
   private contexto: gsap.Context;
   private preferencias: gsap.MatchMedia;
   private entrada?: gsap.core.Timeline;
-  private intervencion?: gsap.core.Timeline;
   private fondo?: gsap.core.Tween;
   private texto: AnimacionTexto;
   private presentada = false;
   private reducido = false;
   private anterior?: EstadoVisual;
 
-  constructor(private raiz: HTMLElement, private onLecturaCompleta?: (intervencion: string) => void) {
+  constructor(private raiz: HTMLElement, onLecturaCompleta?: (intervencion: string) => void) {
     this.contexto = gsap.context(() => {}, raiz);
     this.preferencias = gsap.matchMedia();
     this.texto = new AnimacionTexto(raiz, onLecturaCompleta);
@@ -37,7 +34,6 @@ export class CoordinadorAnimacionConversacion {
       // Cambiar la preferencia termina lo pendiente sin volver a presentar la escena.
       if (this.presentada) {
         this.entrada?.progress(1);
-        this.intervencion?.progress(1);
       }
       this.texto.reducir(this.reducido);
       if (this.reducido) this.fondo?.progress(1);
@@ -63,21 +59,6 @@ export class CoordinadorAnimacionConversacion {
       }
 
       const cambioTexto = this.anterior?.intervencion !== estado.intervencion;
-      const cambioRetratos = !this.anterior || this.anterior.solo !== estado.solo || this.anterior.hablante !== estado.hablante;
-      if (cambioRetratos) {
-        // kill() conserva la posición actual: un cambio rápido retoma el fundido desde ahí.
-        this.intervencion?.kill();
-        this.intervencion = gsap.timeline({ data: 'conversacion:intervencion', defaults: { ease: 'power2.out' } });
-        const retratos = this.raiz.querySelectorAll<HTMLElement>('.conversacion-retrato');
-        if (!this.anterior) gsap.set(retratos, {
-          autoAlpha: (_indice, retrato: HTMLElement) => retrato.dataset.visible === 'false' ? 0 : retrato.dataset.activo === 'true' ? 1 : .45,
-        });
-        this.intervencion.to(retratos, {
-          autoAlpha: (_indice, retrato: HTMLElement) => retrato.dataset.visible === 'false' ? 0 : retrato.dataset.activo === 'true' ? 1 : .45,
-          duration: this.reducido ? 0 : RITMO.personajes.alternancia,
-          overwrite: true,
-        }, 0);
-      }
       if (cambioTexto) this.escribirTexto(estado.intervencion);
       this.anterior = estado;
     });
@@ -126,10 +107,10 @@ export function useAnimacionesConversacion(
     return () => { actual.destruir(); coordinador.current = null; };
   }, { scope: raiz });
 
-  const { listo, intervencion, solo, hablante } = estado;
+  const { listo, intervencion } = estado;
   useLayoutEffect(() => {
-    coordinador.current?.actualizar({ listo, intervencion, solo, hablante });
-  }, [listo, intervencion, solo, hablante]);
+    coordinador.current?.actualizar({ listo, intervencion });
+  }, [listo, intervencion]);
 
   const animarFondo = useCallback((imagen: HTMLImageElement, confirmar: () => void) => {
     if (coordinador.current) coordinador.current.mostrarFondo(imagen, confirmar);
@@ -138,4 +119,25 @@ export function useAnimacionesConversacion(
   const cancelarFondo = useCallback(() => coordinador.current?.cancelarFondo(), []);
   const acelerarTexto = useCallback(() => coordinador.current?.acelerarTexto(), []);
   return { animarFondo, cancelarFondo, acelerarTexto };
+}
+
+/** Plan de entrada: título, retirada, panel, retratos y lectura. No resuelve nodos. */
+function presentarConversacion(raiz: HTMLElement, titulo: Element, personajes: Element, dialogo: Element, reducido: boolean) {
+  const entrada = gsap.timeline({ data: 'conversacion:entrada', defaults: { ease: 'power2.out' } });
+  entrada.addLabel('titulo', RITMO.titulo.entrada)
+    .addLabel('personajes', RITMO.personajes.entrada)
+    .addLabel('lectura', RITMO.dialogo.entrada);
+
+  if (reducido) {
+    entrada.set([titulo, personajes, dialogo], { autoAlpha: 1, y: 0 })
+      .call(() => { raiz.dataset.animacion = 'lista'; })
+      .set(titulo, { autoAlpha: 0 }, 2.5);
+  } else {
+    entrada.fromTo(titulo, { autoAlpha: 0 }, { autoAlpha: 1, duration: RITMO.titulo.duracion }, 'titulo')
+      .to(titulo, { autoAlpha: 0, duration: RITMO.titulo.retirada }, RITMO.titulo.salida)
+      .fromTo(personajes, { autoAlpha: 0 }, { autoAlpha: 1, duration: RITMO.personajes.duracion }, 'personajes')
+      .fromTo(dialogo, { autoAlpha: 0, y: 6 }, { autoAlpha: 1, y: 0, duration: RITMO.dialogo.duracion }, 'lectura')
+      .call(() => { raiz.dataset.animacion = 'lista'; }, undefined, `personajes+=${RITMO.personajes.duracion}`);
+  }
+  return entrada;
 }

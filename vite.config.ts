@@ -1,6 +1,4 @@
 /* Configura cómo se sirve y compila la aplicación con sus recursos. */
-/// <reference types="vitest" />
-
 import legacy from '@vitejs/plugin-legacy'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
@@ -88,11 +86,6 @@ export default defineConfig(/* Completa este paso con los datos recibidos por la
           },
         },
       },
-    },
-    test: {
-      globals: true,
-      environment: 'jsdom',
-      setupFiles: './src/setupTests.ts',
     },
   }
 })

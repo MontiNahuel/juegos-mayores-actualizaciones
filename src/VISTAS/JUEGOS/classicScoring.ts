@@ -1,3 +1,4 @@
+/* Calcula calificaciones, puntos y estrellas de los juegos clásicos. */
 export type ClassicGameId = 'wordle' | 'sudoku' | 'crucigrama' | 'sopa_letras';
 export interface TimeGrade {
   grade: string;
@@ -26,6 +27,7 @@ export const DEFAULT_TIME_GRADES = Object.fromEntries(Object.entries(limits).map
     puntos: [100, 90, 75, 50, 25][i], estrellas: [3, 3, 2, 1, 1][i] })),
 ])) as ScoringConfig['escalasTiempoPorJuego'];
 
+/** Califica Wordle por intentos y los demás juegos por la escala de tiempo configurada. */
 export function getClassicResult(game: ClassicGameId, attempts: number, seconds: number, config: ScoringConfig): ClassicResult {
   if (game === 'wordle') {
     const grade = attempts <= 2 ? 'S' : attempts <= 4 ? 'B' : 'C';
