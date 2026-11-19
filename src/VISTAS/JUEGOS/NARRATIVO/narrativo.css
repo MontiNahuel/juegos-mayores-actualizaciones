@@ -45,3 +45,24 @@
   .narrativo-evento.narrativo-modo-mayor .evento-ilustracion { flex: none; min-height: max(58svh, 28rem); }
   .narrativo-conversacion.narrativo-modo-mayor .conversacion-personajes { min-height: 0; }
 }
+
+/* Composición de la escena y barra de herramientas según la etapa visible. */
+.narrativo-escena { position: relative; z-index: 10; }
+.narrativo-conversacion { min-height: 100vh; }
+.narrativo-evento { min-height: 100%; color: white; }
+.narrativo-general {
+  isolation: isolate; display: flex; flex-direction: column; min-height: 100%;
+  max-width: 1240px; margin-inline: auto; gap: .75rem; color: white;
+  padding: max(8px, env(safe-area-inset-top)) 1.25rem max(12px, env(safe-area-inset-bottom));
+}
+.narrativo-herramientas { display: flex; min-height: 30px; align-items: center; justify-content: flex-end; gap: .5rem; font-size: .75rem; line-height: 1rem; }
+.narrativo-herramientas > p { margin-right: auto; margin-bottom: 0; text-shadow: 0 1px 3px #000; }
+.narrativo-herramientas--general { flex-wrap: wrap; }
+.narrativo-herramientas--conversacion, .narrativo-herramientas--evento { position: absolute; top: max(8px, env(safe-area-inset-top)); }
+.narrativo-herramientas--conversacion { left: .75rem; right: .75rem; z-index: 60; }
+.narrativo-herramientas--evento { left: 1rem; right: 1rem; z-index: 50; }
+@media (max-width: 767px) {
+  .narrativo-general { gap: .5rem; padding-inline: .75rem; }
+  .narrativo-herramientas { flex-wrap: nowrap; }
+  .narrativo-herramientas > p { display: none; }
+}

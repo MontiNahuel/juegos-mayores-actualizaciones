@@ -1,74 +1,53 @@
-/* Compone el escenario de la corte con su fondo y sus capas. */
-import { FONDO_CORTE_DEFAULT, type EstadoFondoCorte } from '../../../../../config/fondoCorte';
-import { useEffect, useState, type CSSProperties } from 'react';
-import type { ElementoFondoCorte } from '../../../../../config/fondoCorte';
-import './fondoCorte.css';
+/* Compone el escenario y anima el decorado sin mover su punto de apoyo. */
+import { forwardRef, type CSSProperties } from 'react';
+import { FONDO_CORTE_DEFAULT, type ElementoFondoCorte, type EstadoFondoCorte } from '../../../../../config/fondoCorte';
 import { imagenPrecargada } from '../../../../../services/assetPreloader';
+import './fondoCorte.css';
 
-// Imagen y decoración comparten encuadre y oscurecido; nunca se mezclan con otra escena.
-export default function FondoCorte({ fondo, atenuado = false, sinTinte = false, destacado = false, fijo = false, onLoad, onError }: {
+const capas = ['personajes', 'manos', 'oro'] as const;
+const claveElemento = (elemento: ElementoFondoCorte) => `${elemento.id}:${elemento.x}:${elemento.y}`;
+// Expone las capas al coordinador, que controla los tiempos de la transición.
+const FondoCorte = forwardRef<HTMLDivElement, {
   fondo: EstadoFondoCorte;
+  fondoAnterior?: EstadoFondoCorte;
   atenuado?: boolean;
   sinTinte?: boolean;
-  destacado?: boolean;
   fijo?: boolean;
   onLoad?: () => void;
   onError?: () => void;
-}) {
-  const esFondoDefault = fondo.src === FONDO_CORTE_DEFAULT;
-
-  return <div className={`fondo-corte pointer-events-none ${fijo ? 'fixed' : 'absolute'} inset-0 ${fijo ? 'z-0' : '-z-20'}`} aria-hidden="true">
-    <img className={`absolute inset-0 h-full w-full object-cover object-center motion-safe:transition-[filter] motion-safe:duration-1000 ${destacado ? 'brightness-[1.16]' : ''}`} src={imagenPrecargada(fondo.src)} alt="" decoding="sync" onLoad={onLoad} onError={onError} />
-    {esFondoDefault && <div className="fondo-corte__plano">
-      <CapaFondoCorte tipo="personajes" elementos={fondo.personajes} />
-      <CapaFondoCorte tipo="manos" elementos={fondo.manos} />
-      <CapaFondoCorte tipo="oro" elementos={fondo.oro} />
+}>(function FondoCorte({ fondo, fondoAnterior = fondo, atenuado = false, sinTinte = false, fijo = false, onLoad, onError }, ref) {
+  return <div ref={ref} className={`fondo-corte pointer-events-none ${fijo ? 'fixed' : 'absolute'} inset-0 ${fijo ? 'z-0' : '-z-20'}`} aria-hidden="true">
+    <img data-fondo-imagen className="absolute inset-0 h-full w-full object-cover object-center" src={imagenPrecargada(fondo.src)} alt="" decoding="sync" onLoad={onLoad} onError={onError} />
+    {fondo.src === FONDO_CORTE_DEFAULT && <div className="fondo-corte__plano">
+      {capas.map(tipo => <CapaFondoCorte key={tipo} tipo={tipo} anteriores={fondoAnterior[tipo]} siguientes={fondo[tipo]} />)}
     </div>}
-    {atenuado && <div className={`absolute inset-0 bg-[linear-gradient(#10151d55,#10151d99)] motion-safe:transition-opacity motion-safe:duration-1000 ${sinTinte ? 'opacity-0' : 'opacity-100'}`} />}
+    {atenuado && <div data-fondo-tinte className="absolute inset-0 bg-[linear-gradient(#10151d55,#10151d99)]" style={{ opacity: sinTinte ? 0 : 1 }} />}
   </div>;
-}
+});
 
-const DURACION_ELEMENTO_MS = 1400;
-// Arma una clave estable para reconocer el mismo adorno del fondo.
-const claveElemento = (elemento: ElementoFondoCorte) => `${elemento.id}:${elemento.x}:${elemento.y}`;
+export default FondoCorte;
 
-// Cada tipo de decoración tiene su profundidad y mantiene el mismo fundido de entrada/salida.
-function CapaFondoCorte({ tipo, elementos }: {
-  tipo: 'personajes' | 'oro' | 'manos';
-  elementos: ElementoFondoCorte[];
+function CapaFondoCorte({ tipo, anteriores, siguientes }: {
+  tipo: typeof capas[number];
+  anteriores: ElementoFondoCorte[];
+  siguientes: ElementoFondoCorte[];
 }) {
-  const [visible, setVisible] = useState(false);
-  const [mostrados, setMostrados] = useState(() => elementos.map(elemento => ({ clave: claveElemento(elemento), elemento, presente: true, cargado: false })));
-  useEffect(() => {
-    const frame = requestAnimationFrame(() => setVisible(true));
-    return () => cancelAnimationFrame(frame);
-  }, []);
+  const clavesAnteriores = new Set(anteriores.map(claveElemento));
+  const clavesSiguientes = new Set(siguientes.map(claveElemento));
+  const salientes = anteriores.filter(elemento => !clavesSiguientes.has(claveElemento(elemento)));
 
-  useEffect(() => {
-    const actuales = new Map(elementos.map(elemento => [claveElemento(elemento), elemento]));
-    // Un guardia que cambia de sitio sale y entra con fundido, sin deslizarse por la sala.
-    setMostrados(previos => [
-      ...previos.map(item => ({ ...item, elemento: actuales.get(item.clave) || item.elemento, presente: actuales.has(item.clave) })),
-      ...elementos.filter(elemento => !previos.some(item => item.clave === claveElemento(elemento))).map(elemento => ({ clave: claveElemento(elemento), elemento, presente: true, cargado: false })),
-    ]);
-    const salida = window.setTimeout(() => setMostrados(previos => previos.filter(item => item.presente)), DURACION_ELEMENTO_MS);
-    return () => window.clearTimeout(salida);
-  }, [elementos]);
-
-  return <div className={`fondo-corte__capa fondo-corte__capa--${tipo} ${visible ? 'fondo-corte__capa--visible' : ''}`} data-cantidad={elementos.length} style={{ '--duracion-elemento': `${DURACION_ELEMENTO_MS}ms` } as CSSProperties}>
-    {mostrados.map(({ clave, elemento, presente, cargado }) => <div key={clave} className={`fondo-corte__elemento ${presente && cargado ? 'fondo-corte__elemento--visible' : ''}`} style={{
-      '--x': `${elemento.x}%`, '--y': `${elemento.y}%`,
-      '--tamano': `${elemento.tamano}%`, '--apoyo': `-${elemento.apoyo ?? 100}%`,
-      '--espejo': elemento.invertida ? -1 : 1,
-      '--silueta': `url("${imagenPrecargada(elemento.src)}")`,
-    } as CSSProperties}>
-      <img src={imagenPrecargada(elemento.src)} alt="" draggable={false} onLoad={evento => {
-        // Espera un frame tras cargar la imagen para que cada elemento nuevo entre con un fundido real.
-        const contenedor = evento.currentTarget.parentElement;
-        requestAnimationFrame(() => requestAnimationFrame(() => {
-          if (contenedor?.isConnected) setMostrados(previos => previos.map(item => item.clave === clave ? { ...item, cargado: true } : item));
-        }));
-      }} />
-    </div>)}
+  return <div className={`fondo-corte__capa fondo-corte__capa--${tipo}`}>
+    {[...siguientes, ...salientes].map(elemento => {
+      const clave = claveElemento(elemento);
+      const estado = !clavesSiguientes.has(clave) ? 'salida' : clavesAnteriores.has(clave) ? undefined : 'entrada';
+      const src = imagenPrecargada(elemento.src);
+      return <div key={clave} className="fondo-corte__elemento" data-adorno={estado} style={{
+        '--x': `${elemento.x}%`, '--y': `${elemento.y}%`,
+        '--tamano': `${elemento.tamano}%`, '--apoyo': `-${elemento.apoyo ?? 100}%`,
+        '--espejo': elemento.invertida ? -1 : 1, '--silueta': `url("${src}")`,
+      } as CSSProperties}>
+        <img src={src} alt="" draggable={false} />
+      </div>;
+    })}
   </div>;
 }

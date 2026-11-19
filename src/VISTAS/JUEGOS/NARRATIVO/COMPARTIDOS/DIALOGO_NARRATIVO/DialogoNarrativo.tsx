@@ -41,9 +41,8 @@ export default function DialogoNarrativo({
     const contexto = gsap.context(() => {
       if (!listo) { gsap.set(panel.current, { autoAlpha: 0 }); return; }
       const reducido = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      const demora = className.includes('evento-dialogo--espera-fondo') ? 1.8 : 0;
       gsap.fromTo(panel.current, { autoAlpha: 0 }, {
-        autoAlpha: 1, duration: reducido ? 0 : .6, delay: reducido ? 0 : demora,
+        autoAlpha: 1, duration: reducido ? 0 : .6,
       });
     });
     return () => contexto.revert();

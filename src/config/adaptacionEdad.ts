@@ -1,5 +1,5 @@
-/* Reúne los ajustes por edad que adaptan la dificultad y los mensajes al jugador. */
-// Reglas centrales del modo adaptado. Cambiarlas aca ajusta todos los juegos.
+/* Reúne los ajustes de legibilidad por edad para la interfaz narrativa. */
+// Ajustes de tamaño para la presentación narrativa.
 export const ADAPTACION_EDAD_HABILITADA = import.meta.env.VITE_ADAPTACION_EDAD !== 'false';
 export const REGLAS_EDAD = {
   edadMayor: 45,
@@ -12,9 +12,6 @@ export const REGLAS_EDAD = {
   // El retrato conserva su tamanio: solo permitimos que el dialogo cubra hasta el 40%.
   personajeVisibleNormal: .7,
   personajeVisibleMayor: .6,
-  // El respaldo conserva el 50% previo y eleva a 75% las conversaciones nuevas en modo adaptado.
-  conversacionNuevaNormal: .5,
-  conversacionNuevaMayor: .75,
   storageKey: 'cognijuegos_edad',
 };
 
@@ -27,12 +24,9 @@ export const configuracionPorEdad = (edad: number | null) => {
 
   return {
     adaptado,
-    mostrarNumeros: !adaptado,
-    permitirCartasMensuales: !adaptado,
     tamanioTexto: interpolar(REGLAS_EDAD.textoMinimo, REGLAS_EDAD.textoMaximo),
     altoControl: interpolar(REGLAS_EDAD.controlMinimo, REGLAS_EDAD.controlMaximo),
     fraccionVisiblePersonaje: adaptado ? REGLAS_EDAD.personajeVisibleMayor : REGLAS_EDAD.personajeVisibleNormal,
-    probabilidadConversacionNoRepetida: adaptado ? REGLAS_EDAD.conversacionNuevaMayor : REGLAS_EDAD.conversacionNuevaNormal,
   };
 };
 
@@ -45,11 +39,3 @@ export const leerEdad = () => {
 
 // Guarda edad con los datos de este paso.
 export const guardarEdad = (edad: number) => localStorage.setItem(REGLAS_EDAD.storageKey, String(edad));
-// Comprueba si corresponde adaptar la experiencia para personas mayores.
-export const esModoMayor = (edad: number | null) => configuracionPorEdad(edad).adaptado;
-// Decide si corresponde ocultar los números de los cambios.
-export const ocultarCambiosNumericos = (texto = '') => texto
-  .replace(/\s*\([^)]*[+−-]\s*\d+[^)]*\)/g, '')
-  .replace(/[+−-]\s*\d+(?:[.,]\d+)?%?\s*(?:oro|pueblo|fe|ej[eé]rcito|afinidad)?/gi, '')
-  .replace(/\s{2,}/g, ' ')
-  .trim();

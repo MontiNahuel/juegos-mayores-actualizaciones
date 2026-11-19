@@ -10,25 +10,11 @@ import BotonNarrativo from '../COMPARTIDOS/BOTON_NARRATIVO/BotonNarrativo';
 import PapelUi from '../COMPARTIDOS/PAPEL_UI/PapelUi';
 import { AnimacionTexto } from '../COMPARTIDOS/DIALOGO_NARRATIVO/AnimacionTexto';
 
-// Describe los efectos sin números para la presentación adaptada.
-function describirEfectos(resultado?: ResultadoApi) {
-  const frases: Record<string, [string, string]> = {
-    oro: ['Ahora hay más oro disponible.', 'Ahora queda menos oro.'],
-    pueblo: ['La gente quedó más contenta.', 'La gente quedó más molesta.'],
-    ejercito: ['La defensa del reino quedó más fuerte.', 'La defensa del reino quedó más débil.'],
-    fe: ['La gente recuperó confianza.', 'La gente perdió confianza.'],
-  };
-  return resultado?.efectos?.map(({ accion }) =>
-    accion.clave && frases[accion.clave]?.[Number(accion.valor || 0) > 0 ? 0 : 1]
-  ).filter(Boolean).join(' ') || 'La decisión no produjo cambios importantes.';
-}
-
 // ETAPA 4: muestra el resultado del evento o el cierre de la partida.
-export default function MostrarResultadoEtapa4({ resultado: recibido, grafo, finalizacion, modoSimple = false, continuando = false, onContinuar, onVerEstadisticas, cargandoEstadisticas, onTerminar, reiniciando }: {
+export default function MostrarResultadoEtapa4({ resultado: recibido, grafo, finalizacion, continuando = false, onContinuar, onVerEstadisticas, cargandoEstadisticas, onTerminar, reiniciando }: {
   resultado?: ResultadoApi;
   grafo?: EstadoGrafoApi;
   finalizacion?: FinalizacionApi;
-  modoSimple?: boolean;
   continuando?: boolean;
   onContinuar?: () => void;
   onVerEstadisticas?: () => void;
@@ -79,9 +65,7 @@ export default function MostrarResultadoEtapa4({ resultado: recibido, grafo, fin
   const tipo = finalizacion
     ? finalizacion.tipo === 'victoria_tiempo' ? 'positivo' : 'negativo'
     : resultado?.tipo_resultado || 'neutro';
-  const efectos: EfectoResultado[] = modoSimple && resultado
-    ? [{ texto: describirEfectos(resultado), tipo: 'neutro' }]
-    : finalizacion
+  const efectos: EfectoResultado[] = finalizacion
       ? [{ texto: finalizacion.rango ? `Rango final: ${finalizacion.rango}` : 'Partida finalizada', tipo }]
       : resultado?.efectos.length
         ? resultado.efectos.map(({ accion }) => ({

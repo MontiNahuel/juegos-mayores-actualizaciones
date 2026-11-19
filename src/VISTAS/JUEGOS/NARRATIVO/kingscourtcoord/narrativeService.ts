@@ -1,13 +1,29 @@
 /* Consulta la API narrativa; conserva saldos confirmados y nunca ejecuta reglas de juego. */
-import { API_URL } from '../../../config/api';
-import { getSessionUser } from '../../AUTH/sessionStore';
-import type { EstadoGrafoApi, EstadoPartida, HistorialPartidaApi, PersonajeApi, SetupPartida } from './narrativeTypes';
+import { API_URL } from '../../../../config/api';
+import { getSessionUser } from '../../../AUTH/sessionStore';
+import type { EstadoGrafoApi, EstadoPartida, HistorialPartidaApi, PersonajeApi, SetupPartida } from '../narrativeTypes';
 
 const GUEST_KEY = 'cognijuegos_narrative_guest_v1';
 const NARRATIVE_GUEST_CREDENTIAL_PATH = '/api/auth/guest-credential';
 interface GuestSession { credential: string; expiresAt: number }
 let credencialPendiente: Promise<string> | null = null;
 let invitadoEnMemoria: GuestSession | null = null;
+
+/** Envía una solicitud JSON con límite de espera y muestra errores HTTP legibles. */
+async function solicitar<T>(url: string, opciones: RequestInit, mensajeError?: string): Promise<T> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10_000);
+  try {
+    const response = await fetch(url, { ...opciones, signal: controller.signal });
+    if (!response.ok) {
+      const error = await response.json().catch(() => null);
+      throw new Error(error?.detail || mensajeError || `Error ${response.status}.`);
+    }
+    return await response.json() as T;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
 
 /** Busca la credencial persistida y recurre a la memoria si el almacenamiento falla. */
 function leerInvitado(): GuestSession | null {
@@ -23,17 +39,12 @@ async function obtenerCredencialInvitado(): Promise<string> {
   const previous = leerInvitado();
   if (previous?.credential && previous.expiresAt > Date.now() + 60_000) return previous.credential;
   if (credencialPendiente) return credencialPendiente;
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 10_000);
   credencialPendiente = (async () => {
-    const response = await fetch(`${API_URL}${NARRATIVE_GUEST_CREDENTIAL_PATH}`, {
-      method: 'POST',
-      credentials: 'same-origin',
-      headers: previous?.credential ? { 'x-guest-credential': previous.credential } : {},
-      signal: controller.signal,
-    });
-    const data = await response.json().catch(() => null);
-    if (!response.ok) throw new Error(data?.detail || 'No se pudo obtener la credencial de invitado.');
+    const data = await solicitar<{ credential: string; expires_in_days: number }>(
+      `${API_URL}${NARRATIVE_GUEST_CREDENTIAL_PATH}`,
+      { method: 'POST', credentials: 'same-origin', headers: previous?.credential ? { 'x-guest-credential': previous.credential } : {} },
+      'No se pudo obtener la credencial de invitado.',
+    );
     if (typeof data?.credential !== 'string' || !data.credential || !Number.isFinite(data.expires_in_days) || data.expires_in_days <= 0) {
       throw new Error('El servidor no devolvió una credencial de invitado válida.');
     }
@@ -42,28 +53,18 @@ async function obtenerCredencialInvitado(): Promise<string> {
     return invitadoEnMemoria.credential;
   })();
   try { return await credencialPendiente; }
-  finally { clearTimeout(timeout); credencialPendiente = null; }
+  finally { credencialPendiente = null; }
 }
 
-// Envía un GET o POST autenticado; un fallo conserva la partida y permite recuperarla.
+// Envía la fecha en la consulta de lectura o en el cuerpo de un POST.
 async function request<T>(path: string, date: string, datos?: object): Promise<T> {
   const headers: Record<string, string> = getSessionUser() ? {} : { 'x-guest-credential': await obtenerCredencialInvitado() };
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 10_000);
-  try {
-    const query = datos ? '' : `?date=${encodeURIComponent(date)}`;
-    const response = await fetch(`${API_URL}/api/narrative/${path}${query}`, {
-      method: datos ? 'POST' : 'GET', credentials: 'include', signal: controller.signal,
-      headers: { 'Content-Type': 'application/json', ...headers },
-      body: datos ? JSON.stringify({ date, ...datos }) : undefined,
-    });
-    // Un proxy puede devolver HTML en un error: conservamos el código HTTP legible.
-    if (!response.ok) {
-      const error = await response.json().catch(() => null);
-      throw new Error(error?.detail || `Error ${response.status}.`);
-    }
-    return await response.json() as T;
-  } finally { clearTimeout(timeout); }
+  const query = datos ? '' : `?date=${encodeURIComponent(date)}`;
+  return solicitar<T>(`${API_URL}/api/narrative/${path}${query}`, {
+    method: datos ? 'POST' : 'GET', credentials: 'include',
+    headers: { 'Content-Type': 'application/json', ...headers },
+    body: datos ? JSON.stringify({ date, ...datos }) : undefined,
+  });
 }
 
 // Obtiene personajes, cartas y recursos de preparación del desafío.
@@ -72,6 +73,18 @@ export const obtenerSetup = (date: string) => request<SetupPartida>('partida/set
 export const obtenerEstadoPartida = (date: string) => request<EstadoPartida>('v2/partida/estado', date);
 // Recupera los personajes y afinidades de la corte guardada.
 export const obtenerCortePartida = (date: string) => request<{ corte: { personaje: PersonajeApi; afinidad?: number }[]; afinidad?: Record<string, number> }>('partida/corte', date);
+
+// Las dos consultas son independientes y se usan tanto al restaurar como en la crónica.
+const obtenerPartidaYCorte = (date: string) => Promise.all([obtenerEstadoPartida(date), obtenerCortePartida(date)]);
+
+/** Carga el desafío y, si hay una partida guardada, su estado y su corte. */
+export async function obtenerDatosIniciales(date: string) {
+  const setup = await obtenerSetup(date);
+  if (!setup.tiene_partida_activa) return { setup, partida: null, corte: null };
+  const [partida, corte] = await obtenerPartidaYCorte(date);
+  return { setup, partida, corte };
+}
+
 // Reinicia la prueba en el servidor.
 export const reiniciarPartida = (date: string) => request('partida/reiniciar', date, {});
 // Confirma la selección inicial y recibe el primer draft.
@@ -103,15 +116,15 @@ function sinResultadoLeido(estado: EstadoPartida): EstadoPartida {
     grafo_actual: estado.grafo_actual?.nodo_actual.es_final ? null : estado.grafo_actual };
 }
 
-// Sólo avanza el mes desde BALANCE_MES; tras un timeout consulta antes de permitir otro intento.
-export async function continuarTurno(date: string): Promise<EstadoPartida> {
+// Avanza sólo desde BALANCE_MES y comparte la consulta de recuperación con el gestor.
+export async function continuarTurno(date: string, recuperarEstado: () => Promise<EstadoPartida>): Promise<EstadoPartida> {
   const estado = await obtenerEstadoPartida(date);
   if (estado.finalizacion || estado.grafo_actual?.finalizacion) return estado;
   if (estado.fase_actual?.toUpperCase() !== 'BALANCE_MES') return sinResultadoLeido(estado);
   try { return await request<EstadoPartida>('v2/partida/avanzar-mes', date, {}); }
   catch (error) {
     try {
-      const actual = await obtenerEstadoPartida(date);
+      const actual = await recuperarEstado();
       if (actual.mes_actual !== estado.mes_actual || actual.fase_actual !== estado.fase_actual || actual.finalizacion)
         return actual.fase_actual?.toUpperCase() === 'BALANCE_MES' ? actual : sinResultadoLeido(actual);
     } catch { /* Conserva el error original si tampoco puede recuperar el estado. */ }
@@ -121,8 +134,8 @@ export async function continuarTurno(date: string): Promise<EstadoPartida> {
 
 // Reúne la crónica confirmada, sin descargar catálogos del editor administrativo.
 export async function obtenerEstadisticasPartida(date: string) {
-  const [estado, historial, corte] = await Promise.all([
-    obtenerEstadoPartida(date), request<HistorialPartidaApi>('partida/historial', date), obtenerCortePartida(date),
+  const [[estado, corte], historial] = await Promise.all([
+    obtenerPartidaYCorte(date), request<HistorialPartidaApi>('partida/historial', date),
   ]);
   return { estado, historial, corte };
 }

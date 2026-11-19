@@ -2,7 +2,7 @@
 
 Implementación actualizada: 16 de noviembre de 2026.
 
-`KingsCourt.tsx` es el único gestor de partida: consulta `narrativeService.ts`, conserva la respuesta confirmada en estado local y entrega datos y callbacks directamente a las etapas. No hay commander separado, selector intermedio, reducers narrativos ni motor local.
+`KingsCourt.tsx` elige la etapa visible y le entrega los datos y las acciones. En `kingscourtcoord/`, `usePartidaNarrativa.ts` conserva las respuestas confirmadas y coordina las acciones, `narrativeService.ts` realiza las llamadas HTTP y `transicionCorte.ts` sincroniza el decorado entre escenas.
 
 - Selección conserva únicamente la elección temporal y anima las cartas recibidas.
 - Evento y conversación presentan el nodo y las opciones que habilita el backend.
@@ -10,7 +10,7 @@ Implementación actualizada: 16 de noviembre de 2026.
 - Estadísticas presenta el historial recibido; no consulta catálogos administrativos.
 - Los componentes compartidos conservan el fondo, los títulos, el diálogo y las transiciones.
 
-Los tipos describen el contrato; no transforman datos. La autenticación y las peticiones residen en un único servicio. Los nodos intermedios conservan los saldos anteriores cuando el servidor los omite. Las acciones se serializan en el gestor; la recuperación tras un fallo consulta el estado sin repetir el comando. El modo adaptado puede seleccionar la primera carta ofrecida, pero no cambia sus efectos.
+Los tipos describen el contrato; no transforman datos. La autenticación y las peticiones residen en un único servicio. Los nodos intermedios conservan los saldos anteriores cuando el servidor los omite. Las acciones se serializan en el hook de partida; la recuperación tras un fallo consulta el estado sin repetir el comando. La elección mensual se presenta al jugador; la edad guardada localmente solo ajusta la legibilidad del texto.
 
 El resto de este documento conserva la revisión del contrato del 6 de noviembre y sus antecedentes; las capas sugeridas entonces no son archivos requeridos por la implementación actual.
 

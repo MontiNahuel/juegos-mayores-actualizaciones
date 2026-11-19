@@ -5,7 +5,6 @@ import gsap from 'gsap';
 import type { EstadoGrafoApi, EventoApi } from '../narrativeTypes';
 import TituloNarrativo from '../COMPARTIDOS/TITULO_NARRATIVO/TituloNarrativo';
 import { API_URL } from '../../../../config/api';
-import { ocultarCambiosNumericos } from '../../../../config/adaptacionEdad';
 import DialogoNarrativo from '../COMPARTIDOS/DIALOGO_NARRATIVO/DialogoNarrativo';
 import FondoCorte from '../COMPARTIDOS/FONDO_CORTE/FondoCorte';
 import type { EstadoFondoCorte } from '../../../../config/fondoCorte';
@@ -17,20 +16,18 @@ const imagenDe = (imagen: string) => imagenPrecargada(imagen.startsWith('/') && 
   ? `${API_URL}${imagen}` : imagen);
 
 // Respeta la etiqueta de secreto confirmada por el servidor, sin recalcular requisitos.
-const textoOpcion = (opcion: EventoApi['opciones'][number], modoSimple: boolean) => {
+const textoOpcion = (opcion: EventoApi['opciones'][number]) => {
   const limpio = opcion.texto.replace(/\s*\[\s*secreto(?:\s*:[^\]]*)?\s*\]\s*/i, ' ').trim();
   const etiqueta = opcion.es_secreta && opcion.secreto ? `[secreto: ${opcion.secreto}] ` : '';
-  return `${etiqueta}${modoSimple ? ocultarCambiosNumericos(limpio) : limpio}`;
+  return `${etiqueta}${limpio}`;
 };
 
 // Muestra resolver evento etapa2 y conecta sus controles con la pantalla.
-export default function ResolverEventoEtapa2({ evento: recibido, grafo, atributos, fondoBase, modoSimple = false, demorarDialogoPorFondo = false, enviando = false, onElegir }: {
+export default function ResolverEventoEtapa2({ evento: recibido, grafo, atributos, fondoBase, enviando = false, onElegir }: {
   evento?: EventoApi;
   grafo?: EstadoGrafoApi;
   atributos: Record<string, number>;
   fondoBase: EstadoFondoCorte;
-  modoSimple?: boolean;
-  demorarDialogoPorFondo?: boolean;
   enviando?: boolean;
   onElegir: (opcionId: string) => void;
 }) {
@@ -86,10 +83,10 @@ export default function ResolverEventoEtapa2({ evento: recibido, grafo, atributo
 
   useLayoutEffect(() => {
     if (!escenaLista || !animacion.current) return;
-    const demora = primeraLectura.current ? (demorarDialogoPorFondo ? 2.4 : .8) : 0;
+    const demora = primeraLectura.current ? .8 : 0;
     primeraLectura.current = false;
     animacion.current.escribirTexto(lecturaId, demora);
-  }, [escenaLista, lecturaId, demorarDialogoPorFondo]);
+  }, [escenaLista, lecturaId]);
 
   return (
     <section ref={escena} className="evento-escena relative isolate flex min-h-[100svh] flex-col text-slate-100 [&>.titulo-narrativo]:pt-[max(48px,calc(env(safe-area-inset-top)+40px))]" aria-label="Evento del reino">
@@ -107,7 +104,7 @@ export default function ResolverEventoEtapa2({ evento: recibido, grafo, atributo
       <TituloNarrativo key={evento.id} titulo={evento.titulo} listo={escenaPresentada || escenaLista} variante="evento" permanente />
       <div className="evento-ilustracion min-h-[clamp(96px,22svh,300px)] flex-1" aria-hidden="true" />
       <DialogoNarrativo
-        className={`evento-dialogo${demorarDialogoPorFondo ? ' evento-dialogo--espera-fondo' : ''}`}
+        className="evento-dialogo"
         listo={escenaPresentada || escenaLista}
         intervencion={lecturaId}
         textoProgresivo
@@ -116,12 +113,12 @@ export default function ResolverEventoEtapa2({ evento: recibido, grafo, atributo
         texto={evento.descripcion}
         opciones={evento.opciones.map(opcion => ({
           id: opcion.id,
-          texto: textoOpcion(opcion, modoSimple),
+          texto: textoOpcion(opcion),
           disabled: enviando,
           // Registra la opción elegida y avanza la historia.
           onElegir: () => onElegir(opcion.id),
         })).filter((_, indice) => !evento.opciones[indice].bloqueada)}
-        complemento={!modoSimple ? <details className="relative text-xs text-slate-300">
+        complemento={<details className="relative text-xs text-slate-300">
           <summary className="cursor-pointer whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-amber-300">Recursos del reino</summary>
           <div className="absolute right-0 bottom-[calc(100%+12px)] w-[min(300px,80vw)] rounded-[10px] border border-slate-500 bg-[#0f172af5] p-4 shadow-[0_8px_24px_#0006]">
             {Object.entries(atributos).map(([clave, valor]) => (
@@ -132,7 +129,7 @@ export default function ResolverEventoEtapa2({ evento: recibido, grafo, atributo
               </div>
             ))}
           </div>
-        </details> : null}
+        </details>}
       />
     </section>
   );
